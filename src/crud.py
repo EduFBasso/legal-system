@@ -193,6 +193,11 @@ class NoticeCRUD:
     def read_by_case(db: Session, case_id: int) -> List[Notice]:
         """Get all notices for a specific case"""
         return db.query(Notice).filter(Notice.case_id == case_id).all()
+
+    @staticmethod
+    def read_all(db: Session, skip: int = 0, limit: int = 1000) -> List[Notice]:
+        """Get all notices with pagination"""
+        return db.query(Notice).offset(skip).limit(limit).all()
     
     @staticmethod
     def read_pending(db: Session) -> List[Notice]:
