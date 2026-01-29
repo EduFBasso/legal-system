@@ -40,14 +40,14 @@ class AccessibleConfig:
     
     # Available themes
     THEMES = {
-        "Padrão Claro": Theme(
-            "Padrão Claro",
+        "Claro Azul": Theme(
+            "Claro Azul",
             QColor(255, 255, 255),   # bg: white
             QColor(0, 0, 0),          # text: black
-            QColor(51, 51, 51),       # button_bg: dark gray
+            QColor(14, 14, 85),       # button_bg: navy blue (#0E0E55)
             QColor(255, 255, 255),    # button_text: white
-            QColor(0, 102, 204),      # accent: blue
-            QColor(240, 240, 240)     # table_alt: light gray
+            QColor(14, 14, 85),       # accent: navy blue
+            QColor(240, 245, 255)     # table_alt: very light blue
         ),
         "Alto Contraste Escuro": Theme(
             "Alto Contraste Escuro",
@@ -87,7 +87,7 @@ class AccessibleConfig:
         )
     }
     
-    _current_theme = THEMES["Padrão Claro"]
+    _current_theme = THEMES["Claro Azul"]
     
     # Colors (dynamically set by theme)
     BG_COLOR = _current_theme.bg
@@ -140,16 +140,22 @@ class AccessibleConfig:
         # Apply stylesheet for better styling
         widget.setStyleSheet(f"""
             QPushButton {{
-                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                background-color: #000000;
                 color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
-                border: 2px solid {AccessibleConfig.ACCENT_COLOR.name()};
+                border: 2px solid #000000;
                 border-radius: 5px;
                 padding: 5px;
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: {AccessibleConfig.ACCENT_COLOR.name()};
-                color: {AccessibleConfig.BG_COLOR.name()};
+                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
+                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
+            }}
+            QPushButton:focus {{
+                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
+                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
             }}
             QTableWidget {{
                 gridline-color: {AccessibleConfig.ACCENT_COLOR.name()};
@@ -162,16 +168,10 @@ class AccessibleConfig:
                 border: 2px solid {AccessibleConfig.ACCENT_COLOR.name()};
                 padding: 3px;
             }}
+            QTabBar::tab {{
+                padding: 8px 20px;
+            }}
         """)
-    @staticmethod
-    def apply_theme(widget):
-        """Apply accessible theme to widget"""
-        palette = widget.palette()
-        palette.setColor(QPalette.ColorRole.Window, AccessibleConfig.BG_COLOR)
-        palette.setColor(QPalette.ColorRole.WindowText, AccessibleConfig.TEXT_COLOR)
-        palette.setColor(QPalette.ColorRole.Button, AccessibleConfig.BUTTON_COLOR)
-        palette.setColor(QPalette.ColorRole.ButtonText, QColor(255, 255, 255))
-        widget.setPalette(palette)
 
 
 class ClientFormDialog(QDialog):
@@ -514,6 +514,12 @@ class ClientListWidget(QWidget):
         self.table.setMinimumHeight(400)
         self.table.setFont(AccessibleConfig.get_font())
         self.table.setRowHeight(0, 40)
+        
+        # Style table headers
+        header = self.table.horizontalHeader()
+        header.setFont(AccessibleConfig.get_font(bold=True))
+        header.setDefaultSectionSize(100)
+        
         layout.addWidget(self.table)
         
         # Buttons
@@ -941,6 +947,12 @@ class CaseListWidget(QWidget):
         ])
         self.table.setMinimumHeight(400)
         self.table.setFont(AccessibleConfig.get_font())
+        
+        # Style table headers
+        header = self.table.horizontalHeader()
+        header.setFont(AccessibleConfig.get_font(bold=True))
+        header.setDefaultSectionSize(100)
+        
         layout.addWidget(self.table)
 
         # Buttons
@@ -1258,6 +1270,12 @@ class NoticeListWidget(QWidget):
         ])
         self.table.setMinimumHeight(400)
         self.table.setFont(AccessibleConfig.get_font())
+        
+        # Style table headers
+        header = self.table.horizontalHeader()
+        header.setFont(AccessibleConfig.get_font(bold=True))
+        header.setDefaultSectionSize(100)
+        
         layout.addWidget(self.table)
 
         # Buttons
@@ -1479,16 +1497,30 @@ class ClientListWindow(QMainWindow):
         AccessibleConfig.apply_theme(self)
         
         # Update control bar elements
-        for i in range(self.centralWidget().layout().itemAt(0).count()):
-            widget = self.centralWidget().layout().itemAt(0).itemAt(i).widget()
-            if widget:
-                if isinstance(widget, QLabel):
-                    widget.setFont(AccessibleConfig.get_font(bold=True))
-                elif isinstance(widget, QComboBox):
-                    widget.setFont(AccessibleConfig.get_font())
+        main_layout = self.centralWidget().layout()
+        if main_layout and main_layout.count() > 0:
+            control_bar_item = main_layout.itemAt(0)
+            if control_bar_item and control_bar_item.layout():
+                control_bar = control_bar_item.layout()
+                for i in range(control_bar.count()):
+                    item = control_bar.itemAt(i)
+                    if item and item.widget():
+                        widget = item.widget()
+                        if isinstance(widget, QLabel):
+                            widget.setFont(AccessibleConfig.get_font(bold=True))
+                        elif isinstance(widget, QComboBox):
+                            widget.setFont(AccessibleConfig.get_font())
+                        elif isinstance(widget, QPushButton):
+                            # Update font size buttons
+                            if widget.text() == "A-":
+                                widget.setFont(AccessibleConfig.get_font(1.2, bold=True))
+                            elif widget.text() == "A":
+                                widget.setFont(AccessibleConfig.get_font(1.3, bold=True))
+                            elif widget.text() == "A+":
+                                widget.setFont(AccessibleConfig.get_font(1.4, bold=True))
         
         # Update tabs font
-        self.tabs.setFont(AccessibleConfig.get_font(1.1))
+        self.tabs.setFont(AccessibleConfig.get_font(1.3))
         
         # Refresh each tab
         if hasattr(self.clients_tab, 'refresh_theme'):
