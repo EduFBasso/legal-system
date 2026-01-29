@@ -157,6 +157,25 @@ class AccessibleConfig:
                 color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
                 border: 2px solid {AccessibleConfig.ACCENT_COLOR.name()};
             }}
+            QPushButton#filterButton {{
+                background-color: #E0E0E0;
+                color: #000000;
+                border: 1px solid #CCCCCC;
+                border-radius: 3px;
+                padding: 8px 16px;
+                font-weight: normal;
+            }}
+            QPushButton#filterButton:hover {{
+                background-color: #D0D0D0;
+                color: #000000;
+                border: 1px solid #CCCCCC;
+            }}
+            QPushButton#filterButton:checked {{
+                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
+                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
+                font-weight: bold;
+            }}
             QTableWidget {{
                 background-color: #F5F5F5;
                 gridline-color: #F5F5F5;
@@ -199,12 +218,6 @@ class AccessibleConfig:
             }}
             QTabBar::tab:hover:!selected {{
                 background-color: #D0D0D0;
-            }}
-            QPushButton:checked {{
-                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
-                color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
-                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
-                font-weight: bold;
             }}
         """)
 
@@ -1283,24 +1296,28 @@ class NoticeListWidget(QWidget):
         self.pending_btn.setMinimumHeight(40)
         self.pending_btn.setFont(AccessibleConfig.get_font())
         self.pending_btn.setCheckable(True)
+        self.pending_btn.setObjectName('filterButton')
         self.pending_btn.clicked.connect(self.on_filter_click)
         
         self.overdue_btn = QPushButton('Vencidos')
         self.overdue_btn.setMinimumHeight(40)
         self.overdue_btn.setFont(AccessibleConfig.get_font())
         self.overdue_btn.setCheckable(True)
+        self.overdue_btn.setObjectName('filterButton')
         self.overdue_btn.clicked.connect(self.on_filter_click)
         
         self.upcoming_btn = QPushButton('Próximos 7 dias')
         self.upcoming_btn.setMinimumHeight(40)
         self.upcoming_btn.setFont(AccessibleConfig.get_font())
         self.upcoming_btn.setCheckable(True)
+        self.upcoming_btn.setObjectName('filterButton')
         self.upcoming_btn.clicked.connect(self.on_filter_click)
         
         self.all_btn = QPushButton('Todos')
         self.all_btn.setMinimumHeight(40)
         self.all_btn.setFont(AccessibleConfig.get_font())
         self.all_btn.setCheckable(True)
+        self.all_btn.setObjectName('filterButton')
         self.all_btn.setChecked(True)  # Default: show all
         self.all_btn.clicked.connect(self.on_filter_click)
 
