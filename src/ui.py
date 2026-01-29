@@ -624,22 +624,26 @@ class ClientListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setContentsMargins(10, 2, 0, 2)
             action_layout.setSpacing(5)
 
             edit_btn = QPushButton('Editar')
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
+            edit_btn.setMinimumHeight(30)
+            edit_btn.setMaximumHeight(35)
             edit_btn.clicked.connect(lambda _, c=client: self.edit_client(c))
             action_layout.addWidget(edit_btn)
 
             delete_btn = QPushButton('Excluir')
             delete_btn.setFont(AccessibleConfig.get_font(0.9))
+            delete_btn.setMinimumHeight(30)
+            delete_btn.setMaximumHeight(35)
             delete_btn.clicked.connect(lambda _, c=client: self.delete_client(c))
             action_layout.addWidget(delete_btn)
 
             self.table.setCellWidget(row, 5, action_widget)
             
-            self.table.setRowHeight(row, 40)
+            self.table.setRowHeight(row, 45)
     
     def new_client(self):
         """Open new client dialog"""
@@ -685,21 +689,25 @@ class ClientListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setContentsMargins(10, 2, 0, 2)
             action_layout.setSpacing(5)
 
             edit_btn = QPushButton('Editar')
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
+            edit_btn.setMinimumHeight(30)
+            edit_btn.setMaximumHeight(35)
             edit_btn.clicked.connect(lambda _, c=client: self.edit_client(c))
             action_layout.addWidget(edit_btn)
 
             delete_btn = QPushButton('Excluir')
             delete_btn.setFont(AccessibleConfig.get_font(0.9))
+            delete_btn.setMinimumHeight(30)
+            delete_btn.setMaximumHeight(35)
             delete_btn.clicked.connect(lambda _, c=client: self.delete_client(c))
             action_layout.addWidget(delete_btn)
 
             self.table.setCellWidget(row, 5, action_widget)
-            self.table.setRowHeight(row, 40)
+            self.table.setRowHeight(row, 45)
     
     def refresh_theme(self):
         """Refresh theme and fonts"""
@@ -1044,21 +1052,25 @@ class CaseListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setContentsMargins(10, 2, 0, 2)
             action_layout.setSpacing(5)
 
-            edit_btn = QPushButton("Editar")
+            edit_btn = QPushButton('Editar')
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
+            edit_btn.setMinimumHeight(30)
+            edit_btn.setMaximumHeight(35)
             edit_btn.clicked.connect(lambda _, c=case: self.edit_case(c))
             action_layout.addWidget(edit_btn)
 
-            delete_btn = QPushButton("Excluir")
+            delete_btn = QPushButton('Excluir')
             delete_btn.setFont(AccessibleConfig.get_font(0.9))
+            delete_btn.setMinimumHeight(30)
+            delete_btn.setMaximumHeight(35)
             delete_btn.clicked.connect(lambda _, c=case: self.delete_case(c))
             action_layout.addWidget(delete_btn)
 
             self.table.setCellWidget(row, 6, action_widget)
-            self.table.setRowHeight(row, 40)
+            self.table.setRowHeight(row, 45)
 
     def new_case(self):
         dialog = CaseFormDialog(self, db=self.db)
@@ -1102,21 +1114,25 @@ class CaseListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setContentsMargins(10, 2, 0, 2)
             action_layout.setSpacing(5)
 
-            edit_btn = QPushButton("Editar")
+            edit_btn = QPushButton('Editar')
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
+            edit_btn.setMinimumHeight(30)
+            edit_btn.setMaximumHeight(35)
             edit_btn.clicked.connect(lambda _, c=case: self.edit_case(c))
             action_layout.addWidget(edit_btn)
 
-            delete_btn = QPushButton("Excluir")
+            delete_btn = QPushButton('Excluir')
             delete_btn.setFont(AccessibleConfig.get_font(0.9))
+            delete_btn.setMinimumHeight(30)
+            delete_btn.setMaximumHeight(35)
             delete_btn.clicked.connect(lambda _, c=case: self.delete_case(c))
             action_layout.addWidget(delete_btn)
 
             self.table.setCellWidget(row, 6, action_widget)
-            self.table.setRowHeight(row, 40)
+            self.table.setRowHeight(row, 45)
     
     def refresh_theme(self):
         """Refresh theme and fonts"""
@@ -1377,26 +1393,32 @@ class NoticeListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setContentsMargins(10, 2, 0, 2)
             action_layout.setSpacing(5)
 
-            edit_btn = QPushButton("Editar")
+            edit_btn = QPushButton('Editar')
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
+            edit_btn.setMinimumHeight(30)
+            edit_btn.setMaximumHeight(35)
             edit_btn.clicked.connect(lambda _, n=notice: self.edit_notice(n))
             action_layout.addWidget(edit_btn)
 
-            done_btn = QPushButton("Concluir")
+            done_btn = QPushButton('Concluir')
             done_btn.setFont(AccessibleConfig.get_font(0.9))
+            done_btn.setMinimumHeight(30)
+            done_btn.setMaximumHeight(35)
             done_btn.clicked.connect(lambda _, n=notice: self.complete_notice(n))
             action_layout.addWidget(done_btn)
 
-            delete_btn = QPushButton("Excluir")
+            delete_btn = QPushButton('Excluir')
             delete_btn.setFont(AccessibleConfig.get_font(0.9))
+            delete_btn.setMinimumHeight(30)
+            delete_btn.setMaximumHeight(35)
             delete_btn.clicked.connect(lambda _, n=notice: self.delete_notice(n))
             action_layout.addWidget(delete_btn)
 
             self.table.setCellWidget(row, 5, action_widget)
-            self.table.setRowHeight(row, 40)
+            self.table.setRowHeight(row, 45)
 
     def load_notices(self):
         self.pending_btn.setChecked(False)
