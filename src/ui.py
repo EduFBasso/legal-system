@@ -140,27 +140,40 @@ class AccessibleConfig:
         # Apply stylesheet for better styling
         widget.setStyleSheet(f"""
             QPushButton {{
-                background-color: #000000;
+                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
                 color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
-                border: 2px solid #000000;
+                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
                 border-radius: 5px;
                 padding: 5px;
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                background-color: {AccessibleConfig.ACCENT_COLOR.name()};
                 color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
-                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
+                border: 2px solid {AccessibleConfig.ACCENT_COLOR.name()};
             }}
             QPushButton:focus {{
-                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                background-color: {AccessibleConfig.ACCENT_COLOR.name()};
                 color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
-                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
+                border: 2px solid {AccessibleConfig.ACCENT_COLOR.name()};
             }}
             QTableWidget {{
-                gridline-color: {AccessibleConfig.ACCENT_COLOR.name()};
+                background-color: #F5F5F5;
+                gridline-color: #F5F5F5;
                 selection-background-color: {AccessibleConfig.ACCENT_COLOR.name()};
-                alternate-background-color: {AccessibleConfig.TABLE_ALT_COLOR.name()};
+                alternate-background-color: #F5F5F5;
+            }}
+            QTableWidget::item {{
+                padding: 5px;
+                background-color: #F5F5F5;
+            }}
+            QHeaderView::section {{
+                background-color: #E0E0E0;
+                color: #000000;
+                padding: 5px;
+                border: none;
+                border-right: 1px solid #CCCCCC;
+                border-bottom: 1px solid #CCCCCC;
             }}
             QLineEdit, QTextEdit, QComboBox {{
                 background-color: {AccessibleConfig.BG_COLOR.name()};
@@ -169,7 +182,29 @@ class AccessibleConfig:
                 padding: 3px;
             }}
             QTabBar::tab {{
-                padding: 8px 20px;
+                background-color: #E0E0E0;
+                color: #000000;
+                padding: 8px 16px;
+                border: 1px solid #CCCCCC;
+                border-bottom: none;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                margin-right: 2px;
+            }}
+            QTabBar::tab:selected {{
+                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
+                font-weight: bold;
+                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
+            }}
+            QTabBar::tab:hover:!selected {{
+                background-color: #D0D0D0;
+            }}
+            QPushButton:checked {{
+                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                color: {AccessibleConfig.BUTTON_TEXT_COLOR.name()};
+                border: 2px solid {AccessibleConfig.BUTTON_COLOR.name()};
+                font-weight: bold;
             }}
         """)
 
@@ -510,7 +545,7 @@ class ClientListWidget(QWidget):
         # Clients table
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["ID", "Nome", "Email", "Telefone", "Tipo", "Ações"])
+        self.table.setHorizontalHeaderLabels(["ID", "Nome", "Email", "Telefone", "Tipo", ""])
         self.table.setMinimumHeight(400)
         self.table.setFont(AccessibleConfig.get_font())
         self.table.setRowHeight(0, 40)
@@ -519,6 +554,8 @@ class ClientListWidget(QWidget):
         header = self.table.horizontalHeader()
         header.setFont(AccessibleConfig.get_font(bold=True))
         header.setDefaultSectionSize(100)
+        # Hide actions column header
+        header.setSectionHidden(5, False)
         
         layout.addWidget(self.table)
         
@@ -574,14 +611,15 @@ class ClientListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
+            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setSpacing(5)
 
-            edit_btn = QPushButton("Editar")
+            edit_btn = QPushButton('Editar')
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
             edit_btn.clicked.connect(lambda _, c=client: self.edit_client(c))
             action_layout.addWidget(edit_btn)
 
-            delete_btn = QPushButton("Excluir")
+            delete_btn = QPushButton('Excluir')
             delete_btn.setFont(AccessibleConfig.get_font(0.9))
             delete_btn.clicked.connect(lambda _, c=client: self.delete_client(c))
             action_layout.addWidget(delete_btn)
@@ -634,14 +672,15 @@ class ClientListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
+            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setSpacing(5)
 
-            edit_btn = QPushButton("Editar")
+            edit_btn = QPushButton('Editar')
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
             edit_btn.clicked.connect(lambda _, c=client: self.edit_client(c))
             action_layout.addWidget(edit_btn)
 
-            delete_btn = QPushButton("Excluir")
+            delete_btn = QPushButton('Excluir')
             delete_btn.setFont(AccessibleConfig.get_font(0.9))
             delete_btn.clicked.connect(lambda _, c=client: self.delete_client(c))
             action_layout.addWidget(delete_btn)
@@ -943,7 +982,7 @@ class CaseListWidget(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Número", "Cliente", "Status", "Prioridade", "Prazo", "Ações"
+            "ID", "Número", "Cliente", "Status", "Prioridade", "Prazo", ""
         ])
         self.table.setMinimumHeight(400)
         self.table.setFont(AccessibleConfig.get_font())
@@ -992,7 +1031,8 @@ class CaseListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
+            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setSpacing(5)
 
             edit_btn = QPushButton("Editar")
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
@@ -1049,7 +1089,8 @@ class CaseListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
+            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setSpacing(5)
 
             edit_btn = QPushButton("Editar")
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
@@ -1229,44 +1270,51 @@ class NoticeListWidget(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
+        self.setLayout(layout)
 
-        title = QLabel("Avisos e Prazos")
+        title = QLabel('Avisos e Prazos')
         title.setFont(AccessibleConfig.get_font(1.5, bold=True))
         layout.addWidget(title)
 
-        # Filter bar
+        # Filter bar with stateful buttons
         filter_layout = QHBoxLayout()
-        pending_btn = QPushButton("Pendentes")
-        pending_btn.setMinimumHeight(40)
-        pending_btn.setFont(AccessibleConfig.get_font())
-        pending_btn.clicked.connect(self.load_pending)
+        
+        self.pending_btn = QPushButton('Pendentes')
+        self.pending_btn.setMinimumHeight(40)
+        self.pending_btn.setFont(AccessibleConfig.get_font())
+        self.pending_btn.setCheckable(True)
+        self.pending_btn.clicked.connect(self.on_filter_click)
+        
+        self.overdue_btn = QPushButton('Vencidos')
+        self.overdue_btn.setMinimumHeight(40)
+        self.overdue_btn.setFont(AccessibleConfig.get_font())
+        self.overdue_btn.setCheckable(True)
+        self.overdue_btn.clicked.connect(self.on_filter_click)
+        
+        self.upcoming_btn = QPushButton('Próximos 7 dias')
+        self.upcoming_btn.setMinimumHeight(40)
+        self.upcoming_btn.setFont(AccessibleConfig.get_font())
+        self.upcoming_btn.setCheckable(True)
+        self.upcoming_btn.clicked.connect(self.on_filter_click)
+        
+        self.all_btn = QPushButton('Todos')
+        self.all_btn.setMinimumHeight(40)
+        self.all_btn.setFont(AccessibleConfig.get_font())
+        self.all_btn.setCheckable(True)
+        self.all_btn.setChecked(True)  # Default: show all
+        self.all_btn.clicked.connect(self.on_filter_click)
 
-        overdue_btn = QPushButton("Vencidos")
-        overdue_btn.setMinimumHeight(40)
-        overdue_btn.setFont(AccessibleConfig.get_font())
-        overdue_btn.clicked.connect(self.load_overdue)
-
-        upcoming_btn = QPushButton("Próximos 7 dias")
-        upcoming_btn.setMinimumHeight(40)
-        upcoming_btn.setFont(AccessibleConfig.get_font())
-        upcoming_btn.clicked.connect(self.load_upcoming)
-
-        all_btn = QPushButton("Todos")
-        all_btn.setMinimumHeight(40)
-        all_btn.setFont(AccessibleConfig.get_font())
-        all_btn.clicked.connect(self.load_notices)
-
-        filter_layout.addWidget(pending_btn)
-        filter_layout.addWidget(overdue_btn)
-        filter_layout.addWidget(upcoming_btn)
-        filter_layout.addWidget(all_btn)
+        filter_layout.addWidget(self.pending_btn)
+        filter_layout.addWidget(self.overdue_btn)
+        filter_layout.addWidget(self.upcoming_btn)
+        filter_layout.addWidget(self.all_btn)
         layout.addLayout(filter_layout)
 
         # Notices table
         self.table = QTableWidget()
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Processo", "Título", "Prazo", "Status", "Ações"
+            'ID', 'Processo', 'Título', 'Prazo', 'Status', ''
         ])
         self.table.setMinimumHeight(400)
         self.table.setFont(AccessibleConfig.get_font())
@@ -1312,7 +1360,8 @@ class NoticeListWidget(QWidget):
 
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
+            action_layout.setContentsMargins(10, 5, 0, 5)
+            action_layout.setSpacing(5)
 
             edit_btn = QPushButton("Editar")
             edit_btn.setFont(AccessibleConfig.get_font(0.9))
@@ -1333,16 +1382,44 @@ class NoticeListWidget(QWidget):
             self.table.setRowHeight(row, 40)
 
     def load_notices(self):
+        self.pending_btn.setChecked(False)
+        self.overdue_btn.setChecked(False)
+        self.upcoming_btn.setChecked(False)
+        self.all_btn.setChecked(True)
         self.populate_table(NoticeCRUD.read_all(self.db))
 
     def load_pending(self):
+        self.pending_btn.setChecked(True)
+        self.overdue_btn.setChecked(False)
+        self.upcoming_btn.setChecked(False)
+        self.all_btn.setChecked(False)
         self.populate_table(NoticeCRUD.read_pending(self.db))
 
     def load_overdue(self):
+        self.pending_btn.setChecked(False)
+        self.overdue_btn.setChecked(True)
+        self.upcoming_btn.setChecked(False)
+        self.all_btn.setChecked(False)
         self.populate_table(NoticeCRUD.read_overdue(self.db))
 
     def load_upcoming(self):
+        self.pending_btn.setChecked(False)
+        self.overdue_btn.setChecked(False)
+        self.upcoming_btn.setChecked(True)
+        self.all_btn.setChecked(False)
         self.populate_table(NoticeCRUD.read_upcoming(self.db, days=7))
+    
+    def on_filter_click(self):
+        '''Handle filter button clicks'''
+        sender = self.sender()
+        if sender == self.pending_btn:
+            self.load_pending()
+        elif sender == self.overdue_btn:
+            self.load_overdue()
+        elif sender == self.upcoming_btn:
+            self.load_upcoming()
+        elif sender == self.all_btn:
+            self.load_notices()
 
     def new_notice(self):
         dialog = NoticeFormDialog(self, db=self.db)
@@ -1520,7 +1597,7 @@ class ClientListWindow(QMainWindow):
                                 widget.setFont(AccessibleConfig.get_font(1.4, bold=True))
         
         # Update tabs font
-        self.tabs.setFont(AccessibleConfig.get_font(1.3))
+        self.tabs.setFont(AccessibleConfig.get_font(1.1))
         
         # Refresh each tab
         if hasattr(self.clients_tab, 'refresh_theme'):
