@@ -186,6 +186,10 @@ class AccessibleConfig:
                 padding: 5px;
                 background-color: #F5F5F5;
             }}
+            QTableWidget::item:selected {{
+                background-color: {AccessibleConfig.BUTTON_COLOR.name()};
+                color: #FFFFFF;
+            }}
             QHeaderView::section {{
                 background-color: #E0E0E0;
                 color: #000000;
