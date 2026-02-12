@@ -1,0 +1,62 @@
+# 📋 Busca de Publicações Jurídicas - PJe Comunica
+
+## 🚀 Como usar
+
+### Instalação
+**Não precisa instalar nada!** É só clicar duas vezes no arquivo `BuscaPublicacoes.exe`
+
+### Primeiro uso
+
+1. **Clique duas vezes** em `BuscaPublicacoes.exe`
+2. Uma janela vai abrir com o formulário
+3. Preencha os campos:
+   - **Tribunal**: TJSP (ou outro se necessário)
+   - **Número OAB**: Seu número da OAB (ex: 507553)
+   - **Período**: Escolha "Publicações de hoje" ou defina um período customizado
+
+4. Clique em **🔍 Buscar Publicações**
+5. Aguarde alguns segundos
+6. Os resultados aparecem na tela
+
+### Onde ficam os arquivos salvos?
+
+Os arquivos JSON com as publicações são salvos automaticamente na pasta `output` que fica ao lado do executável.
+
+Para abrir a pasta rapidamente, clique no botão **📁 Abrir Pasta de Resultados** na interface.
+
+### Formato do arquivo
+
+Cada busca gera um arquivo JSON com nome no formato:
+```
+publications_TJSP_507553_20260211_110655.json
+```
+
+Este arquivo contém todas as informações das publicações encontradas e pode ser usado depois no sistema principal.
+
+## 📝 Dicas
+
+- **Use "Publicações de hoje"** para verificar diariamente
+- **Período customizado** é útil para buscar publicações antigas (formato: AAAA-MM-DD)
+- Você pode fazer quantas buscas quiser, cada uma gera um arquivo separado
+- Os arquivos JSON podem ser abertos em qualquer editor de texto
+
+## ❓ Problemas comuns
+
+**"Nenhuma publicação encontrada"**
+- Confirme se o número da OAB está correto
+- Verifique se realmente há publicações no período
+
+**Erro de conexão**
+- Verifique sua conexão com a internet
+- A API do PJe pode estar temporariamente fora do ar
+
+## 💡 Sobre
+
+Esta ferramenta busca publicações diretamente da API oficial do PJe Comunica (https://comunicaapi.pje.jus.br).
+
+**Versão:** 1.0
+**Data:** Fevereiro 2026
+
+---
+
+Para suporte, entre em contato com o desenvolvedor.

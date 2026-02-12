@@ -22,21 +22,28 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
-def fetch_publications(tribunal, oab, data_inicio, data_fim):
+def fetch_publications(tribunal, oab=None, data_inicio=None, data_fim=None, nome_advogado=None):
     """Fetch publications from PJe Comunica API."""
     params = {
         "siglaTribunal": tribunal,
-        "numeroOab": oab,
     }
     
+    if oab:
+        params["numeroOab"] = oab
     if data_inicio:
         params["dataDisponibilizacaoInicio"] = data_inicio
     if data_fim:
         params["dataDisponibilizacaoFim"] = data_fim
+    if nome_advogado:
+        params["nomeAdvogado"] = nome_advogado
     
     try:
         click.echo(f"🔍 Consultando PJe Comunica API...", err=True)
-        click.echo(f"   Tribunal: {tribunal}, OAB: {oab}", err=True)
+        click.echo(f"   Tribunal: {tribunal}", err=True)
+        if oab:
+            click.echo(f"   OAB: {oab}", err=True)
+        if nome_advogado:
+            click.echo(f"   Nome: {nome_advogado}", err=True)
         if data_inicio:
             click.echo(f"   Data início: {data_inicio}", err=True)
         if data_fim:
@@ -120,11 +127,12 @@ def display_summary(publications):
 @click.command()
 @click.option('--tribunal', default='TJSP', help='Sigla do tribunal (padrão: TJSP)')
 @click.option('--oab', required=True, help='Número da OAB (obrigatório, sem formatação)')
+@click.option('--nome', default=None, help='Nome do advogado (opcional, ex: Vitoria Rocha)')
 @click.option('--today', is_flag=True, help='Usar data de hoje como período')
 @click.option('--from', 'data_inicio', default=None, help='Data inicial (YYYY-MM-DD)')
 @click.option('--to', 'data_fim', default=None, help='Data final (YYYY-MM-DD)')
 @click.option('--output', default=None, help='Nome do arquivo de saída (padrão: auto-gerado)')
-def main(tribunal, oab, today, data_inicio, data_fim, output):
+def main(tribunal, oab, nome, today, data_inicio, data_fim, output):
     """
     Busca publicações jurídicas do PJe Comunica.
     
@@ -132,6 +140,7 @@ def main(tribunal, oab, today, data_inicio, data_fim, output):
     
     \b
     python main.py --tribunal TJSP --oab 507553 --today
+    python main.py --tribunal TJSP --oab 507553 --nome "Vitoria Rocha" --today
     python main.py --tribunal TJSP --oab 507553 --from 2026-01-30 --to 2026-02-02
     """
     
@@ -150,7 +159,7 @@ def main(tribunal, oab, today, data_inicio, data_fim, output):
         sys.exit(1)
     
     # Buscar dados
-    result = fetch_publications(tribunal, oab, data_inicio, data_fim)
+    result = fetch_publications(tribunal, oab, data_inicio, data_fim, nome)
     
     if not result:
         sys.exit(1)
