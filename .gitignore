@@ -1,3 +1,4 @@
+# === Python ===
 .venv/
 __pycache__/
 *.py[cod]
@@ -19,9 +20,46 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-data/*.db
+
+# === Django ===
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# === Node/Frontend ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# === Environment ===
 .env
 .env.local
+.env.production
+.env.development
+
+# === IDEs ===
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
 .DS_Store
+Thumbs.db
+
+# === Dados/Fixtures ===
+data/*.db
+
+# === Documentação de Desenvolvimento (temporária) ===
+backend/info/
+frontend/info/
+
+# === Outros ===
 pub_fetcher/
