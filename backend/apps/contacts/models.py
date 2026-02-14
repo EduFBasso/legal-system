@@ -52,6 +52,15 @@ class Contact(models.Model):
         help_text='Formato: 000.000.000-00 ou 00.000.000/0000-00'
     )
     
+    # Foto (modo local - mini no card, grande no modal)
+    photo = models.ImageField(
+        'Foto',
+        upload_to='contacts/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        help_text='Foto do contato - 40x40px no card, 200x200px no modal'
+    )
+    
     # === Contatos (exibir no card se preenchido) ===
     email = models.EmailField('E-mail', blank=True, null=True)
     phone = models.CharField('Telefone', max_length=20, blank=True, null=True)
@@ -75,9 +84,6 @@ class Contact(models.Model):
     # === Informações Adicionais ===
     notes = models.TextField('Observações', blank=True, null=True)
     
-    # === Status (para mini-card visual) ===
-    is_active = models.BooleanField('Ativo', default=True)
-    
     # === Metadados ===
     created_at = models.DateTimeField('Criado em', auto_now_add=True)
     updated_at = models.DateTimeField('Atualizado em', auto_now=True)
@@ -88,7 +94,7 @@ class Contact(models.Model):
         ordering = ['name']
         indexes = [
             models.Index(fields=['name']),
-            models.Index(fields=['contact_type', 'is_active']),
+            models.Index(fields=['contact_type']),
         ]
     
     def __str__(self):
