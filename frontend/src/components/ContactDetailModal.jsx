@@ -139,11 +139,35 @@ export default function ContactDetailModal({ contactId, isOpen, onClose }) {
               <section className="detail-section">
                 <h3 className="section-title">📍 Endereço</h3>
                 <div className="detail-grid">
-                  {(settings.showEmptyFields || contact.address_oneline) && (
-                    <div className="detail-field full-width">
-                      <label>Endereço Completo</label>
-                      <span className={!contact.address_oneline ? 'field-empty' : ''}>
-                        {contact.address_oneline || 'Não informado'}
+                  {(settings.showEmptyFields || contact.address_line1) && (
+                    <div className="detail-field">
+                      <label>Logradouro</label>
+                      <span className={!contact.address_line1 ? 'field-empty' : ''}>
+                        {contact.address_line1 || 'Não informado'}
+                      </span>
+                    </div>
+                  )}
+                  {(settings.showEmptyFields || contact.address_number) && (
+                    <div className="detail-field">
+                      <label>Número</label>
+                      <span className={!contact.address_number ? 'field-empty' : ''}>
+                        {contact.address_number || 'Não informado'}
+                      </span>
+                    </div>
+                  )}
+                  {(settings.showEmptyFields || contact.complement) && (
+                    <div className="detail-field">
+                      <label>Complemento</label>
+                      <span className={!contact.complement ? 'field-empty' : ''}>
+                        {contact.complement || 'Não informado'}
+                      </span>
+                    </div>
+                  )}
+                  {(settings.showEmptyFields || contact.neighborhood) && (
+                    <div className="detail-field">
+                      <label>Bairro</label>
+                      <span className={!contact.neighborhood ? 'field-empty' : ''}>
+                        {contact.neighborhood || 'Não informado'}
                       </span>
                     </div>
                   )}
@@ -171,16 +195,24 @@ export default function ContactDetailModal({ contactId, isOpen, onClose }) {
                       </span>
                     </div>
                   )}
+                  {(settings.showEmptyFields || contact.address_oneline) && (
+                    <div className="detail-field full-width">
+                      <label>Endereço Completo</label>
+                      <span className={!contact.address_oneline ? 'field-empty' : ''}>
+                        {contact.address_oneline || 'Não informado'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </section>
             )}
 
-            {/* Notes */}
-            {contact.notes && (
+            {/* Notes: mostra se tiver conteúdo OU se config ativa */}
+            {(settings.showEmptyFields || contact.notes) && (
               <section className="detail-section">
                 <h3 className="section-title">📝 Observações</h3>
-                <div className="detail-notes">
-                  {contact.notes}
+                <div className={`detail-notes ${!contact.notes ? 'field-empty' : ''}`}>
+                  {contact.notes || 'Não informado'}
                 </div>
               </section>
             )}
