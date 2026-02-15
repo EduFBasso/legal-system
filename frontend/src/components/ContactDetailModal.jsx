@@ -162,7 +162,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
       }
 
       setContact(savedContact);
-      setEditedContact(savedContact);
+      setEditedContact(applyMasksToContact(savedContact)); // Map back to frontend format
       setIsEditing(false);
 
       // Notify parent to update list
