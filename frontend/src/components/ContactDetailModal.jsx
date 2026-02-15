@@ -124,7 +124,17 @@ export default function ContactDetailModal({ contactId, isOpen, onClose }) {
                   )}
                   {(settings.showEmptyFields || contact.mobile) && (
                     <div className="detail-field">
-                      <: sempre mostra se config ativa OU se tiver endereço completo */}
+                      <label>Celular</label>
+                      <span className={!contact.mobile ? 'field-empty' : ''}>
+                        {contact.mobile || 'Não informado ⚠️'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Address: sempre mostra se config ativa OU se tiver endereço completo */}
             {(settings.showEmptyFields || contact.has_complete_address) && (
               <section className="detail-section">
                 <h3 className="section-title">📍 Endereço</h3>
