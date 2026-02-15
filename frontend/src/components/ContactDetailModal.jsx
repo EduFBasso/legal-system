@@ -294,6 +294,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   };
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={isEditing && !isCreating ? null : onClose}
@@ -752,6 +753,6 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         </div>
       </Modal>
     )}
-  </>
+    </>
   );
 }
