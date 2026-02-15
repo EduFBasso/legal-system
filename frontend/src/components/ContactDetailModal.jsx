@@ -52,10 +52,15 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   }, [isOpen, contactId]);
 
   // Helper: Apply masks to contact data for editing
+  // Maps backend field names to frontend field names + applies masks
   const applyMasksToContact = (contactData) => {
     return {
       ...contactData,
-      document: contactData.document ? maskDocument(contactData.document, contactData.person_type) : '',
+      // Map backend field names to frontend names
+      document: contactData.document_number ? maskDocument(contactData.document_number, contactData.person_type) : '',
+      address_line1: contactData.street || '',
+      address_number: contactData.number || '',
+      // Apply masks to phone fields
       phone: contactData.phone ? maskPhone(contactData.phone) : '',
       mobile: contactData.mobile ? maskPhone(contactData.mobile) : '',
       zip_code: contactData.zip_code ? maskCEP(contactData.zip_code) : '',
