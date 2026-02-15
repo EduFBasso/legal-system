@@ -44,6 +44,13 @@ export default function ContactsPage() {
     setSelectedContactId(null);
   };
 
+  const handleContactUpdated = (updatedContact) => {
+    // Update contact in local list
+    setContacts(prevContacts =>
+      prevContacts.map(c => c.id === updatedContact.id ? updatedContact : c)
+    );
+  };
+
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -105,6 +112,7 @@ export default function ContactsPage() {
         contactId={selectedContactId}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onContactUpdated={handleContactUpdated}
       />
     </div>
   );
