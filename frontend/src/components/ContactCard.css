@@ -3,10 +3,10 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  padding: var(--card-padding-md, 16px);
+  background: var(--card-bg, white);
+  border: 2px solid var(--color-border, #e2e8f0);
+  border-radius: var(--card-radius, 12px);
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -60,9 +60,9 @@
 }
 
 .contact-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: var(--card-name-size, 16px);
+  font-weight: var(--card-name-weight, 700);
+  color: var(--color-heading, #1e293b);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -88,8 +88,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  color: #475569;
+  font-size: var(--card-text-size, 14px);
+  color: var(--color-text-light, #475569);
 }
 
 .detail-label {

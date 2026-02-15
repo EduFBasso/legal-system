@@ -1,4 +1,5 @@
 import Header from './components/Header'
+import Breadcrumb from './components/Breadcrumb'
 import Menu from './components/Menu'
 import MainContent from './components/MainContent'
 import Sidebar from './components/Sidebar'
@@ -9,6 +10,7 @@ function App() {
   return (
     <div className="app-container">
       <Header />
+      <Breadcrumb />
       
       <div className="app-layout">
         <Menu />

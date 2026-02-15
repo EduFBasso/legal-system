@@ -1,10 +1,10 @@
 /* Main Content Area - Centro da Tela */
 .main-content {
   flex: 1;
-  background: white;
+  background: var(--color-bg, #f7f7f7); /* Fundo cinza para contraste */
   padding: 24px;
   overflow-y: auto;
-  height: calc(100vh - 60px); /* 60px = header height */
+  height: calc(100vh - 60px - 36px); /* 60px header + 36px breadcrumb */
 }
 
 .main-content h1 {

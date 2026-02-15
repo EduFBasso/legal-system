@@ -1,0 +1,47 @@
+/* Palette - Cores do Sistema */
+
+:root {
+    /* Cores principais */
+    --color-primary: #1e3a8a; /* Azul escuro */
+    --color-primary-light: #e6f0fa;
+    --color-secondary: #3b82f6; /* Azul médio */
+    --color-accent: #ffb300;
+    
+    /* Backgrounds */
+    --color-bg: #f7f7f7; /* Fundo cinza claro do main */
+    --color-bg-section: #ffffff; /* Fundo branco para cartões */
+    --card-bg: var(--color-bg-section);
+    
+    /* Borders e sombras */
+    --color-border: #e0e0e0;
+    --color-border-focus: #3b82f6;
+    --color-shadow: rgba(0, 0, 0, 0.06);
+    
+    /* Textos */
+    --color-text: #222;
+    --color-text-light: #333;
+    --color-text-muted: #6b7280; /* cinza 600-700 */
+    --color-heading: #111827; /* quase preto para títulos */
+    --color-disabled: #9ca3af;
+    
+    /* Status colors */
+    --color-success: #065f46;
+    --color-success-bg: #ecfdf5;
+    --color-danger: #b91c1c;
+    --color-danger-bg: #fef2f2;
+    --color-warning: #f59e0b;
+    --color-warning-bg: #fef3c7;
+    
+    /* Typography */
+    --font-title-lg: 22px;
+    --font-title-md: 18px;
+    --font-body: 14px;
+    --font-small: 12px;
+    
+    /* Card tokens */
+    --card-name-size: 16px;
+    --card-text-size: 14px;
+    --card-name-weight: 700;
+    --card-radius: 12px;
+    --card-padding-md: 16px;
+}

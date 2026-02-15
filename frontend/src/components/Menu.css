@@ -4,7 +4,7 @@
   background: #1e293b;
   color: white;
   padding: 16px 0;
-  height: calc(100vh - 60px); /* 60px = header height */
+  height: calc(100vh - 60px - 36px); /* 60px header + 36px breadcrumb */
   overflow-y: auto;
 }
 
