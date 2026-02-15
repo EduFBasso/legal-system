@@ -14,10 +14,39 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   const [saving, setSaving] = useState(false);
   const { settings } = useSettings();
 
+  // Detect mode: CREATE if no contactId, VIEW/EDIT otherwise
+  const isCreating = !contactId;
+
   useEffect(() => {
-    if (isOpen && contactId) {
-      loadContactDetails();
-      setIsEditing(false); // Reset edit mode when modal opens
+    if (isOpen) {
+      if (contactId) {
+        // Load existing contact
+        loadContactDetails();
+        setIsEditing(false);
+      } else {
+        // Creating new contact
+        const emptyContact = {
+          name: '',
+          person_type: 'PF',
+          contact_type: 'CL',
+          document: '',
+          email: '',
+          phone: '',
+          mobile: '',
+          address_line1: '',
+          address_number: '',
+          complement: '',
+          neighborhood: '',
+          city: '',
+          state: '',
+          zip_code: '',
+          notes: '',
+        };
+        setContact(emptyContact);
+        setEditedContact(emptyContact);
+        setIsEditing(true); // Start in edit mode for CREATE
+        setError(null);
+      }
     }
   }, [isOpen, contactId]);
 
@@ -42,9 +71,15 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   };
 
   const handleCancel = () => {
-    setEditedContact({ ...contact }); // Revert changes
-    setIsEditing(false);
-    setError(null);
+    if (isCreating) {
+      // Close modal if creating
+      onClose();
+    } else {
+      // Revert changes if editing
+      setEditedContact({ ...contact });
+      setIsEditing(false);
+      setError(null);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -56,12 +91,18 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
 
   const handleSave = async () => {
     try {
+      // Validation: name is required
+      if (!editedContact.name || editedContact.name.trim() === '') {
+        setError('❌ O nome é obrigatório');
+        return;
+      }
+
       setSaving(true);
       setError(null);
 
       // Prepare data for API (only send editable fields)
       const dataToSend = {
-        name: editedContact.name,
+        name: editedContact.name.trim(),
         person_type: editedContact.person_type,
         contact_type: editedContact.contact_type,
         document: editedContact.document || '',
@@ -78,17 +119,34 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         notes: editedContact.notes || '',
       };
 
-      const updatedContact = await contactsAPI.update(contactId, dataToSend);
-      setContact(updatedContact);
-      setEditedContact(updatedContact);
+      let savedContact;
+      if (isCreating) {
+        // CREATE: POST /api/contacts/
+        savedContact = await contactsAPI.create(dataToSend);
+      } else {
+        // UPDATE: PUT /api/contacts/{id}/
+        savedContact = await contactsAPI.update(contactId, dataToSend);
+      }
+
+      setContact(savedContact);
+      setEditedContact(savedContact);
       setIsEditing(false);
 
-      // Notify parent to refresh list
+      // Notify parent to update list
       if (onContactUpdated) {
-        onContactUpdated(updatedContact);
+        onContactUpdated(savedContact, isCreating);
+      }
+
+      // Close modal after successful creation
+      if (isCreating) {
+        onClose();
       }
     } catch (err) {
-      setError('Erro ao salvar alterações. Tente novamente.');
+      if (isCreating) {
+        setError('Erro ao criar contato. Tente novamente.');
+      } else {
+        setError('Erro ao salvar alterações. Tente novamente.');
+      }
       console.error('Save contact error:', err);
     } finally {
       setSaving(false);
@@ -166,8 +224,14 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   return (
     <Modal
       isOpen={isOpen}
-      onClose={isEditing ? null : onClose}
-      title={isEditing ? "✏️ Editar Contato" : "Detalhes do Contato"}
+      onClose={isEditing && !isCreating ? null : onClose}
+      title={
+        isCreating 
+          ? "➕ Novo Contato" 
+          : isEditing 
+            ? "✏️ Editar Contato" 
+            : "Detalhes do Contato"
+      }
       size="large"
     >
       {loading ? (
@@ -183,22 +247,24 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         </div>
       ) : contact ? (
         <div className="contact-detail-content">
-          {/* Photo Section */}
-          <div className="detail-photo-section">
-            {contact.photo_large ? (
-              <img 
-                src={contact.photo_large} 
-                alt={contact.name}
-                className="detail-photo"
-              />
-            ) : (
-              <div className="detail-photo-placeholder">
-                <span className="photo-icon">
-                  {contact.person_type === 'PF' ? '👤' : '🏢'}
-                </span>
-              </div>
-            )}
-          </div>
+          {/* Photo Section - only show in VIEW/EDIT mode */}
+          {!isCreating && (
+            <div className="detail-photo-section">
+              {contact.photo_large ? (
+                <img 
+                  src={contact.photo_large} 
+                  alt={contact.name}
+                  className="detail-photo"
+                />
+              ) : (
+                <div className="detail-photo-placeholder">
+                  <span className="photo-icon">
+                    {contact.person_type === 'PF' ? '👤' : '🏢'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Info Sections */}
           <div className="detail-sections">
@@ -506,19 +572,21 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
               </section>
             )}
 
-            {/* Metadata */}
-            <section className="detail-section detail-metadata">
-              <div className="metadata-grid">
-                <div className="metadata-item">
-                  <label>Criado em</label>
-                  <span>{new Date(contact.created_at).toLocaleString('pt-BR')}</span>
+            {/* Metadata - only show in VIEW/EDIT mode */}
+            {!isCreating && (
+              <section className="detail-section detail-metadata">
+                <div className="metadata-grid">
+                  <div className="metadata-item">
+                    <label>Criado em</label>
+                    <span>{new Date(contact.created_at).toLocaleString('pt-BR')}</span>
+                  </div>
+                  <div className="metadata-item">
+                    <label>Atualizado em</label>
+                    <span>{new Date(contact.updated_at).toLocaleString('pt-BR')}</span>
+                  </div>
                 </div>
-                <div className="metadata-item">
-                  <label>Atualizado em</label>
-                  <span>{new Date(contact.updated_at).toLocaleString('pt-BR')}</span>
-                </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* Action Buttons */}
             <div className="detail-actions">
@@ -532,7 +600,12 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                     ❌ Cancelar
                   </button>
                   <button className="btn-save-edit" onClick={handleSave} disabled={saving}>
-                    {saving ? '⏳ Salvando...' : '💾 Atualizar Informações'}
+                    {saving 
+                      ? '⏳ Salvando...' 
+                      : isCreating 
+                        ? '➕ Criar Contato'
+                        : '💾 Atualizar Informações'
+                    }
                   </button>
                 </>
               )}

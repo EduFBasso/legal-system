@@ -39,16 +39,26 @@ export default function ContactsPage() {
     setIsModalOpen(true);
   };
 
+  const handleNewContact = () => {
+    setSelectedContactId(null); // null = CREATE mode
+    setIsModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedContactId(null);
   };
 
-  const handleContactUpdated = (updatedContact) => {
-    // Update contact in local list
-    setContacts(prevContacts =>
-      prevContacts.map(c => c.id === updatedContact.id ? updatedContact : c)
-    );
+  const handleContactUpdated = (savedContact, wasCreating) => {
+    if (wasCreating) {
+      // Add new contact to list
+      setContacts(prevContacts => [savedContact, ...prevContacts]);
+    } else {
+      // Update existing contact in list
+      setContacts(prevContacts =>
+        prevContacts.map(c => c.id === savedContact.id ? savedContact : c)
+      );
+    }
   };
 
   const filteredContacts = contacts.filter(contact =>
@@ -69,7 +79,7 @@ export default function ContactsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button className="btn-new-contact">
+        <button className="btn-new-contact" onClick={handleNewContact}>
           + Novo Contato
         </button>
       </div>
