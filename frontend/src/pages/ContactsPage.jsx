@@ -49,8 +49,13 @@ export default function ContactsPage() {
     setSelectedContactId(null);
   };
 
-  const handleContactUpdated = (savedContact, wasCreating) => {
-    if (wasCreating) {
+  const handleContactUpdated = (savedContact, wasCreating, wasDeleted) => {
+    if (wasDeleted) {
+      // Remove deleted contact from list
+      setContacts(prevContacts =>
+        prevContacts.filter(c => c.id !== selectedContactId)
+      );
+    } else if (wasCreating) {
       // Add new contact to list
       setContacts(prevContacts => [savedContact, ...prevContacts]);
     } else {

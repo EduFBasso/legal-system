@@ -13,6 +13,9 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   const [isEditing, setIsEditing] = useState(false);
   const [editedContact, setEditedContact] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const { settings } = useSettings();
 
   // Detect mode: CREATE if no contactId, VIEW/EDIT otherwise
@@ -184,6 +187,42 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDelete = async () => {
+    // Validate password if configured
+    if (settings.deletePassword) {
+      if (deletePassword !== settings.deletePassword) {
+        setDeleteError('❌ Senha incorreta');
+        return;
+      }
+    }
+
+    try {
+      setSaving(true);
+      setDeleteError('');
+      
+      await contactsAPI.delete(contactId);
+      
+      // Notify parent to remove from list
+      if (onContactUpdated) {
+        onContactUpdated(null, false, true); // Pass deleted flag
+      }
+      
+      setShowDeleteConfirm(false);
+      onClose();
+    } catch (err) {
+      console.error('Delete error:', err);
+      setDeleteError(`❌ Erro ao excluir: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeletePassword('');
+    setDeleteError('');
   };
 
   if (!isOpen) return null;
@@ -623,22 +662,34 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
 
             {/* Action Buttons */}
             <div className="detail-actions">
-              {!isEditing ? (
-                <button className="btn-edit" onClick={handleEdit}>
-                  ✏️ Editar
-                </button>
+              {!isEditing && !isCreating ? (
+                <>
+                  <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
+                    🗑️ Excluir
+                  </button>
+                  <button className="btn-edit" onClick={handleEdit}>
+                    ✏️ Editar
+                  </button>
+                </>
+              ) : isEditing && !isCreating ? (
+                <>
+                  <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
+                    🗑️ Excluir
+                  </button>
+                  <button className="btn-cancel-edit" onClick={handleCancel} disabled={saving}>
+                    ❌ Cancelar
+                  </button>
+                  <button className="btn-save-edit" onClick={handleSave} disabled={saving}>
+                    {saving ? '⏳ Salvando...' : '💾 Atualizar Informações'}
+                  </button>
+                </>
               ) : (
                 <>
                   <button className="btn-cancel-edit" onClick={handleCancel} disabled={saving}>
                     ❌ Cancelar
                   </button>
                   <button className="btn-save-edit" onClick={handleSave} disabled={saving}>
-                    {saving 
-                      ? '⏳ Salvando...' 
-                      : isCreating 
-                        ? '➕ Criar Contato'
-                        : '💾 Atualizar Informações'
-                    }
+                    {saving ? '⏳ Salvando...' : '➕ Criar Contato'}
                   </button>
                 </>
               )}
@@ -647,5 +698,60 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         </div>
       ) : null}
     </Modal>
+
+    {/* Delete Confirmation Modal */}
+    {showDeleteConfirm && (
+      <Modal 
+        isOpen={showDeleteConfirm} 
+        onClose={handleCancelDelete} 
+        title="⚠️ Confirmar Exclusão"
+        size="small"
+      >
+        <div className="delete-confirm-content">
+          <p className="delete-warning">
+            Tem certeza que deseja excluir <strong>{contact?.name}</strong>?
+          </p>
+          <p className="delete-warning-secondary">
+            ⚠️ Esta ação é <strong>irreversível</strong>!
+          </p>
+
+          {settings.deletePassword && (
+            <div className="delete-password-field">
+              <label>Digite a senha de confirmação:</label>
+              <input
+                type="password"
+                className="delete-password-input"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Senha de exclusão"
+                autoFocus
+              />
+            </div>
+          )}
+
+          {deleteError && (
+            <div className="delete-error">{deleteError}</div>
+          )}
+
+          <div className="delete-actions">
+            <button 
+              className="btn-cancel-delete" 
+              onClick={handleCancelDelete}
+              disabled={saving}
+            >
+              ✅ Não, manter contato
+            </button>
+            <button 
+              className="btn-confirm-delete" 
+              onClick={handleDelete}
+              disabled={saving}
+            >
+              {saving ? '⏳ Excluindo...' : '🗑️ Sim, excluir definitivamente'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
+  </>
   );
 }

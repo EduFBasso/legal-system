@@ -25,6 +25,13 @@ export default function SettingsModal({ isOpen, onClose }) {
     }));
   };
 
+  const handlePasswordChange = (e) => {
+    setLocalSettings((prev) => ({
+      ...prev,
+      deletePassword: e.target.value,
+    }));
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={handleCancel} title="⚙️ Configurações" size="medium">
       <div className="settings-content">
@@ -47,6 +54,28 @@ export default function SettingsModal({ isOpen, onClose }) {
             >
               <span className="toggle-slider"></span>
             </button>
+          </div>
+        </section>
+
+        {/* Segurança */}
+        <section className="settings-section">
+          <h3 className="settings-section-title">🔐 Segurança</h3>
+          
+          <div className="setting-item">
+            <div className="setting-info full-width">
+              <label className="setting-label">Senha para exclusão de contatos</label>
+              <p className="setting-description">
+                Define uma senha que será solicitada ao excluir contatos. 
+                Deixe em branco para permitir exclusão sem confirmação de senha.
+              </p>
+              <input
+                type="password"
+                className="setting-password-input"
+                value={localSettings.deletePassword || ''}
+                onChange={handlePasswordChange}
+                placeholder="Digite uma senha (opcional)"
+              />
+            </div>
           </div>
         </section>
 

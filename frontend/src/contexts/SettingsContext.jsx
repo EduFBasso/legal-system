@@ -17,6 +17,7 @@ export function SettingsProvider({ children }) {
     // Padrão: só mostra campos preenchidos (visual limpo)
     return {
       showEmptyFields: false,
+      deletePassword: '',
     };
   });
 

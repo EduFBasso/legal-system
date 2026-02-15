@@ -150,3 +150,30 @@
 .btn-cancel:active {
   transform: translateY(0);
 }
+
+/* Password Input */
+.setting-info.full-width {
+  width: 100%;
+}
+
+.setting-password-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  margin-top: 8px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.setting-password-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.setting-password-input::placeholder {
+  color: var(--color-text-muted, #6b7280);
+}
