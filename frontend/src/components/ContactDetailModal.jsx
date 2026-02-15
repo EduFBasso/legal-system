@@ -29,7 +29,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         const emptyContact = {
           name: '',
           person_type: 'PF',
-          contact_type: 'CL',
+          contact_type: 'CLIENT',
           document: '',
           email: '',
           phone: '',
@@ -126,17 +126,17 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
       setSaving(true);
       setError(null);
 
-      // Prepare data for API (unmask formatted fields)
+      // Prepare data for API (unmask formatted fields + correct field names)
       const dataToSend = {
         name: editedContact.name.trim(),
         person_type: editedContact.person_type,
         contact_type: editedContact.contact_type,
-        document: unmask(editedContact.document || ''),
+        document_number: unmask(editedContact.document || ''),
         email: editedContact.email || '',
         phone: unmask(editedContact.phone || ''),
         mobile: unmask(editedContact.mobile || ''),
-        address_line1: editedContact.address_line1 || '',
-        address_number: editedContact.address_number || '',
+        street: editedContact.address_line1 || '',
+        number: editedContact.address_number || '',
         complement: editedContact.complement || '',
         neighborhood: editedContact.neighborhood || '',
         city: editedContact.city || '',
@@ -144,6 +144,8 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         zip_code: unmask(editedContact.zip_code || ''),
         notes: editedContact.notes || '',
       };
+
+      console.log('📤 Sending to backend:', dataToSend);
 
       let savedContact;
       if (isCreating) {
@@ -316,18 +318,14 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                   {isEditing ? (
                     <select
                       className="edit-input"
-                      value={editedContact.contact_type || 'CL'}
+                      value={editedContact.contact_type || 'CLIENT'}
                       onChange={(e) => handleChange('contact_type', e.target.value)}
                     >
-                      <option value="CL">Cliente</option>
-                      <option value="AD">Adversário</option>
-                      <option value="PA">Parceiro</option>
-                      <option value="TE">Testemunha</option>
-                      <option value="JU">Juiz</option>
-                      <option value="PR">Promotor</option>
-                      <option value="PE">Perito</option>
-                      <option value="OF">Oficial de Justiça</option>
-                      <option value="OU">Outro</option>
+                      <option value="CLIENT">Cliente</option>
+                      <option value="OPPOSING">Parte Contrária</option>
+                      <option value="WITNESS">Testemunha</option>
+                      <option value="LAWYER">Advogado Parceiro</option>
+                      <option value="OTHER">Outro</option>
                     </select>
                   ) : (
                     <span className="badge-type">{contact.contact_type_display}</span>
