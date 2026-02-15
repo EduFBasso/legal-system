@@ -1,7 +1,7 @@
 // src/components/ContactCard.jsx
 import './ContactCard.css';
 
-export default function ContactCard({ contact }) {
+export default function ContactCard({ contact, onView }) {
   const {
     name,
     contact_type_display,
@@ -51,7 +51,11 @@ export default function ContactCard({ contact }) {
 
       {/* Actions */}
       <div className="contact-actions">
-        <button className="btn-view" title="Ver detalhes">
+        <button 
+          className="btn-view" 
+          title="Ver detalhes"
+          onClick={onView}
+        >
           👁️
         </button>
       </div>

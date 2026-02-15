@@ -1,6 +1,7 @@
 // src/pages/ContactsPage.jsx
 import { useState, useEffect } from 'react';
 import ContactCard from '../components/ContactCard';
+import ContactDetailModal from '../components/ContactDetailModal';
 import contactsAPI from '../services/api';
 import './ContactsPage.css';
 
@@ -9,6 +10,10 @@ export default function ContactsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Modal state
+  const [selectedContactId, setSelectedContactId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load all contacts on mount
   useEffect(() => {
@@ -27,6 +32,16 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewContact = (contactId) => {
+    setSelectedContactId(contactId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedContactId(null);
   };
 
   const filteredContacts = contacts.filter(contact =>
@@ -76,10 +91,21 @@ export default function ContactsPage() {
           </div>
         ) : (
           filteredContacts.map(contact => (
-            <ContactCard key={contact.id} contact={contact} />
+            <ContactCard 
+              key={contact.id} 
+              contact={contact}
+              onView={() => handleViewContact(contact.id)}
+            />
           ))
         )}
       </div>
+
+      {/* Detail Modal */}
+      <ContactDetailModal
+        contactId={selectedContactId}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
