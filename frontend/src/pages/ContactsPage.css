@@ -1,0 +1,151 @@
+/* Contacts Page Styles */
+.contacts-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header: Search + New Button */
+.contacts-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 3px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.search-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  font-size: 18px;
+  color: #64748b;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  font-size: 16px;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.btn-new-contact {
+  width: 160px;
+  padding: 14px 24px;
+  background: #3b82f6;
+  color: white;
+  border: 2px solid #3b82f6;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-new-contact:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-new-contact:active {
+  transform: translateY(0);
+}
+
+/* Contacts List */
+.contacts-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Loading, Empty & Error States */
+.contacts-loading,
+.contacts-empty,
+.contacts-error {
+  text-align: center;
+  padding: 64px 24px;
+  color: #64748b;
+}
+
+.contacts-loading p {
+  font-size: 16px;
+  margin: 0;
+}
+
+.contacts-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contacts-empty p {
+  font-size: 16px;
+  margin: 0;
+  color: #64748b;
+}
+
+.contacts-empty p:first-child {
+  font-size: 18px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.contacts-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.contacts-error p {
+  font-size: 16px;
+  color: #dc2626;
+  font-weight: 600;
+  margin: 0;
+}
+
+.btn-retry {
+  padding: 12px 24px;
+  background: #3b82f6;
+  color: white;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-retry:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}

@@ -1,0 +1,22 @@
+/* Main Content Area - Centro da Tela */
+.main-content {
+  flex: 1;
+  background: white;
+  padding: 24px;
+  overflow-y: auto;
+  height: calc(100vh - 60px); /* 60px = header height */
+}
+
+.main-content h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+  color: #1e293b;
+}
+
+.main-content h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #334155;
+}

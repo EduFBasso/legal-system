@@ -1,0 +1,137 @@
+/* Contact Card - Mini-card com foto/ícone */
+.contact-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.contact-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+
+.contact-card.selected {
+  border: 3px solid #3b82f6;
+  background: #eff6ff;
+}
+
+/* Avatar (40x40px circular) */
+.contact-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+}
+
+.contact-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-icon {
+  font-size: 24px;
+}
+
+/* Info Section */
+.contact-info {
+  flex: 1;
+  min-width: 0; /* Enable text truncation */
+}
+
+.contact-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.contact-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-type {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.detail-value {
+  color: #1e293b;
+}
+
+.detail-icon {
+  font-size: 14px;
+}
+
+/* Actions */
+.contact-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-view {
+  width: 40px;
+  height: 40px;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-view:hover {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  transform: scale(1.08);
+}
+
+.btn-view:active {
+  transform: scale(0.98);
+}

@@ -1,0 +1,54 @@
+/* Menu Lateral Esquerdo */
+.app-menu {
+  width: 200px;
+  background: #1e293b;
+  color: white;
+  padding: 16px 0;
+  height: calc(100vh - 60px); /* 60px = header height */
+  overflow-y: auto;
+}
+
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-item {
+  margin: 4px 0;
+}
+
+.menu-item a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 4px solid transparent;
+}
+
+.menu-item a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.menu-item.active a {
+  background: rgba(59, 130, 246, 0.2);
+  color: white;
+  border-left-color: #3b82f6;
+  font-weight: 600;
+}
+
+.menu-icon {
+  font-size: 20px;
+  width: 24px;
+  text-align: center;
+}
+
+.menu-label {
+  font-size: 16px;
+}
