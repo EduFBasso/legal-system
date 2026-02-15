@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
+import { maskDocument, maskPhone, maskCEP, unmask } from '../utils/masks';
 import './ContactDetailModal.css';
 
 export default function ContactDetailModal({ contactId, isOpen, onClose, onContactUpdated }) {
@@ -50,13 +51,24 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
     }
   }, [isOpen, contactId]);
 
+  // Helper: Apply masks to contact data for editing
+  const applyMasksToContact = (contactData) => {
+    return {
+      ...contactData,
+      document: contactData.document ? maskDocument(contactData.document, contactData.person_type) : '',
+      phone: contactData.phone ? maskPhone(contactData.phone) : '',
+      mobile: contactData.mobile ? maskPhone(contactData.mobile) : '',
+      zip_code: contactData.zip_code ? maskCEP(contactData.zip_code) : '',
+    };
+  };
+
   const loadContactDetails = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await contactsAPI.getById(contactId);
       setContact(data);
-      setEditedContact(data); // Initialize edit data
+      setEditedContact(applyMasksToContact(data)); // Apply masks for editing
     } catch (err) {
       setError('Erro ao carregar detalhes do contato');
       console.error('Load contact details error:', err);
@@ -66,7 +78,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   };
 
   const handleEdit = () => {
-    setEditedContact({ ...contact }); // Copy current data
+    setEditedContact(applyMasksToContact(contact)); // Apply masks when entering edit mode
     setIsEditing(true);
   };
 
@@ -83,9 +95,23 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   };
 
   const handleChange = (field, value) => {
+    let formattedValue = value;
+    
+    // Apply masks based on field type
+    if (field === 'document') {
+      formattedValue = maskDocument(value, editedContact.person_type);
+    } else if (field === 'phone' || field === 'mobile') {
+      formattedValue = maskPhone(value);
+    } else if (field === 'zip_code') {
+      formattedValue = maskCEP(value);
+    } else if (field === 'state') {
+      // Uppercase for state
+      formattedValue = value.toUpperCase().slice(0, 2);
+    }
+    
     setEditedContact(prev => ({
       ...prev,
-      [field]: value
+      [field]: formattedValue
     }));
   };
 
@@ -100,22 +126,22 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
       setSaving(true);
       setError(null);
 
-      // Prepare data for API (only send editable fields)
+      // Prepare data for API (unmask formatted fields)
       const dataToSend = {
         name: editedContact.name.trim(),
         person_type: editedContact.person_type,
         contact_type: editedContact.contact_type,
-        document: editedContact.document || '',
+        document: unmask(editedContact.document || ''),
         email: editedContact.email || '',
-        phone: editedContact.phone || '',
-        mobile: editedContact.mobile || '',
+        phone: unmask(editedContact.phone || ''),
+        mobile: unmask(editedContact.mobile || ''),
         address_line1: editedContact.address_line1 || '',
         address_number: editedContact.address_number || '',
         complement: editedContact.complement || '',
         neighborhood: editedContact.neighborhood || '',
         city: editedContact.city || '',
         state: editedContact.state || '',
-        zip_code: editedContact.zip_code || '',
+        zip_code: unmask(editedContact.zip_code || ''),
         notes: editedContact.notes || '',
       };
 
@@ -333,7 +359,8 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                         className="edit-input"
                         value={editedContact.document || ''}
                         onChange={(e) => handleChange('document', e.target.value)}
-                        placeholder="Digite o documento"
+                        placeholder={currentData.person_type === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                        maxLength={currentData.person_type === 'PF' ? 14 : 18}
                       />
                     ) : (
                       <span className={!contact.document_formatted ? 'field-empty' : ''}>
@@ -378,6 +405,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                           value={editedContact.phone || ''}
                           onChange={(e) => handleChange('phone', e.target.value)}
                           placeholder="(11) 3333-4444"
+                          maxLength={15}
                         />
                       ) : (
                         <span className={!contact.phone ? 'field-empty' : ''}>
@@ -396,6 +424,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                           value={editedContact.mobile || ''}
                           onChange={(e) => handleChange('mobile', e.target.value)}
                           placeholder="(11) 98765-4321"
+                          maxLength={15}
                         />
                       ) : (
                         <span className={!contact.mobile ? 'field-empty' : ''}>
@@ -494,7 +523,8 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                           className="edit-input"
                           value={editedContact.zip_code || ''}
                           onChange={(e) => handleChange('zip_code', e.target.value)}
-                          placeholder="12345-678"
+                          placeholder="00000-000"
+                          maxLength={9}
                         />
                       ) : (
                         <span className={!contact.zip_code ? 'field-empty' : ''}>
