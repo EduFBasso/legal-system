@@ -168,17 +168,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose }) {
                       <label>Estado</label>
                       <span className={!contact.state ? 'field-empty' : ''}>
                         {contact.state || 'Não informado'}
-                      
-                  {contact.city && (
-                    <div className="detail-field">
-                      <label>Cidade</label>
-                      <span>{contact.city}</span>
-                    </div>
-                  )}
-                  {contact.state && (
-                    <div className="detail-field">
-                      <label>Estado</label>
-                      <span>{contact.state}</span>
+                      </span>
                     </div>
                   )}
                 </div>
