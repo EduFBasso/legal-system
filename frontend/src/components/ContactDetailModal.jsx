@@ -1,6 +1,7 @@
 // src/components/ContactDetailModal.jsx
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
+import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
 import './ContactDetailModal.css';
 
@@ -8,6 +9,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose }) {
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { settings } = useSettings();
 
   useEffect(() => {
     if (isOpen && contactId) {
@@ -86,57 +88,77 @@ export default function ContactDetailModal({ contactId, isOpen, onClose }) {
                   <label>Tipo de Pessoa</label>
                   <span>{contact.person_type_display}</span>
                 </div>
-                {contact.document_formatted && (
+                
+                {/* Documento: sempre mostra se config ativa OU se tiver valor */}
+                {(settings.showEmptyFields || contact.document_formatted) && (
                   <div className="detail-field">
                     <label>{contact.person_type === 'PF' ? 'CPF' : 'CNPJ'}</label>
-                    <span>{contact.document_formatted}</span>
+                    <span className={!contact.document_formatted ? 'field-empty' : ''}>
+                      {contact.document_formatted || 'Não informado ⚠️'}
+                    </span>
                   </div>
                 )}
               </div>
             </section>
 
-            {/* Contact Info */}
-            {contact.has_contact_info && (
+            {/* Contact Info: mostra seção se tiver algum dado OU se config ativa */}
+            {(settings.showEmptyFields || contact.has_contact_info) && (
               <section className="detail-section">
                 <h3 className="section-title">📞 Contato</h3>
                 <div className="detail-grid">
-                  {contact.email && (
+                  {(settings.showEmptyFields || contact.email) && (
                     <div className="detail-field">
                       <label>Email</label>
-                      <span>{contact.email}</span>
+                      <span className={!contact.email ? 'field-empty' : ''}>
+                        {contact.email || 'Não informado'}
+                      </span>
                     </div>
                   )}
-                  {contact.phone && (
+                  {(settings.showEmptyFields || contact.phone) && (
                     <div className="detail-field">
                       <label>Telefone</label>
-                      <span>{contact.phone}</span>
+                      <span className={!contact.phone ? 'field-empty' : ''}>
+                        {contact.phone || 'Não informado'}
+                      </span>
                     </div>
                   )}
-                  {contact.mobile && (
+                  {(settings.showEmptyFields || contact.mobile) && (
                     <div className="detail-field">
-                      <label>Celular</label>
-                      <span>{contact.mobile}</span>
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {/* Address */}
-            {contact.has_complete_address && (
+                      <: sempre mostra se config ativa OU se tiver endereço completo */}
+            {(settings.showEmptyFields || contact.has_complete_address) && (
               <section className="detail-section">
                 <h3 className="section-title">📍 Endereço</h3>
                 <div className="detail-grid">
-                  <div className="detail-field full-width">
-                    <label>Endereço Completo</label>
-                    <span>{contact.address_oneline}</span>
-                  </div>
-                  {contact.zip_code && (
-                    <div className="detail-field">
-                      <label>CEP</label>
-                      <span>{contact.zip_code}</span>
+                  {(settings.showEmptyFields || contact.address_oneline) && (
+                    <div className="detail-field full-width">
+                      <label>Endereço Completo</label>
+                      <span className={!contact.address_oneline ? 'field-empty' : ''}>
+                        {contact.address_oneline || 'Não informado'}
+                      </span>
                     </div>
                   )}
+                  {(settings.showEmptyFields || contact.zip_code) && (
+                    <div className="detail-field">
+                      <label>CEP</label>
+                      <span className={!contact.zip_code ? 'field-empty' : ''}>
+                        {contact.zip_code || 'Não informado'}
+                      </span>
+                    </div>
+                  )}
+                  {(settings.showEmptyFields || contact.city) && (
+                    <div className="detail-field">
+                      <label>Cidade</label>
+                      <span className={!contact.city ? 'field-empty' : ''}>
+                        {contact.city || 'Não informado'}
+                      </span>
+                    </div>
+                  )}
+                  {(settings.showEmptyFields || contact.state) && (
+                    <div className="detail-field">
+                      <label>Estado</label>
+                      <span className={!contact.state ? 'field-empty' : ''}>
+                        {contact.state || 'Não informado'}
+                      
                   {contact.city && (
                     <div className="detail-field">
                       <label>Cidade</label>

@@ -1,0 +1,152 @@
+/* Settings Modal Styles */
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Section */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-section-title {
+  margin: 0;
+  font-size: var(--font-title-md, 18px);
+  font-weight: 600;
+  color: var(--color-heading, #111827);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-border, #e0e0e0);
+}
+
+/* Setting Item */
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px;
+  background: var(--color-bg, #f7f7f7);
+  border: 2px solid var(--color-border, #e0e0e0);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.setting-item:hover {
+  border-color: var(--color-border-focus, #3b82f6);
+  background: #f0f9ff;
+}
+
+.setting-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setting-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text, #222);
+  cursor: pointer;
+}
+
+.setting-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* Toggle Button */
+.toggle-button {
+  position: relative;
+  width: 56px;
+  height: 32px;
+  background: #cbd5e1;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.toggle-button:hover {
+  background: #94a3b8;
+}
+
+.toggle-button.active {
+  background: #3b82f6;
+}
+
+.toggle-button.active:hover {
+  background: #2563eb;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-button.active .toggle-slider {
+  transform: translateX(24px);
+}
+
+/* Actions */
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 2px solid var(--color-border, #e0e0e0);
+}
+
+.btn-cancel,
+.btn-save {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid;
+}
+
+.btn-cancel {
+  background: white;
+  color: var(--color-text-muted, #6b7280);
+  border-color: var(--color-border, #e0e0e0);
+}
+
+.btn-cancel:hover {
+  background: #f7f7f7;
+  border-color: #cbd5e1;
+  color: var(--color-text, #222);
+}
+
+.btn-save {
+  background: var(--color-primary, #3b82f6);
+  color: white;
+  border-color: var(--color-primary, #3b82f6);
+}
+
+.btn-save:hover {
+  background: var(--color-primary-dark, #2563eb);
+  border-color: var(--color-primary-dark, #2563eb);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-save:active,
+.btn-cancel:active {
+  transform: translateY(0);
+}

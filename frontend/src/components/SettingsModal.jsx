@@ -1,0 +1,65 @@
+// src/components/SettingsModal.jsx
+import { useState } from 'react';
+import Modal from './Modal';
+import { useSettings } from '../contexts/SettingsContext';
+import './SettingsModal.css';
+
+export default function SettingsModal({ isOpen, onClose }) {
+  const { settings, updateSettings } = useSettings();
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  const handleSave = () => {
+    updateSettings(localSettings);
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setLocalSettings(settings); // Reverte mudanças
+    onClose();
+  };
+
+  const handleToggle = (key) => {
+    setLocalSettings((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleCancel} title="⚙️ Configurações" size="medium">
+      <div className="settings-content">
+        {/* Visualização */}
+        <section className="settings-section">
+          <h3 className="settings-section-title">👁️ Visualização</h3>
+          
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Exibir campos vazios</label>
+              <p className="setting-description">
+                Mostra "Não informado" em campos sem dados no modal de detalhes. 
+                Útil para lembrar quais informações faltam cadastrar.
+              </p>
+            </div>
+            <button
+              className={`toggle-button ${localSettings.showEmptyFields ? 'active' : ''}`}
+              onClick={() => handleToggle('showEmptyFields')}
+              aria-label="Alternar exibição de campos vazios"
+            >
+              <span className="toggle-slider"></span>
+            </button>
+          </div>
+        </section>
+
+        {/* Botões de ação */}
+        <div className="settings-actions">
+          <button className="btn-cancel" onClick={handleCancel}>
+            Cancelar
+          </button>
+          <button className="btn-save" onClick={handleSave}>
+            💾 Salvar
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
