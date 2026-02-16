@@ -58,6 +58,9 @@ export default function ContactCard({ contact, onView }) {
             <div className="contact-detail">
               {isPhone ? (
                 <>
+                  {/* Phone number label and value */}
+                  <span className="detail-label">TEL:</span>
+                  <span className="detail-value">{primary_contact}</span>
                   {/* Phone call icon */}
                   <a 
                     href={telLink} 
@@ -67,19 +70,17 @@ export default function ContactCard({ contact, onView }) {
                   >
                     📞
                   </a>
-                  {/* WhatsApp icon */}
+                  {/* WhatsApp icon with green background */}
                   <a 
                     href={whatsappLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="contact-action-icon"
+                    className="contact-action-icon whatsapp-icon"
                     title="WhatsApp"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    💬
+                    W
                   </a>
-                  {/* Phone number */}
-                  <span className="detail-value">{primary_contact}</span>
                 </>
               ) : (
                 /* Email - just show icon and value */

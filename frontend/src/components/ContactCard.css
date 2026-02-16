@@ -109,7 +109,8 @@
 
 /* Clickable action icons (phone, WhatsApp) */
 .contact-action-icon {
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
@@ -120,16 +121,31 @@
   border-radius: 6px;
   transition: all 0.2s ease;
   background: #f1f5f9;
+  color: #1e293b;
+  margin-left: 8px;
 }
 
 .contact-action-icon:hover {
   background: #3b82f6;
+  color: white;
   transform: scale(1.15);
-  filter: brightness(1.2);
 }
 
 .contact-action-icon:active {
   transform: scale(0.95);
+}
+
+/* WhatsApp icon with green background */
+.contact-action-icon.whatsapp-icon {
+  background: #25D366;
+  color: white;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+}
+
+.contact-action-icon.whatsapp-icon:hover {
+  background: #20BA5A;
+  transform: scale(1.15);
 }
 
 /* Actions */
