@@ -1,8 +1,32 @@
 // src/utils/masks.js
-// Máscaras de input para formatação em tempo real
+/**
+ * @fileoverview Input masks e validações para campos brasileiros
+ * @module utils/masks
+ * 
+ * Máscaras de formatação em tempo real para:
+ * - CPF: 000.000.000-00
+ * - CNPJ: 00.000.000/0000-00
+ * - Telefone: (00) 0000-0000 ou (00) 00000-0000 (auto-detecta)
+ * - CEP: 00000-000
+ * - Número de Processo CNJ: 0000000-00.0000.0.00.0000
+ * 
+ * Também inclui validações completas com dígitos verificadores.
+ * 
+ * @example
+ * import { maskCPF, unmask, isValidCPF } from './masks';
+ * 
+ * const formatted = maskCPF('12345678901'); // "123.456.789-01"
+ * const clean = unmask('123.456.789-01');    // "12345678901"
+ * const valid = isValidCPF('12345678901');   // true/false
+ */
 
 /**
- * Remove todos os caracteres não numéricos
+ * Remove todos os caracteres não numéricos de uma string
+ * @param {string} value - Valor a ser limpo
+ * @returns {string} String contendo apenas dígitos
+ * @example
+ * unmask('123.456.789-01') // "12345678901"
+ * unmask('(11) 98765-4321') // "11987654321"
  */
 export function unmask(value) {
   if (!value) return '';
@@ -10,7 +34,13 @@ export function unmask(value) {
 }
 
 /**
- * Máscara para CPF: 000.000.000-00
+ * Aplica máscara de formatação para CPF
+ * @param {string} value - CPF sem formatação ou parcialmente formatado
+ * @returns {string} CPF formatado como 000.000.000-00
+ * @example
+ * maskCPF('12345678901') // "123.456.789-01"
+ * maskCPF('123')         // "123"
+ * maskCPF('123456')      // "123.456"
  */
 export function maskCPF(value) {
   const numbers = unmask(value);
@@ -27,7 +57,12 @@ export function maskCPF(value) {
 }
 
 /**
- * Máscara para CNPJ: 00.000.000/0000-00
+ * Aplica máscara de formatação para CNPJ
+ * @param {string} value - CNPJ sem formatação ou parcialmente formatado
+ * @returns {string} CNPJ formatado como 00.000.000/0000-00
+ * @example
+ * maskCNPJ('12345678000190') // "12.345.678/0001-90"
+ * maskCNPJ('12345')          // "12.345"
  */
 export function maskCNPJ(value) {
   const numbers = unmask(value);
@@ -46,8 +81,13 @@ export function maskCNPJ(value) {
 }
 
 /**
- * Máscara para Telefone: (00) 0000-0000 ou (00) 00000-0000
+ * Aplica máscara de formatação para telefone
  * Detecta automaticamente se é fixo (8 dígitos) ou celular (9 dígitos)
+ * @param {string} value - Telefone sem formatação ou parcialmente formatado
+ * @returns {string} Telefone formatado como (00) 0000-0000 ou (00) 00000-0000
+ * @example
+ * maskPhone('1133334444')   // "(11) 3333-4444" (fixo)
+ * maskPhone('11987654321')  // "(11) 98765-4321" (celular)
  */
 export function maskPhone(value) {
   const numbers = unmask(value);
@@ -68,7 +108,12 @@ export function maskPhone(value) {
 }
 
 /**
- * Máscara para CEP: 00000-000
+ * Aplica máscara de formatação para CEP
+ * @param {string} value - CEP sem formatação ou parcialmente formatado
+ * @returns {string} CEP formatado como 00000-000
+ * @example
+ * maskCEP('01310100')  // "01310-100"
+ * maskCEP('01310')     // "01310"
  */
 export function maskCEP(value) {
   const numbers = unmask(value);
@@ -81,7 +126,13 @@ export function maskCEP(value) {
 }
 
 /**
- * Máscara para documento (CPF ou CNPJ) - detecta automaticamente
+ * Aplica máscara automática para CPF ou CNPJ baseado no tipo de pessoa
+ * @param {string} value - Documento sem formatação ou parcialmente formatado
+ * @param {('PF'|'PJ')} personType - Tipo de pessoa: 'PF' (Pessoa Física) ou 'PJ' (Pessoa Jurídica)
+ * @returns {string} Documento formatado (CPF se PF, CNPJ se PJ)
+ * @example
+ * maskDocument('12345678901', 'PF')     // "123.456.789-01"
+ * maskDocument('12345678000190', 'PJ')  // "12.345.678/0001-90"
  */
 export function maskDocument(value, personType) {
   if (personType === 'PJ') {
@@ -92,7 +143,12 @@ export function maskDocument(value, personType) {
 }
 
 /**
- * Validação básica de CPF (algoritmo simplificado)
+ * Valida CPF usando algoritmo completo com dígitos verificadores
+ * @param {string} cpf - CPF com ou sem formatação
+ * @returns {boolean} true se CPF válido, false caso contrário
+ * @example
+ * isValidCPF('123.456.789-01')  // false (inválido)
+ * isValidCPF('111.111.111-11')  // false (sequência inválida)
  */
 export function isValidCPF(cpf) {
   const numbers = unmask(cpf);
@@ -123,7 +179,12 @@ export function isValidCPF(cpf) {
 }
 
 /**
- * Validação básica de CNPJ (algoritmo simplificado)
+ * Valida CNPJ usando algoritmo completo com dígitos verificadores
+ * @param {string} cnpj - CNPJ com ou sem formatação
+ * @returns {boolean} true se CNPJ válido, false caso contrário
+ * @example
+ * isValidCNPJ('12.345.678/0001-90')  // validará com algoritmo
+ * isValidCNPJ('11.111.111/1111-11')  // false (sequência inválida)
  */
 export function isValidCNPJ(cnpj) {
   const numbers = unmask(cnpj);
@@ -161,8 +222,19 @@ export function isValidCNPJ(cnpj) {
 }
 
 /**
- * Máscara para número do processo CNJ: 0000000-00.0000.0.00.0000
+ * Aplica máscara para número de processo judicial (formato CNJ)
  * Formato: NNNNNNN-DD.AAAA.J.TR.OOOO
+ * - NNNNNNN: Número sequencial do processo
+ * - DD: Dígito verificador
+ * - AAAA: Ano de ajuizamento
+ * - J: Segmento da Justiça (1-9)
+ * - TR: Tribunal (01-99)
+ * - OOOO: Origem (vara/comarca)
+ * 
+ * @param {string} value - Número do processo sem formatação (20 dígitos)
+ * @returns {string} Número formatado como 0000000-00.0000.0.00.0000
+ * @example
+ * maskProcessNumber('12345678901234567890')  // "1234567-89.0123.4.56.7890"
  */
 export function maskProcessNumber(value) {
   const numbers = unmask(value);
