@@ -133,8 +133,8 @@ class Contact(models.Model):
         if not self.has_complete_address:
             return None
         
-        # Monta o endereço completo com CEP
-        address_parts = [self.zip_code]  # Inicia com CEP
+        # Monta o endereço completo com CEP formatado
+        address_parts = [f"CEP: {self.zip_code_formatted}"]  # Inicia com CEP formatado
         address_parts.append(f"{self.street}, {self.number}")
         
         # Adiciona complemento se existir
@@ -152,8 +152,14 @@ class Contact(models.Model):
     
     @property
     def primary_contact(self):
-        """Retorna contato principal para exibir no card."""
-        return self.mobile or self.phone or self.email
+        """Retorna contato principal formatado para exibir no card."""
+        # Prioridade: mobile > phone > email
+        if self.mobile:
+            return self.mobile_formatted
+        elif self.phone:
+            return self.phone_formatted
+        else:
+            return self.email
     
     @property
     def document_formatted(self):
@@ -170,3 +176,49 @@ class Contact(models.Model):
             return f"{numbers[0:2]}.{numbers[2:5]}.{numbers[5:8]}/{numbers[8:12]}-{numbers[12:14]}"
         
         return self.document_number
+    
+    @property
+    def phone_formatted(self):
+        """Retorna telefone formatado."""
+        if not self.phone:
+            return None
+        
+        # Remove caracteres não numéricos
+        numbers = ''.join(filter(str.isdigit, self.phone))
+        
+        if len(numbers) == 10:  # Telefone fixo: (11) 3333-4444
+            return f"({numbers[0:2]}) {numbers[2:6]}-{numbers[6:10]}"
+        elif len(numbers) == 11:  # Celular: (11) 98765-4321
+            return f"({numbers[0:2]}) {numbers[2:7]}-{numbers[7:11]}"
+        
+        return self.phone
+    
+    @property
+    def mobile_formatted(self):
+        """Retorna celular formatado."""
+        if not self.mobile:
+            return None
+        
+        # Remove caracteres não numéricos
+        numbers = ''.join(filter(str.isdigit, self.mobile))
+        
+        if len(numbers) == 10:  # Telefone fixo: (11) 3333-4444
+            return f"({numbers[0:2]}) {numbers[2:6]}-{numbers[6:10]}"
+        elif len(numbers) == 11:  # Celular: (11) 98765-4321
+            return f"({numbers[0:2]}) {numbers[2:7]}-{numbers[7:11]}"
+        
+        return self.mobile
+    
+    @property
+    def zip_code_formatted(self):
+        """Retorna CEP formatado."""
+        if not self.zip_code:
+            return None
+        
+        # Remove caracteres não numéricos
+        numbers = ''.join(filter(str.isdigit, self.zip_code))
+        
+        if len(numbers) == 8:  # CEP: 12345-678
+            return f"{numbers[0:5]}-{numbers[5:8]}"
+        
+        return self.zip_code

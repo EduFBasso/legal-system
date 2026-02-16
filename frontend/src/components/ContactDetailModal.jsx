@@ -366,7 +366,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                   {(isEditing || settings.showEmptyFields || contact?.phone) && (
                     <FormMaskedField
                       label="Telefone"
-                      value={isEditing ? editedContact.phone : (contact?.phone || '')}
+                      value={isEditing ? editedContact.phone : (contact?.phone_formatted || '')}
                       onChange={(value) => handleChange('phone', value)}
                       mask={maskPhone}
                       readOnly={!isEditing}
@@ -378,7 +378,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                   {(isEditing || settings.showEmptyFields || contact?.mobile) && (
                     <FormMaskedField
                       label="Celular"
-                      value={isEditing ? editedContact.mobile : (contact?.mobile || '')}
+                      value={isEditing ? editedContact.mobile : (contact?.mobile_formatted || '')}
                       onChange={(value) => handleChange('mobile', value)}
                       mask={maskPhone}
                       readOnly={!isEditing}

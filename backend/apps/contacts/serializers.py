@@ -31,6 +31,7 @@ class ContactListSerializer(serializers.ModelSerializer):
             'person_type_display',
             'document_number',
             'document_formatted',
+            'mobile_formatted',
             'primary_contact',
             'has_contact_info',
             'photo',
@@ -57,6 +58,9 @@ class ContactDetailSerializer(serializers.ModelSerializer):
     contact_type_display = serializers.CharField(source='get_contact_type_display', read_only=True)
     person_type_display = serializers.CharField(source='get_person_type_display', read_only=True)
     document_formatted = serializers.CharField(read_only=True)
+    phone_formatted = serializers.CharField(read_only=True)
+    mobile_formatted = serializers.CharField(read_only=True)
+    zip_code_formatted = serializers.CharField(read_only=True)
     primary_contact = serializers.CharField(read_only=True)
     has_contact_info = serializers.BooleanField(read_only=True)
     has_complete_address = serializers.BooleanField(read_only=True)
@@ -81,10 +85,13 @@ class ContactDetailSerializer(serializers.ModelSerializer):
             'photo_large',
             'email',
             'phone',
+            'phone_formatted',
             'mobile',
+            'mobile_formatted',
             'primary_contact',
             'has_contact_info',
             'zip_code',
+            'zip_code_formatted',
             'street',
             'number',
             'complement',
