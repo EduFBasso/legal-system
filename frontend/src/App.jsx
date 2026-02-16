@@ -14,7 +14,7 @@ function App() {
     <BrowserRouter>
       <div className="app-container">
         <Header />
-        <Breadcrumb />
+        {/* <Breadcrumb /> */}
         
         <div className="app-layout">
           <Menu />

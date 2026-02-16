@@ -1,7 +1,7 @@
 // src/components/ContactCard.jsx
 import './ContactCard.css';
 
-export default function ContactCard({ contact, onView }) {
+export default function ContactCard({ contact, onView, isSelected }) {
   const {
     name,
     contact_type_display,
@@ -42,7 +42,7 @@ export default function ContactCard({ contact, onView }) {
   );
 
   return (
-    <div className="contact-card">
+    <div className={`contact-card${isSelected ? ' selected' : ''}`}>
       {/* Photo/Icon */}
       <div className="contact-avatar">
         {photo_thumbnail ? (

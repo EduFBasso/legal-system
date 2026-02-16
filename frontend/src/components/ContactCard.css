@@ -12,14 +12,15 @@
 }
 
 .contact-card:hover {
-  border-color: #3b82f6;
+  border-color: var(--color-border-focus);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
   transform: translateY(-1px);
 }
 
 .contact-card.selected {
-  border: 3px solid #3b82f6;
-  background: #eff6ff;
+  border: 3px solid var(--color-border-focus) !important;
+  background: var(--color-primary-light) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
 }
 
 /* Avatar (40x40px circular) */
@@ -154,7 +155,7 @@
 .btn-view {
   width: 40px;
   height: 40px;
-  background: #f1f5f9;
+  background: transparent !important;
   border: 2px solid #cbd5e1;
   border-radius: 8px;
   font-size: 18px;
@@ -166,8 +167,8 @@
 }
 
 .btn-view:hover {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: #f1f5f9 !important;
+  border-color: var(--color-border-focus);
   transform: scale(1.08);
 }
 

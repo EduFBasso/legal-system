@@ -59,7 +59,7 @@ export default function ContactsPage() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedContactId(null);
+    // NÃO limpar selectedContactId aqui - manter seleção visual
   };
 
   const handleContactUpdated = (savedContact, wasCreating, wasDeleted) => {
@@ -132,6 +132,7 @@ export default function ContactsPage() {
             <ContactCard 
               key={contact.id} 
               contact={contact}
+              isSelected={selectedContactId === contact.id}
               onView={() => handleViewContact(contact.id)}
             />
           ))
