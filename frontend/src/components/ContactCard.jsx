@@ -14,6 +14,20 @@ export default function ContactCard({ contact, onView }) {
   // Ícone padrão: 👤 PF, 🏢 PJ
   const defaultIcon = person_type === 'PF' ? '👤' : '🏢';
 
+  // Helper: Extract only digits from phone number for links
+  const getPhoneDigits = (phoneStr) => {
+    if (!phoneStr) return '';
+    return phoneStr.replace(/\D/g, ''); // Remove non-digits
+  };
+
+  // Check if primary_contact is a phone number (has digits)
+  const isPhone = primary_contact && /\d/.test(primary_contact);
+  const phoneDigits = isPhone ? getPhoneDigits(primary_contact) : '';
+  
+  // WhatsApp link with Brazilian country code (55)
+  const whatsappLink = phoneDigits ? `https://wa.me/55${phoneDigits}` : null;
+  const telLink = phoneDigits ? `tel:+55${phoneDigits}` : null;
+
   return (
     <div className="contact-card">
       {/* Photo/Icon */}
@@ -42,8 +56,38 @@ export default function ContactCard({ contact, onView }) {
           )}
           {primary_contact && (
             <div className="contact-detail">
-              <span className="detail-icon">📱</span>
-              <span className="detail-value">{primary_contact}</span>
+              {isPhone ? (
+                <>
+                  {/* Phone call icon */}
+                  <a 
+                    href={telLink} 
+                    className="contact-action-icon"
+                    title="Ligar"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    📞
+                  </a>
+                  {/* WhatsApp icon */}
+                  <a 
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="contact-action-icon"
+                    title="WhatsApp"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    💬
+                  </a>
+                  {/* Phone number */}
+                  <span className="detail-value">{primary_contact}</span>
+                </>
+              ) : (
+                /* Email - just show icon and value */
+                <>
+                  <span className="detail-icon">📧</span>
+                  <span className="detail-value">{primary_contact}</span>
+                </>
+              )}
             </div>
           )}
         </div>
