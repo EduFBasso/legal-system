@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
+import Toast from '../components/common/Toast';
 import contactsAPI from '../services/api';
 import './ContactsPage.css';
 
@@ -14,6 +15,18 @@ export default function ContactsPage() {
   // Modal state
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Toast state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('info');
+
+  // Helper to show toast
+  const displayToast = (message, type = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
 
   // Load all contacts on mount
   useEffect(() => {
@@ -55,14 +68,17 @@ export default function ContactsPage() {
       setContacts(prevContacts =>
         prevContacts.filter(c => c.id !== selectedContactId)
       );
+      displayToast('🗑️ Contato excluído com sucesso', 'info');
     } else if (wasCreating) {
       // Add new contact to list
       setContacts(prevContacts => [savedContact, ...prevContacts]);
+      displayToast('✅ Contato criado com sucesso!', 'success');
     } else {
       // Update existing contact in list
       setContacts(prevContacts =>
         prevContacts.map(c => c.id === savedContact.id ? savedContact : c)
       );
+      displayToast('✅ Alterações salvas!', 'success');
     }
   };
 
@@ -128,6 +144,15 @@ export default function ContactsPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onContactUpdated={handleContactUpdated}
+      />
+      
+      {/* Toast Notifications */}
+      <Toast
+        isOpen={showToast}
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setShowToast(false)}
+        autoCloseMs={3000}
       />
     </div>
   );

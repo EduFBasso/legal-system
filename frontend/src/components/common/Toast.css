@@ -1,0 +1,117 @@
+/* Toast.css - Estilos para notificações temporárias */
+
+.toast-content-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+  padding: 0;
+}
+
+.toast-card {
+  width: 100%;
+  max-width: 420px;
+  min-width: 280px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.toast-message {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.toast-button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.toast-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.toast-button:active {
+  transform: translateY(0);
+}
+
+/* Success */
+.toast-success {
+  background-color: var(--color-success-bg);
+  border-color: color-mix(in oklab, var(--color-success) 45%, white);
+  color: var(--color-success);
+}
+
+.toast-button-success {
+  background-color: var(--color-success);
+}
+
+.toast-button-success:hover {
+  background-color: color-mix(in oklab, var(--color-success) 85%, black);
+}
+
+/* Error / Danger */
+.toast-error {
+  background-color: var(--color-danger-bg);
+  border-color: color-mix(in oklab, var(--color-danger) 45%, white);
+  color: var(--color-danger);
+}
+
+.toast-button-error {
+  background-color: var(--color-danger);
+}
+
+.toast-button-error:hover {
+  background-color: color-mix(in oklab, var(--color-danger) 85%, black);
+}
+
+/* Warning */
+.toast-warning {
+  background-color: var(--color-warning-bg);
+  border-color: color-mix(in oklab, var(--color-warning) 45%, white);
+  color: #92400e;
+}
+
+.toast-button-warning {
+  background-color: var(--color-warning);
+}
+
+.toast-button-warning:hover {
+  background-color: color-mix(in oklab, var(--color-warning) 85%, black);
+}
+
+/* Info */
+.toast-info {
+  background-color: #eff6ff;
+  border-color: #60a5fa;
+  color: #1d4ed8;
+}
+
+.toast-button-info {
+  background-color: #1d4ed8;
+}
+
+.toast-button-info:hover {
+  background-color: #1e40af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toast-card {
+    max-width: 100%;
+    min-width: 100%;
+  }
+}

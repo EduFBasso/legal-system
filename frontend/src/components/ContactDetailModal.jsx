@@ -1,6 +1,7 @@
 // src/components/ContactDetailModal.jsx
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
+import ConfirmDialog from './common/ConfirmDialog';
 import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
 import { maskDocument, maskPhone, maskCEP, unmask } from '../utils/masks';
@@ -637,58 +638,21 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
     </Modal>
 
     {/* Delete Confirmation Modal */}
-    {showDeleteConfirm && (
-      <Modal 
-        isOpen={showDeleteConfirm} 
-        onClose={handleCancelDelete} 
-        title="⚠️ Confirmar Exclusão"
-        size="small"
-      >
-        <div className="delete-confirm-content">
-          <p className="delete-warning">
-            Tem certeza que deseja excluir <strong>{contact?.name}</strong>?
-          </p>
-          <p className="delete-warning-secondary">
-            ⚠️ Esta ação é <strong>irreversível</strong>!
-          </p>
-
-          {settings.deletePassword && (
-            <div className="delete-password-field">
-              <label>Digite a senha de confirmação:</label>
-              <input
-                type="password"
-                className="delete-password-input"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder="Senha de exclusão"
-                autoFocus
-              />
-            </div>
-          )}
-
-          {deleteError && (
-            <div className="delete-error">{deleteError}</div>
-          )}
-
-          <div className="delete-actions">
-            <button 
-              className="btn-cancel-delete" 
-              onClick={handleCancelDelete}
-              disabled={saving}
-            >
-              ✅ Não, manter contato
-            </button>
-            <button 
-              className="btn-confirm-delete" 
-              onClick={handleDelete}
-              disabled={saving}
-            >
-              {saving ? '⏳ Excluindo...' : '🗑️ Sim, excluir definitivamente'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-    )}
+    <ConfirmDialog
+      isOpen={showDeleteConfirm}
+      type="danger"
+      title="⚠️ Confirmar Exclusão"
+      message={`Tem certeza que deseja excluir ${contact?.name}?`}
+      warningMessage="Esta ação é irreversível!"
+      confirmText={saving ? '⏳ Excluindo...' : '🗑️ Sim, excluir definitivamente'}
+      cancelText="✅ Não, manter contato"
+      onConfirm={handleDelete}
+      onCancel={handleCancelDelete}
+      requirePassword={!!settings.deletePassword}
+      password={deletePassword}
+      onPasswordChange={setDeletePassword}
+      passwordError={deleteError}
+    />
     </>
   );
 }

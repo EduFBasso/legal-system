@@ -32,7 +32,12 @@ npm run preview
 ```
 src/
 ├── components/       # React components
-│   ├── common/       # (Planejado) Componentes reutilizáveis
+│   ├── common/       # 🆕 Componentes reutilizáveis
+│   │   ├── Toast.jsx            # Notificação temporária com auto-close
+│   │   ├── Toast.css
+│   │   ├── ConfirmDialog.jsx    # Modal de confirmação genérico
+│   │   ├── ConfirmDialog.css
+│   │   └── index.js             # Barrel export
 │   ├── contacts/     # Componentes específicos de contatos
 │   │   ├── ContactCard.jsx
 │   │   ├── ContactCard.css
@@ -149,6 +154,125 @@ Mini-card para sidebar de contatos.
 - Nome destacado
 - Tipo de contato (badge)
 - Highlight em hover e selected
+
+## 🧩 Common Components
+
+### Toast
+
+Notificação temporária com auto-close baseado no SystemMessageModal do clinic-system.
+
+**Props**:
+
+- `isOpen`: boolean
+- `message`: string
+- `type`: 'success' | 'error' | 'warning' | 'info'
+- `onClose`: function
+- `autoCloseMs`: number (default: 3000)
+
+**Types**:
+
+- `success` (green) - Operações bem-sucedidas
+- `error` (red) - Erros e falhas
+- `warning` (orange) - Avisos e atenção
+- `info` (blue) - Informações gerais
+
+**Features**:
+
+- Auto-close configurável
+- Cores do palette.css (semantic tokens)
+- Design responsivo (280-420px)
+- Botão OK para fechar manualmente
+- Overlay modal com backdrop
+
+**Example**:
+
+```jsx
+const [showToast, setShowToast] = useState(false);
+const [toastMessage, setToastMessage] = useState("");
+const [toastType, setToastType] = useState("info");
+
+const displayToast = (message, type = "info") => {
+  setToastMessage(message);
+  setToastType(type);
+  setShowToast(true);
+};
+
+// Usage
+displayToast("Contato criado com sucesso!", "success");
+
+<Toast
+  isOpen={showToast}
+  message={toastMessage}
+  type={toastType}
+  onClose={() => setShowToast(false)}
+  autoCloseMs={3000}
+/>;
+```
+
+### ConfirmDialog
+
+Modal de confirmação genérico com suporte a senha opcional.
+
+**Props**:
+
+- `isOpen`: boolean
+- `type`: 'danger' | 'warning' | 'info'
+- `title`: string
+- `message`: string
+- `warningMessage`: string (optional)
+- `confirmText`: string (default: 'Confirmar')
+- `cancelText`: string (default: 'Cancelar')
+- `onConfirm`: function
+- `onCancel`: function
+- `requirePassword`: boolean (default: false)
+- `password`: string
+- `onPasswordChange`: function
+- `passwordError`: string
+
+**Types**:
+
+- `danger` (red) - Ações destrutivas (delete, remove)
+- `warning` (orange) - Ações que requerem atenção
+- `info` (blue) - Confirmações gerais
+
+**Features**:
+
+- Senha de confirmação opcional (para proteção)
+- Mensagem de aviso adicional (ex: "irreversível")
+- Botões com cores semânticas (type-colored)
+- Layout responsivo (mobile: botões empilhados)
+- Validação de senha integrada
+
+**Example**:
+
+```jsx
+<ConfirmDialog
+  isOpen={showConfirm}
+  type="danger"
+  title="⚠️ Confirmar Exclusão"
+  message={`Tem certeza que deseja excluir ${contact.name}?`}
+  warningMessage="Esta ação é irreversível!"
+  confirmText="🗑️ Sim, excluir definitivamente"
+  cancelText="✅ Não, manter contato"
+  onConfirm={handleDelete}
+  onCancel={() => setShowConfirm(false)}
+  requirePassword={!!settings.deletePassword}
+  password={password}
+  onPasswordChange={setPassword}
+  passwordError={passwordError}
+/>
+```
+
+**Refactoring Impact**:
+
+- ContactDetailModal: Removido ~50 linhas de modal de exclusão embarcado
+- Padronizado: Confirmações seguem mesmo padrão visual em todo app
+
+**Future Usage**:
+
+- Publications: "Arquivar publicação?"
+- Cases: "Arquivar processo?" (type=warning)
+- Agenda: "Cancelar compromisso?" (type=danger)
 
 ### ContactDetailModal
 

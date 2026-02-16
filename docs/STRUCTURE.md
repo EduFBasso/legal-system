@@ -59,10 +59,25 @@ Componentes React organizados por funcionalidade:
 - `MainContent.jsx` : Container principal para conteúdo
 - `Sidebar.jsx` : Sidebar lateral com scroll
 
+**Componentes Comuns (`components/common/`)** 🆕
+
+- `Toast.jsx` : Notificação temporária com auto-close
+  - Tipos: success, error, warning, info
+  - Auto-close configurável (padrão 3s)
+  - Baseado no SystemMessageModal do clinic-system
+  - Cores do palette.css
+- `ConfirmDialog.jsx` : Modal de confirmação genérico
+  - Tipos: danger (delete), warning, info
+  - Suporte a senha de confirmação (opcional)
+  - Extraído do padrão de exclusão do ContactDetailModal
+  - Botões: Cancelar + Confirmar (type-colored)
+- `index.js` : Barrel export para facilitar imports
+
 **Específicos de Contacts**
 
 - `ContactCard.jsx` : Mini-card para lista (40x40px foto/ícone + nome + tipo)
-- `ContactDetailModal.jsx` : Modal híbrido VIEW/EDIT/CREATE (695 linhas)
+- `ContactDetailModal.jsx` : Modal híbrido VIEW/EDIT/CREATE
+  - Refatorado: usa ConfirmDialog para exclusão (removido ~50 linhas)
 - `SettingsModal.jsx` : Modal de configurações (showEmptyFields, deletePassword)
 
 **Estilos**
