@@ -52,6 +52,11 @@ export default function ContactsPage() {
     setIsModalOpen(true);
   };
 
+  const handleSelectContact = (contactId) => {
+    // Apenas seleciona o cartão, não abre modal
+    setSelectedContactId(contactId);
+  };
+
   const handleNewContact = () => {
     setSelectedContactId(null); // null = CREATE mode
     setIsModalOpen(true);
@@ -134,6 +139,7 @@ export default function ContactsPage() {
               key={contact.id} 
               contact={contact}
               isSelected={selectedContactId === contact.id}
+              onSelect={() => handleSelectContact(contact.id)}
               onView={() => handleViewContact(contact.id)}
             />
           ))
