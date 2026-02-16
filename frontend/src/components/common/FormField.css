@@ -43,6 +43,8 @@
   font-size: 14px;
   font-weight: 600;
   font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* EDIT mode */

@@ -76,6 +76,8 @@
   color: #1e40af;
   border-radius: 6px;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .contact-details {
