@@ -43,6 +43,15 @@ class Contact(models.Model):
     # Dados básicos (sempre visível no mini-card)
     name = models.CharField('Nome/Razão Social', max_length=200)
     
+    # Nome Fantasia (apenas para PJ)
+    trading_name = models.CharField(
+        'Nome Fantasia',
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text='Nome fantasia da empresa (diferente da razão social)'
+    )
+    
     # Documento (opcional mas recomendado)
     document_number = models.CharField(
         'CPF/CNPJ', 
@@ -120,12 +129,13 @@ class Contact(models.Model):
     
     @property
     def address_oneline(self):
-        """Retorna endereço formatado em uma linha para mini-card."""
+        """Retorna endereço formatado em uma linha para mini-card (inclui CEP)."""
         if not self.has_complete_address:
             return None
         
-        # Monta o endereço base
-        address_parts = [f"{self.street}, {self.number}"]
+        # Monta o endereço completo com CEP
+        address_parts = [self.zip_code]  # Inicia com CEP
+        address_parts.append(f"{self.street}, {self.number}")
         
         # Adiciona complemento se existir
         if self.complement:

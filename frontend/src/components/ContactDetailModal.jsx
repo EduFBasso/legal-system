@@ -33,6 +33,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         // Creating new contact
         const emptyContact = {
           name: '',
+          trading_name: '',
           person_type: 'PF',
           contact_type: 'CLIENT',
           document: '',
@@ -139,6 +140,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
       // Prepare data for API (unmask formatted fields + correct field names)
       const dataToSend = {
         name: editedContact.name.trim(),
+        trading_name: editedContact.trading_name?.trim() || '',
         person_type: editedContact.person_type,
         contact_type: editedContact.contact_type,
         document_number: unmask(editedContact.document || ''),
@@ -291,6 +293,17 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                   required
                 />
                 
+                {/* Nome Fantasia: apenas para PJ */}
+                {(currentData.person_type === 'PJ') && (
+                  <FormField
+                    label="Nome Fantasia"
+                    value={isEditing ? editedContact.trading_name : (contact?.trading_name || '')}
+                    onChange={(value) => handleChange('trading_name', value)}
+                    readOnly={!isEditing}
+                    emptyText="Não informado"
+                  />
+                )}
+                
                 <FormSelect
                   label="Tipo de Contato"
                   value={isEditing ? (editedContact.contact_type || 'CLIENT') : contact.contact_type}
@@ -382,28 +395,43 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
             {(isEditing || settings.showEmptyFields || contact?.has_complete_address) && (
               <section className="detail-section">
                 <h3 className="section-title">📍 Endereço</h3>
-                <AddressFieldGroup
-                  address={isEditing ? editedContact : {
-                    zip_code: contact?.zip_code || '',
-                    address_line1: contact?.street || '',
-                    address_number: contact?.number || '',
-                    complement: contact?.complement || '',
-                    neighborhood: contact?.neighborhood || '',
-                    city: contact?.city || '',
-                    state: contact?.state || '',
-                  }}
-                  onChange={handleChange}
-                  readOnly={!isEditing}
-                  showEmptyFields={settings.showEmptyFields}
-                />
                 
-                {!isEditing && (settings.showEmptyFields || contact?.address_oneline) && (
-                  <div className="detail-field full-width" style={{ marginTop: '16px' }}>
+                {/* VIEW mode com endereço completo: mostra apenas endereço formatado */}
+                {!isEditing && contact?.address_oneline && !settings.showEmptyFields ? (
+                  <div className="detail-field full-width">
                     <label className="form-field-label">Endereço Completo</label>
-                    <span className={`form-field-value ${!contact.address_oneline ? 'field-empty' : ''}`}>
-                      {contact.address_oneline || 'Não informado'}
+                    <span className="form-field-value">
+                      {contact.address_oneline}
                     </span>
                   </div>
+                ) : (
+                  /* EDIT mode ou showEmptyFields: mostra campos individuais */
+                  <>
+                    <AddressFieldGroup
+                      address={isEditing ? editedContact : {
+                        zip_code: contact?.zip_code || '',
+                        address_line1: contact?.street || '',
+                        address_number: contact?.number || '',
+                        complement: contact?.complement || '',
+                        neighborhood: contact?.neighborhood || '',
+                        city: contact?.city || '',
+                        state: contact?.state || '',
+                      }}
+                      onChange={handleChange}
+                      readOnly={!isEditing}
+                      showEmptyFields={settings.showEmptyFields}
+                    />
+                    
+                    {/* Mostra endereço completo também quando em modo VIEW com showEmptyFields */}
+                    {!isEditing && settings.showEmptyFields && contact?.address_oneline && (
+                      <div className="detail-field full-width" style={{ marginTop: '16px' }}>
+                        <label className="form-field-label">Endereço Completo</label>
+                        <span className="form-field-value">
+                          {contact.address_oneline}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </section>
             )}

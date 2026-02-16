@@ -24,6 +24,7 @@ class ContactListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'trading_name',
             'contact_type',
             'contact_type_display',
             'person_type',
@@ -73,6 +74,7 @@ class ContactDetailSerializer(serializers.ModelSerializer):
             'person_type',
             'person_type_display',
             'name',
+            'trading_name',
             'document_number',
             'document_formatted',
             'photo',
@@ -119,6 +121,7 @@ class ContactCreateUpdateSerializer(serializers.ModelSerializer):
             'contact_type',
             'person_type',
             'name',
+            'trading_name',
             'document_number',
             'photo',
             'email',
