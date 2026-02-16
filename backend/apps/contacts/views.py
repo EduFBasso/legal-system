@@ -60,6 +60,38 @@ class ContactViewSet(viewsets.ModelViewSet):
         else:
             return ContactCreateUpdateSerializer
     
+    def create(self, request, *args, **kwargs):
+        """
+        Override do create para retornar ContactDetailSerializer.
+        Garante que o frontend receba todos os campos calculados após CREATE.
+        """
+        # Valida e cria usando ContactCreateUpdateSerializer
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        contact = serializer.save()
+        
+        # Retorna usando ContactDetailSerializer (com campos calculados)
+        detail_serializer = ContactDetailSerializer(contact, context={'request': request})
+        headers = self.get_success_headers(detail_serializer.data)
+        return Response(detail_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def update(self, request, *args, **kwargs):
+        """
+        Override do update para retornar ContactDetailSerializer.
+        Garante que o frontend receba todos os campos calculados após UPDATE.
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Valida e atualiza usando ContactCreateUpdateSerializer
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        contact = serializer.save()
+        
+        # Retorna usando ContactDetailSerializer (com campos calculados)
+        detail_serializer = ContactDetailSerializer(contact, context={'request': request})
+        return Response(detail_serializer.data)
+    
     def perform_create(self, serializer):
         """
         Hook executado ao criar contato.
