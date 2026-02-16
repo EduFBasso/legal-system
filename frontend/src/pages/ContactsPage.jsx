@@ -68,7 +68,7 @@ export default function ContactsPage() {
       setContacts(prevContacts =>
         prevContacts.filter(c => c.id !== selectedContactId)
       );
-      displayToast('🗑️ Contato excluído com sucesso', 'error');
+      displayToast('🗑️ Contato excluído com sucesso', 'success');
     } else if (wasCreating) {
       // Add new contact to list
       setContacts(prevContacts => [savedContact, ...prevContacts]);
