@@ -68,6 +68,7 @@ export default function ContactsPage() {
       setContacts(prevContacts =>
         prevContacts.filter(c => c.id !== selectedContactId)
       );
+      setSelectedContactId(null); // Limpar seleção após deletar
       displayToast('🗑️ Contato excluído com sucesso', 'success');
     } else if (wasCreating) {
       // Add new contact to list

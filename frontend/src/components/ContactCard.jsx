@@ -42,7 +42,10 @@ export default function ContactCard({ contact, onView, isSelected }) {
   );
 
   return (
-    <div className={`contact-card${isSelected ? ' selected' : ''}`}>
+    <div 
+      className={`contact-card${isSelected ? ' selected' : ''}`}
+      onClick={onView}
+    >
       {/* Photo/Icon */}
       <div className="contact-avatar">
         {photo_thumbnail ? (
@@ -110,7 +113,10 @@ export default function ContactCard({ contact, onView, isSelected }) {
         <button 
           className="btn-view" 
           title="Gerenciar contato"
-          onClick={onView}
+          onClick={(e) => {
+            e.stopPropagation();
+            onView();
+          }}
         >
           ✏️
         </button>
