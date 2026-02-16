@@ -1,0 +1,136 @@
+"""
+Views para API de Publications.
+"""
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+from services.pje_comunica import PJeComunicaService
+
+
+# Hardcoded credentials (temporary - will be moved to settings/user profile)
+OAB_NUMBER = "507553"
+ADVOGADA_NOME = "Vitoria Rocha"
+
+
+@api_view(['GET'])
+def fetch_today_publications(request):
+    """
+    Busca publicações de hoje em todos os tribunais configurados.
+    
+    GET /api/publications/today
+    
+    Response:
+    {
+        "success": true,
+        "data": "2026-02-16",
+        "total_publicacoes": 5,
+        "total_tribunais_consultados": 4,
+        "publicacoes": [
+            {
+                "id_api": 516309493,
+                "numero_processo": "1003498-11.2021.8.26.0533",
+                "tribunal": "TJSP",
+                "data_disponibilizacao": "2026-02-16",
+                "tipo_comunicacao": "Intimação",
+                "orgao": "30ª Câmara de Direito Privado",
+                "meio": "D",
+                "texto_resumo": "DESPACHO...",
+                "texto_completo": "full text..."
+            }
+        ],
+        "erros": null
+    }
+    """
+    try:
+        # Busca publicações usando o service
+        result = PJeComunicaService.fetch_today_publications(
+            oab=OAB_NUMBER,
+            nome_advogado=ADVOGADA_NOME
+        )
+        
+        return Response(result, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {
+                'success': False,
+                'error': f'Erro ao buscar publicações: {str(e)}'
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+def search_publications(request):
+    """
+    Busca publicações com filtros personalizados.
+    
+    GET /api/publications/search?data_inicio=2026-02-01&data_fim=2026-02-16&tribunais=TJSP&tribunais=TRF3
+    
+    Query Parameters:
+        - data_inicio (required): Data inicial (YYYY-MM-DD)
+        - data_fim (required): Data final (YYYY-MM-DD)
+        - tribunais (optional, multi): Lista de tribunais (ex: TJSP, TRF3)
+        
+    Response: Similar to fetch_today_publications
+    """
+    try:
+        # Validar parâmetros obrigatórios
+        data_inicio = request.query_params.get('data_inicio')
+        data_fim = request.query_params.get('data_fim')
+        
+        if not data_inicio or not data_fim:
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Parâmetros data_inicio e data_fim são obrigatórios'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Tribunais selecionados (opcional)
+        tribunais = request.query_params.getlist('tribunais')
+        if not tribunais:
+            tribunais = None  # Usa default do service (todos)
+        
+        # Busca publicações usando o service com método genérico
+        result = PJeComunicaService.fetch_publications(
+            oab=OAB_NUMBER,
+            nome_advogado=ADVOGADA_NOME,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tribunais=tribunais
+        )
+        
+        return Response(result, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {
+                'success': False,
+                'error': f'Erro ao buscar publicações: {str(e)}'
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+def debug_search(request):
+    import requests
+    tribunal = request.query_params.get('tribunal', 'TJSP')
+    oab = request.query_params.get('oab', '507553')
+    nome = request.query_params.get('nome', 'Vitoria Rocha')
+    data_inicio = request.query_params.get('data_inicio')
+    data_fim = request.query_params.get('data_fim')
+    if not data_inicio or not data_fim:
+        return Response({'error': 'datas obrigatorias'}, status=400)
+    params_oab = {'siglaTribunal': tribunal, 'numeroOab': oab, 'dataDisponibilizacaoInicio': data_inicio, 'dataDisponibilizacaoFim': data_fim}
+    params_nome = {'siglaTribunal': tribunal, 'nomeAdvogado': nome, 'dataDisponibilizacaoInicio': data_inicio, 'dataDisponibilizacaoFim': data_fim}
+    api_url = 'https://comunicaapi.pje.jus.br/api/v1/comunicacao'
+    try:
+        response_oab = requests.get(api_url, params=params_oab, timeout=15)
+        response_nome = requests.get(api_url, params=params_nome, timeout=15)
+        return Response({'oab': {'url': response_oab.url, 'status': response_oab.status_code, 'data': response_oab.json() if response_oab.status_code == 200 else response_oab.text}, 'nome': {'url': response_nome.url, 'status': response_nome.status_code, 'data': response_nome.json() if response_nome.status_code == 200 else response_nome.text}})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

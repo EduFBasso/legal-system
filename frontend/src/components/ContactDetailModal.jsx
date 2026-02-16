@@ -158,8 +158,6 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         notes: editedContact.notes || '',
       };
 
-      console.log('📤 Sending to backend:', JSON.stringify(dataToSend, null, 2));
-
       let savedContact;
       if (isCreating) {
         // CREATE: POST /api/contacts/

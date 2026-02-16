@@ -61,10 +61,9 @@ export default function ContactCard({ contact, onView }) {
         <div className="contact-details">
           {document_formatted && (
             <div className="contact-detail">
-              <span className="detail-label">
-                {person_type === 'PF' ? 'CPF' : 'CNPJ'}:
+              <span className="detail-text">
+                {person_type === 'PF' ? 'CPF' : 'CNPJ'}: {document_formatted}
               </span>
-              <span className="detail-value">{document_formatted}</span>
             </div>
           )}
           {primary_contact && (
@@ -72,8 +71,7 @@ export default function ContactCard({ contact, onView }) {
               {isPhone ? (
                 <>
                   {/* Phone number label and value */}
-                  <span className="detail-label">TEL:</span>
-                  <span className="detail-value">{primary_contact}</span>
+                  <span className="detail-text">TEL: {primary_contact}</span>
                   {/* Phone call icon */}
                   <a 
                     href={telLink} 
@@ -111,10 +109,10 @@ export default function ContactCard({ contact, onView }) {
       <div className="contact-actions">
         <button 
           className="btn-view" 
-          title="Ver detalhes"
+          title="Gerenciar contato"
           onClick={onView}
         >
-          👁️
+          ✏️
         </button>
       </div>
     </div>

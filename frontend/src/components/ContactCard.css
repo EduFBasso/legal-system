@@ -94,13 +94,13 @@
   color: var(--color-text-light, #475569);
 }
 
-.detail-label {
-  font-weight: 600;
-  color: #64748b;
+.detail-text {
+  font-weight: 500;
+  color: #1e293b;
 }
 
-.detail-value {
-  color: #1e293b;
+.detail-text::first-letter {
+  font-weight: 600;
 }
 
 .detail-icon {

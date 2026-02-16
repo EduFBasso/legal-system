@@ -21,7 +21,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Contacts: /api/contacts/ (o router adiciona 'contacts' automaticamente)
     path('api/', include('apps.contacts.urls')),
+    # Publications: /api/publications/today
+    path('api/publications/', include('apps.publications.urls')),
 ]
 
 # Servir arquivos de mídia local em desenvolvimento

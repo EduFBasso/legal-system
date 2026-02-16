@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     
     # Apps do projeto
     'apps.contacts',
+    'apps.publications',
 ]
 
 MIDDLEWARE = [
@@ -139,10 +140,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  # Vite dev server
+    'http://localhost:5173',  # Vite dev server (padrão)
     'http://127.0.0.1:5173',
-    'http://localhost:3000',  # Legacy/alternativa
-    'http://127.0.0.1:3000',
 ]
 CORS_ALLOW_CREDENTIALS = True
 

@@ -1,15 +1,22 @@
 // src/components/Menu.jsx
+import { NavLink } from 'react-router-dom';
 import './Menu.css';
 
 export default function Menu() {
   return (
     <nav className="app-menu">
       <ul className="menu-list">
-        <li className="menu-item active">
-          <a href="#contacts">
+        <li className="menu-item">
+          <NavLink to="/contacts" className={({ isActive }) => isActive ? 'active' : ''}>
             <span className="menu-icon">👥</span>
             <span className="menu-label">Contatos</span>
-          </a>
+          </NavLink>
+        </li>
+        <li className="menu-item">
+          <NavLink to="/publications" className={({ isActive }) => isActive ? 'active' : ''}>
+            <span className="menu-icon">📰</span>
+            <span className="menu-label">Publicações</span>
+          </NavLink>
         </li>
         <li className="menu-item">
           <a href="#cases">
@@ -21,12 +28,6 @@ export default function Menu() {
           <a href="#calendar">
             <span className="menu-icon">📅</span>
             <span className="menu-label">Agenda</span>
-          </a>
-        </li>
-        <li className="menu-item">
-          <a href="#publications">
-            <span className="menu-icon">📰</span>
-            <span className="menu-label">Publicações</span>
           </a>
         </li>
       </ul>
