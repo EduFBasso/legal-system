@@ -63,6 +63,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
     return {
       ...contactData,
       // Map backend field names to frontend names
+      trading_name: contactData.trading_name || '',
       document: contactData.document_number ? maskDocument(contactData.document_number, contactData.person_type) : '',
       address_line1: contactData.street || '',
       address_number: contactData.number || '',
@@ -157,7 +158,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         notes: editedContact.notes || '',
       };
 
-      console.log('📤 Sending to backend:', dataToSend);
+      console.log('📤 Sending to backend:', JSON.stringify(dataToSend, null, 2));
 
       let savedContact;
       if (isCreating) {
@@ -297,7 +298,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                 {(currentData.person_type === 'PJ') && (
                   <FormField
                     label="Nome Fantasia"
-                    value={isEditing ? editedContact.trading_name : (contact?.trading_name || '')}
+                    value={isEditing ? (editedContact.trading_name || '') : (contact?.trading_name || '')}
                     onChange={(value) => handleChange('trading_name', value)}
                     readOnly={!isEditing}
                     emptyText="Não informado"
