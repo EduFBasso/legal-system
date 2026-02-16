@@ -10,10 +10,6 @@ Sistema de gestão jurídica desenvolvido com arquitetura moderna, priorizando:
 - **Acessibilidade**: Fontes grandes, alto contraste, interface limpa
 - **Local-first**: Funciona localmente, preparado para expansão LAN/cloud
 
-## 🎯 Filosofia do Projeto
-
-> "Criado conforme necessidades do cliente, foca em simplicidade e praticidade."
-
 ## 🏗️ Arquitetura
 
 ### Stack Tecnológica
@@ -189,6 +185,8 @@ docs: atualiza README com features implementadas
 
 ## 🔮 Roadmap
 
+> **Ordem alinhada com o workflow real da advogada**
+
 ### ✅ Fase 1: Contacts (CONCLUÍDO)
 
 - CRUD completo
@@ -196,7 +194,9 @@ docs: atualiza README com features implementadas
 - Exclusão protegida por senha
 - Settings modal
 
-### 🔄 Fase 2: Refatoração (EM PLANEJAMENTO)
+### 🔄 Fase 2: Refatoração (EM ANDAMENTO)
+
+**Importante**: Esta fase será repetida em cada app para organizar, modularizar e solidificar a base.
 
 - Componentes comuns reutilizáveis:
   - `ConfirmDialog`: Modal de confirmação genérico
@@ -206,29 +206,49 @@ docs: atualiza README com features implementadas
   - `Badge`: Etiquetas de status
 - Estrutura `components/common/` para componentes genéricos
 - Documentação JSDoc em todos os componentes
+- **Aplicar estas práticas em todos os próximos apps**
 
-### 🔜 Fase 3: Cases
+### 📰 Fase 3: Publicações (PRÓXIMO)
+
+**Por que primeiro?** Primeira ação da advogada ao iniciar o sistema - consultar publicações.
+
+- Integração com PJe Comunica API
+- Utilizar scraper existente (tools/pub_fetcher)
+- Auto-cadastro de prazos a partir de publicações
+- Notificações de intimações
+- Dashboard de pendências (Em aberto, Lidas, Excluídas)
+- View "Intimações e Publicações" na página principal
+
+### 📁 Fase 4: Cases
 
 - Model Case (processos judiciais)
 - Relacionamento ManyToMany com Contacts
 - Campo número do processo com máscara CNJ
-- Integração com scraper de publicações (tools/pub_fetcher)
+- Integração com publicações (vincular intimações a processos)
 - Anotações e timeline de eventos
+- Refatoração: Aplicar componentes comuns da Fase 2
 
-### 🔜 Fase 4: Agenda
+### 📅 Fase 5: Agenda
 
 - Sistema de agendamento com status visual
 - Tipos: TAREFA, PRAZO, JULGAMENTO
-- Indicadores de urgência (data fatal, período fatal)
+- Categorias de urgência:
+  - Em aberto
+  - Data fatal (hoje)
+  - Atrasados
+  - Período fatal
 - View mensal estilo calendário
 - Relacionamento com Cases e Contacts
+- Prazos gerados automaticamente das Publicações
+- Refatoração: Aplicar componentes comuns da Fase 2
 
-### 🔜 Fase 5: Publicações
+### 🧪 Fase 6: Testes Automatizados (FUTURO)
 
-- Integração com PJe Comunica API
-- Auto-cadastro de prazos a partir de publicações
-- Notificações de intimações
-- Dashboard de pendências
+- Implementar após estrutura completa (Publicações, Cases, Agenda)
+- Vitest + React Testing Library
+- Unit tests para utils (masks, validações)
+- Integration tests para pages
+- E2E tests para fluxos críticos
 
 ## 🎨 Design System
 
@@ -278,7 +298,7 @@ Cores definidas em `frontend/src/palette.css`:
 
 ## 🤝 Contribuindo
 
-Este é um projeto pessoal de aprendizado e uso profissional. Contribuições são bem-vindas através de:
+Contribuições são bem-vindas através de:
 
 1. Fork do repositório
 2. Feature branch (`git checkout -b feature/nova-funcionalidade`)
@@ -287,12 +307,12 @@ Este é um projeto pessoal de aprendizado e uso profissional. Contribuições s�
 
 ## 📄 Licença
 
-Projeto de uso pessoal. Todos os direitos reservados.
+Todos os direitos reservados.
 
 ## 📧 Contato
 
-**Desenvolvedor**: [Seu nome]  
-**Advogado**: [Nome do advogado]
+**Desenvolvedor**: Eduardo  
+**Advogado**: Vitória Rocha
 
 ---
 

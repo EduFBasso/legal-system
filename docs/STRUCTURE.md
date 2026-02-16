@@ -28,9 +28,9 @@ This document describes the folder layout and responsibilities across backend an
     - `views.py` : ContactViewSet (CRUD completo)
     - `urls.py` : API routes `/api/contacts/`
     - `admin.py` : Django admin interface
-  - **agenda/** 🔜 Planejado
-  - **cases/** 🔜 Planejado
-  - **publications/** 🔜 Planejado
+  - **publications/** 📰 **PRÓXIMO** (tools/pub_fetcher já existe)
+  - **cases/** 📁 Planejado
+  - **agenda/** 📅 Planejado
 
 ### Support Layers
 
@@ -156,20 +156,28 @@ Componentes React organizados por funcionalidade:
 
 ### 🔜 Planned
 
-- **cases**: Processos judiciais com relacionamento a contacts
+> **Ordem baseada no workflow real da advogada**
+
+- **publications** 📰 **PRÓXIMO (Fase 3)**: Primeira ação da advogada ao iniciar o sistema
+  - Integração com PJe Comunica API
+  - Utilizar scraper existente (tools/pub_fetcher)
+  - Auto-cadastro de prazos a partir de publicações
+  - Notificações de intimações
+  - Dashboard de pendências (Em aberto, Lidas, Excluídas)
+  - **Refatoração**: Aplicar componentes comuns (ConfirmDialog, Toast, FormField)
+- **cases** 📁 **(Fase 4)**: Processos judiciais com relacionamento a contacts
   - Model: Case com número do processo (máscara CNJ)
   - ManyToMany: contacts (partes envolvidas)
   - Timeline de eventos
-  - Integração com pub_fetcher (scraper TJSP)
-- **agenda**: Sistema de agendamento com status visual
+  - Integração com publications (vincular intimações a processos)
+  - **Refatoração**: Aplicar componentes comuns
+- **agenda** 📅 **(Fase 5)**: Sistema de agendamento com status visual
   - Types: TAREFA, PRAZO, JULGAMENTO
   - Status: Em aberto, Data fatal, Atrasados, Período fatal
   - View: Calendário mensal
   - Relacionamentos: cases, contacts
-- **publications**: Integração com PJe Comunica API
-  - Auto-cadastro de prazos
-  - Notificações de intimações
-  - Dashboard de pendências
+  - Prazos gerados automaticamente das publications
+  - **Refatoração**: Aplicar componentes comuns
 
 ## Data Flow
 
