@@ -285,7 +285,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
               <div className="detail-grid">
                 <FormField
                   label="Nome"
-                  value={currentData.name}
+                  value={isEditing ? editedContact.name : contact.name}
                   onChange={(value) => handleChange('name', value)}
                   readOnly={!isEditing}
                   required
@@ -293,7 +293,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                 
                 <FormSelect
                   label="Tipo de Contato"
-                  value={currentData.contact_type || 'CLIENT'}
+                  value={isEditing ? (editedContact.contact_type || 'CLIENT') : contact.contact_type}
                   onChange={(value) => handleChange('contact_type', value)}
                   options={[
                     { value: 'CLIENT', label: 'Cliente' },
@@ -308,7 +308,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                 
                 <FormSelect
                   label="Tipo de Pessoa"
-                  value={currentData.person_type || 'PF'}
+                  value={isEditing ? (editedContact.person_type || 'PF') : contact.person_type}
                   onChange={(value) => handleChange('person_type', value)}
                   options={[
                     { value: 'PF', label: 'Pessoa Física' },
@@ -322,7 +322,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                 {(isEditing || settings.showEmptyFields || contact?.document_formatted) && (
                   <FormMaskedField
                     label={currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}
-                    value={currentData.document}
+                    value={isEditing ? editedContact.document : (contact?.document_formatted || '')}
                     onChange={(value) => handleChange('document', value)}
                     mask={(value) => maskDocument(value, currentData.person_type)}
                     readOnly={!isEditing}
@@ -342,7 +342,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                   {(isEditing || settings.showEmptyFields || contact?.email) && (
                     <FormField
                       label="Email"
-                      value={currentData.email}
+                      value={isEditing ? editedContact.email : (contact?.email || '')}
                       onChange={(value) => handleChange('email', value)}
                       type="email"
                       readOnly={!isEditing}
@@ -353,7 +353,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                   {(isEditing || settings.showEmptyFields || contact?.phone) && (
                     <FormMaskedField
                       label="Telefone"
-                      value={currentData.phone}
+                      value={isEditing ? editedContact.phone : (contact?.phone || '')}
                       onChange={(value) => handleChange('phone', value)}
                       mask={maskPhone}
                       readOnly={!isEditing}
@@ -365,7 +365,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                   {(isEditing || settings.showEmptyFields || contact?.mobile) && (
                     <FormMaskedField
                       label="Celular"
-                      value={currentData.mobile}
+                      value={isEditing ? editedContact.mobile : (contact?.mobile || '')}
                       onChange={(value) => handleChange('mobile', value)}
                       mask={maskPhone}
                       readOnly={!isEditing}
@@ -383,9 +383,18 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
               <section className="detail-section">
                 <h3 className="section-title">📍 Endereço</h3>
                 <AddressFieldGroup
-                  address={currentData}
+                  address={isEditing ? editedContact : {
+                    zip_code: contact?.zip_code || '',
+                    address_line1: contact?.street || '',
+                    address_number: contact?.number || '',
+                    complement: contact?.complement || '',
+                    neighborhood: contact?.neighborhood || '',
+                    city: contact?.city || '',
+                    state: contact?.state || '',
+                  }}
                   onChange={handleChange}
                   readOnly={!isEditing}
+                  showEmptyFields={settings.showEmptyFields}
                 />
                 
                 {!isEditing && (settings.showEmptyFields || contact?.address_oneline) && (
@@ -405,7 +414,7 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                 <h3 className="section-title">📝 Observações</h3>
                 <FormField
                   label=""
-                  value={currentData.notes}
+                  value={isEditing ? editedContact.notes : (contact?.notes || '')}
                   onChange={(value) => handleChange('notes', value)}
                   type="textarea"
                   readOnly={!isEditing}

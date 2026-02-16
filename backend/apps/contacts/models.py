@@ -124,12 +124,21 @@ class Contact(models.Model):
         if not self.has_complete_address:
             return None
         
-        parts = [
-            f"{self.street}, {self.number}",
-            self.neighborhood,
-            f"{self.city}/{self.state}"
-        ]
-        return " - ".join(filter(None, parts))
+        # Monta o endereço base
+        address_parts = [f"{self.street}, {self.number}"]
+        
+        # Adiciona complemento se existir
+        if self.complement:
+            address_parts.append(self.complement)
+        
+        # Adiciona bairro
+        if self.neighborhood:
+            address_parts.append(self.neighborhood)
+        
+        # Adiciona cidade/estado
+        address_parts.append(f"{self.city}/{self.state}")
+        
+        return " - ".join(filter(None, address_parts))
     
     @property
     def primary_contact(self):
