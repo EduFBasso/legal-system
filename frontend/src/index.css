@@ -8,7 +8,7 @@
 }
 
 :root {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   
@@ -34,6 +34,18 @@ body {
 
 button {
   font-family: inherit;
+}
+
+/* Global label styling - uppercase for all form labels */
+label,
+.form-field-label,
+.form-label,
+.detail-label,
+.section-title,
+.settings-section-title {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
 #root {
