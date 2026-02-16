@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import ConfirmDialog from './common/ConfirmDialog';
+import { FormField, FormSelect, FormMaskedField, AddressFieldGroup } from './common';
 import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
 import { maskDocument, maskPhone, maskCEP, unmask } from '../utils/masks';
@@ -282,303 +283,136 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
             <section className="detail-section">
               <h3 className="section-title">📋 Informações Básicas</h3>
               <div className="detail-grid">
-                <div className="detail-field">
-                  <label>Nome</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      className="edit-input"
-                      value={editedContact.name || ''}
-                      onChange={(e) => handleChange('name', e.target.value)}
-                    />
-                  ) : (
-                    <span>{contact.name}</span>
-                  )}
-                </div>
-                <div className="detail-field">
-                  <label>Tipo de Contato</label>
-                  {isEditing ? (
-                    <select
-                      className="edit-input"
-                      value={editedContact.contact_type || 'CLIENT'}
-                      onChange={(e) => handleChange('contact_type', e.target.value)}
-                    >
-                      <option value="CLIENT">Cliente</option>
-                      <option value="OPPOSING">Parte Contrária</option>
-                      <option value="WITNESS">Testemunha</option>
-                      <option value="LAWYER">Advogado Parceiro</option>
-                      <option value="OTHER">Outro</option>
-                    </select>
-                  ) : (
-                    <span className="badge-type">{contact.contact_type_display}</span>
-                  )}
-                </div>
-                <div className="detail-field">
-                  <label>Tipo de Pessoa</label>
-                  {isEditing ? (
-                    <select
-                      className="edit-input"
-                      value={editedContact.person_type || 'PF'}
-                      onChange={(e) => handleChange('person_type', e.target.value)}
-                    >
-                      <option value="PF">Pessoa Física</option>
-                      <option value="PJ">Pessoa Jurídica</option>
-                    </select>
-                  ) : (
-                    <span>{contact.person_type_display}</span>
-                  )}
-                </div>
+                <FormField
+                  label="Nome"
+                  value={currentData.name}
+                  onChange={(value) => handleChange('name', value)}
+                  readOnly={!isEditing}
+                  required
+                />
+                
+                <FormSelect
+                  label="Tipo de Contato"
+                  value={currentData.contact_type || 'CLIENT'}
+                  onChange={(value) => handleChange('contact_type', value)}
+                  options={[
+                    { value: 'CLIENT', label: 'Cliente' },
+                    { value: 'OPPOSING', label: 'Parte Contrária' },
+                    { value: 'WITNESS', label: 'Testemunha' },
+                    { value: 'LAWYER', label: 'Advogado Parceiro' },
+                    { value: 'OTHER', label: 'Outro' },
+                  ]}
+                  readOnly={!isEditing}
+                  displayValue={contact?.contact_type_display}
+                />
+                
+                <FormSelect
+                  label="Tipo de Pessoa"
+                  value={currentData.person_type || 'PF'}
+                  onChange={(value) => handleChange('person_type', value)}
+                  options={[
+                    { value: 'PF', label: 'Pessoa Física' },
+                    { value: 'PJ', label: 'Pessoa Jurídica' },
+                  ]}
+                  readOnly={!isEditing}
+                  displayValue={contact?.person_type_display}
+                />
                 
                 {/* Documento: sempre mostra se config ativa OU se tiver valor */}
-                {(isEditing || settings.showEmptyFields || contact.document_formatted) && (
-                  <div className="detail-field">
-                    <label>{currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="edit-input"
-                        value={editedContact.document || ''}
-                        onChange={(e) => handleChange('document', e.target.value)}
-                        placeholder={currentData.person_type === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
-                        maxLength={currentData.person_type === 'PF' ? 14 : 18}
-                      />
-                    ) : (
-                      <span className={!contact.document_formatted ? 'field-empty' : ''}>
-                        {contact.document_formatted || 'Não informado ⚠️'}
-                      </span>
-                    )}
-                  </div>
+                {(isEditing || settings.showEmptyFields || contact?.document_formatted) && (
+                  <FormMaskedField
+                    label={currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}
+                    value={currentData.document}
+                    onChange={(value) => handleChange('document', value)}
+                    mask={(value) => maskDocument(value, currentData.person_type)}
+                    readOnly={!isEditing}
+                    placeholder={currentData.person_type === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                    maxLength={currentData.person_type === 'PF' ? 14 : 18}
+                    emptyText="Não informado ⚠️"
+                  />
                 )}
               </div>
             </section>
 
             {/* Contact Info: mostra seção se tiver algum dado OU se config ativa ou modo edit */}
-            {(isEditing || settings.showEmptyFields || contact.has_contact_info) && (
+            {(isEditing || settings.showEmptyFields || contact?.has_contact_info) && (
               <section className="detail-section">
                 <h3 className="section-title">📞 Contato</h3>
                 <div className="detail-grid">
-                  {(isEditing || settings.showEmptyFields || contact.email) && (
-                    <div className="detail-field">
-                      <label>Email</label>
-                      {isEditing ? (
-                        <input
-                          type="email"
-                          className="edit-input"
-                          value={editedContact.email || ''}
-                          onChange={(e) => handleChange('email', e.target.value)}
-                          placeholder="email@exemplo.com"
-                        />
-                      ) : (
-                        <span className={!contact.email ? 'field-empty' : ''}>
-                          {contact.email || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
+                  {(isEditing || settings.showEmptyFields || contact?.email) && (
+                    <FormField
+                      label="Email"
+                      value={currentData.email}
+                      onChange={(value) => handleChange('email', value)}
+                      type="email"
+                      readOnly={!isEditing}
+                      placeholder="email@exemplo.com"
+                    />
                   )}
-                  {(isEditing || settings.showEmptyFields || contact.phone) && (
-                    <div className="detail-field">
-                      <label>Telefone</label>
-                      {isEditing ? (
-                        <input
-                          type="tel"
-                          className="edit-input"
-                          value={editedContact.phone || ''}
-                          onChange={(e) => handleChange('phone', e.target.value)}
-                          placeholder="(11) 3333-4444"
-                          maxLength={15}
-                        />
-                      ) : (
-                        <span className={!contact.phone ? 'field-empty' : ''}>
-                          {contact.phone || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
+                  
+                  {(isEditing || settings.showEmptyFields || contact?.phone) && (
+                    <FormMaskedField
+                      label="Telefone"
+                      value={currentData.phone}
+                      onChange={(value) => handleChange('phone', value)}
+                      mask={maskPhone}
+                      readOnly={!isEditing}
+                      placeholder="(11) 3333-4444"
+                      maxLength={15}
+                    />
                   )}
-                  {(isEditing || settings.showEmptyFields || contact.mobile) && (
-                    <div className="detail-field">
-                      <label>Celular</label>
-                      {isEditing ? (
-                        <input
-                          type="tel"
-                          className="edit-input"
-                          value={editedContact.mobile || ''}
-                          onChange={(e) => handleChange('mobile', e.target.value)}
-                          placeholder="(11) 98765-4321"
-                          maxLength={15}
-                        />
-                      ) : (
-                        <span className={!contact.mobile ? 'field-empty' : ''}>
-                          {contact.mobile || 'Não informado ⚠️'}
-                        </span>
-                      )}
-                    </div>
+                  
+                  {(isEditing || settings.showEmptyFields || contact?.mobile) && (
+                    <FormMaskedField
+                      label="Celular"
+                      value={currentData.mobile}
+                      onChange={(value) => handleChange('mobile', value)}
+                      mask={maskPhone}
+                      readOnly={!isEditing}
+                      placeholder="(11) 98765-4321"
+                      maxLength={15}
+                      emptyText="Não informado ⚠️"
+                    />
                   )}
                 </div>
               </section>
             )}
 
             {/* Address: sempre mostra se config ativa OU se tiver endereço completo ou modo edit */}
-            {(isEditing || settings.showEmptyFields || contact.has_complete_address) && (
+            {(isEditing || settings.showEmptyFields || contact?.has_complete_address) && (
               <section className="detail-section">
                 <h3 className="section-title">📍 Endereço</h3>
-                <div className="detail-grid">
-                  {(isEditing || settings.showEmptyFields || contact.address_line1) && (
-                    <div className="detail-field">
-                      <label>Logradouro</label>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={editedContact.address_line1 || ''}
-                          onChange={(e) => handleChange('address_line1', e.target.value)}
-                          placeholder="Rua, Avenida..."
-                        />
-                      ) : (
-                        <span className={!contact.address_line1 ? 'field-empty' : ''}>
-                          {contact.address_line1 || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(isEditing || settings.showEmptyFields || contact.address_number) && (
-                    <div className="detail-field">
-                      <label>Número</label>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={editedContact.address_number || ''}
-                          onChange={(e) => handleChange('address_number', e.target.value)}
-                          placeholder="123"
-                        />
-                      ) : (
-                        <span className={!contact.address_number ? 'field-empty' : ''}>
-                          {contact.address_number || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(isEditing || settings.showEmptyFields || contact.complement) && (
-                    <div className="detail-field">
-                      <label>Complemento</label>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={editedContact.complement || ''}
-                          onChange={(e) => handleChange('complement', e.target.value)}
-                          placeholder="Apto, Sala..."
-                        />
-                      ) : (
-                        <span className={!contact.complement ? 'field-empty' : ''}>
-                          {contact.complement || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(isEditing || settings.showEmptyFields || contact.neighborhood) && (
-                    <div className="detail-field">
-                      <label>Bairro</label>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={editedContact.neighborhood || ''}
-                          onChange={(e) => handleChange('neighborhood', e.target.value)}
-                          placeholder="Bairro"
-                        />
-                      ) : (
-                        <span className={!contact.neighborhood ? 'field-empty' : ''}>
-                          {contact.neighborhood || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(isEditing || settings.showEmptyFields || contact.zip_code) && (
-                    <div className="detail-field">
-                      <label>CEP</label>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={editedContact.zip_code || ''}
-                          onChange={(e) => handleChange('zip_code', e.target.value)}
-                          placeholder="00000-000"
-                          maxLength={9}
-                        />
-                      ) : (
-                        <span className={!contact.zip_code ? 'field-empty' : ''}>
-                          {contact.zip_code || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(isEditing || settings.showEmptyFields || contact.city) && (
-                    <div className="detail-field">
-                      <label>Cidade</label>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={editedContact.city || ''}
-                          onChange={(e) => handleChange('city', e.target.value)}
-                          placeholder="São Paulo"
-                        />
-                      ) : (
-                        <span className={!contact.city ? 'field-empty' : ''}>
-                          {contact.city || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(isEditing || settings.showEmptyFields || contact.state) && (
-                    <div className="detail-field">
-                      <label>Estado</label>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={editedContact.state || ''}
-                          onChange={(e) => handleChange('state', e.target.value)}
-                          placeholder="SP"
-                          maxLength="2"
-                        />
-                      ) : (
-                        <span className={!contact.state ? 'field-empty' : ''}>
-                          {contact.state || 'Não informado'}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {!isEditing && (settings.showEmptyFields || contact.address_oneline) && (
-                    <div className="detail-field full-width">
-                      <label>Endereço Completo</label>
-                      <span className={!contact.address_oneline ? 'field-empty' : ''}>
-                        {contact.address_oneline || 'Não informado'}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <AddressFieldGroup
+                  address={currentData}
+                  onChange={handleChange}
+                  readOnly={!isEditing}
+                />
+                
+                {!isEditing && (settings.showEmptyFields || contact?.address_oneline) && (
+                  <div className="detail-field full-width" style={{ marginTop: '16px' }}>
+                    <label className="form-field-label">Endereço Completo</label>
+                    <span className={`form-field-value ${!contact.address_oneline ? 'field-empty' : ''}`}>
+                      {contact.address_oneline || 'Não informado'}
+                    </span>
+                  </div>
+                )}
               </section>
             )}
 
             {/* Notes: mostra se tiver conteúdo OU se config ativa ou modo edit */}
-            {(isEditing || settings.showEmptyFields || contact.notes) && (
+            {(isEditing || settings.showEmptyFields || contact?.notes) && (
               <section className="detail-section">
                 <h3 className="section-title">📝 Observações</h3>
-                {isEditing ? (
-                  <textarea
-                    className="edit-input edit-textarea"
-                    value={editedContact.notes || ''}
-                    onChange={(e) => handleChange('notes', e.target.value)}
-                    rows={5}
-                    placeholder="Adicione observações sobre este contato..."
-                  />
-                ) : (
-                  <div className={`detail-notes ${!contact.notes ? 'field-empty' : ''}`}>
-                    {contact.notes || 'Não informado'}
-                  </div>
-                )}
+                <FormField
+                  label=""
+                  value={currentData.notes}
+                  onChange={(value) => handleChange('notes', value)}
+                  type="textarea"
+                  readOnly={!isEditing}
+                  placeholder="Adicione observações sobre este contato..."
+                  rows={5}
+                  className="notes-field"
+                />
               </section>
             )}
 

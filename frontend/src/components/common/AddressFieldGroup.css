@@ -1,0 +1,88 @@
+/* AddressFieldGroup.css - Layout responsivo para grupo de endereço */
+
+.address-field-group {
+  width: 100%;
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+
+/* Layout desktop */
+.address-field-cep {
+  grid-column: span 3; /* CEP: 3 colunas */
+}
+
+.address-field-street {
+  grid-column: span 6; /* Logradouro: 6 colunas */
+}
+
+.address-field-number {
+  grid-column: span 3; /* Número: 3 colunas */
+}
+
+.address-field-complement {
+  grid-column: span 4; /* Complemento: 4 colunas */
+}
+
+.address-field-neighborhood {
+  grid-column: span 4; /* Bairro: 4 colunas */
+}
+
+.address-field-city {
+  grid-column: span 3; /* Cidade: 3 colunas */
+}
+
+.address-field-state {
+  grid-column: span 1; /* Estado: 1 coluna (UF) */
+}
+
+/* Layout tablet */
+@media (max-width: 1024px) {
+  .address-field-cep {
+    grid-column: span 4;
+  }
+
+  .address-field-street {
+    grid-column: span 8;
+  }
+
+  .address-field-number {
+    grid-column: span 4;
+  }
+
+  .address-field-complement {
+    grid-column: span 4;
+  }
+
+  .address-field-neighborhood {
+    grid-column: span 4;
+  }
+
+  .address-field-city {
+    grid-column: span 6;
+  }
+
+  .address-field-state {
+    grid-column: span 2;
+  }
+}
+
+/* Layout mobile */
+@media (max-width: 768px) {
+  .address-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .address-field-cep,
+  .address-field-street,
+  .address-field-number,
+  .address-field-complement,
+  .address-field-neighborhood,
+  .address-field-city,
+  .address-field-state {
+    grid-column: span 1;
+  }
+}

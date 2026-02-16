@@ -109,6 +109,13 @@
   gap: 16px;
 }
 
+/* FormField dentro de detail-grid se comporta como detail-field */
+.detail-grid .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .detail-field {
   display: flex;
   flex-direction: column;
@@ -148,6 +155,20 @@
   color: #1e40af;
   border-radius: 6px;
   font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+/* Notes field - ocupa largura total */
+.notes-field {
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.notes-field .form-field-value {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  padding: 8px 0;
+}
   font-weight: 600 !important;
 }
 
