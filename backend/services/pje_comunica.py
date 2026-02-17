@@ -152,9 +152,19 @@ class PJeComunicaService:
                 # Fallback: página de busca manual
                 link_oficial = "https://esaj.tjsp.jus.br/cpopg/open.do"
         
-        # TRF3: Padrão similar
-        elif 'trf3.jus.br' in link_base and hash_pub:
+        # TRF3: Padrão similar (aguardando publicações para testar)
+        elif tribunal == 'TRF3' and 'trf3.jus.br' in link_base and hash_pub:
             link_oficial = f"{link_base}/Visualizar?hash={hash_pub}"
+        
+        # TRT2: Tribunal Regional do Trabalho 2ª Região - SP
+        # TODO: Implementar quando houver publicações da advogada
+        # elif tribunal == 'TRT2' and numero_processo:
+        #     link_oficial = f"https://pje.trt2.jus.br/consultaprocessual/pages/consultas/ConsultaProcessual.seam"
+        
+        # TRT15: Tribunal Regional do Trabalho 15ª Região - Campinas
+        # TODO: Implementar quando houver publicações da advogada  
+        # elif tribunal == 'TRT15' and numero_processo:
+        #     link_oficial = f"https://pje.trt15.jus.br/consultaprocessual/pages/consultas/ConsultaProcessual.seam"
         
         # Fallback: link base da API (se existir)
         elif link_base:
