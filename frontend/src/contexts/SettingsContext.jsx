@@ -18,6 +18,7 @@ export function SettingsProvider({ children }) {
     return {
       showEmptyFields: false,
       deletePassword: '',
+      retroactiveDays: 7,  // Notificações para publicações dos últimos 7 dias
     };
   });
 

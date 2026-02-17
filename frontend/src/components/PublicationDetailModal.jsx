@@ -107,6 +107,16 @@ export default function PublicationDetailModal({ publication, onClose }) {
         </div>
 
         <div className="modal-footer">
+          {publication.link_oficial && (
+            <a 
+              href={publication.link_oficial}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary-link"
+            >
+              � Consultar Processo no ESAJ
+            </a>
+          )}
           <button className="btn btn-secondary" onClick={onClose}>
             Fechar
           </button>

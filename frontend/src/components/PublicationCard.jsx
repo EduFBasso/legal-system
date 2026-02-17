@@ -65,6 +65,19 @@ export default function PublicationCard({ publication, onClick }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
+        
+        {publication.link_oficial && (
+          <a 
+            href={publication.link_oficial}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-official-link"
+            onClick={(e) => e.stopPropagation()}
+            title="Consultar processo no portal do tribunal"
+          >
+            🔍 Consultar Processo
+          </a>
+        )}
       </div>
     </div>
   );

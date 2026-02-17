@@ -249,13 +249,15 @@ export default function NotificationsPage() {
                     <a 
                       href={notification.link} 
                       className="notification-link"
+                      target={notification.link.startsWith('http') ? '_blank' : '_self'}
+                      rel={notification.link.startsWith('http') ? 'noopener noreferrer' : undefined}
                       onClick={() => {
                         if (!notification.read) {
                           handleMarkAsRead(notification.id);
                         }
                       }}
                     >
-                      Ver detalhes →
+                      {notification.link.startsWith('http') ? '� Consultar Processo' : 'Ver detalhes →'}
                     </a>
                   )}
                 </div>

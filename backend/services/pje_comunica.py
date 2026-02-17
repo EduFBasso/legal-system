@@ -122,6 +122,44 @@ class PJeComunicaService:
         # Limita resumo a 500 caracteres
         texto_resumo = texto[:500] + "..." if len(texto) > 500 else texto
         
+        # Link oficial da publicação
+        link_base = item.get('link', '')
+        hash_pub = item.get('hash', '')
+        
+        # Remover www. para evitar erro de certificado SSL wildcard
+        if link_base:
+            link_base = link_base.replace('://www.', '://')
+        
+        # Construir URL de consulta pública quando possível
+        link_oficial = None
+        
+        # TJSP: Link para consulta pública de processos
+        if tribunal == 'TJSP' and numero_processo:
+            # Extrair código do foro (últimos 4 dígitos do número CNJ)
+            # Formato: NNNNNNN-DD.AAAA.J.TR.OOOO (OOOO = foro)
+            # Exemplo: 1006581-93.2025.8.26.0533 → codigo = 533 (SEM zeros à esquerda)
+            
+            foro = numero_processo[-4:] if len(numero_processo) >= 4 else None
+            
+            if foro and foro.isdigit():
+                # Remover zeros à esquerda (0533 → 533)
+                codigo_foro = str(int(foro))
+                
+                # Link direto: processo.codigo = foro (não é o código interno ET..., é o foro!)
+                # ESAJ preenche automaticamente e ao clicar "Consultar" abre o processo
+                link_oficial = f"https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo={codigo_foro}&processo.numero={numero_processo}"
+            else:
+                # Fallback: página de busca manual
+                link_oficial = "https://esaj.tjsp.jus.br/cpopg/open.do"
+        
+        # TRF3: Padrão similar
+        elif 'trf3.jus.br' in link_base and hash_pub:
+            link_oficial = f"{link_base}/Visualizar?hash={hash_pub}"
+        
+        # Fallback: link base da API (se existir)
+        elif link_base:
+            link_oficial = link_base
+        
         return {
             "id_api": item.get('id'),
             "numero_processo": numero_processo,
@@ -132,6 +170,8 @@ class PJeComunicaService:
             "meio": item.get('meio', ''),
             "texto_resumo": texto_resumo,
             "texto_completo": texto,
+            "link_oficial": link_oficial,  # Link para acessar no site oficial
+            "hash": hash_pub,  # Hash da publicação
         }
     
     @classmethod

@@ -32,6 +32,14 @@ export default function SettingsModal({ isOpen, onClose }) {
     }));
   };
 
+  const handleRetroactiveDaysChange = (e) => {
+    const value = parseInt(e.target.value) || 0;
+    setLocalSettings((prev) => ({
+      ...prev,
+      retroactiveDays: Math.max(0, Math.min(30, value)), // Entre 0 e 30 dias
+    }));
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={handleCancel} title="⚙️ Configurações" size="medium">
       <div className="settings-content">
@@ -75,6 +83,37 @@ export default function SettingsModal({ isOpen, onClose }) {
                 onChange={handlePasswordChange}
                 placeholder="Digite uma senha (opcional)"
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Notificações */}
+        <section className="settings-section">
+          <h3 className="settings-section-title">🔔 Notificações</h3>
+          
+          <div className="setting-item">
+            <div className="setting-info full-width">
+              <label className="setting-label">Dias retroativos para notificações</label>
+              <p className="setting-description">
+                Ao buscar publicações, apenas as dos últimos <strong>{localSettings.retroactiveDays || 7} dias</strong> 
+                geram notificações. Publicações mais antigas aparecem apenas na lista, sem notificação.
+              </p>
+              <div className="setting-input-group">
+                <input
+                  type="number"
+                  className="setting-number-input"
+                  value={localSettings.retroactiveDays || 7}
+                  onChange={handleRetroactiveDaysChange}
+                  min="0"
+                  max="30"
+                  placeholder="7"
+                />
+                <span className="setting-input-suffix">dias</span>
+              </div>
+              <p className="setting-hint">
+                💡 Dica: Use 0 para nunca criar notificações automáticas, 
+                ou até 30 dias para histórico mais amplo.
+              </p>
             </div>
           </div>
         </section>

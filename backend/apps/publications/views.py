@@ -95,6 +95,9 @@ def search_publications(request):
         if not tribunais:
             tribunais = None  # Usa default do service (todos)
         
+        # Dias retroativos para notificações (padrão: 7 dias)
+        retroactive_days = int(request.query_params.get('retroactive_days', 7))
+        
         # Busca publicações usando o service com método genérico
         result = PJeComunicaService.fetch_publications(
             oab=OAB_NUMBER,
@@ -106,7 +109,10 @@ def search_publications(request):
         
         # Criar notificações para novas publicações (se houver)
         if result.get('success') and result.get('total_publicacoes', 0) > 0:
-            _create_publication_notifications(result.get('publicacoes', []))
+            _create_publication_notifications(
+                result.get('publicacoes', []),
+                retroactive_days=retroactive_days
+            )
         
         return Response(result, status=status.HTTP_200_OK)
         
@@ -134,15 +140,57 @@ def debug_search(request):
     params_nome = {'siglaTribunal': tribunal, 'nomeAdvogado': nome, 'dataDisponibilizacaoInicio': data_inicio, 'dataDisponibilizacaoFim': data_fim}
     api_url = 'https://comunicaapi.pje.jus.br/api/v1/comunicacao'
     try:
-        response_oab = requests.get(api_url, params=pa
+        response_oab = requests.get(api_url, params=params_oab, timeout=15)
+        response_nome = requests.get(api_url, params=params_nome, timeout=15)
+        return Response({
+            'oab': {
+                'url': response_oab.url,
+                'status': response_oab.status_code,
+                'data': response_oab.json() if response_oab.status_code == 200 else response_oab.text
+            },
+            'nome': {
+                'url': response_nome.url,
+                'status': response_nome.status_code,
+                'data': response_nome.json() if response_nome.status_code == 200 else response_nome.text
+            }
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
 
-def _create_publication_notifications(publicacoes):
+def _create_publication_notifications(publicacoes, retroactive_days=7):
     """
     Helper para criar notificações de novas publicações.
-    Cria apenas se não existir notificação para aquela publicação específica.
+    Cria apenas se não existir notificação para aquela publicação específica
+    E se a data de disponibilização for dentro do período retroativo.
+    
+    Args:
+        publicacoes: Lista de publicações
+        retroactive_days: Número de dias retroativos (padrão: 7)
+                         Se 0, nenhuma notificação é criada
     """
+    from datetime import datetime, timedelta, timezone
+    
+    # Se retroactive_days for 0, não criar notificações
+    if retroactive_days == 0:
+        return
+    
+    # Calcular data limite (hoje - retroactive_days)
+    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=retroactive_days)
+    
     for pub in publicacoes[:5]:  # Limitar a 5 notificações por busca
+        # Filtrar por data de disponibilização
+        data_disp = pub.get('data_disponibilizacao')
+        if data_disp:
+            try:
+                # Converter string YYYY-MM-DD para date
+                pub_date = datetime.fromisoformat(data_disp).date()
+                # Pular se for muito antiga
+                if pub_date < cutoff_date:
+                    continue
+            except (ValueError, TypeError):
+                # Se não conseguir parsear, pular
+                continue
         # Verificar se já existe notificação para esta publicação
         notification_exists = Notification.objects.filter(
             type='publication',
@@ -164,22 +212,20 @@ def _create_publication_notifications(publicacoes):
         # Criar notificação
         numero_processo = pub.get('numero_processo', 'Sem número')
         tribunal = pub.get('tribunal', '')
+        link_oficial = pub.get('link_oficial')  # Link para site oficial
         
         Notification.objects.create(
             type='publication',
             priority=priority,
             title=f'Nova Publicação - {tribunal}',
             message=f'Processo: {numero_processo}\nTipo: {pub.get("tipo_comunicacao", "N/A")}\nÓrgão: {pub.get("orgao", "N/A")}',
-            link='/publications',
+            link=link_oficial if link_oficial else '/publications',  # Link oficial ou fallback
             metadata={
                 'id_api': pub.get('id_api'),
                 'numero_processo': numero_processo,
                 'tribunal': tribunal,
                 'data_disponibilizacao': pub.get('data_disponibilizacao'),
                 'tipo_comunicacao': pub.get('tipo_comunicacao'),
+                'link_oficial': link_oficial,  # Guardar link no metadata também
             }
-        )rams_oab, timeout=15)
-        response_nome = requests.get(api_url, params=params_nome, timeout=15)
-        return Response({'oab': {'url': response_oab.url, 'status': response_oab.status_code, 'data': response_oab.json() if response_oab.status_code == 200 else response_oab.text}, 'nome': {'url': response_nome.url, 'status': response_nome.status_code, 'data': response_nome.json() if response_nome.status_code == 200 else response_nome.text}})
-    except Exception as e:
-        return Response({'error': str(e)}, status=500)
+        )

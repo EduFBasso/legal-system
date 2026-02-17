@@ -3,11 +3,13 @@ import PublicationCard from '../components/PublicationCard';
 import PublicationDetailModal from '../components/PublicationDetailModal';
 import PublicationsSearchForm from '../components/PublicationsSearchForm';
 import Toast from '../components/common/Toast';
+import { useSettings } from '../contexts/SettingsContext';
 import './PublicationsPage.css';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 export default function PublicationsPage() {
+  const { settings } = useSettings();
   const [publications, setPublications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedPublication, setSelectedPublication] = useState(null);
@@ -35,6 +37,10 @@ export default function PublicationsPage() {
       params.append('data_inicio', filters.dataInicio);
       params.append('data_fim', filters.dataFim);
       filters.tribunais.forEach(t => params.append('tribunais', t));
+      
+      // Adicionar configuração de dias retroativos
+      const retroactiveDays = settings.retroactiveDays ?? 7;
+      params.append('retroactive_days', retroactiveDays);
 
       const response = await fetch(`${API_BASE_URL}/publications/search?${params.toString()}`);
       const data = await response.json();
@@ -60,7 +66,7 @@ export default function PublicationsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [settings]);
 
   const handlePublicationClick = (publication) => {
     setSelectedPublication(publication);
