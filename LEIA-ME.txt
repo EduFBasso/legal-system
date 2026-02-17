@@ -1,0 +1,62 @@
+========================================================================
+              SISTEMA JURIDICO - MANUAL DE USO
+========================================================================
+
+INSTALACAO (PRIMEIRA VEZ):
+---------------------------
+1. Clique duplo em "INSTALAR.bat"
+2. Aguarde a instalacao concluir (10-15 minutos)
+3. Pronto! O sistema esta instalado.
+
+USO DIARIO:
+-----------
+1. Clique duplo em "INICIAR SISTEMA.bat"
+2. O sistema abrira automaticamente no navegador
+3. Use normalmente
+4. Para fechar, clique em "PARAR SISTEMA.bat" OU feche a janela preta
+
+ARQUIVOS IMPORTANTES:
+---------------------
+- INSTALAR.bat          → Instala o sistema (usar 1 vez)
+- INICIAR SISTEMA.bat   → Abre o sistema
+- PARAR SISTEMA.bat     → Fecha o sistema
+- VERIFICAR STATUS.bat  → Verifica se esta rodando
+
+REQUISITOS:
+-----------
+- Windows 10 ou superior
+- Python 3.8+ (https://www.python.org/downloads/)
+- Node.js 16+ (https://nodejs.org/)
+- Conexao com internet (para buscar publicacoes)
+
+ENDERECOS DO SISTEMA:
+---------------------
+- Frontend: http://localhost:5173
+- Backend:  http://localhost:8000
+
+SOLUCAO DE PROBLEMAS:
+---------------------
+1. Sistema nao abre?
+   → Execute "PARAR SISTEMA.bat"
+   → Execute "INICIAR SISTEMA.bat" novamente
+
+2. Erro na instalacao?
+   → Verifique se Python e Node.js estao instalados
+   → Execute "INSTALAR.bat" novamente
+
+3. Pagina nao carrega?
+   → Aguarde 10-15 segundos apos clicar em INICIAR
+   → Verifique status com "VERIFICAR STATUS.bat"
+
+4. Precisa reinstalar?
+   → Delete as pastas: backend\.venv e frontend\node_modules
+   → Execute "INSTALAR.bat" novamente
+
+SUPORTE:
+--------
+Para duvidas ou problemas, entre em contato com o desenvolvedor.
+
+========================================================================
+Versao: 1.0
+Data: Fevereiro 2026
+========================================================================
