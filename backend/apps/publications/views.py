@@ -1,12 +1,15 @@
 """
 Views para API de Publications.
 """
+import time
+from datetime import datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
 from services.pje_comunica import PJeComunicaService
 from apps.notifications.models import Notification
+from .models import Publication, SearchHistory
 
 
 # Hardcoded credentials (temporary - will be moved to settings/user profile)
@@ -98,6 +101,9 @@ def search_publications(request):
         # Dias retroativos para notificações (padrão: 7 dias)
         retroactive_days = int(request.query_params.get('retroactive_days', 7))
         
+        # Iniciar cronômetro
+        start_time = time.time()
+        
         # Busca publicações usando o service com método genérico
         result = PJeComunicaService.fetch_publications(
             oab=OAB_NUMBER,
@@ -107,12 +113,41 @@ def search_publications(request):
             tribunais=tribunais
         )
         
-        # Criar notificações para novas publicações (se houver)
+        # Salvar publicações no banco e criar histórico
+        total_novas = 0
         if result.get('success') and result.get('total_publicacoes', 0) > 0:
+            publicacoes = result.get('publicacoes', [])
+            
+            # Salvar cada publicação (deduplicação automática via id_api unique)
+            total_novas = _save_publications_to_db(publicacoes)
+            
+            # Criar notificações para novas publicações
             _create_publication_notifications(
-                result.get('publicacoes', []),
+                publicacoes,
                 retroactive_days=retroactive_days
             )
+        
+        # Calcular duração
+        duration = time.time() - start_time
+        
+        # Criar histórico de busca
+        SearchHistory.objects.create(
+            data_inicio=datetime.fromisoformat(data_inicio).date(),
+            data_fim=datetime.fromisoformat(data_fim).date(),
+            tribunais=tribunais if tribunais else ['TJSP', 'TRF3', 'TRT2', 'TRT15'],
+            total_publicacoes=result.get('total_publicacoes', 0),
+            total_novas=total_novas,
+            duration_seconds=round(duration, 2),
+            search_params={
+                'retroactive_days': retroactive_days,
+                'oab': OAB_NUMBER,
+                'nome_advogado': ADVOGADA_NOME,
+            }
+        )
+        
+        # Adicionar info de novas publicações na resposta
+        result['total_novas_salvas'] = total_novas
+        result['duration_seconds'] = round(duration, 2)
         
         return Response(result, status=status.HTTP_200_OK)
         
@@ -229,3 +264,174 @@ def _create_publication_notifications(publicacoes, retroactive_days=7):
                 'link_oficial': link_oficial,  # Guardar link no metadata também
             }
         )
+
+
+def _save_publications_to_db(publicacoes):
+    """
+    Salva publicações no banco de dados local.
+    Retorna quantidade de publicações novas salvas (ignora duplicadas).
+    """
+    total_novas = 0
+    
+    for pub in publicacoes:
+        id_api = pub.get('id_api')
+        if not id_api:
+            continue
+        
+        # Tentar criar (unique constraint previne duplicatas)
+        try:
+            Publication.objects.create(
+                id_api=id_api,
+                numero_processo=pub.get('numero_processo'),
+                tribunal=pub.get('tribunal', ''),
+                tipo_comunicacao=pub.get('tipo_comunicacao', ''),
+                data_disponibilizacao=datetime.fromisoformat(pub.get('data_disponibilizacao')).date(),
+                orgao=pub.get('orgao', ''),
+                meio=pub.get('meio', ''),
+                texto_resumo=pub.get('texto_resumo', ''),
+                texto_completo=pub.get('texto_completo', ''),
+                link_oficial=pub.get('link_oficial'),
+                hash_pub=pub.get('hash'),
+                search_metadata={
+                    'original_data': pub
+                }
+            )
+            total_novas += 1
+        except Exception:
+            # Publicação já existe (duplicate id_api) ou erro de validação
+            pass
+    
+    return total_novas
+
+
+@api_view(['GET'])
+def get_last_search(request):
+    """
+    Retorna informações da última busca realizada.
+    
+    GET /api/publications/last-search
+    
+    Response:
+    {
+        "success": true,
+        "last_search": {
+            "id": 5,
+            "executed_at": "2026-02-17T14:48:00Z",
+            "data_inicio": "2026-02-11",
+            "data_fim": "2026-02-17",
+            "tribunais": ["TJSP"],
+            "total_publicacoes": 4,
+            "total_novas": 2,
+            "duration_seconds": 3.45
+        }
+    }
+    """
+    try:
+        last_search = SearchHistory.objects.first()  # Ordenado por -executed_at
+        
+        if not last_search:
+            return Response({
+                'success': True,
+                'last_search': None
+            })
+        
+        return Response({
+            'success': True,
+            'last_search': {
+                'id': last_search.id,
+                'executed_at': last_search.executed_at.isoformat(),
+                'data_inicio': last_search.data_inicio.isoformat(),
+                'data_fim': last_search.data_fim.isoformat(),
+                'tribunais': last_search.tribunais,
+                'total_publicacoes': last_search.total_publicacoes,
+                'total_novas': last_search.total_novas,
+                'duration_seconds': last_search.duration_seconds,
+            }
+        })
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def retrieve_last_search_publications(request):
+    """
+    Recupera as publicações da última busca diretamente do banco SQLite.
+    Evita requisições ao PJe, retornando dados já salvos.
+    
+    Returns:
+    - success: bool
+    - publicacoes: list[dict] - Publicações no formato idêntico à API
+    - total_publicacoes: int
+    - search_info: dict - Informações da busca (período, tribunais, etc)
+    - from_database: bool - Indica que veio do banco
+    
+    Example response:
+    {
+        "success": true,
+        "total_publicacoes": 4,
+        "publicacoes": [...],
+        "search_info": {
+            "data_inicio": "2026-02-11",
+            "data_fim": "2026-02-17",
+            "tribunais": ["TJSP"],
+            "executed_at": "2026-02-17T14:48:00"
+        },
+        "from_database": true
+    }
+    """
+    try:
+        # Buscar última pesquisa
+        last_search = SearchHistory.objects.first()
+        
+        if not last_search:
+            return Response({
+                'success': False,
+                'error': 'Nenhuma busca anterior encontrada'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Filtrar publicações do banco de dados
+        publicacoes_db = Publication.objects.filter(
+            tribunal__in=last_search.tribunais,
+            data_disponibilizacao__gte=last_search.data_inicio,
+            data_disponibilizacao__lte=last_search.data_fim
+        ).order_by('-data_disponibilizacao', '-created_at')
+        
+        # Serializar publicações no formato idêntico à API
+        publicacoes_json = []
+        for pub in publicacoes_db:
+            publicacoes_json.append({
+                'id_api': pub.id_api,
+                'numero_processo': pub.numero_processo,
+                'tribunal': pub.tribunal,
+                'tipo_comunicacao': pub.tipo_comunicacao,
+                'data_disponibilizacao': pub.data_disponibilizacao.isoformat(),
+                'orgao': pub.orgao,
+                'meio': pub.meio,
+                'texto_resumo': pub.texto_resumo,
+                'texto_completo': pub.texto_completo,
+                'link_oficial': pub.link_oficial,
+                'hash': pub.hash_pub,
+            })
+        
+        return Response({
+            'success': True,
+            'total_publicacoes': len(publicacoes_json),
+            'publicacoes': publicacoes_json,
+            'search_info': {
+                'data_inicio': last_search.data_inicio.isoformat(),
+                'data_fim': last_search.data_fim.isoformat(),
+                'tribunais': last_search.tribunais,
+                'executed_at': last_search.executed_at.isoformat(),
+                'duration_seconds': last_search.duration_seconds,
+            },
+            'from_database': True
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

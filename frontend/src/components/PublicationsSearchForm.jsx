@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './PublicationsSearchForm.css';
+
+const STORAGE_KEY_TRIBUNAIS = 'tribunaisSelecionados';
 
 export default function PublicationsSearchForm({ onSearch, isLoading }) {
   const today = new Date().toISOString().split('T')[0];
@@ -8,12 +10,34 @@ export default function PublicationsSearchForm({ onSearch, isLoading }) {
   const [dataFim, setDataFim] = useState(today);
   const dataInicioRef = useRef(null);
   const dataFimRef = useRef(null);
-  const [tribunais, setTribunais] = useState({
-    TJSP: true,
-    TRF3: true,
-    TRT2: true,
-    TRT15: true,
+  
+  // Carregar tribunais do localStorage ou usar padrão
+  const [tribunais, setTribunais] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_TRIBUNAIS);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar tribunais salvos:', error);
+    }
+    // Padrão: todos selecionados
+    return {
+      TJSP: true,
+      TRF3: true,
+      TRT2: true,
+      TRT15: true,
+    };
   });
+
+  // Salvar tribunais no localStorage quando mudam
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_TRIBUNAIS, JSON.stringify(tribunais));
+    } catch (error) {
+      console.error('Erro ao salvar tribunais:', error);
+    }
+  }, [tribunais]);
 
   const handleTribunalChange = (tribunal) => {
     setTribunais(prev => ({

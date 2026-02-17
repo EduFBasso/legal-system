@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import PublicationCard from '../components/PublicationCard';
 import PublicationDetailModal from '../components/PublicationDetailModal';
 import PublicationsSearchForm from '../components/PublicationsSearchForm';
@@ -10,11 +11,13 @@ const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 export default function PublicationsPage() {
   const { settings } = useSettings();
+  const location = useLocation();
   const [publications, setPublications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedPublication, setSelectedPublication] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useState(null);
+  const [lastSearch, setLastSearch] = useState(null);  // Nova: última busca salva
   
   // Toast state
   const [showToast, setShowToast] = useState(false);
@@ -26,6 +29,64 @@ export default function PublicationsPage() {
     setToastType(type);
     setShowToast(true);
   };
+
+  // Carregar última busca ao montar
+  useEffect(() => {
+    fetchLastSearch();
+  }, []);
+
+  const fetchLastSearch = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/publications/last-search`);
+      const data = await response.json();
+      if (data.success && data.last_search) {
+        setLastSearch(data.last_search);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar última busca:', error);
+    }
+  };
+
+  const handleLoadLastSearch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/publications/retrieve-last-search`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const pubs = data.publicacoes || [];
+        setPublications(pubs);
+        
+        // Preencher searchParams para exibir resumo da busca
+        setSearchParams({
+          dataInicio: data.search_info.data_inicio,
+          dataFim: data.search_info.data_fim,
+          tribunais: data.search_info.tribunais
+        });
+        
+        displayToast(
+          `📦 ${data.total_publicacoes} publicações carregadas do histórico local`,
+          'success'
+        );
+      } else {
+        displayToast(data.error || 'Erro ao carregar última busca', 'error');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar última busca do banco:', error);
+      displayToast('Erro ao conectar com o servidor', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Detectar navegação do cartão de Controles
+  useEffect(() => {
+    if (location.state?.loadLastSearch) {
+      handleLoadLastSearch();
+      // Limpar state para não recarregar ao voltar
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, handleLoadLastSearch]);
 
   const handleSearch = useCallback(async (filters) => {
     setLoading(true);
@@ -49,11 +110,18 @@ export default function PublicationsPage() {
         const pubs = data.publicacoes || [];
         setPublications(pubs);
 
+        // Atualizar última busca
+        fetchLastSearch();
+        
+        // Notificar sidebar para atualizar
+        window.dispatchEvent(new Event('publicationsSearchCompleted'));
+
         if (pubs.length === 0) {
           displayToast('Nenhuma publicação encontrada para os filtros selecionados', 'info');
         } else {
+          const novas = data.total_novas_salvas || 0;
           displayToast(
-            `✅ ${data.total_publicacoes} publicações encontradas (${data.total_tribunais_consultados} tribunais × 2 buscas)`,
+            `✅ ${data.total_publicacoes} publicações encontradas • ${novas} novas salvas no histórico`,
             'success'
           );
         }
@@ -97,22 +165,55 @@ export default function PublicationsPage() {
       {/* Search Form */}
       <PublicationsSearchForm onSearch={handleSearch} isLoading={loading} />
 
-      {/* Search Summary */}
-      {searchParams && publications.length > 0 && (
-        <div className="search-summary">
-          <div className="summary-item">
-            <span className="summary-label">📅 Período:</span>
-            <span className="summary-value">
-              {new Date(searchParams.dataInicio + 'T00:00:00').toLocaleDateString('pt-BR')} até {new Date(searchParams.dataFim + 'T00:00:00').toLocaleDateString('pt-BR')}
-            </span>
+      {/* Last Search Panel */}
+      {lastSearch && (
+        <div 
+          className="last-search-panel"
+          onClick={handleLoadLastSearch}
+          title="Clique para carregar esta busca do histórico local"
+        >
+          <div className="last-search-header">
+            <span className="last-search-icon">🕒</span>
+            <h3 className="last-search-title">Última Busca</h3>
           </div>
-          <div className="summary-item">
-            <span className="summary-label">⚖️ Tribunais:</span>
-            <span className="summary-value">{searchParams.tribunais.join(', ')}</span>
-          </div>
-          <div className="summary-item">
-            <span className="summary-label">📊 Resultados:</span>
-            <span className="summary-value">{publications.length} {publications.length === 1 ? 'publicação' : 'publicações'}</span>
+          <div className="last-search-content">
+            <div className="last-search-row">
+              <div className="last-search-item">
+                <span className="last-search-label">📅 Período:</span>
+                <span className="last-search-value">
+                  {new Date(lastSearch.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR')} até {new Date(lastSearch.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+              <div className="last-search-item">
+                <span className="last-search-label">⚖️ Tribunais:</span>
+                <span className="last-search-value">{lastSearch.tribunais.join(', ')}</span>
+              </div>
+            </div>
+            <div className="last-search-row">
+              <div className="last-search-item">
+                <span className="last-search-label">📊 Resultados:</span>
+                <span className="last-search-value">
+                  {lastSearch.total_publicacoes} {lastSearch.total_publicacoes === 1 ? 'publicação' : 'publicações'}
+                  {lastSearch.total_novas > 0 && (
+                    <span className="last-search-badge">+{lastSearch.total_novas} novas</span>
+                  )}
+                </span>
+              </div>
+              <div className="last-search-item">
+                <span className="last-search-label">⏱️ Executada:</span>
+                <span className="last-search-value">
+                  {new Date(lastSearch.executed_at).toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                  {lastSearch.duration_seconds && (
+                    <span className="last-search-duration"> ({lastSearch.duration_seconds}s)</span>
+                  )}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}

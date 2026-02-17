@@ -3,34 +3,48 @@ import { useNavigate } from 'react-router-dom';
 import './PublicationsSummary.css';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
-const STORAGE_KEY = 'last_publications_check';
 
 export default function PublicationsSummary() {
   const [loading, setLoading] = useState(false);
-  const [lastCheck, setLastCheck] = useState(null);
-  const [count, setCount] = useState(null);
+  const [lastSearch, setLastSearch] = useState(null);
   const [error, setError] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Carregar última busca do localStorage
-    loadLastCheck();
+    // Carregar última busca da API
+    loadLastSearch();
+    
+    // Listener para atualizações de busca
+    const handleSearchUpdate = () => {
+      loadLastSearch();
+    };
+    
+    window.addEventListener('publicationsSearchCompleted', handleSearchUpdate);
+    
+    // Recarregar a cada 30 segundos (fallback)
+    const interval = setInterval(() => {
+      loadLastSearch();
+    }, 30000);
+    
+    return () => {
+      window.removeEventListener('publicationsSearchCompleted', handleSearchUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
-  const loadLastCheck = () => {
+  const loadLastSearch = async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        setLastCheck(new Date(data.timestamp));
-        setCount(data.count);
+      const response = await fetch(`${API_BASE_URL}/publications/last-search`);
+      const data = await response.json();
+      if (data.success && data.last_search) {
+        setLastSearch(data.last_search);
       }
     } catch (err) {
       console.error('Erro ao carregar última busca:', err);
     }
   };
 
-  const fetchTodayPublications = async () => {
+  const handleSearchToday = async () => {
     setLoading(true);
     setError(false);
     
@@ -39,32 +53,27 @@ export default function PublicationsSummary() {
       const data = await response.json();
       
       if (data.success) {
-        const newCount = data.total_publicacoes || 0;
-        const timestamp = new Date();
+        const hasPublications = data.total_publicacoes > 0;
         
-        // Salvar no localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          timestamp: timestamp.toISOString(),
-          count: newCount,
-          date: timestamp.toISOString().split('T')[0]
-        }));
-        
-        setCount(newCount);
-        setLastCheck(timestamp);
+        if (hasPublications) {
+          // Atualizar última busca e navegar
+          await loadLastSearch();
+          window.dispatchEvent(new Event('publicationsSearchCompleted'));
+          navigate('/publications', { state: { loadLastSearch: true } });
+        } else {
+          // Sem publicações hoje - mantém última busca
+          // Apenas atualiza o lastSearch para refletir a busca vazia
+          await loadLastSearch();
+        }
       } else {
         setError(true);
       }
     } catch (err) {
-      console.error('Erro ao buscar publicações:', err);
+      console.error('Erro ao buscar publicações de hoje:', err);
       setError(true);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleViewPublications = (e) => {
-    e.stopPropagation();
-    navigate('/publications');
   };
 
   const formatLastCheck = (date) => {
@@ -100,51 +109,49 @@ export default function PublicationsSummary() {
 
   return (
     <div className="publications-summary">
-      {/* Status da última busca */}
-      {lastCheck ? (
-        <div className="last-check-info">
-          <p className="last-check-label">Última busca:</p>
-          <p className="last-check-time">{formatLastCheck(lastCheck)}</p>
+      {/* Status da última busca - CLICÁVEL */}
+      {lastSearch ? (
+        <div 
+          className="last-check-info clickable"
+          onClick={() => navigate('/publications', { state: { loadLastSearch: true } })}
+          title="Clique para carregar esta busca do histórico"
+        >
+          <p className="last-check-label">ÚLTIMA BUSCA</p>
+          <p className="last-check-time">
+            {formatLastCheck(new Date(lastSearch.executed_at))}
+          </p>
           
-          {count !== null && (
-            <div className="check-result">
-              {count > 0 ? (
-                <>
-                  <span className="result-count">{count}</span>
-                  <span className="result-label">
-                    {count === 1 ? 'publicação' : 'publicações'}
-                  </span>
-                </>
-              ) : (
-                <span className="result-none">Nenhuma publicação</span>
-              )}
-            </div>
-          )}
+          <div className="check-result">
+            {lastSearch.total_publicacoes > 0 ? (
+              <>
+                <span className="result-count">{lastSearch.total_publicacoes}</span>
+                <span className="result-label">
+                  {lastSearch.total_publicacoes === 1 ? 'publicação' : 'publicações'}
+                </span>
+                {lastSearch.total_novas > 0 && (
+                  <span className="new-badge">+ {lastSearch.total_novas}</span>
+                )}
+              </>
+            ) : (
+              <span className="result-none">Nenhuma publicação</span>
+            )}
+          </div>
         </div>
       ) : (
         <div className="no-check-info">
-          <p>🔍 Nenhuma busca realizada hoje</p>
+          <p>🔍 Nenhuma busca realizada</p>
         </div>
       )}
 
-      {/* Botões de ação */}
+      {/* Botão de ação */}
       <div className="summary-actions">
         <button 
-          className="btn-fetch"
-          onClick={fetchTodayPublications}
+          className="btn-search-today"
+          onClick={handleSearchToday}
           disabled={loading}
         >
-          {loading ? '⏳ Buscando...' : '🔄 Buscar Publicações'}
+          {loading ? '⏳ Buscando...' : '🔍 Buscar Hoje'}
         </button>
-        
-        {count !== null && count > 0 && (
-          <button 
-            className="btn-view"
-            onClick={handleViewPublications}
-          >
-            👁️ Ver Detalhes
-          </button>
-        )}
       </div>
 
       {error && (
