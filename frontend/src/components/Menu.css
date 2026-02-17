@@ -29,6 +29,7 @@
   font-weight: 500;
   transition: all 0.2s;
   border-left: 4px solid transparent;
+  position: relative;
 }
 
 .menu-item a:hover {
@@ -51,4 +52,37 @@
 
 .menu-label {
   font-size: 16px;
+}
+
+/* Badge de notificações */
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.menu-item a.active .notification-badge {
+  background: #dc2626;
 }

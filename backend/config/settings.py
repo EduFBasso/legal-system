@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # Apps do projeto
     'apps.contacts',
     'apps.publications',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [

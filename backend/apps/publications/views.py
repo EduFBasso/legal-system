@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from services.pje_comunica import PJeComunicaService
+from apps.notifications.models import Notification
 
 
 # Hardcoded credentials (temporary - will be moved to settings/user profile)
@@ -103,6 +104,10 @@ def search_publications(request):
             tribunais=tribunais
         )
         
+        # Criar notificações para novas publicações (se houver)
+        if result.get('success') and result.get('total_publicacoes', 0) > 0:
+            _create_publication_notifications(result.get('publicacoes', []))
+        
         return Response(result, status=status.HTTP_200_OK)
         
     except Exception as e:
@@ -129,7 +134,51 @@ def debug_search(request):
     params_nome = {'siglaTribunal': tribunal, 'nomeAdvogado': nome, 'dataDisponibilizacaoInicio': data_inicio, 'dataDisponibilizacaoFim': data_fim}
     api_url = 'https://comunicaapi.pje.jus.br/api/v1/comunicacao'
     try:
-        response_oab = requests.get(api_url, params=params_oab, timeout=15)
+        response_oab = requests.get(api_url, params=pa
+
+
+def _create_publication_notifications(publicacoes):
+    """
+    Helper para criar notificações de novas publicações.
+    Cria apenas se não existir notificação para aquela publicação específica.
+    """
+    for pub in publicacoes[:5]:  # Limitar a 5 notificações por busca
+        # Verificar se já existe notificação para esta publicação
+        notification_exists = Notification.objects.filter(
+            type='publication',
+            metadata__id_api=pub.get('id_api')
+        ).exists()
+        
+        if notification_exists:
+            continue
+        
+        # Determinar prioridade baseada no tipo de comunicação
+        tipo_comunicacao = pub.get('tipo_comunicacao', '').lower()
+        if 'intimação' in tipo_comunicacao or 'citação' in tipo_comunicacao:
+            priority = 'high'
+        elif 'despacho' in tipo_comunicacao:
+            priority = 'medium'
+        else:
+            priority = 'low'
+        
+        # Criar notificação
+        numero_processo = pub.get('numero_processo', 'Sem número')
+        tribunal = pub.get('tribunal', '')
+        
+        Notification.objects.create(
+            type='publication',
+            priority=priority,
+            title=f'Nova Publicação - {tribunal}',
+            message=f'Processo: {numero_processo}\nTipo: {pub.get("tipo_comunicacao", "N/A")}\nÓrgão: {pub.get("orgao", "N/A")}',
+            link='/publications',
+            metadata={
+                'id_api': pub.get('id_api'),
+                'numero_processo': numero_processo,
+                'tribunal': tribunal,
+                'data_disponibilizacao': pub.get('data_disponibilizacao'),
+                'tipo_comunicacao': pub.get('tipo_comunicacao'),
+            }
+        )rams_oab, timeout=15)
         response_nome = requests.get(api_url, params=params_nome, timeout=15)
         return Response({'oab': {'url': response_oab.url, 'status': response_oab.status_code, 'data': response_oab.json() if response_oab.status_code == 200 else response_oab.text}, 'nome': {'url': response_nome.url, 'status': response_nome.status_code, 'data': response_nome.json() if response_nome.status_code == 200 else response_nome.text}})
     except Exception as e:

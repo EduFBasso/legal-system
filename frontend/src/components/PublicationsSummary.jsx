@@ -55,6 +55,7 @@ export default function PublicationsSummary() {
         setError(true);
       }
     } catch (err) {
+      console.error('Erro ao buscar publicações:', err);
       setError(true);
     } finally {
       setLoading(false);
