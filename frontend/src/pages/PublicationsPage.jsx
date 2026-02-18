@@ -1,150 +1,80 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import PublicationCard from '../components/PublicationCard';
-import PublicationDetailModal from '../components/PublicationDetailModal';
-import PublicationsSearchForm from '../components/PublicationsSearchForm';
-import Toast from '../components/common/Toast';
+import { usePublicationsContext } from '../contexts/PublicationsContext';
 import { useSettings } from '../contexts/SettingsContext';
+import PublicationsSearchForm from '../components/PublicationsSearchForm';
+import PublicationsList from '../components/PublicationsList';
+import PublicationsStats from '../components/PublicationsStats';
+import PublicationDetailModal from '../components/PublicationDetailModal';
+import Toast from '../components/common/Toast';
 import './PublicationsPage.css';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
+/**
+ * Página principal de publicações
+ * Usa Context API e componentes modulares para maior manutenibilidade
+ */
 export default function PublicationsPage() {
   const { settings } = useSettings();
   const location = useLocation();
-  const [publications, setPublications] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedPublication, setSelectedPublication] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchParams, setSearchParams] = useState(null);
-  const [lastSearch, setLastSearch] = useState(null);  // Nova: última busca salva
   
-  // Toast state
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('info');
+  // Obter estado e ações do contexto
+  const {
+    publications,
+    loading,
+    searchParams,
+    lastSearch,
+    selectedPublication,
+    isModalOpen,
+    toast,
+    search,
+    loadLastSearch,
+    openModal,
+    closeModal,
+    hideToast
+  } = usePublicationsContext();
 
-  const displayToast = (message, type = 'info') => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
-  };
+  /**
+   * Handler para busca com filtros
+   * Adiciona retroactiveDays do settings
+   */
+  const handleSearch = useCallback(async (filters) => {
+    const retroactiveDays = settings.retroactiveDays ?? 7;
+    
+    await search({
+      dataInicio: filters.dataInicio,
+      dataFim: filters.dataFim,
+      tribunais: filters.tribunais,
+      retroactiveDays
+    });
+  }, [search, settings.retroactiveDays]);
 
-  // Carregar última busca ao montar
-  useEffect(() => {
-    fetchLastSearch();
-  }, []);
-
-  const fetchLastSearch = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/publications/last-search`);
-      const data = await response.json();
-      if (data.success && data.last_search) {
-        setLastSearch(data.last_search);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar última busca:', error);
-    }
-  };
-
-  const handleLoadLastSearch = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/publications/retrieve-last-search`);
-      const data = await response.json();
-      
-      if (data.success) {
-        const pubs = data.publicacoes || [];
-        setPublications(pubs);
-        
-        // Preencher searchParams para exibir resumo da busca
-        setSearchParams({
-          dataInicio: data.search_info.data_inicio,
-          dataFim: data.search_info.data_fim,
-          tribunais: data.search_info.tribunais
-        });
-        
-        displayToast(
-          `📦 ${data.total_publicacoes} publicações carregadas do histórico local`,
-          'success'
-        );
-      } else {
-        displayToast(data.error || 'Erro ao carregar última busca', 'error');
-      }
-    } catch (error) {
-      console.error('Erro ao carregar última busca do banco:', error);
-      displayToast('Erro ao conectar com o servidor', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Detectar navegação do cartão de Controles
+  /**
+   * Detectar navegação do cartão de Controles
+   * Carrega última busca quando vem com state específico
+   */
   useEffect(() => {
     if (location.state?.loadLastSearch) {
-      handleLoadLastSearch();
+      loadLastSearch();
       // Limpar state para não recarregar ao voltar
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, handleLoadLastSearch]);
+  }, [location.state, loadLastSearch]);
 
-  const handleSearch = useCallback(async (filters) => {
-    setLoading(true);
-    setSearchParams(filters);
+  /**
+   * Listener para evento customizado de reload da sidebar
+   * Corrige bug de navegação para mesma rota
+   */
+  useEffect(() => {
+    const handleReloadFromSidebar = () => {
+      loadLastSearch();
+    };
     
-    try {
-      // Construir query string
-      const params = new URLSearchParams();
-      params.append('data_inicio', filters.dataInicio);
-      params.append('data_fim', filters.dataFim);
-      filters.tribunais.forEach(t => params.append('tribunais', t));
-      
-      // Adicionar configuração de dias retroativos
-      const retroactiveDays = settings.retroactiveDays ?? 7;
-      params.append('retroactive_days', retroactiveDays);
-
-      const response = await fetch(`${API_BASE_URL}/publications/search?${params.toString()}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        const pubs = data.publicacoes || [];
-        setPublications(pubs);
-
-        // Atualizar última busca
-        fetchLastSearch();
-        
-        // Notificar sidebar para atualizar
-        window.dispatchEvent(new Event('publicationsSearchCompleted'));
-
-        if (pubs.length === 0) {
-          displayToast('Nenhuma publicação encontrada para os filtros selecionados', 'info');
-        } else {
-          const novas = data.total_novas_salvas || 0;
-          displayToast(
-            `✅ ${data.total_publicacoes} publicações encontradas • ${novas} novas salvas no histórico`,
-            'success'
-          );
-        }
-      } else {
-        displayToast('Erro ao buscar publicações', 'error');
-      }
-    } catch (error) {
-      console.error('Erro ao buscar publicações:', error);
-      displayToast('Erro ao conectar com o servidor', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [settings]);
-
-  const handlePublicationClick = (publication) => {
-    setSelectedPublication(publication);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedPublication(null);
-  };
+    window.addEventListener('reloadPublicationsFromSidebar', handleReloadFromSidebar);
+    
+    return () => {
+      window.removeEventListener('reloadPublicationsFromSidebar', handleReloadFromSidebar);
+    };
+  }, [loadLastSearch]);
 
   return (
     <div className="publications-page">
@@ -165,110 +95,37 @@ export default function PublicationsPage() {
       {/* Search Form */}
       <PublicationsSearchForm onSearch={handleSearch} isLoading={loading} />
 
-      {/* Last Search Panel */}
-      {lastSearch && (
-        <div 
-          className="last-search-panel"
-          onClick={handleLoadLastSearch}
-          title="Clique para carregar esta busca do histórico local"
-        >
-          <div className="last-search-header">
-            <span className="last-search-icon">🕒</span>
-            <h3 className="last-search-title">Última Busca</h3>
-          </div>
-          <div className="last-search-content">
-            <div className="last-search-row">
-              <div className="last-search-item">
-                <span className="last-search-label">📅 Período:</span>
-                <span className="last-search-value">
-                  {new Date(lastSearch.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR')} até {new Date(lastSearch.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}
-                </span>
-              </div>
-              <div className="last-search-item">
-                <span className="last-search-label">⚖️ Tribunais:</span>
-                <span className="last-search-value">{lastSearch.tribunais.join(', ')}</span>
-              </div>
-            </div>
-            <div className="last-search-row">
-              <div className="last-search-item">
-                <span className="last-search-label">📊 Resultados:</span>
-                <span className="last-search-value">
-                  {lastSearch.total_publicacoes} {lastSearch.total_publicacoes === 1 ? 'publicação' : 'publicações'}
-                  {lastSearch.total_novas > 0 && (
-                    <span className="last-search-badge">+{lastSearch.total_novas} novas</span>
-                  )}
-                </span>
-              </div>
-              <div className="last-search-item">
-                <span className="last-search-label">⏱️ Executada:</span>
-                <span className="last-search-value">
-                  {new Date(lastSearch.executed_at).toLocaleString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                  {lastSearch.duration_seconds && (
-                    <span className="last-search-duration"> ({lastSearch.duration_seconds}s)</span>
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Last Search Stats Panel */}
+      <PublicationsStats 
+        lastSearch={lastSearch} 
+        onLoadSearch={loadLastSearch} 
+      />
 
       {/* Publications List */}
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Consultando tribunais selecionados...</p>
-          <p className="loading-hint">2 buscas por tribunal: OAB + Nome da Advogada</p>
-        </div>
-      ) : publications.length === 0 && searchParams ? (
-        <div className="empty-state">
-          <svg className="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <p>Nenhuma publicação encontrada</p>
-          <p className="empty-hint">Tente ajustar os filtros ou selecionar outro período</p>
-        </div>
-      ) : publications.length === 0 && !searchParams ? (
-        <div className="empty-state">
-          <svg className="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <p>Pronto para buscar publicações</p>
-          <p className="empty-hint">Configure os filtros acima e clique em "Buscar Publicações"</p>
-        </div>
-      ) : (
-        <div className="publications-grid">
-          {publications.map((publication) => (
-            <PublicationCard
-              key={publication.id_api}
-              publication={publication}
-              onClick={() => handlePublicationClick(publication)}
-            />
-          ))}
-        </div>
-      )}
+      <PublicationsList
+        publications={publications}
+        loading={loading}
+        searchParams={searchParams}
+        onCardClick={openModal}
+      />
 
       {/* Detail Modal */}
-      {isModalOpen && selectedPublication && (
+      {selectedPublication && (
         <PublicationDetailModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
           publication={selectedPublication}
-          onClose={handleCloseModal}
         />
       )}
 
       {/* Toast Notifications */}
-      <Toast
-        isOpen={showToast}
-        message={toastMessage}
-        type={toastType}
-        onClose={() => setShowToast(false)}
-        autoCloseMs={3000}
-      />
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }

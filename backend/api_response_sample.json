@@ -1,0 +1,135 @@
+{
+  "status": "success",
+  "message": "Sucesso",
+  "count": 2,
+  "items": [
+    {
+      "id": 533295300,
+      "data_disponibilizacao": "2026-02-18",
+      "siglaTribunal": "TJSP",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "Foro de Limeira - 2ª Vara Cível",
+      "idOrgao": 70842,
+      "texto": "Processo 0000623-69.2026.8.26.0320 (processo principal 1011010-97.2024.8.26.0320) - Cumprimento de sentença - Liminar - A.M.C.P.E.  - B.S.A.  - Como o cumprimento de sentença foi iniciado a partir de 03/01/2024, considerando que os cálculos apresentados não incluem as custas referente a instauração fase de cumprimento de sentença, fica intimado o exequente para que, no prazo de 15 (quinze) dias, proceda a inclusão das mesmas no importe de 2% (dois por cento) sobre o valor do crédito a ser satisfeito, observando o valor mínimo das custas, nos termos do Comunicado Conjunto nº 951/2023, item 10 que assim dispõe: \"Nos casos em que o autor ou exequente, por força de gratuidade ou outra hipótese, tenha sido dispensado do adiantamento, os valores da taxa judiciária e das demais despesas pendentes, inclusive aquelas atinentes às fases anteriores do processo, deverão ser incluídos no demonstrativo de débito para que sejam cobradas concomitantemente com o valor da execução\". Providencie ainda o exequente a correção do cadastro processual, no prazo de 15 dias, sob as penas da Lei, para: - inclusão da advogada/exequente no polo ativo, por tratar de execução de honorários sucumbenciais. Para a inclusão de parte e recategorização dos documentos é necessário acessar a página do Tribunal de Justiça (http://www.tjsp.jus.br) e clicar no menu: Peticionamento Eletrônico > Peticione Eletronicamente > Peticionamento Eletrônico de 1° grau > Complemento de Cadastro de 1º Grau. - ADV: VITORIA ROCHA DE MORAIS (OAB 507553/SP), ANCILA DEI VIEIRA DA CUNHA BRIZOLA (OAB 145619/SP)",
+      "numero_processo": "00006236920268260320",
+      "meio": "D",
+      "link": "https://www.dje.tjsp.jus.br",
+      "tipoDocumento": "Intimação",
+      "nomeClasse": "CUMPRIMENTO DE SENTENçA",
+      "codigoClasse": "156",
+      "numeroComunicacao": 184962,
+      "ativo": true,
+      "hash": "Ep4n8JxY17sjX3yueTaqbrg61ObAW3",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "18/02/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "0000623-69.2026.8.26.0320",
+      "destinatarios": [
+        {
+          "comunicacao_id": 533295300,
+          "nome": "A.M.C.P.E.",
+          "polo": "A"
+        },
+        {
+          "comunicacao_id": 533295300,
+          "nome": "B.S.A.",
+          "polo": "P"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 953393868,
+          "comunicacao_id": 533295300,
+          "advogado_id": 1740809,
+          "created_at": "2026-02-13T17:50:20",
+          "updated_at": "2026-02-13T17:50:20",
+          "advogado": {
+            "id": 1740809,
+            "nome": "VITORIA ROCHA DE MORAIS",
+            "numero_oab": "507553",
+            "uf_oab": "SP"
+          }
+        },
+        {
+          "id": 953393862,
+          "comunicacao_id": 533295300,
+          "advogado_id": 317534,
+          "created_at": "2026-02-13T17:50:20",
+          "updated_at": "2026-02-13T17:50:20",
+          "advogado": {
+            "id": 317534,
+            "nome": "ANCILA DEI VIEIRA DA CUNHA BRIZOLA",
+            "numero_oab": "145619",
+            "uf_oab": "SP"
+          }
+        }
+      ]
+    },
+    {
+      "id": 533297236,
+      "data_disponibilizacao": "2026-02-18",
+      "siglaTribunal": "TJSP",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "Foro de Limeira - 4ª Vara Cível",
+      "idOrgao": 70608,
+      "texto": "Processo 0000618-47.2026.8.26.0320 (processo principal 1012723-10.2024.8.26.0320) - Cumprimento de sentença - Obrigações - Associação dos Moradores do Condomínio Portal dos Eucaliptos  - Brascond Serviços Administrativos Ltda  - Como o cumprimento de sentença foi iniciado a partir de 03/01/2024, considerando que os cálculos apresentados não incluem as custas referente a instauração fase de cumprimento de sentença, fica intimado o exequente para que, no prazo de 15 (quinze) dias, proceda a inclusão das mesmas no importe de 2% (dois por cento) sobre o valor do crédito a ser satisfeito, observando o valor mínimo das custas, nos termos do Comunicado Conjunto nº 951/2023, item 10 que assim dispõe: \"Nos casos em que o autor ou exequente, por força de gratuidade ou outra hipótese, tenha sido dispensado do adiantamento, os valores da taxa judiciária e das demais despesas pendentes, inclusive aquelas atinentes às fases anteriores do processo, deverão ser incluídos no demonstrativo de débito para que sejam cobradas concomitantemente com o valor da execução\". - ADV: VITORIA ROCHA DE MORAIS (OAB 507553/SP), ANCILA DEI VIEIRA DA CUNHA BRIZOLA (OAB 145619/SP)",
+      "numero_processo": "00006184720268260320",
+      "meio": "D",
+      "link": "https://www.dje.tjsp.jus.br",
+      "tipoDocumento": "Intimação",
+      "nomeClasse": "CUMPRIMENTO DE SENTENçA",
+      "codigoClasse": "156",
+      "numeroComunicacao": 185497,
+      "ativo": true,
+      "hash": "VMlJ3NoYG7soeKEFVTp57QeYLzE4gO",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "18/02/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "0000618-47.2026.8.26.0320",
+      "destinatarios": [
+        {
+          "comunicacao_id": 533297236,
+          "nome": "ASSOCIAçãO DOS MORADORES DO CONDOMíNIO PORTAL DOS EUCALIPTOS",
+          "polo": "A"
+        },
+        {
+          "comunicacao_id": 533297236,
+          "nome": "BRASCOND SERVIçOS ADMINISTRATIVOS LTDA",
+          "polo": "P"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 953397436,
+          "comunicacao_id": 533297236,
+          "advogado_id": 317534,
+          "created_at": "2026-02-13T17:52:07",
+          "updated_at": "2026-02-13T17:52:07",
+          "advogado": {
+            "id": 317534,
+            "nome": "ANCILA DEI VIEIRA DA CUNHA BRIZOLA",
+            "numero_oab": "145619",
+            "uf_oab": "SP"
+          }
+        },
+        {
+          "id": 953397441,
+          "comunicacao_id": 533297236,
+          "advogado_id": 1740809,
+          "created_at": "2026-02-13T17:52:07",
+          "updated_at": "2026-02-13T17:52:07",
+          "advogado": {
+            "id": 1740809,
+            "nome": "VITORIA ROCHA DE MORAIS",
+            "numero_oab": "507553",
+            "uf_oab": "SP"
+          }
+        }
+      ]
+    }
+  ]
+}

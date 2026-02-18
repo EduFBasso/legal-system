@@ -1,50 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { usePublicationsContext } from '../contexts/PublicationsContext';
 import './PublicationsSummary.css';
 
-/**
- * Componente para exibir resumo da última busca na sidebar
- * Usa Context API para acessar estado global de publicações
- */
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+
 export default function PublicationsSummary() {
   const [loading, setLoading] = useState(false);
+  const [lastSearch, setLastSearch] = useState(null);
   const [error, setError] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Obter estado e ações do contexto
-  const { lastSearch, searchToday, fetchLastSearch } = usePublicationsContext();
-
-  /**
-   * Carrega última busca ao montar e atualiza periodicamente
-   */
-  useEffect(() => {
-    // Carregar última busca da API
-    fetchLastSearch();
-    
-    // Listener para atualizações de busca
-    const handleSearchUpdate = () => {
-      fetchLastSearch();
-    };
-    
-    window.addEventListener('publicationsSearchCompleted', handleSearchUpdate);
-    
-    // Recarregar a cada 30 segundos (fallback)
-    const interval = setInterval(() => {
-      fetchLastSearch();
-    }, 30000);
-    
-    return () => {
-      window.removeEventListener('publicationsSearchCompleted', handleSearchUpdate);
-      clearInterval(interval);
-    };
-  }, [fetchLastSearch]);
-
-  /**
-   * Lida com clique no card da última busca
-   * Usa evento customizado se já estiver na página de publicações
-   */
+  // Função para carregar última busca (clique no card)
   const handleCardClick = () => {
     // Se já estiver na página de publicações, dispara evento customizado
     if (location.pathname === '/publications') {
@@ -55,24 +22,63 @@ export default function PublicationsSummary() {
     }
   };
 
-  /**
-   * Busca publicações de hoje
-   * Usa a ação do contexto e gerencia estado local de loading
-   */
+  useEffect(() => {
+    // Carregar última busca da API
+    loadLastSearch();
+    
+    // Listener para atualizações de busca
+    const handleSearchUpdate = () => {
+      loadLastSearch();
+    };
+    
+    window.addEventListener('publicationsSearchCompleted', handleSearchUpdate);
+    
+    // Recarregar a cada 30 segundos (fallback)
+    const interval = setInterval(() => {
+      loadLastSearch();
+    }, 30000);
+    
+    return () => {
+      window.removeEventListener('publicationsSearchCompleted', handleSearchUpdate);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const loadLastSearch = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/publications/last-search`);
+      const data = await response.json();
+      if (data.success && data.last_search) {
+        setLastSearch(data.last_search);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar última busca:', err);
+    }
+  };
+
   const handleSearchToday = async () => {
     setLoading(true);
     setError(false);
     
     try {
-      await searchToday();
+      const response = await fetch(`${API_BASE_URL}/publications/today`);
+      const data = await response.json();
       
-      // Atualizar informações e navegar se houver publicações
-      await fetchLastSearch();
-      window.dispatchEvent(new Event('publicationsSearchCompleted'));
-      
-      // Sempre navega para a página de publicações após buscar
-      if (location.pathname !== '/publications') {
-        navigate('/publications', { state: { loadLastSearch: true } });
+      if (data.success) {
+        const hasPublications = data.total_publicacoes > 0;
+        
+        if (hasPublications) {
+          // Atualizar última busca e navegar
+          await loadLastSearch();
+          window.dispatchEvent(new Event('publicationsSearchCompleted'));
+          navigate('/publications', { state: { loadLastSearch: true } });
+        } else {
+          // Sem publicações hoje - mantém última busca
+          // Apenas atualiza o lastSearch para refletir a busca vazia
+          await loadLastSearch();
+        }
+      } else {
+        setError(true);
       }
     } catch (err) {
       console.error('Erro ao buscar publicações de hoje:', err);
@@ -82,9 +88,6 @@ export default function PublicationsSummary() {
     }
   };
 
-  /**
-   * Formata data da última busca
-   */
   const formatLastCheck = (date) => {
     if (!date) return null;
     const today = new Date();
@@ -107,7 +110,6 @@ export default function PublicationsSummary() {
     return `${dateStr} às ${timeStr}`;
   };
 
-  // Estado de carregamento
   if (loading) {
     return (
       <div className="publications-summary loading">

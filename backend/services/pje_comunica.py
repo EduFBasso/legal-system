@@ -133,24 +133,26 @@ class PJeComunicaService:
         # Construir URL de consulta pública quando possível
         link_oficial = None
         
-        # TJSP: Link para consulta pública de processos
+        # TJSP: Tentar preenchimento automático com parâmetros
+        # Se não funcionar, o frontend copia o número automaticamente
         if tribunal == 'TJSP' and numero_processo:
             # Extrair código do foro (últimos 4 dígitos do número CNJ)
-            # Formato: NNNNNNN-DD.AAAA.J.TR.OOOO (OOOO = foro)
-            # Exemplo: 1006581-93.2025.8.26.0533 → codigo = 533 (SEM zeros à esquerda)
-            
             foro = numero_processo[-4:] if len(numero_processo) >= 4 else None
             
             if foro and foro.isdigit():
                 # Remover zeros à esquerda (0533 → 533)
                 codigo_foro = str(int(foro))
                 
-                # Link direto: processo.codigo = foro (não é o código interno ET..., é o foro!)
-                # ESAJ preenche automaticamente e ao clicar "Consultar" abre o processo
+                # Tenta preencher automaticamente
+                # Funciona em alguns foros (ex: 533), em outros não preenche mas abre o ESAJ
+                # Frontend copia número automaticamente como fallback
                 link_oficial = f"https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo={codigo_foro}&processo.numero={numero_processo}"
             else:
                 # Fallback: página de busca manual
                 link_oficial = "https://esaj.tjsp.jus.br/cpopg/open.do"
+        elif tribunal == 'TJSP':
+            # Se não tiver número de processo, usar página inicial
+            link_oficial = "https://esaj.tjsp.jus.br/cpopg/open.do"
         
         # TRF3: Padrão similar (aguardando publicações para testar)
         elif tribunal == 'TRF3' and 'trf3.jus.br' in link_base and hash_pub:

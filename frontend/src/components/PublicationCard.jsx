@@ -31,6 +31,43 @@ export default function PublicationCard({ publication, onClick }) {
     return textoLimpo.substring(0, 200) + (textoLimpo.length > 200 ? '...' : '');
   };
 
+  const handleCopyProcesso = (e) => {
+    e.stopPropagation();
+    if (publication.numero_processo) {
+      navigator.clipboard.writeText(publication.numero_processo).then(() => {
+        // Feedback visual temporário
+        const btn = e.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✅ Copiado!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  };
+
+  const handleConsultarProcesso = (e) => {
+    e.stopPropagation();
+    // Copiar automaticamente o número do processo
+    if (publication.numero_processo) {
+      navigator.clipboard.writeText(publication.numero_processo).then(() => {
+        // Mostrar feedback visual no botão
+        const btn = e.currentTarget;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '✅ Número Copiado! Abrindo...';
+        
+        // Restaurar texto original após abrir
+        setTimeout(() => {
+          btn.innerHTML = originalHTML;
+        }, 2000);
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
+      });
+    }
+  };
+
   return (
     <div className="publication-card" onClick={onClick}>
       <div className="publication-header">
@@ -49,6 +86,15 @@ export default function PublicationCard({ publication, onClick }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <span className="processo-number">{publication.numero_processo || 'N/A'}</span>
+          {publication.numero_processo && (
+            <button 
+              className="btn-copy-processo"
+              onClick={handleCopyProcesso}
+              title="Copiar número do processo"
+            >
+              📋
+            </button>
+          )}
         </div>
 
         <div className="publication-orgao">{publication.orgao}</div>
@@ -72,8 +118,8 @@ export default function PublicationCard({ publication, onClick }) {
             target="_blank"
             rel="noopener noreferrer"
             className="btn-official-link"
-            onClick={(e) => e.stopPropagation()}
-            title="Consultar processo no portal do tribunal"
+            onClick={handleConsultarProcesso}
+            title="Copia o número e abre o portal do tribunal"
           >
             🔍 Consultar Processo
           </a>

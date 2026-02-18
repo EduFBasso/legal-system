@@ -1,56 +1,59 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { NotificationsProvider } from './contexts/NotificationsContext'
-import Header from './components/Header'
-import Breadcrumb from './components/Breadcrumb'
-import Menu from './components/Menu'
-import MainContent from './components/MainContent'
-import Sidebar from './components/Sidebar'
-import ContactsPage from './pages/ContactsPage'
-import PublicationsPage from './pages/PublicationsPage'
-import NotificationsPage from './pages/NotificationsPage'
-import PublicationsSummary from './components/PublicationsSummary'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { NotificationsProvider } from './contexts/NotificationsContext';
+import { PublicationsProvider } from './contexts/PublicationsContext';
+import Header from './components/Header';
+import Breadcrumb from './components/Breadcrumb';
+import Menu from './components/Menu';
+import MainContent from './components/MainContent';
+import Sidebar from './components/Sidebar';
+import ContactsPage from './pages/ContactsPage';
+import PublicationsPage from './pages/PublicationsPage.refactored';
+import NotificationsPage from './pages/NotificationsPage';
+import PublicationsSummary from './components/PublicationsSummary.refactored';
+import './App.css';
 
 function App() {
   return (
     <BrowserRouter>
       <NotificationsProvider>
-        <div className="app-container">
-          <Header />
-          {/* <Breadcrumb /> */}
-          
-          <div className="app-layout">
-            <Menu />
+        <PublicationsProvider>
+          <div className="app-container">
+            <Header />
+            {/* <Breadcrumb /> */}
             
-            <MainContent>
-              <Routes>
-                <Route path="/" element={<ContactsPage />} />
-                <Route path="/contacts" element={<ContactsPage />} />
-                <Route path="/publications" element={<PublicationsPage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-              </Routes>
-            </MainContent>
-            
-            <Sidebar>
-              <h2>Controles</h2>
+            <div className="app-layout">
+              <Menu />
               
-              <div className="sidebar-section">
-                <h3>📰 Publicações</h3>
-                <PublicationsSummary />
-              </div>
+              <MainContent>
+                <Routes>
+                  <Route path="/" element={<ContactsPage />} />
+                  <Route path="/contacts" element={<ContactsPage />} />
+                  <Route path="/publications" element={<PublicationsPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                </Routes>
+              </MainContent>
               
-              <div className="sidebar-section">
-                <h3>💬 Mensagens</h3>
-                <div className="sidebar-empty">
-                  <p>Em desenvolvimento</p>
+              <Sidebar>
+                <h2>Controles</h2>
+                
+                <div className="sidebar-section">
+                  <h3>📰 Publicações</h3>
+                  <PublicationsSummary />
                 </div>
-              </div>
-            </Sidebar>
+                
+                <div className="sidebar-section">
+                  <h3>💬 Mensagens</h3>
+                  <div className="sidebar-empty">
+                    <p>Em desenvolvimento</p>
+                  </div>
+                </div>
+              </Sidebar>
+            </div>
           </div>
-        </div>
+        </PublicationsProvider>
       </NotificationsProvider>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

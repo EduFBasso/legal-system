@@ -10,6 +10,42 @@ export default function PublicationDetailModal({ publication, onClose }) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
+  const handleConsultarProcesso = (e) => {
+    // Copiar automaticamente o número do processo
+    if (publication.numero_processo) {
+      navigator.clipboard.writeText(publication.numero_processo).then(() => {
+        // Mostrar feedback visual no botão
+        const btn = e.currentTarget;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '✅ Número Copiado! Abrindo...';
+        
+        // Restaurar texto original após abrir
+        setTimeout(() => {
+          btn.innerHTML = originalHTML;
+        }, 2000);
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
+      });
+    }
+  };
+
+  const handleCopyProcesso = (e) => {
+    e.preventDefault();
+    if (publication.numero_processo) {
+      navigator.clipboard.writeText(publication.numero_processo).then(() => {
+        // Feedback visual temporário
+        const btn = e.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✅';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString + 'T00:00:00');
@@ -72,6 +108,15 @@ export default function PublicationDetailModal({ publication, onClose }) {
               <span className="detail-label">Processo:</span>
               <span className="detail-value processo-number">
                 {publication.numero_processo || 'N/A'}
+                {publication.numero_processo && (
+                  <button 
+                    className="btn-copy-processo-modal"
+                    onClick={handleCopyProcesso}
+                    title="Copiar número do processo"
+                  >
+                    📋
+                  </button>
+                )}
               </span>
             </div>
 
@@ -113,8 +158,9 @@ export default function PublicationDetailModal({ publication, onClose }) {
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary-link"
+              onClick={handleConsultarProcesso}
             >
-              � Consultar Processo no ESAJ
+              🔍 Consultar Processo no ESAJ
             </a>
           )}
           <button className="btn btn-secondary" onClick={onClose}>

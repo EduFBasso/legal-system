@@ -47,11 +47,50 @@ def fetch_today_publications(request):
     }
     """
     try:
+        # Iniciar cronômetro
+        start_time = time.time()
+        
+        # Data de hoje
+        hoje = datetime.now().date()
+        
         # Busca publicações usando o service
         result = PJeComunicaService.fetch_today_publications(
             oab=OAB_NUMBER,
             nome_advogado=ADVOGADA_NOME
         )
+        
+        # Salvar publicações no banco e criar histórico
+        total_novas = 0
+        if result.get('success') and result.get('total_publicacoes', 0) > 0:
+            publicacoes = result.get('publicacoes', [])
+            
+            # Salvar cada publicação (deduplicação automática via id_api unique)
+            total_novas = _save_publications_to_db(publicacoes)
+            
+            # Criar notificações para novas publicações (7 dias retroativos)
+            _create_publication_notifications(publicacoes, retroactive_days=7)
+        
+        # Calcular duração
+        duration = time.time() - start_time
+        
+        # Criar histórico de busca
+        SearchHistory.objects.create(
+            data_inicio=hoje,
+            data_fim=hoje,
+            tribunais=['TJSP', 'TRF3', 'TRT2', 'TRT15'],  # Todos os tribunais
+            total_publicacoes=result.get('total_publicacoes', 0),
+            total_novas=total_novas,
+            duration_seconds=round(duration, 2),
+            search_params={
+                'retroactive_days': 7,
+                'oab': OAB_NUMBER,
+                'nome_advogado': ADVOGADA_NOME,
+            }
+        )
+        
+        # Adicionar info de novas publicações na resposta
+        result['total_novas_salvas'] = total_novas
+        result['duration_seconds'] = round(duration, 2)
         
         return Response(result, status=status.HTTP_200_OK)
         
