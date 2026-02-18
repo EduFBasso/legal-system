@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { generateAllConsultaLinks } from '../utils/consultaLinksHelper';
 import './PublicationDetailModal.css';
 
 export default function PublicationDetailModal({ publication, onClose }) {
@@ -10,22 +11,35 @@ export default function PublicationDetailModal({ publication, onClose }) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  const handleConsultarProcesso = (e) => {
+  const handleConsultarProcesso = (e, url) => {
+    e.preventDefault();
     // Copiar automaticamente o número do processo
     if (publication.numero_processo) {
       navigator.clipboard.writeText(publication.numero_processo).then(() => {
         // Mostrar feedback visual no botão
         const btn = e.currentTarget;
         const originalHTML = btn.innerHTML;
-        btn.innerHTML = '✅ Número Copiado! Abrindo...';
+        btn.innerHTML = '✅ Copiado! Abrindo...';
         
-        // Restaurar texto original após abrir
+        // Abrir link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        
+        // Restaurar texto original
         setTimeout(() => {
           btn.innerHTML = originalHTML;
         }, 2000);
       }).catch(err => {
         console.error('Erro ao copiar:', err);
+        // Mesmo com erro, abre o link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
       });
+    } else if (url) {
+      // Se não tem número, só abre o link
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -81,6 +95,9 @@ export default function PublicationDetailModal({ publication, onClose }) {
 
   const texto = publication.texto_completo || publication.texto_resumo || 'Texto não disponível';
   const isHTMLContent = isHTML(texto);
+  
+  // Obter todos os links de consulta disponíveis
+  const consultaLinks = generateAllConsultaLinks(publication);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -152,17 +169,30 @@ export default function PublicationDetailModal({ publication, onClose }) {
         </div>
 
         <div className="modal-footer">
-          {publication.link_oficial && (
-            <a 
-              href={publication.link_oficial}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary-link"
-              onClick={handleConsultarProcesso}
-            >
-              🔍 Consultar Processo no ESAJ
-            </a>
-          )}
+          <div className="modal-actions">
+            {/* Link oficial (ESAJ ou principal) */}
+            {consultaLinks.linkOficial && (
+              <button 
+                className="btn btn-primary-link"
+                onClick={(e) => handleConsultarProcesso(e, consultaLinks.linkOficial)}
+                title="Copia o número e abre o portal do tribunal"
+              >
+                🔍 {publication.tribunal || 'Consultar'}
+              </button>
+            )}
+            
+            {/* Links alternativos (eProc, TRF3, TRT15, etc.) */}
+            {consultaLinks.linksAlternativos.map((system, index) => (
+              <button 
+                key={index}
+                className="btn btn-alternative-link"
+                onClick={(e) => handleConsultarProcesso(e, system.url)}
+                title={system.description}
+              >
+                {system.icon} {system.shortName}
+              </button>
+            ))}
+          </div>
           <button className="btn btn-secondary" onClick={onClose}>
             Fechar
           </button>

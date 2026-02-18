@@ -7,9 +7,9 @@ import Menu from './components/Menu';
 import MainContent from './components/MainContent';
 import Sidebar from './components/Sidebar';
 import ContactsPage from './pages/ContactsPage';
-import PublicationsPage from './pages/PublicationsPage.refactored';
+import PublicationsPage from './pages/PublicationsPage';
 import NotificationsPage from './pages/NotificationsPage';
-import PublicationsSummary from './components/PublicationsSummary.refactored';
+import PublicationsSummary from './components/PublicationsSummary';
 import './App.css';
 
 function App() {

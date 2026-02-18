@@ -1,3 +1,4 @@
+import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import './PublicationCard.css';
 
 export default function PublicationCard({ publication, onClick }) {
@@ -48,7 +49,7 @@ export default function PublicationCard({ publication, onClick }) {
     }
   };
 
-  const handleConsultarProcesso = (e) => {
+  const handleConsultarProcesso = (e, url) => {
     e.stopPropagation();
     // Copiar automaticamente o número do processo
     if (publication.numero_processo) {
@@ -56,17 +57,32 @@ export default function PublicationCard({ publication, onClick }) {
         // Mostrar feedback visual no botão
         const btn = e.currentTarget;
         const originalHTML = btn.innerHTML;
-        btn.innerHTML = '✅ Número Copiado! Abrindo...';
+        btn.innerHTML = '✅ Copiado! Abrindo...';
         
-        // Restaurar texto original após abrir
+        // Abrir link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        
+        // Restaurar texto original
         setTimeout(() => {
           btn.innerHTML = originalHTML;
         }, 2000);
       }).catch(err => {
         console.error('Erro ao copiar:', err);
+        // Mesmo com erro, abre o link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
       });
+    } else if (url) {
+      // Se não tem número, só abre o link
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
+
+  // Obter todos os links de consulta disponíveis
+  const consultaLinks = generateAllConsultaLinks(publication);
 
   return (
     <div className="publication-card" onClick={onClick}>
@@ -112,18 +128,28 @@ export default function PublicationCard({ publication, onClick }) {
           </svg>
         </button>
         
-        {publication.link_oficial && (
-          <a 
-            href={publication.link_oficial}
-            target="_blank"
-            rel="noopener noreferrer"
+        {/* Link oficial (ESAJ ou principal) */}
+        {consultaLinks.linkOficial && (
+          <button 
             className="btn-official-link"
-            onClick={handleConsultarProcesso}
+            onClick={(e) => handleConsultarProcesso(e, consultaLinks.linkOficial)}
             title="Copia o número e abre o portal do tribunal"
           >
-            🔍 Consultar Processo
-          </a>
+            🔍 Consultar ({publication.tribunal})
+          </button>
         )}
+        
+        {/* Links alternativos (eProc, TRF3, TRT15, etc.) */}
+        {consultaLinks.linksAlternativos.map((system, index) => (
+          <button 
+            key={index}
+            className="btn-alternative-link"
+            onClick={(e) => handleConsultarProcesso(e, system.url)}
+            title={system.description}
+          >
+            {system.icon} {system.shortName}
+          </button>
+        ))}
       </div>
     </div>
   );
