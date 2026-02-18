@@ -186,6 +186,48 @@ export function useSearchHistory() {
     }
   }, []);
 
+  /**
+   * Busca no backend por número de processo ou outros campos
+   */
+  const searchByQuery = useCallback(async (query) => {
+    if (!query.trim()) {
+      // Se query vazio, recarregar histórico normal
+      await loadHistory(0);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await publicationsService.getSearchHistory({
+        limit: pagination.limit,
+        offset: 0,
+        ordering,
+        q: query  // Envia query para backend
+      });
+
+      if (result.success) {
+        setSearches(result.results);
+        setPagination({
+          count: result.count,
+          limit: pagination.limit,
+          offset: 0,
+          hasNext: !!result.next,
+          hasPrevious: !!result.previous
+        });
+      } else {
+        throw new Error(result.error || 'Erro ao buscar');
+      }
+    } catch (err) {
+      console.error('Erro ao buscar:', err);
+      setError(err.message);
+      setSearches([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.limit, ordering, loadHistory]);
+
   // Carregar histórico ao montar o componente ou quando ordenação mudar
   useEffect(() => {
     const offset = 0;
@@ -241,6 +283,7 @@ export function useSearchHistory() {
     changeOrdering,
     clearSelectedSearch,
     clearHistory,
+    searchByQuery,
 
     // Utilitários
     formatDate,

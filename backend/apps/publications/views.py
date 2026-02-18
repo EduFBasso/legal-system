@@ -481,13 +481,14 @@ def get_search_history(request):
     """
     Retorna lista completa do histórico de buscas.
     
-    GET /api/publications/history?limit=20&offset=0&ordering=-executed_at
+    GET /api/publications/history?limit=20&offset=0&ordering=-executed_at&q=processo
     
     Query Parameters:
         - limit (optional): Número de itens por página (padrão: 20)
         - offset (optional): Offset para paginação (padrão: 0)
         - ordering (optional): Campo para ordenação (padrão: -executed_at)
                               Opções: executed_at, -executed_at, total_publicacoes, -total_publicacoes
+        - q (optional): Busca por número de processo nas publicações
     
     Response:
     {
@@ -514,6 +515,7 @@ def get_search_history(request):
         limit = int(request.query_params.get('limit', 20))
         offset = int(request.query_params.get('offset', 0))
         ordering = request.query_params.get('ordering', '-executed_at')
+        query = request.query_params.get('q', '').strip()
         
         # Validar limite (máximo 100)
         if limit > 100:
@@ -525,8 +527,68 @@ def get_search_history(request):
         if ordering not in valid_ordering:
             ordering = '-executed_at'
         
-        # Buscar histórico com paginação
-        all_searches = SearchHistory.objects.all().order_by(ordering)
+        # Buscar histórico
+        all_searches = SearchHistory.objects.all()
+        
+        # Se houver busca por número de processo
+        if query:
+            # Remover caracteres especiais do query para buscar também números sem formatação
+            # Ex: "00006236920268260320" encontra "0000623-69.2026.8.26.0320"
+            import re
+            query_digits = re.sub(r'[^\d]', '', query)  # Apenas dígitos
+            
+            # Buscar publicações que contêm o número de processo
+            # Tenta tanto com query original quanto só com dígitos
+            publications = Publication.objects.filter(
+                numero_processo__icontains=query
+            )
+            
+            # Se não encontrou, tentar buscar removendo formatação
+            if not publications.exists() and query_digits and len(query_digits) >= 7:
+                # Buscar publicações cujo número (sem formatação) contém os dígitos
+                all_publications = Publication.objects.exclude(numero_processo__isnull=True)
+                matching_pubs = []
+                
+                for pub in all_publications:
+                    pub_digits = re.sub(r'[^\d]', '', pub.numero_processo or '')
+                    if query_digits in pub_digits:
+                        matching_pubs.append(pub)
+                
+                publications = matching_pubs
+            
+            # Verificar se encontrou publicações (pode ser QuerySet ou lista)
+            has_publications = (publications.exists() if hasattr(publications, 'exists') 
+                              else len(publications) > 0)
+            
+            if has_publications:
+                # Encontrar SearchHistory que correspondem às publicações encontradas
+                # (mesmo tribunal e período que contém a data da publicação)
+                search_ids = set()
+                
+                for pub in publications:
+                    # Buscar históricos que incluem essa publicação
+                    # Filtrar no Python porque JSONField contains não funciona bem no SQLite
+                    matching_searches = SearchHistory.objects.filter(
+                        data_inicio__lte=pub.data_disponibilizacao,
+                        data_fim__gte=pub.data_disponibilizacao
+                    )
+                    
+                    # Filtrar por tribunal no Python
+                    for search in matching_searches:
+                        if pub.tribunal in search.tribunais:
+                            search_ids.add(search.id)
+                
+                # Filtrar histórico pelos IDs encontrados
+                if search_ids:
+                    all_searches = all_searches.filter(id__in=search_ids)
+                else:
+                    all_searches = SearchHistory.objects.none()
+            else:
+                # Se não encontrou nenhuma publicação, retornar vazio
+                all_searches = SearchHistory.objects.none()
+        
+        # Aplicar ordenação
+        all_searches = all_searches.order_by(ordering)
         total_count = all_searches.count()
         
         searches = all_searches[offset:offset + limit]

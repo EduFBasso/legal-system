@@ -136,12 +136,17 @@ class PublicationsService {
    * @param {string} params.ordering - Campo para ordenação (padrão: -executed_at)
    * @returns {Promise<Object>} Lista de buscas do histórico
    */
-  async getSearchHistory({ limit = 20, offset = 0, ordering = '-executed_at' } = {}) {
+  async getSearchHistory({ limit = 20, offset = 0, ordering = '-executed_at', q = '' } = {}) {
     const params = new URLSearchParams({
       limit,
       offset,
       ordering
     });
+
+    // Adicionar query se fornecida
+    if (q) {
+      params.append('q', q);
+    }
 
     const response = await fetch(`${API_BASE_URL}/publications/history?${params}`);
     

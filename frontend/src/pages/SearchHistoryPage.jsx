@@ -2,7 +2,7 @@
  * Página de Histórico de Publicações
  * Exibe lista de todas as buscas realizadas com filtros e paginação
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 import SearchHistoryList from '../components/SearchHistoryList';
 import SearchHistoryControls from '../components/SearchHistoryControls';
@@ -26,12 +26,15 @@ function SearchHistoryPage() {
     changeOrdering,
     clearSelectedSearch,
     clearHistory,
+    searchByQuery,
     formatDate,
     formatDateTime
   } = useSearchHistory();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [useBackendSearch, setUseBackendSearch] = useState(false);
+  const debounceTimerRef = useRef(null);
 
   // Verificar se ordenação é crescente
   const isAscending = ordering === 'executed_at';
@@ -47,11 +50,20 @@ function SearchHistoryPage() {
   /**
    * Filtro em tempo real - busca por data, processo ou nomes
    * Também filtra buscas com 0 publicações
+   * 
+   * Se useBackendSearch=true, os resultados já vêm filtrados do backend
+   * Para busca local, filtra por data, tribunal e ID
    */
   const filteredSearches = useMemo(() => {
     // Primeiro filtrar apenas buscas com publicações
     const searchesWithResults = searches.filter(s => s.total_publicacoes > 0);
 
+    // Se busca está sendo feita no backend, retornar resultados diretos
+    if (useBackendSearch) {
+      return searchesWithResults;
+    }
+
+    // Busca local (data, tribunal, ID)
     if (!searchQuery.trim()) {
       return searchesWithResults;
     }
@@ -69,9 +81,15 @@ function SearchHistoryPage() {
         return true;
       }
 
-      // Busca inteligente por data: verifica se a data está DENTRO do período
-      // Exemplo: digita "11/" e encontra buscas que incluem 11/02 mesmo que não seja início ou fim
-      if (query.match(/^\d{1,2}\/?/) || query.match(/^\d{1,2}\/\d{1,2}\/?/)) {
+      // Busca inteligente por data: só detecta como data se:
+      // 1. Contém "/" (ex: "11/", "11/02", "11/02/2026")
+      // 2. OU tem no máximo 2 dígitos (ex: "11", "1")
+      // Números longos sem "/" (ex: "00006236920268260320") NÃO são considerados datas
+      const hasSlash = query.includes('/');
+      const isShortNumber = query.match(/^\d{1,2}$/) !== null;
+      const looksLikeDate = hasSlash || isShortNumber;
+
+      if (looksLikeDate) {
         // Tentar construir possíveis datas com o que foi digitado
         const inicio = new Date(search.data_inicio);
         const fim = new Date(search.data_fim);
@@ -117,9 +135,55 @@ function SearchHistoryPage() {
         return true;
       }
 
+      // TODO: Busca por número de processo nas publicações
+      // Requer carregar publicações ou buscar no backend
+      // Por enquanto, só busca nos dados do histórico (data, tribunal, ID)
+
       return false;
     });
-  }, [searches, searchQuery, formatDate, formatDateTime]);
+  }, [searches, searchQuery, formatDate, formatDateTime, useBackendSearch]);
+
+  /**
+   * Detecta se deve usar busca no backend (números longos = possível número de processo)
+   * Usa debounce para evitar requisições excessivas
+   */
+  useEffect(() => {
+    const query = searchQuery.trim();
+    
+    // Limpar timer anterior
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Se query vazia, resetar
+    if (!query) {
+      setUseBackendSearch(false);
+      return;
+    }
+
+    // Detectar se é número longo sem "/" (possível número de processo)
+    // Números com 3+ dígitos sem "/" aciona busca no backend
+    const hasSlash = query.includes('/');
+    const isLongNumber = /^\d{3,}$/.test(query);
+    const shouldUseBackend = !hasSlash && isLongNumber;
+
+    if (shouldUseBackend) {
+      // Buscar no backend após 500ms de debounce
+      debounceTimerRef.current = setTimeout(() => {
+        setUseBackendSearch(true);
+        searchByQuery(query);
+      }, 500);
+    } else {
+      setUseBackendSearch(false);
+    }
+
+    // Cleanup
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery, searchByQuery]);
 
   /**
    * Manipula mudança na busca
