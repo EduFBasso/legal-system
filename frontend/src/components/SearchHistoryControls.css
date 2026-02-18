@@ -1,8 +1,7 @@
 /* SearchHistoryControls.css */
 .search-history-controls {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
   padding: 1.25rem;
   background: white;
@@ -12,10 +11,9 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Campo de busca */
+/* Campo de busca - primeira linha, largura total */
 .search-box {
-  flex: 1;
-  max-width: 500px;
+  width: 100%;
   position: relative;
   display: flex;
   align-items: center;
@@ -68,11 +66,13 @@
   color: #333;
 }
 
-/* Controles à direita */
+/* Controles à direita - segunda linha */
 .controls-right {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
+  width: 100%;
 }
 
 .results-info {
@@ -273,46 +273,27 @@
 }
 
 /* Responsividade */
-@media (max-width: 1024px) {
-  .search-history-controls {
-    flex-wrap: wrap;
-  }
-
-  .search-box {
-    flex: 1 1 100%;
-    max-width: none;
-    order: 1;
-  }
-
-  .controls-right {
-    flex: 1;
-    width: 100%;
-    justify-content: space-between;
-    order: 2;
-    margin-top: 0.5rem;
-  }
-}
-
 @media (max-width: 768px) {
   .search-history-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
+    padding: 1rem;
   }
 
   .controls-right {
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 0.75rem;
+  }
+
+  .results-info {
+    width: 100%;
+    text-align: center;
+    order: -1;
   }
 
   .ordering-toggle,
   .clear-history-btn {
-    width: 100%;
+    flex: 1;
+    min-width: 140px;
     justify-content: center;
-  }
-
-  .results-info {
-    text-align: center;
   }
 
   .confirm-dialog {
@@ -321,10 +302,5 @@
 
   .confirm-actions {
     flex-direction: column;
-  }
-
-  .ordering-label,
-  .clear-label {
-    display: inline;
   }
 }
