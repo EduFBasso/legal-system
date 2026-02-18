@@ -2,11 +2,10 @@
  * Página de Histórico de Publicações
  * Exibe lista de todas as buscas realizadas com filtros e paginação
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 import SearchHistoryList from '../components/SearchHistoryList';
-import SearchHistoryStats from '../components/SearchHistoryStats';
-import SearchHistoryFilters from '../components/SearchHistoryFilters';
+import SearchHistoryControls from '../components/SearchHistoryControls';
 import SearchHistoryDetailModal from '../components/SearchHistoryDetailModal';
 import './SearchHistoryPage.css';
 
@@ -20,17 +19,84 @@ function SearchHistoryPage() {
     selectedSearch,
     selectedPublications,
     detailLoading,
+    isClearing,
     loadSearchDetail,
     nextPage,
     previousPage,
     changeOrdering,
     clearSelectedSearch,
+    clearHistory,
     formatDate,
-    formatDateTime,
-    getStats
+    formatDateTime
   } = useSearchHistory();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Verificar se ordenação é crescente
+  const isAscending = ordering === 'executed_at';
+
+  /**
+   * Toggle de ordenação crescente/decrescente
+   */
+  const handleOrderingToggle = () => {
+    const newOrdering = isAscending ? '-executed_at' : 'executed_at';
+    changeOrdering(newOrdering);
+  };
+
+  /**
+   * Filtro em tempo real - busca por data, processo ou nomes
+   */
+  const filteredSearches = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return searches;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return searches.filter(search => {
+      // Buscar por data (formato DD/MM/YYYY)
+      const dataInicio = formatDate(search.data_inicio).toLowerCase();
+      const dataFim = formatDate(search.data_fim).toLowerCase();
+      const executedAt = formatDateTime(search.executed_at).toLowerCase();
+
+      if (dataInicio.includes(query) || dataFim.includes(query) || executedAt.includes(query)) {
+        return true;
+      }
+
+      // Buscar por tribunal
+      if (search.tribunais.some(t => t.toLowerCase().includes(query))) {
+        return true;
+      }
+
+      // Buscar por número no ID (se digitarem números)
+      if (search.id.toString().includes(query)) {
+        return true;
+      }
+
+      return false;
+    });
+  }, [searches, searchQuery, formatDate, formatDateTime]);
+
+  /**
+   * Manipula mudança na busca
+   */
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+  };
+
+  /**
+   * Manipula limpeza do histórico
+   */
+  const handleClearHistory = async () => {
+    try {
+      await clearHistory();
+      // Sucesso - o hook já atualiza o estado
+    } catch (err) {
+      // Erro já tratado no hook
+      console.error('Erro ao limpar histórico:', err);
+    }
+  };
 
   /**
    * Manipula clique em um card de busca
@@ -48,9 +114,6 @@ function SearchHistoryPage() {
     clearSelectedSearch();
   };
 
-  // Calcular estatísticas
-  const stats = getStats();
-
   return (
     <div className="search-history-page">
       {/* Cabeçalho */}
@@ -61,14 +124,16 @@ function SearchHistoryPage() {
         </p>
       </header>
 
-      {/* Estatísticas */}
-      <SearchHistoryStats stats={stats} />
-
-      {/* Filtros e Ordenação */}
-      <SearchHistoryFilters
-        ordering={ordering}
-        onOrderingChange={changeOrdering}
+      {/* Controles: Busca, Ordenação e Limpeza */}
+      <SearchHistoryControls
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        isAscending={isAscending}
+        onOrderingToggle={handleOrderingToggle}
+        onClearHistory={handleClearHistory}
         totalCount={pagination.count}
+        filteredCount={filteredSearches.length}
+        isClearing={isClearing}
       />
 
       {/* Mensagem de erro */}
@@ -88,20 +153,20 @@ function SearchHistoryPage() {
       ) : (
         <>
           {/* Lista de buscas */}
-          {searches.length === 0 ? (
+          {filteredSearches.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📋</div>
-              <h2>Nenhuma busca encontrada</h2>
+              <h2>{searchQuery ? 'Nenhum resultado encontrado' : 'Nenhuma busca encontrada'}</h2>
               <p>
-                Você ainda não realizou nenhuma busca de publicações.
-                <br />
-                Acesse a página de Publicações para fazer sua primeira pesquisa.
+                {searchQuery
+                  ? 'Tente buscar com outros termos ou limpe o filtro.'
+                  : 'Você ainda não realizou nenhuma busca de publicações. Acesse a página de Publicações para fazer sua primeira pesquisa.'}
               </p>
             </div>
           ) : (
             <>
               <SearchHistoryList
-                searches={searches}
+                searches={filteredSearches}
                 onSearchClick={handleSearchClick}
                 formatDate={formatDate}
                 formatDateTime={formatDateTime}

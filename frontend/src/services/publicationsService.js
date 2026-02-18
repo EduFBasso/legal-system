@@ -169,6 +169,23 @@ class PublicationsService {
 
     return await response.json();
   }
+
+  /**
+   * Deleta todo o histórico de buscas
+   * ATENÇÃO: Operação irreversível!
+   * @returns {Promise<Object>} Resultado da deleção
+   */
+  async deleteSearchHistory() {
+    const response = await fetch(`${API_BASE_URL}/publications/history/delete`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao deletar histórico: ${response.status}`);
+    }
+
+    return await response.json();
+  }
 }
 
 // Exportar instância singleton

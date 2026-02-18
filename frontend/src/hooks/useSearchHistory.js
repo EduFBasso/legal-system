@@ -28,6 +28,9 @@ export function useSearchHistory() {
   const [selectedPublications, setSelectedPublications] = useState([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  // Estado para limpeza do histórico
+  const [isClearing, setIsClearing] = useState(false);
+
   /**
    * Carrega lista de buscas do histórico
    */
@@ -150,29 +153,38 @@ export function useSearchHistory() {
   }, []);
 
   /**
-   * Calcula estatísticas do histórico
+   * Deleta todo o histórico de buscas
+   * ATENÇÃO: Operação irreversível!
    */
-  const getStats = useCallback(() => {
-    if (searches.length === 0) {
-      return {
-        totalSearches: 0,
-        totalPublications: 0,
-        totalNewPublications: 0,
-        averageDuration: 0
-      };
+  const clearHistory = useCallback(async () => {
+    setIsClearing(true);
+    setError(null);
+
+    try {
+      const result = await publicationsService.deleteSearchHistory();
+
+      if (result.success) {
+        // Recarregar histórico (que agora estará vazio)
+        setSearches([]);
+        setPagination({
+          count: 0,
+          limit: 20,
+          offset: 0,
+          hasNext: false,
+          hasPrevious: false
+        });
+        return result;
+      } else {
+        throw new Error(result.error || 'Erro ao limpar histórico');
+      }
+    } catch (err) {
+      console.error('Erro ao limpar histórico:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsClearing(false);
     }
-
-    const totalPublications = searches.reduce((sum, s) => sum + s.total_publicacoes, 0);
-    const totalNewPublications = searches.reduce((sum, s) => sum + s.total_novas, 0);
-    const averageDuration = searches.reduce((sum, s) => sum + s.duration_seconds, 0) / searches.length;
-
-    return {
-      totalSearches: pagination.count,
-      totalPublications,
-      totalNewPublications,
-      averageDuration: averageDuration.toFixed(2)
-    };
-  }, [searches, pagination.count]);
+  }, []);
 
   // Carregar histórico ao montar o componente ou quando ordenação mudar
   useEffect(() => {
@@ -219,6 +231,7 @@ export function useSearchHistory() {
     selectedSearch,
     selectedPublications,
     detailLoading,
+    isClearing,
 
     // Ações
     loadHistory,
@@ -227,10 +240,10 @@ export function useSearchHistory() {
     previousPage,
     changeOrdering,
     clearSelectedSearch,
+    clearHistory,
 
     // Utilitários
     formatDate,
-    formatDateTime,
-    getStats
+    formatDateTime
   };
 }

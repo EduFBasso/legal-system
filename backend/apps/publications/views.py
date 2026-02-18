@@ -655,3 +655,46 @@ def get_search_history_detail(request, search_id):
             'success': False,
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['DELETE'])
+def delete_search_history(request):
+    """
+    Deleta todo o histórico de buscas.
+    ATENÇÃO: Esta operação é irreversível!
+    
+    DELETE /api/publications/history
+    
+    Response:
+    {
+        "success": true,
+        "message": "15 buscas deletadas com sucesso",
+        "deleted_count": 15
+    }
+    """
+    try:
+        # Contar registros antes de deletar
+        count = SearchHistory.objects.count()
+        
+        if count == 0:
+            return Response({
+                'success': True,
+                'message': 'Nenhuma busca para deletar',
+                'deleted_count': 0
+            })
+        
+        # Deletar todos os registros
+        SearchHistory.objects.all().delete()
+        
+        return Response({
+            'success': True,
+            'message': f'{count} {"busca deletada" if count == 1 else "buscas deletadas"} com sucesso',
+            'deleted_count': count
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
