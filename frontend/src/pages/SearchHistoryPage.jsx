@@ -46,15 +46,19 @@ function SearchHistoryPage() {
 
   /**
    * Filtro em tempo real - busca por data, processo ou nomes
+   * Também filtra buscas com 0 publicações
    */
   const filteredSearches = useMemo(() => {
+    // Primeiro filtrar apenas buscas com publicações
+    const searchesWithResults = searches.filter(s => s.total_publicacoes > 0);
+
     if (!searchQuery.trim()) {
-      return searches;
+      return searchesWithResults;
     }
 
     const query = searchQuery.toLowerCase();
 
-    return searches.filter(search => {
+    return searchesWithResults.filter(search => {
       // Buscar por data (formato DD/MM/YYYY)
       const dataInicio = formatDate(search.data_inicio).toLowerCase();
       const dataFim = formatDate(search.data_fim).toLowerCase();
