@@ -25,9 +25,10 @@ export function generateEProcLink(numeroProcesso) {
 export function generateTRF3Link(numeroProcesso) {
   if (!numeroProcesso) return null;
   
-  // PJe TRF3 - Consulta Pública
-  // Base: https://pje1g.trf3.jus.br/consultapublica/ConsultaPublica/listView.seam
-  return 'https://pje1g.trf3.jus.br/consultapublica/ConsultaPublica/listView.seam';
+  // TRF3 1ª Instância - Juizado Especial Federal (JEF)
+  // Página oficial de consulta processual
+  // Base: http://www.jfsp.jus.br/jef/
+  return 'http://www.jfsp.jus.br/jef/';
 }
 
 /**
@@ -38,9 +39,9 @@ export function generateTRF3Link(numeroProcesso) {
 export function generateTRT15Link(numeroProcesso) {
   if (!numeroProcesso) return null;
   
-  // PJe TRT15 - Consulta Processual
-  // Base: https://pje.trt15.jus.br/consultaprocessual/
-  return 'https://pje.trt15.jus.br/consultaprocessual/';
+  // PJe TRT15 - Consulta Pública
+  // Base: https://pje.trt15.jus.br/consultaprocessual
+  return 'https://pje.trt15.jus.br/consultaprocessual';
 }
 
 /**
@@ -64,13 +65,13 @@ export function getAvailableConsultaSystems(tribunal) {
       break;
       
     case 'TRF3':
-      // TRF3 tem consulta PJe própria
+      // TRF3 tem consulta JEF/Fórum própria
       systems.push({
-        name: 'Consulta PJe TRF3',
-        shortName: 'PJe TRF3',
+        name: 'Consulta JEF/Fórum TRF3',
+        shortName: 'JEF TRF3',
         icon: '⚖️',
         getLinkFn: generateTRF3Link,
-        description: 'Consulta processual TRF3'
+        description: 'Consulta processual JEF e Fóruns Federais TRF3'
       });
       break;
       
