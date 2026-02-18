@@ -45,6 +45,19 @@ export function generateTRT15Link(numeroProcesso) {
 }
 
 /**
+ * Gera link para consulta PJe TRT2 (Justiça do Trabalho - São Paulo)
+ * @param {string} numeroProcesso - Número CNJ do processo
+ * @returns {string|null} URL da consulta PJe TRT2 ou null se não aplicável
+ */
+export function generateTRT2Link(numeroProcesso) {
+  if (!numeroProcesso) return null;
+  
+  // PJe TRT2 - Consulta Pública
+  // Base: https://pje.trt2.jus.br/consultaprocessual
+  return 'https://pje.trt2.jus.br/consultaprocessual';
+}
+
+/**
  * Determina quais sistemas de consulta são aplicáveis para um tribunal
  * @param {string} tribunal - Código do tribunal (ex: 'TJSP', 'TRF3', 'TRT15')
  * @returns {Array<Object>} Lista de sistemas disponíveis
@@ -83,6 +96,17 @@ export function getAvailableConsultaSystems(tribunal) {
         icon: '👔',
         getLinkFn: generateTRT15Link,
         description: 'Consulta processual Justiça do Trabalho'
+      });
+      break;
+      
+    case 'TRT2':
+      // TRT2 tem consulta PJe Trabalhista (São Paulo)
+      systems.push({
+        name: 'Consulta PJe TRT2',
+        shortName: 'PJe TRT2',
+        icon: '👔',
+        getLinkFn: generateTRT2Link,
+        description: 'Consulta processual Justiça do Trabalho - SP'
       });
       break;
       
