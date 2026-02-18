@@ -60,8 +60,47 @@ function SearchHistoryPage() {
       const dataFim = formatDate(search.data_fim).toLowerCase();
       const executedAt = formatDateTime(search.executed_at).toLowerCase();
 
+      // Busca simples: query aparece nas datas
       if (dataInicio.includes(query) || dataFim.includes(query) || executedAt.includes(query)) {
         return true;
+      }
+
+      // Busca inteligente por data: verifica se a data está DENTRO do período
+      // Exemplo: digita "11/" e encontra buscas que incluem 11/02 mesmo que não seja início ou fim
+      if (query.match(/^\d{1,2}\/?/) || query.match(/^\d{1,2}\/\d{1,2}\/?/)) {
+        // Tentar construir possíveis datas com o que foi digitado
+        const inicio = new Date(search.data_inicio);
+        const fim = new Date(search.data_fim);
+        
+        // Extrair dia, mês e ano do query
+        const parts = query.split('/');
+        const diaQuery = parts[0] ? parseInt(parts[0]) : null;
+        const mesQuery = parts[1] ? parseInt(parts[1]) : null;
+        const anoQuery = parts[2] ? parseInt(parts[2]) : null;
+
+        if (diaQuery) {
+          // Criar data de teste baseada no período da busca
+          // Usar o ano e mês do início para testar
+          const anoTeste = anoQuery || inicio.getFullYear();
+          const mesTeste = mesQuery || (inicio.getMonth() + 1);
+          
+          // Tentar criar a data com os valores fornecidos
+          const dataTeste = new Date(anoTeste, mesTeste - 1, diaQuery);
+          
+          // Verificar se a data de teste está dentro do período [inicio, fim]
+          if (dataTeste >= inicio && dataTeste <= fim) {
+            return true;
+          }
+
+          // Também testar com o mês do fim (caso o período cruze meses)
+          if (fim.getMonth() !== inicio.getMonth()) {
+            const mesTeste2 = mesQuery || (fim.getMonth() + 1);
+            const dataTeste2 = new Date(anoTeste, mesTeste2 - 1, diaQuery);
+            if (dataTeste2 >= inicio && dataTeste2 <= fim) {
+              return true;
+            }
+          }
+        }
       }
 
       // Buscar por tribunal
