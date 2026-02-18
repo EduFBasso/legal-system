@@ -22,6 +22,12 @@ export default function Menu() {
           </NavLink>
         </li>
         <li className="menu-item">
+          <NavLink to="/search-history" className={({ isActive }) => isActive ? 'active' : ''}>
+            <span className="menu-icon">📋</span>
+            <span className="menu-label">Histórico</span>
+          </NavLink>
+        </li>
+        <li className="menu-item">
           <NavLink to="/notifications" className={({ isActive }) => isActive ? 'active' : ''}>
             <span className="menu-icon">🔔</span>
             <span className="menu-label">Notificações</span>

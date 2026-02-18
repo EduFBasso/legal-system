@@ -127,6 +127,48 @@ class PublicationsService {
       dataFim: this.formatDateISO(hoje)
     };
   }
+
+  /**
+   * Busca histórico de buscas com paginação
+   * @param {Object} params - Parâmetros de busca
+   * @param {number} params.limit - Número de itens por página (padrão: 20)
+   * @param {number} params.offset - Offset para paginação (padrão: 0)
+   * @param {string} params.ordering - Campo para ordenação (padrão: -executed_at)
+   * @returns {Promise<Object>} Lista de buscas do histórico
+   */
+  async getSearchHistory({ limit = 20, offset = 0, ordering = '-executed_at' } = {}) {
+    const params = new URLSearchParams({
+      limit,
+      offset,
+      ordering
+    });
+
+    const response = await fetch(`${API_BASE_URL}/publications/history?${params}`);
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar histórico: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Busca detalhes de uma busca específica do histórico
+   * @param {number} searchId - ID da busca
+   * @returns {Promise<Object>} Detalhes da busca e publicações
+   */
+  async getSearchHistoryDetail(searchId) {
+    const response = await fetch(`${API_BASE_URL}/publications/history/${searchId}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Busca não encontrada');
+      }
+      throw new Error(`Erro ao buscar detalhes: ${response.status}`);
+    }
+
+    return await response.json();
+  }
 }
 
 // Exportar instância singleton

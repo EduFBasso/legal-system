@@ -474,3 +474,184 @@ def retrieve_last_search_publications(request):
             'success': False,
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_search_history(request):
+    """
+    Retorna lista completa do histórico de buscas.
+    
+    GET /api/publications/history?limit=20&offset=0&ordering=-executed_at
+    
+    Query Parameters:
+        - limit (optional): Número de itens por página (padrão: 20)
+        - offset (optional): Offset para paginação (padrão: 0)
+        - ordering (optional): Campo para ordenação (padrão: -executed_at)
+                              Opções: executed_at, -executed_at, total_publicacoes, -total_publicacoes
+    
+    Response:
+    {
+        "success": true,
+        "count": 15,
+        "next": "?limit=20&offset=20",
+        "previous": null,
+        "results": [
+            {
+                "id": 5,
+                "executed_at": "2026-02-17T14:48:00Z",
+                "data_inicio": "2026-02-11",
+                "data_fim": "2026-02-17",
+                "tribunais": ["TJSP", "TRF3"],
+                "total_publicacoes": 4,
+                "total_novas": 2,
+                "duration_seconds": 3.45
+            }
+        ]
+    }
+    """
+    try:
+        # Parâmetros de paginação
+        limit = int(request.query_params.get('limit', 20))
+        offset = int(request.query_params.get('offset', 0))
+        ordering = request.query_params.get('ordering', '-executed_at')
+        
+        # Validar limite (máximo 100)
+        if limit > 100:
+            limit = 100
+        
+        # Validar campo de ordenação
+        valid_ordering = ['executed_at', '-executed_at', 'total_publicacoes', 
+                         '-total_publicacoes', 'duration_seconds', '-duration_seconds']
+        if ordering not in valid_ordering:
+            ordering = '-executed_at'
+        
+        # Buscar histórico com paginação
+        all_searches = SearchHistory.objects.all().order_by(ordering)
+        total_count = all_searches.count()
+        
+        searches = all_searches[offset:offset + limit]
+        
+        # Serializar resultados
+        results = []
+        for search in searches:
+            results.append({
+                'id': search.id,
+                'executed_at': search.executed_at.isoformat(),
+                'data_inicio': search.data_inicio.isoformat(),
+                'data_fim': search.data_fim.isoformat(),
+                'tribunais': search.tribunais,
+                'total_publicacoes': search.total_publicacoes,
+                'total_novas': search.total_novas,
+                'duration_seconds': search.duration_seconds,
+            })
+        
+        # Calcular URLs de paginação
+        next_url = None
+        previous_url = None
+        
+        if offset + limit < total_count:
+            next_url = f"?limit={limit}&offset={offset + limit}&ordering={ordering}"
+        
+        if offset > 0:
+            prev_offset = max(0, offset - limit)
+            previous_url = f"?limit={limit}&offset={prev_offset}&ordering={ordering}"
+        
+        return Response({
+            'success': True,
+            'count': total_count,
+            'next': next_url,
+            'previous': previous_url,
+            'results': results
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_search_history_detail(request, search_id):
+    """
+    Retorna detalhes de uma busca específica do histórico, incluindo as publicações.
+    
+    GET /api/publications/history/<id>
+    
+    Response:
+    {
+        "success": true,
+        "search": {
+            "id": 5,
+            "executed_at": "2026-02-17T14:48:00Z",
+            "data_inicio": "2026-02-11",
+            "data_fim": "2026-02-17",
+            "tribunais": ["TJSP"],
+            "total_publicacoes": 4,
+            "total_novas": 2,
+            "duration_seconds": 3.45,
+            "search_params": {
+                "retroactive_days": 7,
+                "oab": "507553"
+            }
+        },
+        "publicacoes": [...]
+    }
+    """
+    try:
+        # Buscar pesquisa específica
+        try:
+            search = SearchHistory.objects.get(id=search_id)
+        except SearchHistory.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': f'Busca com ID {search_id} não encontrada'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Buscar publicações relacionadas a esta pesquisa
+        publicacoes_db = Publication.objects.filter(
+            tribunal__in=search.tribunais,
+            data_disponibilizacao__gte=search.data_inicio,
+            data_disponibilizacao__lte=search.data_fim
+        ).order_by('-data_disponibilizacao', '-created_at')
+        
+        # Serializar publicações
+        publicacoes_json = []
+        for pub in publicacoes_db:
+            publicacoes_json.append({
+                'id_api': pub.id_api,
+                'numero_processo': pub.numero_processo,
+                'tribunal': pub.tribunal,
+                'tipo_comunicacao': pub.tipo_comunicacao,
+                'data_disponibilizacao': pub.data_disponibilizacao.isoformat(),
+                'orgao': pub.orgao,
+                'meio': pub.meio,
+                'texto_resumo': pub.texto_resumo,
+                'texto_completo': pub.texto_completo,
+                'link_oficial': pub.link_oficial,
+                'hash': pub.hash_pub,
+            })
+        
+        # Montar resposta com todos os dados da busca
+        return Response({
+            'success': True,
+            'search': {
+                'id': search.id,
+                'executed_at': search.executed_at.isoformat(),
+                'data_inicio': search.data_inicio.isoformat(),
+                'data_fim': search.data_fim.isoformat(),
+                'tribunais': search.tribunais,
+                'total_publicacoes': search.total_publicacoes,
+                'total_novas': search.total_novas,
+                'duration_seconds': search.duration_seconds,
+                'search_params': search.search_params,
+            },
+            'publicacoes': publicacoes_json,
+            'total_publicacoes_encontradas': len(publicacoes_json)
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

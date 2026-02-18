@@ -8,6 +8,7 @@ import MainContent from './components/MainContent';
 import Sidebar from './components/Sidebar';
 import ContactsPage from './pages/ContactsPage';
 import PublicationsPage from './pages/PublicationsPage';
+import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import './App.css';
@@ -29,6 +30,7 @@ function App() {
                   <Route path="/" element={<ContactsPage />} />
                   <Route path="/contacts" element={<ContactsPage />} />
                   <Route path="/publications" element={<PublicationsPage />} />
+                  <Route path="/search-history" element={<SearchHistoryPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
                 </Routes>
               </MainContent>

@@ -1,0 +1,204 @@
+/* SearchHistoryCard.css */
+.search-history-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-history-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: #007bff;
+}
+
+/* Cabeçalho */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.execution-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.execution-icon {
+  font-size: 1.2rem;
+}
+
+.execution-date {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.duration-badge {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Período */
+.search-period {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.period-icon {
+  font-size: 1.1rem;
+}
+
+.period-text {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Tribunais */
+.tribunais-section {
+  margin-bottom: 1rem;
+}
+
+.tribunais-label {
+  font-size: 0.85rem;
+  color: #666;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.tribunais-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tribunal-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.tribunal-tjsp {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.tribunal-trf3 {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.tribunal-trt2 {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.tribunal-trt15 {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+/* Estatísticas */
+.card-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 1rem 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value-new {
+  color: #28a745;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background-color: #e0e0e0;
+}
+
+.stat-item-highlight {
+  background-color: #f0f8f1;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+/* Rodapé */
+.card-footer {
+  text-align: center;
+}
+
+.view-details {
+  color: #007bff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.search-history-card:hover .view-details {
+  color: #0056b3;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .search-history-card {
+    padding: 1rem;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .duration-badge {
+    align-self: flex-start;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
