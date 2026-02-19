@@ -2,9 +2,10 @@
  * SearchHistoryDetailModal - Modal para exibir detalhes de uma busca
  * Mostra informações completas e lista de publicações
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import PublicationCard from './PublicationCard';
+import PublicationDetailModal from './PublicationDetailModal';
 import './SearchHistoryDetailModal.css';
 
 function SearchHistoryDetailModal({
@@ -16,9 +17,22 @@ function SearchHistoryDetailModal({
   formatDateTime,
   highlightProcessNumber = null
 }) {
+  // Estado para controlar publicação selecionada (modal dentro de modal)
+  const [selectedPublication, setSelectedPublication] = useState(null);
+  
+  // Handler para abrir detalhes da publicação
+  const handlePublicationClick = (publication) => {
+    setSelectedPublication(publication);
+  };
+  
+  // Handler para fechar modal de detalhes da publicação
+  const handleClosePublicationDetail = () => {
+    setSelectedPublication(null);
+  };
+  
   // Verificar quais publicações contêm o número de processo buscado
   const getMatchingPublications = () => {
-    if (!highlightProcessNumber) return [];
+    if (!highlightProcessNumber || !publications || publications.length === 0) return [];
     
     // Remover caracteres especiais do número buscado
     const searchDigits = highlightProcessNumber.replace(/[^\d]/g, '');
@@ -31,6 +45,7 @@ function SearchHistoryDetailModal({
   };
   
   const matchingPublicationIds = getMatchingPublications();
+  
   // Prevenir rolagem do body quando modal está aberto
   useEffect(() => {
     if (search) {
@@ -145,6 +160,7 @@ function SearchHistoryDetailModal({
                         key={pub.id_api}
                         publication={pub}
                         highlighted={isHighlighted}
+                        onClick={() => handlePublicationClick(pub)}
                       />
                     );
                   })}
@@ -154,6 +170,14 @@ function SearchHistoryDetailModal({
           </>
         )}
       </div>
+      
+      {/* Modal de detalhes da publicação (modal dentro de modal) */}
+      {selectedPublication && (
+        <PublicationDetailModal
+          publication={selectedPublication}
+          onClose={handleClosePublicationDetail}
+        />
+      )}
     </div>
   );
 }
