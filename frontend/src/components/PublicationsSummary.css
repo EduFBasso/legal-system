@@ -22,16 +22,16 @@
   cursor: pointer;
   padding: 1rem;
   margin: -1rem -1rem 1rem -1rem;
-  border-bottom: 2px solid #3b82f6;
-  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  border-bottom: 2px solid var(--publication-primary, #6366f1);
+  background: linear-gradient(135deg, var(--publication-light, #e0e7ff) 0%, var(--publication-lighter, #eef2ff) 100%);
   border-radius: 12px 12px 0 0;
   transition: all 0.2s ease;
 }
 
 .last-check-info.clickable:hover {
-  background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+  background: linear-gradient(135deg, #c7d2fe 0%, #e0e7ff 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 6px rgba(99, 102, 241, 0.15);
 }
 
 .last-check-info.clickable:active {
