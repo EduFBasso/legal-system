@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
+import { useHighlight } from '../hooks/useHighlight';
 import './NotificationsSummary.css';
 
 /**
@@ -10,6 +11,12 @@ import './NotificationsSummary.css';
 export default function NotificationsSummary() {
   const navigate = useNavigate();
   const { notifications, unreadCount, fetchUnreadNotifications, markAsRead } = useNotifications();
+  
+  // Sistema de destaque unificado - usando hook customizado
+  const highlight = useHighlight({ 
+    className: 'pulse-active-mini',
+    initialState: false  // Começa desativado
+  });
 
   // Atualizar notificações periodicamente
   useEffect(() => {
@@ -62,6 +69,29 @@ export default function NotificationsSummary() {
 
   return (
     <div className="notifications-summary">
+      {/* Botão de teste (apenas desenvolvimento) */}
+      {process.env.NODE_ENV === 'development' && (
+        <button 
+          onClick={highlight.toggle}
+          style={{
+            position: 'absolute',
+            top: '0.5rem',
+            right: '0.5rem',
+            padding: '0.25rem 0.5rem',
+            fontSize: '0.7rem',
+            background: highlight.isHighlighted ? '#4caf50' : '#ccc',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            zIndex: 10
+          }}
+          title="Toggle brilho pulsante (dev)"
+        >
+          {highlight.isHighlighted ? '✨ ON' : '⭕ OFF'}
+        </button>
+      )}
+      
       {/* Header com contador */}
       <div className="notifications-header" onClick={handleViewAll}>
         <div className="notification-count-badge">
@@ -83,7 +113,7 @@ export default function NotificationsSummary() {
           {recentUnread.map((notification) => (
             <div
               key={notification.id}
-              className={`notification-mini-card ${getPriorityClass(notification.priority)}`}
+              className={`notification-mini-card ${getPriorityClass(notification.priority)} ${highlight.className}`}
               onClick={() => handleNotificationClick(notification.id)}
             >
               <div className="mini-card-icon">

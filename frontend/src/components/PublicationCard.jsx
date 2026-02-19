@@ -1,7 +1,14 @@
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import './PublicationCard.css';
 
-export default function PublicationCard({ publication, onClick, highlighted = false }) {
+export default function PublicationCard({ 
+  publication, 
+  onClick, 
+  highlighted = false,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelect = () => {}
+}) {
   const getTipoBadgeColor = (tipo) => {
     const colors = {
       'Intimação': 'blue',
@@ -88,9 +95,31 @@ export default function PublicationCard({ publication, onClick, highlighted = fa
     ? "publication-card highlighted-publication" 
     : "publication-card";
 
+  const handleCardClick = (e) => {
+    if (selectionMode) {
+      e.stopPropagation();
+      onToggleSelect();
+    } else {
+      onClick();
+    }
+  };
+
+  const handleCheckboxClick = (e) => {
+    e.stopPropagation();
+    onToggleSelect();
+  };
+
   return (
-    <div className={cardClassName} onClick={onClick}>
-      {highlighted && (
+    <div className={cardClassName} onClick={handleCardClick}>      {selectionMode && (
+        <div className="selection-checkbox-overlay">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={handleCheckboxClick}
+            className="publication-checkbox"
+          />
+        </div>
+      )}      {highlighted && (
         <div className="highlighted-badge">
           <span className="badge-icon">✨</span>
           <span className="badge-text">Encontrado</span>

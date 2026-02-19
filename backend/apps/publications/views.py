@@ -813,3 +813,110 @@ def get_publication_by_id(request, id_api):
             'success': False,
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['DELETE'])
+def delete_publication(request, id_api):
+    """
+    Deleta uma publicação específica.
+    
+    DELETE /api/publications/<id_api>/delete
+    
+    Response:
+    {
+        "success": true,
+        "message": "Publicação deletada com sucesso"
+    }
+    """
+    try:
+        publication = Publication.objects.get(id_api=id_api)
+        publication.delete()
+        
+        return Response({
+            'success': True,
+            'message': 'Publicação deletada com sucesso'
+        })
+        
+    except Publication.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Publicação não encontrada'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def delete_multiple_publications(request):
+    """
+    Deleta múltiplas publicações de uma vez.
+    
+    POST /api/publications/delete-multiple
+    Body: {
+        "publication_ids": [123, 456, 789]  // Array de id_api
+    }
+    
+    Response:
+    {
+        "success": true,
+        "deleted": 3,
+        "message": "3 publicação(ões) deletada(s) com sucesso"
+    }
+    """
+    try:
+        publication_ids = request.data.get('publication_ids', [])
+        
+        if not publication_ids:
+            return Response({
+                'success': False,
+                'message': 'Nenhuma publicação especificada'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        deleted_count = Publication.objects.filter(id_api__in=publication_ids).delete()[0]
+        
+        return Response({
+            'success': True,
+            'deleted': deleted_count,
+            'message': f'{deleted_count} publicação(ões) deletada(s) com sucesso'
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def delete_all_publications(request):
+    """
+    Deleta TODAS as publicações do banco.
+    ATENÇÃO: Esta operação é irreversível!
+    
+    POST /api/publications/delete-all
+    
+    Response:
+    {
+        "success": true,
+        "deleted": 150,
+        "message": "Todas as 150 publicações foram deletadas"
+    }
+    """
+    try:
+        deleted_count = Publication.objects.all().delete()[0]
+        
+        return Response({
+            'success': True,
+            'deleted': deleted_count,
+            'message': f'Todas as {deleted_count} publicações foram deletadas'
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

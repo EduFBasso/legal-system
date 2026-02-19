@@ -168,11 +168,13 @@ def create_test_notification(request):
     Endpoint para criar notificação de teste.
     Útil para desenvolvimento e troubleshooting.
     """
+    # Usar timezone.localtime() para converter para timezone configurado
+    now_local = timezone.localtime(timezone.now())
     notification = Notification.objects.create(
         type='system',
         priority='medium',
         title='Notificação de Teste',
-        message='Esta é uma notificação de teste criada em ' + timezone.now().strftime('%d/%m/%Y às %H:%M'),
+        message='Esta é uma notificação de teste criada em ' + now_local.strftime('%d/%m/%Y às %H:%M'),
         link='/notifications'
     )
     

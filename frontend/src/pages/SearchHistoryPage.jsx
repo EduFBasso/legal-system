@@ -1,5 +1,5 @@
 /**
- * Página de Histórico de Publicações
+ * Página de Histórico de Buscas de Publicações
  * Exibe lista de todas as buscas realizadas com filtros e paginação
  */
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -230,7 +230,7 @@ function SearchHistoryPage() {
     <div className="search-history-page">
       {/* Cabeçalho */}
       <header className="search-history-header">
-        <h1>Histórico de Publicações</h1>
+        <h1>Histórico de Buscas</h1>
         <p className="subtitle">
           Consulte suas buscas anteriores e visualize as publicações encontradas
         </p>

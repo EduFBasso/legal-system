@@ -283,7 +283,7 @@
   padding: 20px;
   background: white;
   border-radius: 12px;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #4caf50 !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s;
   position: relative;
@@ -300,8 +300,16 @@
 }
 
 .notification-card.unread {
-  background: #fffbeb;
-  border-left-color: #f59e0b;
+  background: #f0fdf4;
+  border: 2px solid #4caf50;
+  border-left: 4px solid #4caf50;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+.notification-card.unread:hover {
+  border-color: #45a049;
+  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 /* Selection Mode */
@@ -359,7 +367,7 @@
 }
 
 .notification-card.unread .notification-icon {
-  background: #fef3c7;
+  background: #dcfce7;
 }
 
 .notification-content {
@@ -444,6 +452,8 @@
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
+  border: none;
+  cursor: pointer;
   transition: all 0.2s;
 }
 
@@ -451,27 +461,7 @@
   background: #2563eb;
 }
 
-.unread-indicator {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 10px;
-  height: 10px;
-  background: #ef4444;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.7;
-  }
-}
+/* Removido: unread-indicator (ponto vermelho) - usando destaque verde no card completo */
 
 /* Empty State */
 .empty-state {

@@ -1,5 +1,6 @@
 /* Notifications Summary - Sidebar Component */
 .notifications-summary {
+  position: relative; /* ESTUDO: Para posicionar botão de teste */
   padding: 1rem;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   border-radius: 12px;
@@ -74,6 +75,21 @@
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  /* ESTUDO: Animação removida - agora controlada por classe .pulse-active */
+}
+
+/* ESTUDO: Classe para ativar brilho quando necessário */
+.notification-mini-card.pulse-active {
+  animation: pulse-green-mini 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green-mini {
+  0%, 100% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 8px rgba(76, 175, 80, 0.2);
+  }
+  50% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 15px rgba(76, 175, 80, 0.4);
+  }
 }
 
 .notification-mini-card:hover {

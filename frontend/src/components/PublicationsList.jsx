@@ -6,7 +6,15 @@ import './PublicationsList.css';
  * Componente para exibir a lista de publicações
  * Lida com estados de carregamento, vazio e lista de publicações
  */
-export default function PublicationsList({ publications, loading, searchParams, onCardClick }) {
+export default function PublicationsList({ 
+  publications, 
+  loading, 
+  searchParams, 
+  onCardClick,
+  selectionMode = false,
+  selectedIds = new Set(),
+  onToggleSelect = () => {}
+}) {
   // Estado de carregamento
   if (loading) {
     return (
@@ -51,9 +59,12 @@ export default function PublicationsList({ publications, loading, searchParams, 
     <div className="publications-grid">
       {publications.map((pub) => (
         <PublicationCard
-          key={pub.id}
+          key={pub.id_api}
           publication={pub}
           onClick={() => onCardClick(pub)}
+          selectionMode={selectionMode}
+          isSelected={selectedIds.has(pub.id_api)}
+          onToggleSelect={() => onToggleSelect(pub.id_api)}
         />
       ))}
     </div>
@@ -64,5 +75,8 @@ PublicationsList.propTypes = {
   publications: PropTypes.arrayOf(PropTypes.object).isRequired,
   loading: PropTypes.bool.isRequired,
   searchParams: PropTypes.object,
-  onCardClick: PropTypes.func.isRequired
+  onCardClick: PropTypes.func.isRequired,
+  selectionMode: PropTypes.bool,
+  selectedIds: PropTypes.instanceOf(Set),
+  onToggleSelect: PropTypes.func
 };

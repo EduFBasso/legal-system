@@ -14,5 +14,9 @@ urlpatterns = [
     path('history', views.get_search_history, name='search_history'),
     path('history/delete', views.delete_search_history, name='delete_search_history'),
     path('history/<int:search_id>', views.get_search_history_detail, name='search_history_detail'),
+    path('delete-multiple', views.delete_multiple_publications, name='delete_multiple'),
+    path('delete-all', views.delete_all_publications, name='delete_all'),
+    path('<int:id_api>/delete', views.delete_publication, name='delete'),
+    path('<int:id_api>', views.get_publication_by_id, name='get_by_id'),
     path('debug', views.debug_search, name='debug'),
 ]

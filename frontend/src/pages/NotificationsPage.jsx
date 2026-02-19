@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
+import NotificationDetailModal from '../components/NotificationDetailModal';
+import PublicationDetailModal from '../components/PublicationDetailModal';
 import './NotificationsPage.css';
 
 export default function NotificationsPage() {
@@ -24,6 +26,9 @@ export default function NotificationsPage() {
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [selectedPublication, setSelectedPublication] = useState(null);
+  const [loadingPublication, setLoadingPublication] = useState(false);
 
   useEffect(() => {
     fetchAllNotifications();
@@ -61,6 +66,36 @@ export default function NotificationsPage() {
     const success = await createTestNotification();
     if (success) {
       alert('Notificação de teste criada!');
+    }
+  };
+
+  // Função para buscar publicação e abrir modal apropriado
+  const handleViewDetails = async (notification) => {
+    // Se for notificação de publicação, buscar dados da publicação
+    if (notification.type === 'publication' && notification.metadata?.id_api) {
+      setLoadingPublication(true);
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/publications/${notification.metadata.id_api}`
+        );
+        const data = await response.json();
+        
+        if (data.success && data.publication) {
+          setSelectedPublication(data.publication);
+        } else {
+          // Se não encontrar publicação, mostrar modal de notificação normal
+          setSelectedNotification(notification);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar publicação:', error);
+        // Em caso de erro, mostrar modal de notificação normal
+        setSelectedNotification(notification);
+      } finally {
+        setLoadingPublication(false);
+      }
+    } else {
+      // Para outros tipos de notificação, mostrar modal normal
+      setSelectedNotification(notification);
     }
   };
 
@@ -321,33 +356,7 @@ export default function NotificationsPage() {
         </button>
       </div>
 
-      {/* Informações sobre notificações Web */}
-      {permission === 'granted' && unreadCount > 0 && (
-        <div className="notification-info-banner">
-          <div className="info-content">
-            <span className="info-icon">ℹ️</span>
-            <div className="info-text">
-              <strong>Notificações automáticas ativadas</strong>
-              <p>
-                Notificações novas aparecem automaticamente no navegador e ficam visíveis no sidebar até serem marcadas como lidas.
-                Clique na notificação para marcá-la como lida.
-              </p>
-            </div>
-            {process.env.NODE_ENV === 'development' && (
-              <button 
-                className="btn-ghost btn-sm" 
-                onClick={() => {
-                  clearShownNotifications();
-                  alert('Cache limpo! Notificações poderão aparecer novamente.');
-                }}
-                title="Limpar cache de notificações já exibidas (apenas desenvolvimento)"
-              >
-                🔄 Limpar Cache
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Banner removido - fluxo intuitivo não precisa de explicação */}
 
       {/* Lista de notificações */}
       <div className="notifications-list">
@@ -411,30 +420,53 @@ export default function NotificationsPage() {
                       </button>
                     )}
                     
-                    {notification.link && (
+                    <button
+                      className="notification-link"
+                      onClick={() => handleViewDetails(notification)}
+                      disabled={loadingPublication}
+                    >
+                      {loadingPublication ? 'Carregando...' : 'Ver detalhes →'}
+                    </button>
+
+                    {notification.link && notification.link.startsWith('http') && (
                       <a 
                         href={notification.link} 
                         className="notification-link"
-                        target={notification.link.startsWith('http') ? '_blank' : '_self'}
-                        rel={notification.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         onClick={() => {
                           if (!notification.read) {
                             handleMarkAsRead(notification.id);
                           }
                         }}
                       >
-                        {notification.link.startsWith('http') ? '🔗 Consultar Processo' : 'Ver detalhes →'}
+                        🔗 Consultar Processo
                       </a>
                     )}
                   </div>
                 )}
               </div>
-              
-              {!notification.read && !selectionMode && <div className="unread-indicator"></div>}
             </div>
           ))
         )}
       </div>
+
+      {/* Modal de Detalhes */}
+      {selectedNotification && (
+        <NotificationDetailModal
+          notification={selectedNotification}
+          onClose={() => setSelectedNotification(null)}
+          onMarkAsRead={handleMarkAsRead}
+        />
+      )}
+
+      {/* Modal de Publicação */}
+      {selectedPublication && (
+        <PublicationDetailModal
+          publication={selectedPublication}
+          onClose={() => setSelectedPublication(null)}
+        />
+      )}
 
       {error && (
         <div className="error-message">

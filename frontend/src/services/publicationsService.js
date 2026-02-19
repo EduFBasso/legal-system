@@ -191,6 +191,61 @@ class PublicationsService {
 
     return await response.json();
   }
+
+  /**
+   * Deleta uma publicação específica
+   * @param {number} idApi - ID da publicação na API
+   * @returns {Promise<Object>} Resultado da deleção
+   */
+  async deletePublication(idApi) {
+    const response = await fetch(`${API_BASE_URL}/publications/${idApi}/delete`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao deletar publicação: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Deleta múltiplas publicações
+   * @param {Array<number>} publicationIds - Array de id_api
+   * @returns {Promise<Object>} Resultado da deleção
+   */
+  async deleteMultiplePublications(publicationIds) {
+    const response = await fetch(`${API_BASE_URL}/publications/delete-multiple`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ publication_ids: publicationIds })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao deletar publicações: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Deleta TODAS as publicações
+   * ATENÇÃO: Operação irreversível!
+   * @returns {Promise<Object>} Resultado da deleção
+   */
+  async deleteAllPublications() {
+    const response = await fetch(`${API_BASE_URL}/publications/delete-all`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao deletar todas publicações: ${response.status}`);
+    }
+
+    return await response.json();
+  }
 }
 
 // Exportar instância singleton
