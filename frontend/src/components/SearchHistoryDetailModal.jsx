@@ -13,8 +13,24 @@ function SearchHistoryDetailModal({
   loading,
   onClose,
   formatDate,
-  formatDateTime
+  formatDateTime,
+  highlightProcessNumber = null
 }) {
+  // Verificar quais publicações contêm o número de processo buscado
+  const getMatchingPublications = () => {
+    if (!highlightProcessNumber) return [];
+    
+    // Remover caracteres especiais do número buscado
+    const searchDigits = highlightProcessNumber.replace(/[^\d]/g, '');
+    
+    return publications.filter(pub => {
+      if (!pub.numero_processo) return false;
+      const pubDigits = pub.numero_processo.replace(/[^\d]/g, '');
+      return pubDigits.includes(searchDigits);
+    }).map(pub => pub.id_api);
+  };
+  
+  const matchingPublicationIds = getMatchingPublications();
   // Prevenir rolagem do body quando modal está aberto
   useEffect(() => {
     if (search) {
@@ -122,12 +138,16 @@ function SearchHistoryDetailModal({
                 </div>
               ) : (
                 <div className="publications-list">
-                  {publications.map((pub) => (
-                    <PublicationCard
-                      key={pub.id_api}
-                      publication={pub}
-                    />
-                  ))}
+                  {publications.map((pub) => {
+                    const isHighlighted = matchingPublicationIds.includes(pub.id_api);
+                    return (
+                      <PublicationCard
+                        key={pub.id_api}
+                        publication={pub}
+                        highlighted={isHighlighted}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -166,7 +186,8 @@ SearchHistoryDetailModal.propTypes = {
   loading: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   formatDate: PropTypes.func.isRequired,
-  formatDateTime: PropTypes.func.isRequired
+  formatDateTime: PropTypes.func.isRequired,
+  highlightProcessNumber: PropTypes.string
 };
 
 export default SearchHistoryDetailModal;

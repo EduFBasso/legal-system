@@ -233,6 +233,81 @@
   transform: none !important;
 }
 
+/* Destaque para publicação encontrada */
+.highlighted-publication {
+  position: relative;
+  border: 2px solid #4caf50;
+  background: linear-gradient(to bottom, #f1f8f4 0%, #ffffff 100%);
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.25), 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: highlight-glow 2s ease-in-out infinite;
+}
+
+.highlighted-publication:hover {
+  border-color: #45a049;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.35), 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes highlight-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.25), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(76, 175, 80, 0.4), 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Badge de publicação encontrada */
+.highlighted-badge {
+  position: absolute;
+  top: -12px;
+  right: 15px;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  padding: 0.35rem 0.9rem;
+  border-radius: 18px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 3px 6px rgba(76, 175, 80, 0.3);
+  z-index: 5;
+  animation: badge-appear 0.5s ease-out;
+}
+
+@keyframes badge-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.highlighted-badge .badge-icon {
+  font-size: 0.95rem;
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.highlighted-badge .badge-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
 @media (max-width: 768px) {
   .publication-card {
     padding: 1rem;

@@ -183,6 +183,68 @@
   color: #0056b3;
 }
 
+/* Destaque para processo encontrado */
+.highlight-process-found {
+  position: relative;
+  border: 2px solid #4caf50;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+.highlight-process-found:hover {
+  border-color: #45a049;
+  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Badge de processo encontrado */
+.process-found-badge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+  z-index: 10;
+  animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.badge-icon {
+  font-size: 1rem;
+}
+
+.badge-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .search-history-card {

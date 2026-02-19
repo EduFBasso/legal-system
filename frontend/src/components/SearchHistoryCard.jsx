@@ -4,9 +4,27 @@
 import PropTypes from 'prop-types';
 import './SearchHistoryCard.css';
 
-function SearchHistoryCard({ search, onClick, formatDate, formatDateTime }) {
+function SearchHistoryCard({ 
+  search, 
+  onClick, 
+  formatDate, 
+  formatDateTime, 
+  highlightProcessSearch = false 
+}) {
+  const cardClassName = highlightProcessSearch 
+    ? "search-history-card highlight-process-found" 
+    : "search-history-card";
+
   return (
-    <div className="search-history-card" onClick={onClick}>
+    <div className={cardClassName} onClick={onClick}>
+      {/* Badge de processo encontrado */}
+      {highlightProcessSearch && (
+        <div className="process-found-badge">
+          <span className="badge-icon">🔍</span>
+          <span className="badge-text">Processo encontrado</span>
+        </div>
+      )}
+
       {/* Cabeçalho com data de execução */}
       <div className="card-header">
         <div className="execution-info">
@@ -72,7 +90,8 @@ SearchHistoryCard.propTypes = {
   }).isRequired,
   onClick: PropTypes.func.isRequired,
   formatDate: PropTypes.func.isRequired,
-  formatDateTime: PropTypes.func.isRequired
+  formatDateTime: PropTypes.func.isRequired,
+  highlightProcessSearch: PropTypes.bool
 };
 
 export default SearchHistoryCard;

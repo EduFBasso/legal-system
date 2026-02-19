@@ -34,6 +34,7 @@ function SearchHistoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [useBackendSearch, setUseBackendSearch] = useState(false);
+  const [isProcessSearch, setIsProcessSearch] = useState(false);
   const debounceTimerRef = useRef(null);
 
   // Verificar se ordenação é crescente
@@ -158,14 +159,17 @@ function SearchHistoryPage() {
     // Se query vazia, resetar
     if (!query) {
       setUseBackendSearch(false);
+      setIsProcessSearch(false);
       return;
     }
 
     // Detectar se é número longo sem "/" (possível número de processo)
-    // Números com 3+ dígitos sem "/" aciona busca no backend
+    // Números com 6+ dígitos sem "/" aciona busca no backend
     const hasSlash = query.includes('/');
-    const isLongNumber = /^\d{3,}$/.test(query);
+    const isLongNumber = /^\d{6,}$/.test(query);
     const shouldUseBackend = !hasSlash && isLongNumber;
+
+    setIsProcessSearch(shouldUseBackend);
 
     if (shouldUseBackend) {
       // Buscar no backend após 500ms de debounce
@@ -277,6 +281,7 @@ function SearchHistoryPage() {
                 onSearchClick={handleSearchClick}
                 formatDate={formatDate}
                 formatDateTime={formatDateTime}
+                highlightProcessSearch={isProcessSearch}
               />
 
               {/* Paginação */}
@@ -319,6 +324,7 @@ function SearchHistoryPage() {
           onClose={handleCloseModal}
           formatDate={formatDate}
           formatDateTime={formatDateTime}
+          highlightProcessNumber={isProcessSearch ? searchQuery : null}
         />
       )}
     </div>

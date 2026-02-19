@@ -1,7 +1,7 @@
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import './PublicationCard.css';
 
-export default function PublicationCard({ publication, onClick }) {
+export default function PublicationCard({ publication, onClick, highlighted = false }) {
   const getTipoBadgeColor = (tipo) => {
     const colors = {
       'Intimação': 'blue',
@@ -83,9 +83,19 @@ export default function PublicationCard({ publication, onClick }) {
 
   // Obter todos os links de consulta disponíveis
   const consultaLinks = generateAllConsultaLinks(publication);
+  
+  const cardClassName = highlighted 
+    ? "publication-card highlighted-publication" 
+    : "publication-card";
 
   return (
-    <div className="publication-card" onClick={onClick}>
+    <div className={cardClassName} onClick={onClick}>
+      {highlighted && (
+        <div className="highlighted-badge">
+          <span className="badge-icon">✨</span>
+          <span className="badge-text">Processo encontrado</span>
+        </div>
+      )}
       <div className="publication-header">
         <div className="publication-badges">
           <span className={`badge badge-${getTipoBadgeColor(publication.tipo_comunicacao)}`}>

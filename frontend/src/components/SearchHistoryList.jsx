@@ -6,7 +6,13 @@ import PropTypes from 'prop-types';
 import SearchHistoryCard from './SearchHistoryCard';
 import './SearchHistoryList.css';
 
-function SearchHistoryList({ searches, onSearchClick, formatDate, formatDateTime }) {
+function SearchHistoryList({ 
+  searches, 
+  onSearchClick, 
+  formatDate, 
+  formatDateTime, 
+  highlightProcessSearch = false 
+}) {
   return (
     <div className="search-history-list">
       {searches.map(search => (
@@ -16,6 +22,7 @@ function SearchHistoryList({ searches, onSearchClick, formatDate, formatDateTime
           onClick={() => onSearchClick(search)}
           formatDate={formatDate}
           formatDateTime={formatDateTime}
+          highlightProcessSearch={highlightProcessSearch}
         />
       ))}
     </div>
@@ -37,7 +44,8 @@ SearchHistoryList.propTypes = {
   ).isRequired,
   onSearchClick: PropTypes.func.isRequired,
   formatDate: PropTypes.func.isRequired,
-  formatDateTime: PropTypes.func.isRequired
+  formatDateTime: PropTypes.func.isRequired,
+  highlightProcessSearch: PropTypes.bool
 };
 
 export default SearchHistoryList;
