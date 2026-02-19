@@ -61,6 +61,7 @@ data/*.db
 backend/info/
 frontend/info/
 backend/db.sqlite3
+backend/scripts/
 
 # === Outros ===
 pub_fetcher/

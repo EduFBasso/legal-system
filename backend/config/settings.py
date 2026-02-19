@@ -163,3 +163,7 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
     ],
 }
+
+# Configurações de OAB para publicações
+OAB_NUMBER = config('OAB_NUMBER', default='507553')
+ADVOGADA_NOME = config('ADVOGADA_NOME', default='Vitoria Rocha')

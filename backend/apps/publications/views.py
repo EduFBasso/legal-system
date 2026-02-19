@@ -4,6 +4,7 @@ Views para API de Publications.
 import time
 from datetime import datetime
 from django.db import models
+from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,9 +14,9 @@ from apps.notifications.models import Notification
 from .models import Publication, SearchHistory
 
 
-# Hardcoded credentials (temporary - will be moved to settings/user profile)
-OAB_NUMBER = "507553"
-ADVOGADA_NOME = "Vitoria Rocha"
+# Credentials from settings
+OAB_NUMBER = settings.OAB_NUMBER
+ADVOGADA_NOME = settings.ADVOGADA_NOME
 
 
 @api_view(['GET'])
