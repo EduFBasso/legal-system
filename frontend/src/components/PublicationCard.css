@@ -11,8 +11,8 @@
 }
 
 .publication-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  border-color: var(--publication-primary, #6366f1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
   transform: translateY(-2px);
 }
 
@@ -86,7 +86,7 @@
 .processo-icon {
   width: 20px;
   height: 20px;
-  color: #3b82f6;
+  color: var(--publication-primary, #6366f1);
   flex-shrink: 0;
 }
 
@@ -149,7 +149,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #3b82f6;
+  color: var(--publication-primary, #6366f1);
   font-size: 0.875rem;
   font-weight: 600;
   background: none;
@@ -160,7 +160,7 @@
 }
 
 .btn-view-details:hover {
-  color: #2563eb;
+  color: var(--publication-dark, #4f46e5);
 }
 
 .arrow-icon {
@@ -178,7 +178,7 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.875rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: var(--publication-gradient, linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%));
   color: white;
   font-size: 0.813rem;
   font-weight: 600;
@@ -186,12 +186,12 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
 }
 
 .btn-official-link:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.35);
   transform: translateY(-1px);
 }
 
@@ -205,7 +205,7 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.875rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
   color: white;
   font-size: 0.813rem;
   font-weight: 600;
@@ -213,12 +213,12 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.25);
 }
 
 .btn-alternative-link:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.35);
   transform: translateY(-1px);
 }
 
@@ -236,23 +236,23 @@
 /* Destaque para publicação encontrada */
 .highlighted-publication {
   position: relative;
-  border: 2px solid #4caf50;
-  background: linear-gradient(to bottom, #f1f8f4 0%, #ffffff 100%);
-  box-shadow: 0 0 15px rgba(76, 175, 80, 0.25), 0 4px 8px rgba(0, 0, 0, 0.1);
-  animation: highlight-glow 2s ease-in-out infinite;
+  border: 2px solid var(--publication-primary, #6366f1);
+  background: var(--publication-bg-gradient, linear-gradient(to bottom, #f5f3ff 0%, #ffffff 100%));
+  box-shadow: 0 0 15px var(--publication-glow, rgba(99, 102, 241, 0.3)), 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: highlight-glow-publication 2s ease-in-out infinite;
 }
 
 .highlighted-publication:hover {
-  border-color: #45a049;
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.35), 0 8px 16px rgba(0, 0, 0, 0.15);
+  border-color: var(--publication-dark, #4f46e5);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-@keyframes highlight-glow {
+@keyframes highlight-glow-publication {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.25), 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
   }
   50% {
-    box-shadow: 0 0 25px rgba(76, 175, 80, 0.4), 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -261,7 +261,7 @@
   position: absolute;
   top: -12px;
   right: 15px;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  background: var(--publication-gradient, linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%));
   color: white;
   padding: 0.35rem 0.9rem;
   border-radius: 18px;
@@ -270,7 +270,7 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  box-shadow: 0 3px 6px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 3px 6px rgba(99, 102, 241, 0.35);
   z-index: 5;
   animation: badge-appear 0.5s ease-out;
 }

@@ -13,7 +13,7 @@
 .search-history-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  border-color: #007bff;
+  border-color: var(--publication-primary, #6366f1);
 }
 
 /* Cabeçalho */
@@ -175,35 +175,35 @@
 }
 
 .view-details {
-  color: #007bff;
+  color: var(--publication-primary, #6366f1);
   font-size: 0.9rem;
   font-weight: 600;
   transition: color 0.2s;
 }
 
 .search-history-card:hover .view-details {
-  color: #0056b3;
+  color: var(--publication-dark, #4f46e5);
 }
 
 /* Destaque para processo encontrado */
 .highlight-process-found {
   position: relative;
-  border: 2px solid #4caf50;
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
-  animation: pulse-green 2s ease-in-out infinite;
+  border: 2px solid var(--publication-primary, #6366f1);
+  box-shadow: 0 0 20px var(--publication-glow, rgba(99, 102, 241, 0.3)), 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: pulse-publication 2s ease-in-out infinite;
 }
 
 .highlight-process-found:hover {
-  border-color: #45a049;
-  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15);
+  border-color: var(--publication-dark, #4f46e5);
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-@keyframes pulse-green {
+@keyframes pulse-publication {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
   }
   50% {
-    box-shadow: 0 0 30px rgba(76, 175, 80, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -212,7 +212,7 @@
   position: absolute;
   top: -12px;
   right: 20px;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  background: var(--publication-gradient, linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%));
   color: white;
   padding: 0.4rem 1rem;
   border-radius: 20px;
@@ -221,7 +221,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.35);
   z-index: 10;
   animation: slideDown 0.4s ease-out;
 }
