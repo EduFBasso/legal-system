@@ -228,6 +228,50 @@ class PJeComunicaService:
         # Passou por todos os filtros - INCLUIR publicação
         return False
     
+    @staticmethod
+    def should_include_publication(pub: Dict, oab: str, nome_advogado: str) -> bool:
+        """
+        Verifica se uma publicação REALMENTE menciona a advogada desejada.
+        
+        FILTRO POSITIVO: Garante que há menção à OAB ou nome no texto.
+        Evita falsos positivos da API.
+        
+        Args:
+            pub: Publicação normalizada
+            oab: OAB da advogada (ex: "507553")
+            nome_advogado: Nome completo (ex: "Vitoria Rocha de Morais")
+            
+        Returns:
+            True se menciona a advogada, False caso contrário
+        """
+        # Concatenar todos os textos para busca
+        text_fields = [
+            pub.get('texto_completo', ''),
+            pub.get('texto_resumo', ''),
+            pub.get('orgao', ''),
+        ]
+        full_text = ' '.join(text_fields).upper()
+        
+        # Verificar se menciona o número da OAB
+        if oab and oab in full_text:
+            return True  # INCLUIR - menciona OAB
+        
+        # Verificar se menciona partes do nome da advogada
+        # Dividir nome em partes significativas (ignorar preposições)
+        if nome_advogado:
+            # Remover preposições comuns
+            nome_parts = nome_advogado.upper().replace(' DE ', ' ').replace(' DA ', ' ').replace(' DO ', ' ')
+            nome_parts = [p.strip() for p in nome_parts.split() if len(p.strip()) > 2]
+            
+            # Procurar pelo menos 2 partes do nome (ex: VITORIA + ROCHA)
+            matches = sum(1 for part in nome_parts if part in full_text)
+            
+            if matches >= 2:
+                return True  # INCLUIR - menciona partes do nome
+        
+        # NÃO encontrou menção à advogada - EXCLUIR
+        return False
+    
     @classmethod
     def fetch_publications(
         cls,
@@ -279,9 +323,11 @@ class PJeComunicaService:
                         seen_ids.add(item_id)
                         normalized = cls.normalize_publication(item, tribunal)
                         
-                        # Aplicar filtro de exclusão (outras advogadas)
-                        if not cls.should_exclude_publication(normalized):
-                            results.append(normalized)
+                        # Aplicar FILTRO POSITIVO: deve mencionar a advogada
+                        if cls.should_include_publication(normalized, oab, nome_advogado):
+                            # Aplicar FILTRO NEGATIVO: não pode ser outra advogada
+                            if not cls.should_exclude_publication(normalized):
+                                results.append(normalized)
             else:
                 errors.append({
                     'tribunal': tribunal,
@@ -306,9 +352,11 @@ class PJeComunicaService:
                         seen_ids.add(item_id)
                         normalized = cls.normalize_publication(item, tribunal)
                         
-                        # Aplicar filtro de exclusão (outras advogadas)
-                        if not cls.should_exclude_publication(normalized):
-                            results.append(normalized)
+                        # Aplicar FILTRO POSITIVO: deve mencionar a advogada
+                        if cls.should_include_publication(normalized, oab, nome_advogado):
+                            # Aplicar FILTRO NEGATIVO: não pode ser outra advogada
+                            if not cls.should_exclude_publication(normalized):
+                                results.append(normalized)
             else:
                 errors.append({
                     'tribunal': tribunal,
