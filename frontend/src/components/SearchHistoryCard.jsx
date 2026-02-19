@@ -68,11 +68,6 @@ function SearchHistoryCard({
           <span className="stat-label">Novas</span>
         </div>
       </div>
-
-      {/* Indicador de clique */}
-      <div className="card-footer">
-        <span className="view-details">Ver detalhes →</span>
-      </div>
     </div>
   );
 }

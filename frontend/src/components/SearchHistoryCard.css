@@ -43,13 +43,14 @@
 }
 
 .duration-badge {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background: linear-gradient(135deg, var(--publication-light, #e0e7ff) 0%, var(--publication-lighter, #eef2ff) 100%);
+  color: var(--publication-dark, #4f46e5);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.85rem;
   font-weight: 600;
   white-space: nowrap;
+  border: 1px solid var(--publication-primary, #6366f1);
 }
 
 /* Período */
@@ -116,8 +117,8 @@
 }
 
 .tribunal-trt15 {
-  background-color: #e8f5e9;
-  color: #388e3c;
+  background-color: var(--publication-lighter, #eef2ff);
+  color: var(--publication-dark, #4f46e5);
 }
 
 /* Estatísticas */
@@ -145,7 +146,7 @@
 }
 
 .stat-value-new {
-  color: #28a745;
+  color: var(--publication-primary, #6366f1);
 }
 
 .stat-label {
@@ -161,29 +162,16 @@
 }
 
 .stat-item-highlight {
-  background-color: #f0f8f1;
+  background: linear-gradient(135deg, var(--publication-lighter, #eef2ff) 0%, var(--publication-light, #e0e7ff) 100%);
   padding: 0.5rem;
   border-radius: 8px;
   margin: -0.25rem;
   position: relative;
   z-index: 0;
+  border: 1px solid var(--publication-primary, #6366f1);
 }
 
-/* Rodapé */
-.card-footer {
-  text-align: center;
-}
-
-.view-details {
-  color: var(--publication-primary, #6366f1);
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.search-history-card:hover .view-details {
-  color: var(--publication-dark, #4f46e5);
-}
+/* Rodapé - removido */
 
 /* Destaque para processo encontrado */
 .highlight-process-found {
