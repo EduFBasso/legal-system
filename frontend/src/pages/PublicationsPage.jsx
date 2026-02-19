@@ -95,7 +95,11 @@ export default function PublicationsPage() {
       const result = await publicationsService.deleteMultiplePublications(Array.from(selectedIds));
       
       if (result.success) {
-        alert(`${result.deleted} publicação(ões) deletada(s) com sucesso!`);
+        const msg = `${result.deleted} publicação(ões) deletada(s) com sucesso!`;
+        const notifMsg = result.notifications_deleted > 0 
+          ? `\n${result.notifications_deleted} notificação(ões) relacionada(s) também foram removidas.`
+          : '';
+        alert(msg + notifMsg);
         setSelectedIds(new Set());
         setSelectionMode(false);
         // Recarregar lista
@@ -123,7 +127,11 @@ export default function PublicationsPage() {
       const result = await publicationsService.deleteAllPublications();
       
       if (result.success) {
-        alert(`Todas as ${result.deleted} publicações foram deletadas!`);
+        const msg = `Todas as ${result.deleted} publicações foram deletadas!`;
+        const notifMsg = result.notifications_deleted > 0
+          ? `\n${result.notifications_deleted} notificação(ões) relacionada(s) também foram removidas.`
+          : '';
+        alert(msg + notifMsg);
         setSelectedIds(new Set());
         setSelectionMode(false);
         // Recarregar lista

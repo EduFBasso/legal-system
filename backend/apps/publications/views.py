@@ -818,23 +818,33 @@ def get_publication_by_id(request, id_api):
 @api_view(['DELETE'])
 def delete_publication(request, id_api):
     """
-    Deleta uma publicação específica.
+    Deleta uma publicação específica + notificações relacionadas (cascade).
     
     DELETE /api/publications/<id_api>/delete
     
     Response:
     {
         "success": true,
-        "message": "Publicação deletada com sucesso"
+        "message": "Publicação deletada com sucesso",
+        "notifications_deleted": 2
     }
     """
     try:
         publication = Publication.objects.get(id_api=id_api)
+        
+        # CASCADE DELETE: Deletar notificações que referenciam esta publicação
+        notifications_deleted = Notification.objects.filter(
+            type='publication',
+            metadata__id_api=id_api
+        ).delete()[0]
+        
+        # Deletar a publicação
         publication.delete()
         
         return Response({
             'success': True,
-            'message': 'Publicação deletada com sucesso'
+            'message': 'Publicação deletada com sucesso',
+            'notifications_deleted': notifications_deleted
         })
         
     except Publication.DoesNotExist:
@@ -852,7 +862,7 @@ def delete_publication(request, id_api):
 @api_view(['POST'])
 def delete_multiple_publications(request):
     """
-    Deleta múltiplas publicações de uma vez.
+    Deleta múltiplas publicações + notificações relacionadas (cascade).
     
     POST /api/publications/delete-multiple
     Body: {
@@ -863,6 +873,7 @@ def delete_multiple_publications(request):
     {
         "success": true,
         "deleted": 3,
+        "notifications_deleted": 5,
         "message": "3 publicação(ões) deletada(s) com sucesso"
     }
     """
@@ -875,11 +886,21 @@ def delete_multiple_publications(request):
                 'message': 'Nenhuma publicação especificada'
             }, status=status.HTTP_400_BAD_REQUEST)
         
+        # CASCADE DELETE: Deletar notificações que referenciam estas publicações
+        notifications_deleted = 0
+        for pub_id in publication_ids:
+            notifications_deleted += Notification.objects.filter(
+                type='publication',
+                metadata__id_api=pub_id
+            ).delete()[0]
+        
+        # Deletar as publicações
         deleted_count = Publication.objects.filter(id_api__in=publication_ids).delete()[0]
         
         return Response({
             'success': True,
             'deleted': deleted_count,
+            'notifications_deleted': notifications_deleted,
             'message': f'{deleted_count} publicação(ões) deletada(s) com sucesso'
         })
         
@@ -893,7 +914,7 @@ def delete_multiple_publications(request):
 @api_view(['POST'])
 def delete_all_publications(request):
     """
-    Deleta TODAS as publicações do banco.
+    Deleta TODAS as publicações + notificações relacionadas (cascade).
     ATENÇÃO: Esta operação é irreversível!
     
     POST /api/publications/delete-all
@@ -902,15 +923,23 @@ def delete_all_publications(request):
     {
         "success": true,
         "deleted": 150,
+        "notifications_deleted": 120,
         "message": "Todas as 150 publicações foram deletadas"
     }
     """
     try:
+        # CASCADE DELETE: Deletar TODAS notificações de publicação
+        notifications_deleted = Notification.objects.filter(
+            type='publication'
+        ).delete()[0]
+        
+        # Deletar TODAS as publicações
         deleted_count = Publication.objects.all().delete()[0]
         
         return Response({
             'success': True,
             'deleted': deleted_count,
+            'notifications_deleted': notifications_deleted,
             'message': f'Todas as {deleted_count} publicações foram deletadas'
         })
         
