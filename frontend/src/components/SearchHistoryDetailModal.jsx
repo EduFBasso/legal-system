@@ -34,14 +34,32 @@ function SearchHistoryDetailModal({
   const getMatchingPublications = () => {
     if (!highlightProcessNumber || !publications || publications.length === 0) return [];
     
-    // Remover caracteres especiais do número buscado
-    const searchDigits = highlightProcessNumber.replace(/[^\d]/g, '');
+    const query = highlightProcessNumber.toLowerCase();
     
-    return publications.filter(pub => {
-      if (!pub.numero_processo) return false;
-      const pubDigits = pub.numero_processo.replace(/[^\d]/g, '');
-      return pubDigits.includes(searchDigits);
-    }).map(pub => pub.id_api);
+    // Se contém apenas dígitos, buscar por número de processo
+    const isNumberSearch = /^\d+$/.test(highlightProcessNumber);
+    
+    if (isNumberSearch) {
+      // Remover caracteres especiais do número buscado
+      const searchDigits = highlightProcessNumber.replace(/[^\d]/g, '');
+      
+      return publications.filter(pub => {
+        if (!pub.numero_processo) return false;
+        const pubDigits = pub.numero_processo.replace(/[^\d]/g, '');
+        return pubDigits.includes(searchDigits);
+      }).map(pub => pub.id_api);
+    } else {
+      // Busca por texto (nome de parte)
+      return publications.filter(pub => {
+        const textoCompleto = (pub.texto_completo || '').toLowerCase();
+        const textoResumo = (pub.texto_resumo || '').toLowerCase();
+        const orgao = (pub.orgao || '').toLowerCase();
+        
+        return textoCompleto.includes(query) || 
+               textoResumo.includes(query) || 
+               orgao.includes(query);
+      }).map(pub => pub.id_api);
+    }
   };
   
   const matchingPublicationIds = getMatchingPublications();

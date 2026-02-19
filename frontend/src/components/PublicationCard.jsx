@@ -93,7 +93,7 @@ export default function PublicationCard({ publication, onClick, highlighted = fa
       {highlighted && (
         <div className="highlighted-badge">
           <span className="badge-icon">✨</span>
-          <span className="badge-text">Processo encontrado</span>
+          <span className="badge-text">Encontrado</span>
         </div>
       )}
       <div className="publication-header">

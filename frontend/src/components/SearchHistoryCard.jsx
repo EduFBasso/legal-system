@@ -21,7 +21,7 @@ function SearchHistoryCard({
       {highlightProcessSearch && (
         <div className="process-found-badge">
           <span className="badge-icon">🔍</span>
-          <span className="badge-text">Processo encontrado</span>
+          <span className="badge-text">Encontrado</span>
         </div>
       )}
 

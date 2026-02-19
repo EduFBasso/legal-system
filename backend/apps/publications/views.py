@@ -3,6 +3,7 @@ Views para API de Publications.
 """
 import time
 from datetime import datetime
+from django.db import models
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -537,24 +538,36 @@ def get_search_history(request):
             import re
             query_digits = re.sub(r'[^\d]', '', query)  # Apenas dígitos
             
-            # Buscar publicações que contêm o número de processo
-            # Tenta tanto com query original quanto só com dígitos
-            publications = Publication.objects.filter(
-                numero_processo__icontains=query
-            )
+            # Detectar se é busca por número (só dígitos) ou por texto (nome de parte)
+            is_number_search = len(query_digits) >= 6 and query_digits == query
             
-            # Se não encontrou, tentar buscar removendo formatação
-            if not publications.exists() and query_digits and len(query_digits) >= 7:
-                # Buscar publicações cujo número (sem formatação) contém os dígitos
-                all_publications = Publication.objects.exclude(numero_processo__isnull=True)
-                matching_pubs = []
+            if is_number_search:
+                # Busca por número de processo
+                # Tenta tanto com query original quanto só com dígitos
+                publications = Publication.objects.filter(
+                    numero_processo__icontains=query
+                )
                 
-                for pub in all_publications:
-                    pub_digits = re.sub(r'[^\d]', '', pub.numero_processo or '')
-                    if query_digits in pub_digits:
-                        matching_pubs.append(pub)
-                
-                publications = matching_pubs
+                # Se não encontrou, tentar buscar removendo formatação
+                if not publications.exists() and query_digits and len(query_digits) >= 7:
+                    # Buscar publicações cujo número (sem formatação) contém os dígitos
+                    all_publications = Publication.objects.exclude(numero_processo__isnull=True)
+                    matching_pubs = []
+                    
+                    for pub in all_publications:
+                        pub_digits = re.sub(r'[^\d]', '', pub.numero_processo or '')
+                        if query_digits in pub_digits:
+                            matching_pubs.append(pub)
+                    
+                    publications = matching_pubs
+            else:
+                # Busca por nome de parte (texto)
+                # Busca nos campos texto_resumo e texto_completo
+                publications = Publication.objects.filter(
+                    models.Q(texto_resumo__icontains=query) |
+                    models.Q(texto_completo__icontains=query) |
+                    models.Q(orgao__icontains=query)
+                )
             
             # Verificar se encontrou publicações (pode ser QuerySet ou lista)
             has_publications = (publications.exists() if hasattr(publications, 'exists') 

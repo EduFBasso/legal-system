@@ -164,10 +164,11 @@ function SearchHistoryPage() {
     }
 
     // Detectar se é número longo sem "/" (possível número de processo)
-    // Números com 6+ dígitos sem "/" aciona busca no backend
+    // OU se tem letras (busca por nome de parte)
     const hasSlash = query.includes('/');
+    const hasLetters = /[a-zA-Z]/.test(query);
     const isLongNumber = /^\d{6,}$/.test(query);
-    const shouldUseBackend = !hasSlash && isLongNumber;
+    const shouldUseBackend = (!hasSlash && isLongNumber) || (hasLetters && query.length >= 3);
 
     setIsProcessSearch(shouldUseBackend);
 
