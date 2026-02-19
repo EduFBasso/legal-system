@@ -34,6 +34,76 @@
 .header-actions {
   display: flex;
   gap: 12px;
+  align-items: center;
+}
+
+.selection-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3b82f6;
+  padding: 8px 12px;
+  background: #eff6ff;
+  border-radius: 6px;
+}
+
+/* Selection Bar (estilo mobile) */
+.selection-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-text:hover {
+  background: #eff6ff;
+}
+
+.btn-danger-text {
+  color: #dc2626;
+}
+
+.btn-danger-text:hover {
+  background: #fef2f2;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Loading State */
@@ -232,6 +302,37 @@
 .notification-card.unread {
   background: #fffbeb;
   border-left-color: #f59e0b;
+}
+
+/* Selection Mode */
+.notification-card.selection-mode {
+  cursor: pointer;
+  user-select: none;
+}
+
+.notification-card.selection-mode:hover {
+  background: #f8fafc;
+  border-left-color: #3b82f6;
+}
+
+.notification-card.selected {
+  background: #eff6ff !important;
+  border-left-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.notification-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #3b82f6;
 }
 
 .notification-icon {

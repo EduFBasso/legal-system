@@ -12,6 +12,9 @@ export default function NotificationsPage() {
     fetchAllNotifications,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    deleteMultipleNotifications,
+    deleteAllNotifications,
     requestPermission,
     createTestNotification,
     clearShownNotifications,
@@ -19,6 +22,8 @@ export default function NotificationsPage() {
   
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => {
     fetchAllNotifications();
@@ -56,6 +61,67 @@ export default function NotificationsPage() {
     const success = await createTestNotification();
     if (success) {
       alert('Notificação de teste criada!');
+    }
+  };
+
+  // Funções de seleção
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelectNotification = (notificationId) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(notificationId)) {
+        newSet.delete(notificationId);
+      } else {
+        newSet.add(notificationId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllFiltered = () => {
+    const allIds = new Set(filteredNotifications.map(n => n.id));
+    setSelectedIds(allIds);
+  };
+
+  const deselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    
+    const confirmMsg = `Deletar ${selectedIds.size} notificação(ões) selecionada(s)?`;
+    if (!window.confirm(confirmMsg)) return;
+    
+    const result = await deleteMultipleNotifications(Array.from(selectedIds));
+    
+    if (result.success) {
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+      alert(`${result.deleted} notificação(ões) deletada(s) com sucesso!`);
+    } else {
+      alert(`Erro ao deletar: ${result.message}`);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    const totalCount = notifications.length;
+    const confirmMsg = `Deletar TODAS as ${totalCount} notificações? Esta ação não pode ser desfeita.`;
+    
+    if (!window.confirm(confirmMsg)) return;
+    
+    const result = await deleteAllNotifications();
+    
+    if (result.success) {
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+      alert(`Todas as ${result.deleted} notificações foram deletadas!`);
+    } else {
+      alert(`Erro ao deletar: ${result.message}`);
     }
   };
 
@@ -131,24 +197,82 @@ export default function NotificationsPage() {
           )}
         </div>
         <div className="header-actions">
-          {unreadCount > 0 && (
-            <button 
-              className="btn-secondary" 
-              onClick={handleMarkAllAsRead}
-              disabled={loading}
-            >
-              ✓ Marcar todas como lidas
-            </button>
+          {!selectionMode ? (
+            <>
+              {notifications.length > 0 && (
+                <button 
+                  className="btn-secondary" 
+                  onClick={toggleSelectionMode}
+                  disabled={loading}
+                  title="Selecionar notificações"
+                >
+                  ☑️ Selecionar
+                </button>
+              )}
+              {unreadCount > 0 && (
+                <button 
+                  className="btn-secondary" 
+                  onClick={handleMarkAllAsRead}
+                  disabled={loading}
+                >
+                  ✓ Marcar todas como lidas
+                </button>
+              )}
+              <button 
+                className="btn-primary" 
+                onClick={handleCreateTest}
+                disabled={loading}
+              >
+                🧪 Criar Teste
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="selection-count">
+                {selectedIds.size} selecionada{selectedIds.size !== 1 ? 's' : ''}
+              </span>
+              {selectedIds.size > 0 && (
+                <button 
+                  className="btn-danger" 
+                  onClick={handleDeleteSelected}
+                  disabled={loading}
+                >
+                  🗑️ Deletar ({selectedIds.size})
+                </button>
+              )}
+              <button 
+                className="btn-secondary" 
+                onClick={toggleSelectionMode}
+                disabled={loading}
+              >
+                ✕ Cancelar
+              </button>
+            </>
           )}
-          <button 
-            className="btn-primary" 
-            onClick={handleCreateTest}
-            disabled={loading}
-          >
-            🧪 Criar Teste
-          </button>
         </div>
       </div>
+
+      {/* Barra de ações de seleção (estilo mobile) */}
+      {selectionMode && (
+        <div className="selection-bar">
+          <button 
+            className="btn-text"
+            onClick={selectedIds.size === filteredNotifications.length ? deselectAll : selectAllFiltered}
+          >
+            {selectedIds.size === filteredNotifications.length ? '⬜ Desmarcar todas' : '☑️ Selecionar todas'}
+          </button>
+          
+          {notifications.length > 0 && (
+            <button 
+              className="btn-text btn-danger-text"
+              onClick={handleDeleteAll}
+              disabled={loading}
+            >
+              🗑️ Deletar tudo ({notifications.length})
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Prompt de permissão Web Notifications */}
       {showPermissionPrompt && (
@@ -241,9 +365,21 @@ export default function NotificationsPage() {
           filteredNotifications.map((notification) => (
             <div
               key={notification.id}
-              className={`notification-card ${notification.read ? 'read' : 'unread'}`}
+              className={`notification-card ${notification.read ? 'read' : 'unread'} ${selectionMode ? 'selection-mode' : ''} ${selectedIds.has(notification.id) ? 'selected' : ''}`}
               style={{ borderLeftColor: getPriorityColor(notification.priority) }}
+              onClick={() => selectionMode && toggleSelectNotification(notification.id)}
             >
+              {selectionMode && (
+                <div className="notification-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(notification.id)}
+                    onChange={() => toggleSelectNotification(notification.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              )}
+              
               <div className="notification-icon">
                 {getTypeIcon(notification.type)}
               </div>
@@ -256,43 +392,45 @@ export default function NotificationsPage() {
                 
                 <p className="notification-message">{notification.message}</p>
                 
-                <div className="notification-footer">
-                  <span className="notification-type">{notification.type_display}</span>
-                  <span 
-                    className="notification-priority"
-                    style={{ color: getPriorityColor(notification.priority) }}
-                  >
-                    {notification.priority_display}
-                  </span>
-                  
-                  {!notification.read && (
-                    <button
-                      className="btn-mark-read"
-                      onClick={() => handleMarkAsRead(notification.id)}
+                {!selectionMode && (
+                  <div className="notification-footer">
+                    <span className="notification-type">{notification.type_display}</span>
+                    <span 
+                      className="notification-priority"
+                      style={{ color: getPriorityColor(notification.priority) }}
                     >
-                      ✓ Marcar como lida
-                    </button>
-                  )}
-                  
-                  {notification.link && (
-                    <a 
-                      href={notification.link} 
-                      className="notification-link"
-                      target={notification.link.startsWith('http') ? '_blank' : '_self'}
-                      rel={notification.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      onClick={() => {
-                        if (!notification.read) {
-                          handleMarkAsRead(notification.id);
-                        }
-                      }}
-                    >
-                      {notification.link.startsWith('http') ? '� Consultar Processo' : 'Ver detalhes →'}
-                    </a>
-                  )}
-                </div>
+                      {notification.priority_display}
+                    </span>
+                    
+                    {!notification.read && (
+                      <button
+                        className="btn-mark-read"
+                        onClick={() => handleMarkAsRead(notification.id)}
+                      >
+                        ✓ Marcar como lida
+                      </button>
+                    )}
+                    
+                    {notification.link && (
+                      <a 
+                        href={notification.link} 
+                        className="notification-link"
+                        target={notification.link.startsWith('http') ? '_blank' : '_self'}
+                        rel={notification.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        onClick={() => {
+                          if (!notification.read) {
+                            handleMarkAsRead(notification.id);
+                          }
+                        }}
+                      >
+                        {notification.link.startsWith('http') ? '🔗 Consultar Processo' : 'Ver detalhes →'}
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
               
-              {!notification.read && <div className="unread-indicator"></div>}
+              {!notification.read && !selectionMode && <div className="unread-indicator"></div>}
             </div>
           ))
         )}

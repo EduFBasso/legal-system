@@ -259,6 +259,82 @@ export function NotificationsProvider({ children }) {
     setShownNotifications(new Set());
   };
 
+  // Deletar notificação individual
+  const deleteNotification = async (notificationId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/notifications/${notificationId}/`,
+        { method: 'DELETE' }
+      );
+      
+      if (response.ok || response.status === 204) {
+        // Remover do estado local
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Erro ao deletar notificação:', err);
+      return false;
+    }
+  };
+
+  // Deletar múltiplas notificações
+  const deleteMultipleNotifications = async (notificationIds) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/notifications/delete_multiple/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notification_ids: notificationIds })
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Remover do estado local
+        setNotifications(prev => prev.filter(n => !notificationIds.includes(n.id)));
+        // Recalcular não lidas
+        setUnreadCount(prev => {
+          const deletedUnread = notifications.filter(
+            n => notificationIds.includes(n.id) && !n.read
+          ).length;
+          return Math.max(0, prev - deletedUnread);
+        });
+        return { success: true, deleted: data.deleted };
+      }
+      return { success: false, message: data.message };
+    } catch (err) {
+      console.error('Erro ao deletar múltiplas notificações:', err);
+      return { success: false, message: err.message };
+    }
+  };
+
+  // Deletar todas as notificações
+  const deleteAllNotifications = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/notifications/delete_all/`,
+        { method: 'POST' }
+      );
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setNotifications([]);
+        setUnreadCount(0);
+        return { success: true, deleted: data.deleted };
+      }
+      return { success: false, message: data.message };
+    } catch (err) {
+      console.error('Erro ao deletar todas as notificações:', err);
+      return { success: false, message: err.message };
+    }
+  };
+
   // Solicitar permissão manualmente
   const requestPermission = async () => {
     if ('Notification' in window) {
@@ -292,6 +368,9 @@ export function NotificationsProvider({ children }) {
     fetchAllNotifications,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    deleteMultipleNotifications,
+    deleteAllNotifications,
     requestPermission,
     createTestNotification,
     clearShownNotifications,

@@ -130,6 +130,36 @@ class NotificationViewSet(viewsets.ModelViewSet):
             'read': notification.read,
             'message': message
         })
+    
+    @action(detail=False, methods=['post'])
+    def delete_multiple(self, request):
+        """Deleta múltiplas notificações de uma vez."""
+        notification_ids = request.data.get('notification_ids', [])
+        
+        if not notification_ids:
+            return Response({
+                'success': False,
+                'message': 'Nenhuma notificação especificada'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        deleted_count = self.queryset.filter(id__in=notification_ids).delete()[0]
+        
+        return Response({
+            'success': True,
+            'deleted': deleted_count,
+            'message': f'{deleted_count} notificação(ões) deletada(s) com sucesso'
+        })
+    
+    @action(detail=False, methods=['post'])
+    def delete_all(self, request):
+        """Deleta todas as notificações."""
+        deleted_count = self.queryset.all().delete()[0]
+        
+        return Response({
+            'success': True,
+            'deleted': deleted_count,
+            'message': f'Todas as {deleted_count} notificações foram deletadas'
+        })
 
 
 @api_view(['POST'])
