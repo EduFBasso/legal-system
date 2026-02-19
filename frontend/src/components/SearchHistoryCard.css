@@ -162,14 +162,16 @@
   background-color: #e0e0e0;
   flex-shrink: 0;
   align-self: center;
+  z-index: 1;
 }
 
 .stat-item-highlight {
   background-color: #f0f8f1;
   padding: 0.5rem;
   border-radius: 8px;
-  margin: -0.25rem 0;
+  margin: -0.25rem;
   position: relative;
+  z-index: 0;
 }
 
 /* Rodapé */
