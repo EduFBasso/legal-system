@@ -1,0 +1,145 @@
+/**
+ * Estilos globais para sistema de destaque (highlight)
+ * Classes reutilizáveis para efeito de brilho pulsante em componentes
+ */
+
+/* ============================================
+   CLASSE BASE PARA DESTAQUE VERDE
+   ============================================ */
+.pulse-active {
+  border: 2px solid #4caf50 !important;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  animation: pulse-green 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ============================================
+   VARIAÇÃO PARA MINI-CARDS (SIDEBAR)
+   ============================================ */
+.pulse-active-mini {
+  animation: pulse-green-mini 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-green-mini {
+  0%, 100% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 8px rgba(76, 175, 80, 0.2);
+  }
+  50% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 15px rgba(76, 175, 80, 0.4);
+  }
+}
+
+/* ============================================
+   VARIAÇÃO PARA PRIORIDADE ALTA (VERMELHO)
+   ============================================ */
+.pulse-active-urgent {
+  border: 2px solid #ef4444 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  animation: pulse-red 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ============================================
+   VARIAÇÃO PARA INFORMAÇÃO (AZUL) - DEPRECATED
+   Usar pulse-active-publication para publicações
+   ============================================ */
+.pulse-active-info {
+  border: 2px solid #3b82f6 !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  animation: pulse-blue 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-blue {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ============================================
+   PUBLICAÇÕES - Azul/Roxo (Indigo-Violet)
+   ============================================ */
+.pulse-active-publication {
+  border: 2px solid var(--publication-primary, #6366f1) !important;
+  box-shadow: 0 0 20px var(--publication-glow, rgba(99, 102, 241, 0.3)), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  animation: pulse-publication 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-publication {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Variação para mini-cards de publicação */
+.pulse-active-publication-mini {
+  animation: pulse-publication-mini 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-publication-mini {
+  0%, 100% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 8px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 15px rgba(99, 102, 241, 0.4);
+  }
+}
+
+/* ============================================
+   CLASSE PARA PROCESSO ENCONTRADO (HISTÓRICO)
+   Mantida para compatibilidade com código existente
+   ============================================ */
+.highlight-process-found {
+  position: relative;
+  border: 2px solid #4caf50 !important;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  animation: pulse-green 2s ease-in-out infinite !important;
+}
+
+.highlight-process-found:hover {
+  border-color: #45a049 !important;
+  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ============================================
+   TRANSIÇÕES SUAVES
+   ============================================ */
+.highlight-transition {
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ============================================
+   UTILITÁRIOS
+   ============================================ */
+
+/* Desabilitar animação quando usuário preferir movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-active,
+  .pulse-active-mini,
+  .pulse-active-urgent,
+  .pulse-active-info,
+  .highlight-process-found {
+    animation: none !important;
+  }
+}

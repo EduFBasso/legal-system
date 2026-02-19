@@ -32,6 +32,23 @@
     --color-warning: #f59e0b;
     --color-warning-bg: #fef3c7;
     
+    /* Módulo: NOTIFICAÇÕES - Verde */
+    --notification-primary: #10b981;      /* emerald-500 */
+    --notification-light: #d1fae5;        /* emerald-100 */
+    --notification-dark: #059669;         /* emerald-600 */
+    --notification-glow: rgba(16, 185, 129, 0.3);
+    --notification-bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    
+    /* Módulo: PUBLICAÇÕES - Azul/Roxo (Indigo-Violet) */
+    --publication-primary: #6366f1;        /* indigo-500 */
+    --publication-secondary: #8b5cf6;      /* violet-500 */
+    --publication-light: #e0e7ff;          /* indigo-100 */
+    --publication-lighter: #eef2ff;        /* indigo-50 */
+    --publication-dark: #4f46e5;           /* indigo-600 */
+    --publication-glow: rgba(99, 102, 241, 0.3);
+    --publication-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --publication-bg-gradient: linear-gradient(to bottom, #f5f3ff 0%, #ffffff 100%);
+    
     /* Typography */
     --font-title-lg: 22px;
     --font-title-md: 18px;
