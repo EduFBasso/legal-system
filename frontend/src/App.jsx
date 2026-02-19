@@ -11,6 +11,7 @@ import PublicationsPage from './pages/PublicationsPage';
 import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import PublicationsSummary from './components/PublicationsSummary';
+import NotificationsSummary from './components/NotificationsSummary';
 import './App.css';
 
 function App() {
@@ -44,10 +45,8 @@ function App() {
                 </div>
                 
                 <div className="sidebar-section">
-                  <h3>💬 Mensagens</h3>
-                  <div className="sidebar-empty">
-                    <p>Em desenvolvimento</p>
-                  </div>
+                  <h3>� Notificações</h3>
+                  <NotificationsSummary />
                 </div>
               </Sidebar>
             </div>

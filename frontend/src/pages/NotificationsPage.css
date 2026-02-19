@@ -312,13 +312,24 @@
 
 .notification-card.selection-mode:hover {
   background: #f8fafc;
-  border-left-color: #3b82f6;
+  border-left-color: #4caf50;
 }
 
 .notification-card.selected {
-  background: #eff6ff !important;
-  border-left-color: #3b82f6 !important;
-  box-shadow: 0 0 0 2px #3b82f6;
+  background: #f1f8f4 !important;
+  border: 2px solid #4caf50 !important;
+  border-left: 4px solid #4caf50 !important;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
 }
 
 .notification-checkbox {
