@@ -204,7 +204,7 @@ class PJeComunicaService:
         
         Args:
             oab: Número da OAB (ex: "507553")
-            nome_advogado: Nome completo (ex: "Vitoria Rocha")
+            nome_advogado: Nome completo (ex: "Vitoria Rocha de Morais")
             data_inicio: Data inicial (YYYY-MM-DD)
             data_fim: Data final (YYYY-MM-DD)
             tribunais: Lista de tribunais (default: TRIBUNAIS constante)
@@ -293,7 +293,7 @@ class PJeComunicaService:
         
         Args:
             oab: Número da OAB (ex: "507553")
-            nome_advogado: Nome completo (ex: "Vitoria Rocha")
+            nome_advogado: Nome completo (ex: "Vitoria Rocha de Morais")
             tribunais: Lista de tribunais (default: TRIBUNAIS constante)
             
         Returns:

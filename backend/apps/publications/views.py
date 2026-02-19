@@ -207,7 +207,7 @@ def debug_search(request):
     import requests
     tribunal = request.query_params.get('tribunal', 'TJSP')
     oab = request.query_params.get('oab', '507553')
-    nome = request.query_params.get('nome', 'Vitoria Rocha')
+    nome = request.query_params.get('nome', 'Vitoria Rocha de Morais')
     data_inicio = request.query_params.get('data_inicio')
     data_fim = request.query_params.get('data_fim')
     if not data_inicio or not data_fim:
@@ -774,3 +774,42 @@ def delete_search_history(request):
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@api_view(['GET'])
+def get_publication_by_id(request, id_api):
+    """
+    Busca uma publicação específica pelo id_api.
+    Usado para abrir modal de publicação a partir de notificações.
+    """
+    try:
+        publication = Publication.objects.get(id_api=id_api)
+        
+        # Serializar no formato da API
+        return Response({
+            'success': True,
+            'publication': {
+                'id_api': publication.id_api,
+                'numero_processo': publication.numero_processo,
+                'tribunal': publication.tribunal,
+                'tipo_comunicacao': publication.tipo_comunicacao,
+                'data_disponibilizacao': publication.data_disponibilizacao.strftime('%Y-%m-%d'),
+                'orgao': publication.orgao,
+                'meio': publication.meio,
+                'texto_completo': publication.texto_completo,
+                'texto_resumo': publication.texto_resumo,
+                'link_oficial': publication.link_oficial,
+                'hash_pub': publication.hash_pub,
+                'created_at': publication.created_at.isoformat(),
+            }
+        })
+        
+    except Publication.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Publicação não encontrada'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
