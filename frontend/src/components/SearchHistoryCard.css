@@ -157,12 +157,7 @@
 }
 
 .stat-divider {
-  width: 1px;
-  height: 40px;
-  background-color: #e0e0e0;
-  flex-shrink: 0;
-  align-self: center;
-  z-index: 1;
+  display: none;
 }
 
 .stat-item-highlight {
