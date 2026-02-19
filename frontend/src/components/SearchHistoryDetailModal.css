@@ -152,8 +152,8 @@
 }
 
 .search-stat-highlight {
-  background: linear-gradient(135deg, #f0f8f1 0%, #e8f5e9 100%);
-  border-color: #81c784;
+  background: linear-gradient(135deg, var(--publication-lighter, #eef2ff) 0%, var(--publication-light, #e0e7ff) 100%);
+  border-color: var(--publication-primary, #6366f1);
 }
 
 .stat-number {
@@ -165,7 +165,7 @@
 }
 
 .search-stat-highlight .stat-number {
-  color: #2e7d32;
+  color: var(--publication-dark, #4f46e5);
 }
 
 .stat-text {
