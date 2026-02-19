@@ -21,6 +21,12 @@ TRIBUNAIS = [
     'TRT15',  # Tribunal Regional do Trabalho da 15ª Região (Campinas)
 ]
 
+# OABs e nomes a EXCLUIR (outras advogadas com nomes similares)
+EXCLUDED_LAWYERS = {
+    'oabs': ['407729'],  # LÚCIA VITÓRIA ROCHA DO NASCIMENTO
+    'keywords': ['LUCIA', 'LÚCIA', 'ROCHA DO NASCIMENTO']
+}
+
 
 class PJeComunicaService:
     """Service para buscar publicações da API PJe Comunica."""
@@ -186,6 +192,42 @@ class PJeComunicaService:
             "hash": hash_pub,  # Hash da publicação
         }
     
+    @staticmethod
+    def should_exclude_publication(pub: Dict) -> bool:
+        """
+        Verifica se uma publicação deve ser EXCLUÍDA por pertencer a outra advogada.
+        
+        Critérios de exclusão (caso mencione):
+        - OABs de outras advogadas (ex: 407729 - LÚCIA VITÓRIA)
+        - Keywords de outras advogadas (LUCIA, LÚCIA, etc.)
+        
+        Args:
+            pub: Publicação normalizada
+            
+        Returns:
+            True se deve EXCLUIR, False se deve INCLUIR
+        """
+        # Concatenar todos os textos da publicação para análise
+        text_fields = [
+            pub.get('texto_completo', ''),
+            pub.get('texto_resumo', ''),
+            pub.get('orgao', ''),
+        ]
+        full_text = ' '.join(text_fields).upper()
+        
+        # Verificar OABs excluídas
+        for excluded_oab in EXCLUDED_LAWYERS['oabs']:
+            if excluded_oab in full_text:
+                return True  # EXCLUIR
+        
+        # Verificar keywords excluídas
+        for keyword in EXCLUDED_LAWYERS['keywords']:
+            if keyword.upper() in full_text:
+                return True  # EXCLUIR
+        
+        # Passou por todos os filtros - INCLUIR publicação
+        return False
+    
     @classmethod
     def fetch_publications(
         cls,
@@ -236,7 +278,10 @@ class PJeComunicaService:
                     if item_id and item_id not in seen_ids:
                         seen_ids.add(item_id)
                         normalized = cls.normalize_publication(item, tribunal)
-                        results.append(normalized)
+                        
+                        # Aplicar filtro de exclusão (outras advogadas)
+                        if not cls.should_exclude_publication(normalized):
+                            results.append(normalized)
             else:
                 errors.append({
                     'tribunal': tribunal,
@@ -260,7 +305,10 @@ class PJeComunicaService:
                     if item_id and item_id not in seen_ids:
                         seen_ids.add(item_id)
                         normalized = cls.normalize_publication(item, tribunal)
-                        results.append(normalized)
+                        
+                        # Aplicar filtro de exclusão (outras advogadas)
+                        if not cls.should_exclude_publication(normalized):
+                            results.append(normalized)
             else:
                 errors.append({
                     'tribunal': tribunal,

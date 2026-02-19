@@ -166,4 +166,6 @@ REST_FRAMEWORK = {
 
 # Configurações de OAB para publicações
 OAB_NUMBER = config('OAB_NUMBER', default='507553')
-ADVOGADA_NOME = config('ADVOGADA_NOME', default='Vitoria Rocha de Morais')
+ADVOGADA_NOME = config('ADVOGADA_NOME', default='Vitoria Rocha de Morais')# Nota: O sistema filtra automaticamente publicações de outras advogadas
+# com nomes similares (ex: LÚCIA VITÓRIA ROCHA DO NASCIMENTO - OAB 407729)
+# Ajuste em services/pje_comunica.py → EXCLUDED_LAWYERS
