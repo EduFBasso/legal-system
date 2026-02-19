@@ -9,7 +9,7 @@ import './NotificationsSummary.css';
  */
 export default function NotificationsSummary() {
   const navigate = useNavigate();
-  const { notifications, unreadCount, fetchUnreadNotifications } = useNotifications();
+  const { notifications, unreadCount, fetchUnreadNotifications, markAsRead } = useNotifications();
 
   // Atualizar notificações periodicamente
   useEffect(() => {
@@ -22,6 +22,13 @@ export default function NotificationsSummary() {
     .slice(0, 3);
 
   const handleViewAll = () => {
+    navigate('/notifications');
+  };
+
+  const handleNotificationClick = async (notificationId) => {
+    // Marcar como lida
+    await markAsRead(notificationId);
+    // Navegar para a página de notificações
     navigate('/notifications');
   };
 
@@ -77,7 +84,7 @@ export default function NotificationsSummary() {
             <div
               key={notification.id}
               className={`notification-mini-card ${getPriorityClass(notification.priority)}`}
-              onClick={handleViewAll}
+              onClick={() => handleNotificationClick(notification.id)}
             >
               <div className="mini-card-icon">
                 {getTypeIcon(notification.type)}
@@ -90,7 +97,7 @@ export default function NotificationsSummary() {
           ))}
           
           {unreadCount > 3 && (
-            <div className="more-notifications">
+            <div className="more-notifications" onClick={handleViewAll}>
               +{unreadCount - 3} mais
             </div>
           )}

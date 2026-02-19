@@ -77,23 +77,6 @@ export function NotificationsProvider({ children }) {
       }
       webNotification.close();
     };
-    
-    // Auto-marcar como lida após 10 segundos (se não for urgente)
-    if (notification.priority !== 'urgent') {
-      setTimeout(async () => {
-        try {
-          await fetch(`${API_BASE_URL}/notifications/${notification.id}/toggle_read/`, {
-            method: 'POST'
-          });
-          setNotifications(prev => 
-            prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
-          );
-          setUnreadCount(prev => Math.max(0, prev - 1));
-        } catch (err) {
-          console.error('Erro ao auto-marcar notificação:', err);
-        }
-      }, 10000);
-    }
   }, [permission, shownNotifications]);
 
   // Buscar notificações não lidas

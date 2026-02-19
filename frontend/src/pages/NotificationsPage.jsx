@@ -329,8 +329,8 @@ export default function NotificationsPage() {
             <div className="info-text">
               <strong>Notificações automáticas ativadas</strong>
               <p>
-                Notificações novas aparecem automaticamente e são marcadas como lidas após 10 segundos.
-                Notificações urgentes permanecem até você clicar nelas.
+                Notificações novas aparecem automaticamente no navegador e ficam visíveis no sidebar até serem marcadas como lidas.
+                Clique na notificação para marcá-la como lida.
               </p>
             </div>
             {process.env.NODE_ENV === 'development' && (
