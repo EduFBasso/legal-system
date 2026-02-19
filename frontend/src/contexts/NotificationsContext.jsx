@@ -12,6 +12,7 @@ export function NotificationsProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [permission, setPermission] = useState('default');
+  const [shownNotifications, setShownNotifications] = useState(new Set()); // IDs já exibidas
 
   // Solicitar permissão para Web Notifications
   useEffect(() => {
@@ -32,6 +33,10 @@ export function NotificationsProvider({ children }) {
   // Mostrar Web Notification
   const showWebNotification = useCallback((notification) => {
     if (permission !== 'granted') return;
+    // Verificar se já foi exibida nesta sessão
+    if (shownNotifications.has(notification.id)) {
+      return;
+    }
     
     const options = {
       body: notification.message,
@@ -47,13 +52,49 @@ export function NotificationsProvider({ children }) {
     
     const webNotification = new Notification(notification.title, options);
     
-    webNotification.onclick = () => {
+    // Marcar como já exibida
+    setShownNotifications(prev => new Set([...prev, notification.id]));
+    
+    // Quando clicar: marcar como lida e navegar
+    webNotification.onclick = async () => {
       window.focus();
+      
+      // Marcar como lida no backend
+      try {
+        await fetch(`${API_BASE_URL}/notifications/${notification.id}/toggle_read/`, {
+          method: 'POST'
+        });
+        setNotifications(prev => 
+          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error('Erro ao marcar notificação como lida:', err);
+      }
+      
       if (notification.link) {
         window.location.href = notification.link;
       }
       webNotification.close();
     };
+    
+    // Auto-marcar como lida após 10 segundos (se não for urgente)
+    if (notification.priority !== 'urgent') {
+      setTimeout(async () => {
+        try {
+          await fetch(`${API_BASE_URL}/notifications/${notification.id}/toggle_read/`, {
+            method: 'POST'
+          });
+          setNotifications(prev => 
+            prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+          );
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch (err) {
+          console.error('Erro ao auto-marcar notificação:', err);
+        }
+      }, 10000);
+    }
+  }, [permission, shownNotifications
   }, [permission]);
 
   // Buscar notificações não lidas
@@ -70,16 +111,18 @@ export function NotificationsProvider({ children }) {
         
         // Se houver novas notificações e temos permissão, mostrar Web Notification
         if (permission === 'granted' && newNotifications.length > 0) {
-          const latestNotification = newNotifications[0];
+          // Mostrar apenas notificações criadas há menos de 2 minutos
+          const recentNotifications = newNotifications.filter(notif => {
+            const createdAt = new Date(notif.created_at);
+            const now = new Date();
+            const diffSeconds = (now - createdAt) / 1000;
+            return diffSeconds < 120; // 2 minutos
+          });
           
-          // Verificar se é uma notificação nova (criada há menos de 1 minuto)
-          const createdAt = new Date(latestNotification.created_at);
-          const now = new Date();
-          const diffSeconds = (now - createdAt) / 1000;
-          
-          if (diffSeconds < 60) {
-            showWebNotification(latestNotification);
-          }
+          // Mostrar cada notificação recente (se ainda não foi exibida)
+          recentNotifications.forEach(notif => {
+            showWebNotification(notif);
+          });
         }
         
         setError(null);
@@ -126,11 +169,23 @@ export function NotificationsProvider({ children }) {
       );
       
       if (response.ok) {
+        const data = await response.json();
         // Atualizar estado local
         setNotifications(prev => 
-          prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+          prev.map(n => n.id === notificationId ? { ...n, read: data.read } : n)
         );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        if (data.read) {
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        } else {
+          // Se foi marcada como não lida, permitir reexibir
+          setShownNotifications(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(notificationId);
+            return newSet;
+          });
+          setUnreadCount(prev => prev + 1);
+        }
         return true;
       }
       return false;
@@ -178,7 +233,10 @@ export function NotificationsProvider({ children }) {
     }
   };
 
-
+  // Limpar cache de notificações exibidas (útil para testes)
+  const clearShownNotifications = () => {
+    setShownNotifications(new Set());
+  };
 
   // Solicitar permissão manualmente
   const requestPermission = async () => {
@@ -215,6 +273,7 @@ export function NotificationsProvider({ children }) {
     markAllAsRead,
     requestPermission,
     createTestNotification,
+    clearShownNotifications,
   };
 
   return (

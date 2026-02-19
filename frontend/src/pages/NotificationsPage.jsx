@@ -14,6 +14,7 @@ export default function NotificationsPage() {
     markAllAsRead,
     requestPermission,
     createTestNotification,
+    clearShownNotifications,
   } = useNotifications();
   
   const [filter, setFilter] = useState('all'); // all, unread, read
@@ -195,6 +196,34 @@ export default function NotificationsPage() {
           Lidas ({notifications.length - unreadCount})
         </button>
       </div>
+
+      {/* Informações sobre notificações Web */}
+      {permission === 'granted' && unreadCount > 0 && (
+        <div className="notification-info-banner">
+          <div className="info-content">
+            <span className="info-icon">ℹ️</span>
+            <div className="info-text">
+              <strong>Notificações automáticas ativadas</strong>
+              <p>
+                Notificações novas aparecem automaticamente e são marcadas como lidas após 10 segundos.
+                Notificações urgentes permanecem até você clicar nelas.
+              </p>
+            </div>
+            {process.env.NODE_ENV === 'development' && (
+              <button 
+                className="btn-ghost btn-sm" 
+                onClick={() => {
+                  clearShownNotifications();
+                  alert('Cache limpo! Notificações poderão aparecer novamente.');
+                }}
+                title="Limpar cache de notificações já exibidas (apenas desenvolvimento)"
+              >
+                🔄 Limpar Cache
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Lista de notificações */}
       <div className="notifications-list">
