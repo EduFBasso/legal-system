@@ -349,6 +349,7 @@ def _save_publications_to_db(publicacoes):
 def get_last_search(request):
     """
     Retorna informações da última busca realizada.
+    Valida se publicações ainda existem no banco (proteção contra deleção manual).
     
     GET /api/publications/last-search
     
@@ -376,6 +377,21 @@ def get_last_search(request):
                 'last_search': None
             })
         
+        # VALIDAÇÃO: Contar quantas publicações ainda existem no banco para esse período
+        current_pubs_count = Publication.objects.filter(
+            tribunal__in=last_search.tribunais,
+            data_disponibilizacao__gte=last_search.data_inicio,
+            data_disponibilizacao__lte=last_search.data_fim
+        ).count()
+        
+        # Se não há mais publicações no banco, retornar None (lastSearch inválido)
+        if current_pubs_count == 0:
+            return Response({
+                'success': True,
+                'last_search': None
+            })
+        
+        # Retornar com contagem REAL do banco (não do histórico)
         return Response({
             'success': True,
             'last_search': {
@@ -384,8 +400,8 @@ def get_last_search(request):
                 'data_inicio': last_search.data_inicio.isoformat(),
                 'data_fim': last_search.data_fim.isoformat(),
                 'tribunais': last_search.tribunais,
-                'total_publicacoes': last_search.total_publicacoes,
-                'total_novas': last_search.total_novas,
+                'total_publicacoes': current_pubs_count,  # Contagem REAL
+                'total_novas': 0,  # Resetar (não sabemos quais são novas após deleção)
                 'duration_seconds': last_search.duration_seconds,
             }
         })
