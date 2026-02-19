@@ -94,8 +94,7 @@ export function NotificationsProvider({ children }) {
         }
       }, 10000);
     }
-  }, [permission, shownNotifications
-  }, [permission]);
+  }, [permission, shownNotifications]);
 
   // Buscar notificações não lidas
   const fetchUnreadNotifications = useCallback(async () => {
@@ -106,8 +105,30 @@ export function NotificationsProvider({ children }) {
       
       if (response.ok) {
         const newNotifications = data.notifications || [];
-        setNotifications(newNotifications);
+        
+        // Atualizar contador de não lidas
         setUnreadCount(data.count || 0);
+        
+        // Merge inteligente: adicionar novas não lidas sem remover as lidas do estado
+        setNotifications(prev => {
+          // Se o estado está vazio, usar apenas as não lidas
+          if (prev.length === 0) {
+            return newNotifications;
+          }
+          
+          // Criar mapa das notificações existentes para fácil lookup
+          const existingMap = new Map(prev.map(n => [n.id, n]));
+          
+          // Adicionar/atualizar notificações não lidas
+          newNotifications.forEach(notif => {
+            existingMap.set(notif.id, notif);
+          });
+          
+          // Retornar array ordenado por created_at (mais recente primeiro)
+          return Array.from(existingMap.values()).sort((a, b) => 
+            new Date(b.created_at) - new Date(a.created_at)
+          );
+        });
         
         // Se houver novas notificações e temos permissão, mostrar Web Notification
         if (permission === 'granted' && newNotifications.length > 0) {
