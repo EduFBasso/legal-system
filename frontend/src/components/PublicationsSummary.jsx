@@ -149,7 +149,8 @@ export default function PublicationsSummary() {
         </div>
       ) : (
         <div className="no-check-info">
-          <p>🔍 Nenhuma busca realizada</p>
+          <p className="no-check-message">📋 Nenhuma busca recente</p>
+          <p className="no-check-hint">Clique em "Buscar Hoje" para iniciar</p>
         </div>
       )}
 

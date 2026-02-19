@@ -56,6 +56,16 @@ export function usePublications() {
   }, []);
 
   /**
+   * Limpa/invalida informações da última busca
+   * Usado após deletar todas as publicações
+   */
+  const clearLastSearch = useCallback(() => {
+    setLastSearch(null);
+    setPublications([]);
+    setSearchParams(null);
+  }, []);
+
+  /**
    * Carrega publicações da última busca do banco
    */
   const loadLastSearch = useCallback(async () => {
@@ -67,9 +77,13 @@ export function usePublications() {
         setPublications(data.publicacoes || []);
         setSearchParams(data.search_info);
         
+        // Se não há mais publicações no banco, limpar lastSearch
         if (data.total_publicacoes === 0) {
+          setLastSearch(null);
           showToast('Nenhuma publicação encontrada na última busca.', 'warning');
         } else {
+          // Atualizar lastSearch com dados atualizados
+          await fetchLastSearch();
           showToast(
             `${data.total_publicacoes} publicação(ões) carregada(s) da última busca.`,
             'success'
@@ -78,6 +92,7 @@ export function usePublications() {
       } else {
         showToast(data.message || 'Nenhuma busca anterior encontrada.', 'warning');
         setPublications([]);
+        setLastSearch(null);
       }
     } catch (error) {
       console.error('Erro ao carregar última busca:', error);
@@ -86,7 +101,7 @@ export function usePublications() {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, fetchLastSearch]);
 
   /**
    * Busca publicações do dia atual
@@ -205,6 +220,7 @@ export function usePublications() {
     search,
     searchToday,
     loadLastSearch,
+    clearLastSearch,
     openModal,
     closeModal,
     showToast,
