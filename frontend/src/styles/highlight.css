@@ -108,18 +108,18 @@
 
 /* ============================================
    CLASSE PARA PROCESSO ENCONTRADO (HISTÓRICO)
-   Mantida para compatibilidade com código existente
+   Usa as cores do módulo de PUBLICAÇÕES (azul/violeta)
    ============================================ */
 .highlight-process-found {
   position: relative;
-  border: 2px solid #4caf50 !important;
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-  animation: pulse-green 2s ease-in-out infinite !important;
+  border: 2px solid var(--publication-primary, #6366f1) !important;
+  box-shadow: 0 0 20px var(--publication-glow, rgba(99, 102, 241, 0.3)), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  animation: pulse-publication 2s ease-in-out infinite !important;
 }
 
 .highlight-process-found:hover {
-  border-color: #45a049 !important;
-  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+  border-color: var(--publication-dark, #4f46e5) !important;
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.4), 0 8px 16px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* ============================================
