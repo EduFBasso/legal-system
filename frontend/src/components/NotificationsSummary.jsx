@@ -69,29 +69,6 @@ export default function NotificationsSummary() {
 
   return (
     <div className="notifications-summary">
-      {/* Botão de teste (apenas desenvolvimento) */}
-      {process.env.NODE_ENV === 'development' && (
-        <button 
-          onClick={highlight.toggle}
-          style={{
-            position: 'absolute',
-            top: '0.5rem',
-            right: '0.5rem',
-            padding: '0.25rem 0.5rem',
-            fontSize: '0.7rem',
-            background: highlight.isHighlighted ? '#4caf50' : '#ccc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            zIndex: 10
-          }}
-          title="Toggle brilho pulsante (dev)"
-        >
-          {highlight.isHighlighted ? '✨ ON' : '⭕ OFF'}
-        </button>
-      )}
-      
       {/* Header com contador */}
       <div className="notifications-header" onClick={handleViewAll}>
         <div className="notification-count-badge">
