@@ -2,6 +2,7 @@
 Views para API de Publications.
 """
 import time
+import unicodedata
 from datetime import datetime
 from django.db import models
 from django.conf import settings
@@ -17,6 +18,19 @@ from .models import Publication, SearchHistory
 # Credentials from settings
 OAB_NUMBER = settings.OAB_NUMBER
 ADVOGADA_NOME = settings.ADVOGADA_NOME
+
+
+def normalize_string(text):
+    """
+    Normaliza string removendo acentos para busca.
+    Ex: 'Vitória' -> 'vitoria'
+    """
+    if not text:
+        return ''
+    # NFD = Normalização de decomposição canônica (separa caractere base + acento)
+    # Depois remove categoria Mn (Nonspacing Mark = acentos)
+    nfd = unicodedata.normalize('NFD', text)
+    return ''.join(char for char in nfd if unicodedata.category(char) != 'Mn').lower()
 
 
 @api_view(['GET'])
@@ -254,6 +268,7 @@ def _create_publication_notifications(publicacoes, retroactive_days=7):
     # Calcular data limite (hoje - retroactive_days)
     cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=retroactive_days)
     
+    notifications_created = 0
     for pub in publicacoes[:5]:  # Limitar a 5 notificações por busca
         # Filtrar por data de disponibilização
         data_disp = pub.get('data_disponibilizacao')
@@ -264,9 +279,10 @@ def _create_publication_notifications(publicacoes, retroactive_days=7):
                 # Pular se for muito antiga
                 if pub_date < cutoff_date:
                     continue
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
                 # Se não conseguir parsear, pular
                 continue
+        
         # Verificar se já existe notificação para esta publicação
         notification_exists = Notification.objects.filter(
             type='publication',
@@ -305,6 +321,7 @@ def _create_publication_notifications(publicacoes, retroactive_days=7):
                 'link_oficial': link_oficial,  # Guardar link no metadata também
             }
         )
+        notifications_created += 1
 
 
 def _save_publications_to_db(publicacoes):
@@ -579,12 +596,26 @@ def get_search_history(request):
                     publications = matching_pubs
             else:
                 # Busca por nome de parte (texto)
-                # Busca nos campos texto_resumo e texto_completo
-                publications = Publication.objects.filter(
-                    models.Q(texto_resumo__icontains=query) |
-                    models.Q(texto_completo__icontains=query) |
-                    models.Q(orgao__icontains=query)
-                )
+                # Normalizar query para busca sem acentos
+                query_normalized = normalize_string(query)
+                
+                # Buscar em todas as publicações e filtrar com normalização
+                all_publications = Publication.objects.all()
+                matching_pubs = []
+                
+                for pub in all_publications:
+                    # Normalizar campos de texto
+                    texto_resumo_norm = normalize_string(pub.texto_resumo or '')
+                    texto_completo_norm = normalize_string(pub.texto_completo or '')
+                    orgao_norm = normalize_string(pub.orgao or '')
+                    
+                    # Verificar se query normalizada está em algum campo normalizado
+                    if (query_normalized in texto_resumo_norm or 
+                        query_normalized in texto_completo_norm or 
+                        query_normalized in orgao_norm):
+                        matching_pubs.append(pub)
+                
+                publications = matching_pubs
             
             # Verificar se encontrou publicações (pode ser QuerySet ou lista)
             has_publications = (publications.exists() if hasattr(publications, 'exists') 
