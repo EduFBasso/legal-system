@@ -8,17 +8,17 @@ function SearchHistoryCard({
   search, 
   onClick, 
   formatDate, 
-  formatDateTime, 
-  highlightProcessSearch = false 
+  formatDateTime,
+  isHighlighted = false
 }) {
-  const cardClassName = highlightProcessSearch 
+  const cardClassName = isHighlighted 
     ? "search-history-card highlight-process-found" 
     : "search-history-card";
 
   return (
     <div className={cardClassName} onClick={onClick}>
       {/* Badge de processo encontrado */}
-      {highlightProcessSearch && (
+      {isHighlighted && (
         <div className="process-found-badge">
           <span className="badge-icon">🔍</span>
           <span className="badge-text">Encontrado</span>
@@ -86,7 +86,7 @@ SearchHistoryCard.propTypes = {
   onClick: PropTypes.func.isRequired,
   formatDate: PropTypes.func.isRequired,
   formatDateTime: PropTypes.func.isRequired,
-  highlightProcessSearch: PropTypes.bool
+  isHighlighted: PropTypes.bool
 };
 
 export default SearchHistoryCard;

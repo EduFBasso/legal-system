@@ -2,8 +2,9 @@
  * Página de Histórico de Buscas de Publicações
  * Exibe lista de todas as buscas realizadas com filtros e paginação
  */
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchHistory } from '../hooks/useSearchHistory';
+import publicationsService from '../services/publicationsService';
 import SearchHistoryList from '../components/SearchHistoryList';
 import SearchHistoryControls from '../components/SearchHistoryControls';
 import SearchHistoryDetailModal from '../components/SearchHistoryDetailModal';
@@ -20,21 +21,22 @@ function SearchHistoryPage() {
     selectedPublications,
     detailLoading,
     isClearing,
+    loadHistory,
     loadSearchDetail,
     nextPage,
     previousPage,
     changeOrdering,
     clearSelectedSearch,
     clearHistory,
-    searchByQuery,
     formatDate,
     formatDateTime
   } = useSearchHistory();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [useBackendSearch, setUseBackendSearch] = useState(false);
-  const [isProcessSearch, setIsProcessSearch] = useState(false);
+  const [isSearchingBackend, setIsSearchingBackend] = useState(false);
+  const [isBackendQuery, setIsBackendQuery] = useState(false); // Indica se query atual é tipo backend (nome/processo)
+  const [backendMatchIds, setBackendMatchIds] = useState(new Set()); // IDs dos cartões encontrados no backend
   const debounceTimerRef = useRef(null);
 
   // Verificar se ordenação é crescente
@@ -49,104 +51,123 @@ function SearchHistoryPage() {
   };
 
   /**
-   * Filtro em tempo real - busca por data, processo ou nomes
+   * Detecta se a busca deve ser feita no backend ou localmente
+   * - Data (DD/MM ou números curtos): local
+   * - Tribunal (TJSP, TRF, etc): local
+   * - Texto/nome (>= 3 caracteres): backend
+   * - Número longo (>= 6 dígitos): backend
+   */
+  const shouldUseBackend = useCallback((query) => {
+    if (!query || query.length < 3) return false;
+    
+    // Busca por data: contém "/" ou são apenas 1-2 dígitos
+    if (query.includes('/') || /^\d{1,2}$/.test(query)) {
+      return false;
+    }
+    
+    // Busca por tribunal: siglas conhecidas
+    const tribunalKeywords = ['tjsp', 'trf', 'trt', 'tst', 'stj', 'stf'];
+    const queryLower = query.toLowerCase();
+    if (tribunalKeywords.some(t => queryLower.includes(t))) {
+      return false;
+    }
+    
+    // Qualquer outra coisa com 3+ caracteres: buscar no backend
+    return true;
+  }, []);
+
+  /**
+   * Normaliza string removendo acentos para busca
+   */
+  const normalizeString = (str) => {
+    if (!str) return '';
+    return str.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  };
+
+  /**
+   * Busca no backend e guarda apenas os IDs encontrados (não altera searches)
+   */
+  const searchBackendOnly = useCallback(async (query) => {
+    setIsSearchingBackend(true);
+    try {
+      const result = await publicationsService.getSearchHistory({
+        limit: 1000, // Pegar todos os resultados possíveis
+        offset: 0,
+        q: query
+      });
+
+      if (result.success && result.results.length > 0) {
+        // Guardar apenas os IDs encontrados
+        const foundIds = new Set(result.results.map(s => s.id));
+        setBackendMatchIds(foundIds);
+      } else {
+        // Nenhum resultado: limpar IDs
+        setBackendMatchIds(new Set());
+      }
+    } catch (err) {
+      console.error('Erro ao buscar no backend:', err);
+      setBackendMatchIds(new Set());
+    } finally {
+      setIsSearchingBackend(false);
+    }
+  }, []);
+  /**
+   * Filtro em tempo real - busca por data, tribunal e ID
    * Também filtra buscas com 0 publicações
-   * 
-   * Se useBackendSearch=true, os resultados já vêm filtrados do backend
-   * Para busca local, filtra por data, tribunal e ID
+   * Busca local com normalização de acentos
    */
   const filteredSearches = useMemo(() => {
     // Primeiro filtrar apenas buscas com publicações
     const searchesWithResults = searches.filter(s => s.total_publicacoes > 0);
 
-    // Se busca está sendo feita no backend, retornar resultados diretos
-    if (useBackendSearch) {
-      return searchesWithResults;
-    }
-
-    // Busca local (data, tribunal, ID)
+    // Se query vazia, SEMPRE retornar tudo
     if (!searchQuery.trim()) {
       return searchesWithResults;
     }
 
-    const query = searchQuery.toLowerCase();
+    // Se é query de backend (nome/processo): SEMPRE mostrar tudo
+    // O destaque visual (borda azul) indica o que foi encontrado
+    // Isso evita piscar quando backend não encontra resultados
+    if (isBackendQuery || isSearchingBackend || backendMatchIds.size > 0) {
+      return searchesWithResults;
+    }
 
+    const query = normalizeString(searchQuery);
+
+    // Se texto muito curto (1-2 caracteres), retornar tudo
+    // Evita que cartão desapareça enquanto usuário digita
+    if (query.length < 3) {
+      return searchesWithResults;
+    }
+
+    // Busca local: filtrar por data, tribunal, ID
     return searchesWithResults.filter(search => {
       // Buscar por data (formato DD/MM/YYYY)
-      const dataInicio = formatDate(search.data_inicio).toLowerCase();
-      const dataFim = formatDate(search.data_fim).toLowerCase();
-      const executedAt = formatDateTime(search.executed_at).toLowerCase();
+      const dataInicio = normalizeString(formatDate(search.data_inicio));
+      const dataFim = normalizeString(formatDate(search.data_fim));
+      const executedAt = normalizeString(formatDateTime(search.executed_at));
 
       // Busca simples: query aparece nas datas
       if (dataInicio.includes(query) || dataFim.includes(query) || executedAt.includes(query)) {
         return true;
       }
 
-      // Busca inteligente por data: só detecta como data se:
-      // 1. Contém "/" (ex: "11/", "11/02", "11/02/2026")
-      // 2. OU tem no máximo 2 dígitos (ex: "11", "1")
-      // Números longos sem "/" (ex: "00006236920268260320") NÃO são considerados datas
-      const hasSlash = query.includes('/');
-      const isShortNumber = query.match(/^\d{1,2}$/) !== null;
-      const looksLikeDate = hasSlash || isShortNumber;
-
-      if (looksLikeDate) {
-        // Tentar construir possíveis datas com o que foi digitado
-        const inicio = new Date(search.data_inicio);
-        const fim = new Date(search.data_fim);
-        
-        // Extrair dia, mês e ano do query
-        const parts = query.split('/');
-        const diaQuery = parts[0] ? parseInt(parts[0]) : null;
-        const mesQuery = parts[1] ? parseInt(parts[1]) : null;
-        const anoQuery = parts[2] ? parseInt(parts[2]) : null;
-
-        if (diaQuery) {
-          // Criar data de teste baseada no período da busca
-          // Usar o ano e mês do início para testar
-          const anoTeste = anoQuery || inicio.getFullYear();
-          const mesTeste = mesQuery || (inicio.getMonth() + 1);
-          
-          // Tentar criar a data com os valores fornecidos
-          const dataTeste = new Date(anoTeste, mesTeste - 1, diaQuery);
-          
-          // Verificar se a data de teste está dentro do período [inicio, fim]
-          if (dataTeste >= inicio && dataTeste <= fim) {
-            return true;
-          }
-
-          // Também testar com o mês do fim (caso o período cruze meses)
-          if (fim.getMonth() !== inicio.getMonth()) {
-            const mesTeste2 = mesQuery || (fim.getMonth() + 1);
-            const dataTeste2 = new Date(anoTeste, mesTeste2 - 1, diaQuery);
-            if (dataTeste2 >= inicio && dataTeste2 <= fim) {
-              return true;
-            }
-          }
-        }
-      }
-
       // Buscar por tribunal
-      if (search.tribunais.some(t => t.toLowerCase().includes(query))) {
+      if (search.tribunais && search.tribunais.some(t => normalizeString(t).includes(query))) {
         return true;
       }
 
       // Buscar por número no ID (se digitarem números)
-      if (search.id.toString().includes(query)) {
+      if (search.id && search.id.toString().includes(query)) {
         return true;
       }
 
-      // TODO: Busca por número de processo nas publicações
-      // Requer carregar publicações ou buscar no backend
-      // Por enquanto, só busca nos dados do histórico (data, tribunal, ID)
-
       return false;
     });
-  }, [searches, searchQuery, formatDate, formatDateTime, useBackendSearch]);
+  }, [searches, searchQuery, formatDate, formatDateTime, isBackendQuery, isSearchingBackend, backendMatchIds]);
 
   /**
-   * Detecta se deve usar busca no backend (números longos = possível número de processo)
-   * Usa debounce para evitar requisições excessivas
+   * Usa debounce para buscar no backend quando necessário
    */
   useEffect(() => {
     const query = searchQuery.trim();
@@ -158,28 +179,27 @@ function SearchHistoryPage() {
 
     // Se query vazia, resetar
     if (!query) {
-      setUseBackendSearch(false);
-      setIsProcessSearch(false);
+      setIsBackendQuery(false);
+      if (backendMatchIds.size > 0) {
+        setBackendMatchIds(new Set());
+      }
       return;
     }
 
-    // Detectar se é número longo sem "/" (possível número de processo)
-    // OU se tem letras (busca por nome de parte)
-    const hasSlash = query.includes('/');
-    const hasLetters = /[a-zA-Z]/.test(query);
-    const isLongNumber = /^\d{6,}$/.test(query);
-    const shouldUseBackend = (!hasSlash && isLongNumber) || (hasLetters && query.length >= 3);
+    // Detectar se deve usar backend
+    const useBackend = shouldUseBackend(query);
+    setIsBackendQuery(useBackend);
 
-    setIsProcessSearch(shouldUseBackend);
-
-    if (shouldUseBackend) {
+    if (useBackend) {
       // Buscar no backend após 500ms de debounce
       debounceTimerRef.current = setTimeout(() => {
-        setUseBackendSearch(true);
-        searchByQuery(query);
+        searchBackendOnly(query);
       }, 500);
     } else {
-      setUseBackendSearch(false);
+      // Busca local: limpar IDs do backend
+      if (backendMatchIds.size > 0) {
+        setBackendMatchIds(new Set());
+      }
     }
 
     // Cleanup
@@ -188,7 +208,7 @@ function SearchHistoryPage() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [searchQuery, searchByQuery]);
+  }, [searchQuery, shouldUseBackend, backendMatchIds.size, searchBackendOnly]);
 
   /**
    * Manipula mudança na busca
@@ -282,7 +302,7 @@ function SearchHistoryPage() {
                 onSearchClick={handleSearchClick}
                 formatDate={formatDate}
                 formatDateTime={formatDateTime}
-                highlightProcessSearch={isProcessSearch}
+                backendMatchIds={backendMatchIds}
               />
 
               {/* Paginação */}
@@ -325,7 +345,7 @@ function SearchHistoryPage() {
           onClose={handleCloseModal}
           formatDate={formatDate}
           formatDateTime={formatDateTime}
-          highlightProcessNumber={isProcessSearch ? searchQuery : null}
+          highlightProcessNumber={isBackendQuery ? searchQuery : null}
         />
       )}
     </div>

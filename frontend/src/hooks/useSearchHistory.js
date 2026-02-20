@@ -283,7 +283,6 @@ export function useSearchHistory() {
     changeOrdering,
     clearSelectedSearch,
     clearHistory,
-    searchByQuery,
 
     // Utilitários
     formatDate,
