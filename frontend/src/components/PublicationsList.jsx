@@ -83,5 +83,3 @@ PublicationsList.propTypes = {
   onToggleSelect: PropTypes.func,
   onDelete: PropTypes.func
 };
-  onToggleSelect: PropTypes.func
-};

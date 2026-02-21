@@ -133,7 +133,12 @@ export default function PublicationCard({
       )}
       <div className="publication-header">
         <div className="publication-badges">
-         div className="publication-header-right">
+          <span className={`badge badge-${getTipoBadgeColor(publication.tipo_comunicacao)}`}>
+            {publication.tipo_comunicacao}
+          </span>
+          <span className="badge badge-gray">{publication.tribunal}</span>
+        </div>
+        <div className="publication-header-right">
           <span className="publication-date">{formatDate(publication.data_disponibilizacao)}</span>
           {!selectionMode && (
             <button
@@ -144,12 +149,7 @@ export default function PublicationCard({
               🗑️
             </button>
           )}
-        </div
-            {publication.tipo_comunicacao}
-          </span>
-          <span className="badge badge-gray">{publication.tribunal}</span>
         </div>
-        <span className="publication-date">{formatDate(publication.data_disponibilizacao)}</span>
       </div>
 
       <div className="publication-body">

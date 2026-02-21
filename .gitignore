@@ -65,3 +65,8 @@ backend/scripts/
 
 # === Outros ===
 pub_fetcher/
+
+# === Tools/Binários ===
+*.exe
+*.dll
+tools/sqlite3.exe
