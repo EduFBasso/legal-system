@@ -37,10 +37,10 @@ export default function Menu() {
           </NavLink>
         </li>
         <li className="menu-item">
-          <a href="#cases">
+          <NavLink to="/cases" className={({ isActive }) => isActive ? 'active' : ''}>
             <span className="menu-icon">⚖️</span>
             <span className="menu-label">Processos</span>
-          </a>
+          </NavLink>
         </li>
         <li className="menu-item">
           <a href="#calendar">
