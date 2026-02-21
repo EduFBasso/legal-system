@@ -27,6 +27,8 @@ urlpatterns = [
     path('api/publications/', include('apps.publications.urls')),
     # Notifications: /api/notifications/
     path('api/notifications/', include('apps.notifications.urls')),
+    # Cases: /api/cases/
+    path('api/', include('apps.cases.urls')),
 ]
 
 # Servir arquivos de mídia local em desenvolvimento
