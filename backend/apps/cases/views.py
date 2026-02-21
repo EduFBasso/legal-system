@@ -38,7 +38,6 @@ class CaseViewSet(viewsets.ModelViewSet):
         'auto_status': ['exact'],
         'data_distribuicao': ['gte', 'lte', 'exact'],
         'data_ultima_movimentacao': ['gte', 'lte', 'exact'],
-        'tags': ['contains'],
     }
     search_fields = [
         'numero_processo',
