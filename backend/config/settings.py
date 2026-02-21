@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'apps.contacts',
     'apps.publications',
     'apps.notifications',
+    'apps.cases',
 ]
 
 MIDDLEWARE = [
