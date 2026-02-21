@@ -95,9 +95,9 @@ export default function PublicationsPage() {
       const result = await publicationsService.deleteMultiplePublications(Array.from(selectedIds));
       
       if (result.success) {
-        const msg = `${result.deleted} publicação(ões) deletada(s) com sucesso!`;
-        const notifMsg = result.notifications_deleted > 0 
-          ? `\n${result.notifications_deleted} notificação(ões) relacionada(s) também foram removidas.`
+        const msg = `${result.deleted} publicação(ões) marcada(s) como deletadas!`;
+        const notifMsg = result.notifications_updated > 0 
+          ? `\n${result.notifications_updated} notificação(ões) relacionada(s) marcadas como lidas.` 
           : '';
         alert(msg + notifMsg);
         setSelectedIds(new Set());
@@ -115,11 +115,34 @@ export default function PublicationsPage() {
   /**
    * Handler para deletar TODAS as publicações
    */
+  const handleDeleteSingle = async (idApi) => {
+    if (!window.confirm('Marcar esta publicação como deletada? Ela será ocultada mas permanecerá no banco para auditoria.')) {
+      return;
+    }
+
+    try {
+      const result = await publicationsService.deletePublication(idApi);
+      
+      if (result.success) {
+        const notifMsg = result.notifications_updated > 0 
+          ? `\n${result.notifications_updated} notificação(ões) relacionada(s) marcadas como lidas.` 
+          : '';
+        alert(`Publicação marcada como deletada!${notifMsg}`);
+        // Recarregar lista
+        await loadLastSearch();
+      } else {
+        alert(`Erro ao deletar: ${result.error || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      alert(`Erro ao deletar publicação: ${error.message}`);
+    }
+  };
+
   const handleDeleteAll = async () => {
     const totalCount = publications.length;
     if (totalCount === 0) return;
     
-    const confirmMsg = `Deletar TODAS as ${totalCount} publicações? Esta ação não pode ser desfeita e irá remover todas as publicações do banco de dados.`;
+    const confirmMsg = `Marcar TODAS as ${totalCount} publicações como deletadas?\n\nAs publicações serão ocultadas mas permanecerão no banco para auditoria.\nO histórico de buscas será removido.\nNotificações relacionadas serão marcadas como lidas.`;
     
     if (!window.confirm(confirmMsg)) return;
     
@@ -127,11 +150,14 @@ export default function PublicationsPage() {
       const result = await publicationsService.deleteAllPublications();
       
       if (result.success) {
-        const msg = `Todas as ${result.deleted} publicações foram deletadas!`;
-        const notifMsg = result.notifications_deleted > 0
-          ? `\n${result.notifications_deleted} notificação(ões) relacionada(s) também foram removidas.`
+        const msg = `Todas as ${result.deleted} publicações foram marcadas como deletadas!`;
+        const notifMsg = result.notifications_updated > 0
+          ? `\n${result.notifications_updated} notificação(ões) relacionada(s) marcadas como lidas.`
           : '';
-        alert(msg + notifMsg);
+        const historyMsg = result.history_deleted > 0
+          ? `\n${result.history_deleted} registro(s) de histórico removidos.`
+          : '';
+        alert(msg + notifMsg + historyMsg);
         setSelectedIds(new Set());
         setSelectionMode(false);
         // Recarregar lista
@@ -244,6 +270,7 @@ export default function PublicationsPage() {
         selectionMode={selectionMode}
         selectedIds={selectedIds}
         onToggleSelect={toggleSelectPublication}
+        onDelete={handleDeleteSingle}
       />
 
       {/* Detail Modal */}

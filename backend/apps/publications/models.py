@@ -92,6 +92,26 @@ class Publication(models.Model):
         auto_now=True
     )
     
+    # Soft Delete
+    deleted = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Se True, publicação foi excluída (soft delete)'
+    )
+    
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Data/hora da exclusão'
+    )
+    
+    deleted_reason = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='Motivo da exclusão (ex: Exclusão manual pela advogada)'
+    )
+    
     class Meta:
         ordering = ['-data_disponibilizacao', '-created_at']
         verbose_name = 'Publicação'

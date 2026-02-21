@@ -7,7 +7,8 @@ export default function PublicationCard({
   highlighted = false,
   selectionMode = false,
   isSelected = false,
-  onToggleSelect = () => {}
+  onToggleSelect = () => {},
+  onDelete = () => {}
 }) {
   const getTipoBadgeColor = (tipo) => {
     const colors = {
@@ -109,6 +110,11 @@ export default function PublicationCard({
     onToggleSelect();
   };
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    onDelete();
+  };
+
   return (
     <div className={cardClassName} onClick={handleCardClick}>      {selectionMode && (
         <div className="selection-checkbox-overlay">
@@ -127,7 +133,18 @@ export default function PublicationCard({
       )}
       <div className="publication-header">
         <div className="publication-badges">
-          <span className={`badge badge-${getTipoBadgeColor(publication.tipo_comunicacao)}`}>
+         div className="publication-header-right">
+          <span className="publication-date">{formatDate(publication.data_disponibilizacao)}</span>
+          {!selectionMode && (
+            <button
+              className="btn-delete-publication"
+              onClick={handleDeleteClick}
+              title="Deletar esta publicação"
+            >
+              🗑️
+            </button>
+          )}
+        </div
             {publication.tipo_comunicacao}
           </span>
           <span className="badge badge-gray">{publication.tribunal}</span>

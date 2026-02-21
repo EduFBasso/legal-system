@@ -13,7 +13,8 @@ export default function PublicationsList({
   onCardClick,
   selectionMode = false,
   selectedIds = new Set(),
-  onToggleSelect = () => {}
+  onToggleSelect = () => {},
+  onDelete = () => {}
 }) {
   // Estado de carregamento
   if (loading) {
@@ -65,6 +66,7 @@ export default function PublicationsList({
           selectionMode={selectionMode}
           isSelected={selectedIds.has(pub.id_api)}
           onToggleSelect={() => onToggleSelect(pub.id_api)}
+          onDelete={() => onDelete(pub.id_api)}
         />
       ))}
     </div>
@@ -78,5 +80,8 @@ PublicationsList.propTypes = {
   onCardClick: PropTypes.func.isRequired,
   selectionMode: PropTypes.bool,
   selectedIds: PropTypes.instanceOf(Set),
+  onToggleSelect: PropTypes.func,
+  onDelete: PropTypes.func
+};
   onToggleSelect: PropTypes.func
 };
