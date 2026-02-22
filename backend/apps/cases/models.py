@@ -44,18 +44,21 @@ class Case(models.Model):
     comarca = models.CharField(
         max_length=100,
         blank=True,
+        default='',
         help_text='Comarca/Subseção judiciária'
     )
 
     vara = models.CharField(
         max_length=200,
         blank=True,
+        default='',
         help_text='Vara/Turma/Câmara'
     )
 
     tipo_acao = models.CharField(
         max_length=100,
         blank=True,
+        default='',
         choices=[
             ('CIVEL', 'Cível'),
             ('CRIMINAL', 'Criminal'),
@@ -129,12 +132,14 @@ class Case(models.Model):
     parte_contraria = models.CharField(
         max_length=200,
         blank=True,
+        default='',
         help_text='Nome da parte contrária (ré/autor/reclamada)'
     )
 
     # ========== OBSERVAÇÕES ==========
     observacoes = models.TextField(
         blank=True,
+        default='',
         help_text='Observações internas sobre o caso'
     )
 

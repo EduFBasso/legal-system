@@ -12,12 +12,22 @@ export default function PublicationCard({
 }) {
   const getTipoBadgeColor = (tipo) => {
     const colors = {
-      'Intimação': 'blue',
+      'Intimação': 'red',
       'Citação': 'green',
       'Edital': 'orange',
       'Sentença': 'purple',
     };
     return colors[tipo] || 'gray';
+  };
+
+  const getTribunalBadgeClass = (tribunal) => {
+    const tribunalMap = {
+      'TJSP': 'badge-tribunal-tjsp',
+      'TRF3': 'badge-tribunal-trf3',
+      'TRT2': 'badge-tribunal-trt2',
+      'TRT15': 'badge-tribunal-trt15',
+    };
+    return tribunalMap[tribunal] || 'badge-gray';
   };
 
   const formatDate = (dateString) => {
@@ -136,7 +146,7 @@ export default function PublicationCard({
           <span className={`badge badge-${getTipoBadgeColor(publication.tipo_comunicacao)}`}>
             {publication.tipo_comunicacao}
           </span>
-          <span className="badge badge-gray">{publication.tribunal}</span>
+          <span className={`badge ${getTribunalBadgeClass(publication.tribunal)}`}>{publication.tribunal}</span>
         </div>
         <div className="publication-header-right">
           <span className="publication-date">{formatDate(publication.data_disponibilizacao)}</span>

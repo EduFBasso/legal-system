@@ -31,6 +31,15 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
   }, [loadParties]);
 
   /**
+   * Sync formData with caseData prop when it changes
+   */
+  useEffect(() => {
+    if (caseData) {
+      setFormData(caseData);
+    }
+  }, [caseData]);
+
+  /**
    * Handle form input change
    */
   const handleInputChange = (field, value) => {
@@ -46,18 +55,28 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // Remove empty strings, null, and undefined values
+      const cleanedData = {};
+      Object.entries(formData).forEach(([key, value]) => {
+        // Only include fields with actual values
+        if (value !== '' && value !== null && value !== undefined) {
+          cleanedData[key] = value;
+        }
+      });
+      
       let updatedCase;
       if (caseData?.id) {
         // Update existing case
-        updatedCase = await casesService.update(caseData.id, formData);
+        updatedCase = await casesService.update(caseData.id, cleanedData);
       } else {
         // Create new case
-        updatedCase = await casesService.create(formData);
+        updatedCase = await casesService.create(cleanedData);
       }
       onUpdate(updatedCase);
       setIsEditing(false);
       setFormData(updatedCase);
     } catch (error) {
+      console.error('Error details:', error);
       alert('Erro ao salvar processo: ' + error.message);
     } finally {
       setLoading(false);

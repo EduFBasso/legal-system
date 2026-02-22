@@ -70,9 +70,116 @@
   transition: all 0.2s ease;
 }
 
-.stat-card:hover {
+.stat-card.stat-clickable {
+  cursor: pointer;
+}
+
+/* Hover genérico removido - cada card terá sua cor específica */
+
+/* Total card hover - Gray/Black */
+.stat-card.stat-clickable:not(.stat-active):not(.stat-inactive):not(.stat-tribunal):hover {
+  border-color: #475569;
+  box-shadow: 0 4px 12px rgba(71, 85, 105, 0.15);
+  transform: translateY(-2px);
+  background: #f8fafc;
+}
+
+/* Active card hover - Green */
+.stat-card.stat-active.stat-clickable:hover {
+  border-color: #16a34a;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+  transform: translateY(-2px);
+  background: #f0fdf4;
+}
+
+/* Inactive card hover - Red */
+.stat-card.stat-inactive.stat-clickable:hover {
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+  transform: translateY(-2px);
+  background: #fef2f2;
+}
+
+/* Tribunal card hover - Blue/Violet */
+.stat-card.stat-tribunal.stat-clickable:hover {
   border-color: #6366f1;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+  background: #eef2ff;
+}
+
+.stat-card:not(.stat-clickable):hover {
+  border-color: #cbd5e1;
+}
+
+/* Selected state - shows active filter */
+.stat-card.stat-selected {
+  border-width: 3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Total - Gray/Black when selected */
+.stat-card.stat-selected:not(.stat-active):not(.stat-inactive):not(.stat-tribunal) {
+  border-color: #475569;
+  background: #f8fafc;
+}
+
+.stat-card.stat-selected:not(.stat-active):not(.stat-inactive):not(.stat-tribunal) .stat-value {
+  color: #0f172a;
+}
+
+/* Total selected + hover */
+.stat-card.stat-selected:not(.stat-active):not(.stat-inactive):not(.stat-tribunal):hover {
+  box-shadow: 0 6px 16px rgba(71, 85, 105, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Active - Green when selected */
+.stat-card.stat-active.stat-selected {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.stat-card.stat-active.stat-selected .stat-value {
+  color: #15803d;
+}
+
+/* Active selected + hover */
+.stat-card.stat-active.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Inactive - Red when selected */
+.stat-card.stat-inactive.stat-selected {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.stat-card.stat-inactive.stat-selected .stat-value {
+  color: #b91c1c;
+}
+
+/* Inactive selected + hover */
+.stat-card.stat-inactive.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Tribunal - Blue when selected */
+.stat-card.stat-tribunal.stat-selected {
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+
+.stat-card.stat-tribunal.stat-selected .stat-value {
+  color: #4f46e5;
+}
+
+/* Tribunal selected + hover */
+.stat-card.stat-tribunal.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.2);
   transform: translateY(-2px);
 }
 
@@ -84,11 +191,24 @@
 }
 
 .stat-label {
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 1rem;
+  color: #1e293b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
+}
+
+/* Label colors matching stat values */
+.stat-active .stat-label {
+  color: #16a34a;
+}
+
+.stat-inactive .stat-label {
+  color: #dc2626;
+}
+
+.stat-tribunal .stat-label {
+  color: #1e293b;
 }
 
 .stat-active .stat-value {
@@ -97,6 +217,65 @@
 
 .stat-inactive .stat-value {
   color: #dc2626;
+}
+
+.stat-tribunal {
+  position: relative;
+  overflow: visible;
+}
+
+.tribunal-breakdown {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.tribunal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.tribunal-item:hover {
+  background: #f1f5f9;
+}
+
+.tribunal-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.tribunal-filter-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #6366f1;
+}
+
+.tribunal-name {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.875rem;
+  user-select: none;
+}
+
+.tribunal-count {
+  background: #6366f1;
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  min-width: 24px;
+  text-align: center;
 }
 
 /* Filters */

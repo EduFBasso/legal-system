@@ -32,7 +32,7 @@ class CaseViewSet(viewsets.ModelViewSet):
     queryset = Case.objects.filter(deleted=False).order_by('-data_ultima_movimentacao')
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = {
-        'tribunal': ['exact'],
+        'tribunal': ['exact', 'in'],
         'comarca': ['exact', 'icontains'],
         'status': ['exact'],
         'auto_status': ['exact'],
@@ -108,8 +108,8 @@ class CaseViewSet(viewsets.ModelViewSet):
             'total': queryset.count(),
             'by_status': dict(queryset.values_list('status').annotate(Count('id'))),
             'by_tribunal': dict(queryset.values_list('tribunal').annotate(Count('id'))),
-            'ativos': queryset.filter(auto_status='ATIVO').count(),
-            'inativos': queryset.filter(auto_status='INATIVO').count(),
+            'ativos': queryset.filter(status='ATIVO').count(),
+            'inativos': queryset.filter(status='INATIVO').count(),
         }
         
         return Response(stats_data)

@@ -24,6 +24,16 @@ async function apiFetch(endpoint, options = {}) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('API Error Response:', errorData);
+      
+      // Format validation errors
+      if (errorData && typeof errorData === 'object') {
+        const errors = Object.entries(errorData)
+          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('\n');
+        throw new Error(errors || `API Error: ${response.status}`);
+      }
+      
       throw new Error(errorData.detail || `API Error: ${response.status}`);
     }
 
@@ -55,7 +65,18 @@ const casesService = {
   async getAll(filters = {}) {
     const params = new URLSearchParams();
     
-    if (filters.tribunal) params.append('tribunal', filters.tribunal);
+    // Handle multiple tribunals (comma-separated string)
+    if (filters.tribunal) {
+      const tribunals = filters.tribunal.split(',').filter(t => t.trim());
+      if (tribunals.length > 1) {
+        // Multiple tribunals: use __in lookup
+        params.append('tribunal__in', tribunals.join(','));
+      } else if (tribunals.length === 1) {
+        // Single tribunal: use exact lookup
+        params.append('tribunal', tribunals[0]);
+      }
+    }
+    
     if (filters.status) params.append('status', filters.status);
     if (filters.auto_status) params.append('auto_status', filters.auto_status);
     if (filters.search) params.append('search', filters.search);

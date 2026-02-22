@@ -15,6 +15,9 @@ export default function CasesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [stats, setStats] = useState(null);
+  const [allTribunals, setAllTribunals] = useState({});
+  const [showTribunalBreakdown, setShowTribunalBreakdown] = useState(false);
+  const [selectedTribunals, setSelectedTribunals] = useState([]);
   
   // Filters
   const [filters, setFilters] = useState({
@@ -33,7 +36,8 @@ export default function CasesPage() {
     setLoading(true);
     try {
       const response = await casesService.getAll(filters);
-      setCases(response.results || []);
+      // Handle both paginated and non-paginated responses
+      setCases(Array.isArray(response) ? response : (response.results || []));
     } catch (error) {
       console.error('Error loading cases:', error);
       setToast({
@@ -52,10 +56,17 @@ export default function CasesPage() {
     try {
       const statsData = await casesService.getStats(filters);
       setStats(statsData);
+      
+      // Load all tribunals (without tribunal filter) for breakdown list
+      if (Object.keys(allTribunals).length === 0) {
+        const filtersWithoutTribunal = { ...filters, tribunal: '' };
+        const allStatsData = await casesService.getStats(filtersWithoutTribunal);
+        setAllTribunals(allStatsData.by_tribunal || {});
+      }
     } catch (error) {
       console.error('Error loading stats:', error);
     }
-  }, [filters]);
+  }, [filters, allTribunals]);
 
   /**
    * Initial load
@@ -95,6 +106,46 @@ export default function CasesPage() {
       comarca: '',
       ordering: '-data_ultima_movimentacao',
     });
+    setSelectedTribunals([]);
+    setShowTribunalBreakdown(false);
+  };
+
+  /**
+   * Quick filter by status
+   */
+  const filterByStatus = (status) => {
+    setFilters(prev => ({
+      ...prev,
+      status: status,
+      search: '',
+      tribunal: '',
+    }));
+    setSelectedTribunals([]);
+    setShowTribunalBreakdown(false);
+  };
+
+  /**
+   * Toggle tribunal selection
+   */
+  const toggleTribunal = (tribunal) => {
+    setSelectedTribunals(prev => {
+      const newSelection = prev.includes(tribunal)
+        ? prev.filter(t => t !== tribunal)
+        : [...prev, tribunal];
+      
+      // Update filters with selected tribunals
+      setFilters(f => ({
+        ...f,
+        tribunal: newSelection.length > 0 ? newSelection.join(',') : ''
+      }));
+      
+      // Close breakdown if no tribunals selected
+      if (newSelection.length === 0) {
+        setShowTribunalBreakdown(false);
+      }
+      
+      return newSelection;
+    });
   };
 
   /**
@@ -114,14 +165,33 @@ export default function CasesPage() {
   };
 
   /**
-   * Handle case update
+   * Handle case update (or create)
    */
   const handleCaseUpdate = async (updatedCase) => {
-    setCases(prev => prev.map(c => c.id === updatedCase.id ? updatedCase : c));
+    // Check if it's an update or new case
+    const exists = cases.some(c => c.id === updatedCase.id);
+    
+    if (exists) {
+      // Update existing case
+      setCases(prev => prev.map(c => c.id === updatedCase.id ? updatedCase : c));
+      // Update selected case if it's the same one
+      if (selectedCase?.id === updatedCase.id) {
+        setSelectedCase(updatedCase);
+      }
+    } else {
+      // Add new case
+      setCases(prev => [updatedCase, ...prev]);
+    }
+    
     setToast({
-      message: 'Processo atualizado com sucesso!',
+      message: exists ? 'Processo atualizado com sucesso!' : 'Processo criado com sucesso!',
       type: 'success'
     });
+    
+    // Reload all tribunals in case a new one was added
+    const allStatsData = await casesService.getStats({});
+    setAllTribunals(allStatsData.by_tribunal || {});
+    
     await loadStats();
   };
 
@@ -140,6 +210,11 @@ export default function CasesPage() {
         type: 'success'
       });
       closeModal();
+      
+      // Reload all tribunals in case one was removed
+      const allStatsData = await casesService.getStats({});
+      setAllTribunals(allStatsData.by_tribunal || {});
+      
       await loadStats();
     } catch (error) {
       setToast({
@@ -161,22 +236,64 @@ export default function CasesPage() {
       {/* Statistics */}
       {stats && (
         <div className="cases-stats">
-          <div className="stat-card">
+          <div 
+            className={`stat-card stat-clickable ${!filters.status && !filters.tribunal ? 'stat-selected' : ''}`}
+            onClick={clearFilters} 
+            title="Ver todos os processos"
+          >
             <div className="stat-value">{stats.total || 0}</div>
             <div className="stat-label">Total</div>
           </div>
-          <div className="stat-card stat-active">
+          <div 
+            className={`stat-card stat-active stat-clickable ${filters.status === 'ATIVO' ? 'stat-selected' : ''}`}
+            onClick={() => filterByStatus('ATIVO')} 
+            title="Filtrar por processos ativos"
+          >
             <div className="stat-value">{stats.ativos || 0}</div>
             <div className="stat-label">Ativos</div>
           </div>
-          <div className="stat-card stat-inactive">
+          <div 
+            className={`stat-card stat-inactive stat-clickable ${filters.status === 'INATIVO' ? 'stat-selected' : ''}`}
+            onClick={() => filterByStatus('INATIVO')} 
+            title="Filtrar por processos inativos"
+          >
             <div className="stat-value">{stats.inativos || 0}</div>
             <div className="stat-label">Inativos</div>
           </div>
-          {stats.by_tribunal && Object.keys(stats.by_tribunal).length > 0 && (
-            <div className="stat-card">
-              <div className="stat-value">{Object.keys(stats.by_tribunal).length}</div>
-              <div className="stat-label">Tribunais</div>
+          {allTribunals && Object.keys(allTribunals).length > 0 && (
+            <div 
+              className={`stat-card stat-clickable stat-tribunal ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
+              onClick={() => setShowTribunalBreakdown(!showTribunalBreakdown)}
+              title="Clique para selecionar tribunais"
+            >
+              <div className="stat-value">{Object.keys(allTribunals).length}</div>
+              <div className="stat-label">
+                Tribunais {showTribunalBreakdown ? '▲' : '▼'}
+                {selectedTribunals.length > 0 && ` (${selectedTribunals.length})`}
+              </div>
+              
+              {showTribunalBreakdown && (
+                <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
+                  {Object.entries(allTribunals).map(([tribunal, count]) => (
+                    <label 
+                      key={tribunal} 
+                      className="tribunal-item"
+                      title={`Filtrar por ${tribunal}`}
+                    >
+                      <div className="tribunal-checkbox-group">
+                        <input
+                          type="checkbox"
+                          checked={selectedTribunals.includes(tribunal)}
+                          onChange={() => toggleTribunal(tribunal)}
+                          className="tribunal-filter-checkbox"
+                        />
+                        <span className="tribunal-name">{tribunal}</span>
+                      </div>
+                      <span className="tribunal-count">{count}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -298,6 +415,7 @@ export default function CasesPage() {
       {/* Toast */}
       {toast && (
         <Toast
+          isOpen={true}
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}

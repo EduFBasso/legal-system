@@ -72,12 +72,22 @@ export default function PublicationDetailModal({ publication, onClose }) {
 
   const getTipoBadgeColor = (tipo) => {
     const colors = {
-      'Intimação': 'blue',
+      'Intimação': 'red',
       'Citação': 'green',
       'Edital': 'orange',
       'Sentença': 'purple',
     };
     return colors[tipo] || 'gray';
+  };
+
+  const getTribunalBadgeClass = (tribunal) => {
+    const tribunalMap = {
+      'TJSP': 'badge-tribunal-tjsp',
+      'TRF3': 'badge-tribunal-trf3',
+      'TRT2': 'badge-tribunal-trt2',
+      'TRT15': 'badge-tribunal-trt15',
+    };
+    return tribunalMap[tribunal] || 'badge-gray';
   };
 
   // Detecta se o texto contém HTML
@@ -109,7 +119,7 @@ export default function PublicationDetailModal({ publication, onClose }) {
               <span className={`badge badge-${getTipoBadgeColor(publication.tipo_comunicacao)}`}>
                 {publication.tipo_comunicacao}
               </span>
-              <span className="badge badge-gray">{publication.tribunal}</span>
+              <span className={`badge ${getTribunalBadgeClass(publication.tribunal)}`}>{publication.tribunal}</span>
             </div>
           </div>
           <button className="modal-close" onClick={onClose}>

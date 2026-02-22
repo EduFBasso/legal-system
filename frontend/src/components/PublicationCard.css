@@ -47,7 +47,7 @@
 .publication-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.25rem 0.75rem 1.25rem;
   background: linear-gradient(135deg, var(--publication-light, #e0e7ff) 0%, var(--publication-lighter, #eef2ff) 100%);
@@ -61,17 +61,24 @@
 }
 
 .badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  color: white;
 }
 
 .badge-blue {
   background: #dbeafe;
   color: #1e40af;
+}
+
+.badge-red {
+  background: #dc3545;
+  color: white;
+  font-weight: 700;
 }
 
 .badge-green {
@@ -92,6 +99,31 @@
 .badge-gray {
   background: #f1f5f9;
   color: #475569;
+}
+
+/* Tribunal badges - matching SearchHistory pattern */
+.badge-tribunal-tjsp {
+  background-color: #1976d2;
+  color: white;
+  font-weight: 600;
+}
+
+.badge-tribunal-trf3 {
+  background-color: #7b1fa2;
+  color: white;
+  font-weight: 600;
+}
+
+.badge-tribunal-trt2 {
+  background-color: #f57c00;
+  color: white;
+  font-weight: 600;
+}
+
+.badge-tribunal-trt15 {
+  background-color: #4f46e5;
+  color: white;
+  font-weight: 600;
 }
 
 .publication-date {
