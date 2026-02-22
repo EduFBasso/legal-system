@@ -88,7 +88,7 @@ export default function PublicationsPage() {
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
     
-    const confirmMsg = `Deletar ${selectedIds.size} publicação(ões) selecionada(s)? Esta ação não pode ser desfeita.`;
+    const confirmMsg = `Apagar ${selectedIds.size} publicação(ões) selecionada(s)? Esta ação não pode ser desfeita.`;
     if (!window.confirm(confirmMsg)) return;
     
     try {
@@ -247,7 +247,7 @@ export default function PublicationsPage() {
                 onClick={handleDeleteSelected}
                 disabled={selectedIds.size === 0}
               >
-                🗑️ Deletar ({selectedIds.size})
+                🗑️ Apagar ({selectedIds.size})
               </button>
             </>
           )}
@@ -256,7 +256,7 @@ export default function PublicationsPage() {
             className="btn-delete-all-publications"
             onClick={handleDeleteAll}
           >
-            🗑️ Deletar tudo ({publications.length})
+            🗑️ Apagar tudo ({publications.length})
           </button>
         </div>
       )}

@@ -129,11 +129,29 @@ class Case(models.Model):
         help_text='Valor da causa em R$'
     )
 
+    parte_autora = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        help_text='Nome da parte autora (quem move a ação)'
+    )
+
     parte_contraria = models.CharField(
         max_length=200,
         blank=True,
         default='',
         help_text='Nome da parte contrária (ré/autor/reclamada)'
+    )
+
+    posicao_cliente = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        choices=[
+            ('AUTOR', 'Autor (Cliente move a ação)'),
+            ('REU', 'Réu (Cliente é processado)'),
+        ],
+        help_text='Posição do cliente no processo'
     )
 
     # ========== OBSERVAÇÕES ==========

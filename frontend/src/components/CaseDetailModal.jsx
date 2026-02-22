@@ -119,6 +119,20 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
   ];
 
   /**
+   * Get tipo acao options
+   */
+  const tipoAcaoOptions = [
+    { value: '', label: 'Selecione...' },
+    { value: 'CIVEL', label: 'Cível' },
+    { value: 'CRIMINAL', label: 'Criminal' },
+    { value: 'TRABALHISTA', label: 'Trabalhista' },
+    { value: 'TRIBUTARIA', label: 'Tributária' },
+    { value: 'FAMILIA', label: 'Família' },
+    { value: 'CONSUMIDOR', label: 'Consumidor' },
+    { value: 'OUTROS', label: 'Outros' },
+  ];
+
+  /**
    * Format date for display
    */
   const formatDate = (dateString) => {
@@ -250,12 +264,15 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
                     </div>
                     <div className="form-group">
                       <label>Tipo de Ação</label>
-                      <input
-                        type="text"
+                      <select
                         value={formData.tipo_acao || ''}
                         onChange={(e) => handleInputChange('tipo_acao', e.target.value)}
-                        placeholder="Ex: Cobrança"
-                      />
+                        disabled={!isEditing}
+                      >
+                        {tipoAcaoOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -328,7 +345,7 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
                 /* View Mode */
                 <div className="case-view">
                   <div className="view-section">
-                    <h3>Processo</h3>
+                    <h3>Informações Gerais</h3>
                     <div className="view-field">
                       <span className="field-label">Número:</span>
                       <span className="field-value">{formData.numero_processo_formatted || formData.numero_processo}</span>
@@ -345,43 +362,67 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
                       <span className="field-label">Status:</span>
                       <span className="field-value">{formData.status_display || formData.status}</span>
                     </div>
+                    {formData.tipo_acao && (
+                      <div className="view-field">
+                        <span className="field-label">Tipo de Ação:</span>
+                        <span className="field-value">{formData.tipo_acao_display || formData.tipo_acao}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="view-section">
                     <h3>Localização</h3>
-                    <div className="view-field">
-                      <span className="field-label">Comarca:</span>
-                      <span className="field-value">{formData.comarca || '-'}</span>
-                    </div>
-                    <div className="view-field">
-                      <span className="field-label">Vara:</span>
-                      <span className="field-value">{formData.vara || '-'}</span>
-                    </div>
+                    {formData.comarca && (
+                      <div className="view-field">
+                        <span className="field-label">Comarca:</span>
+                        <span className="field-value">{formData.comarca}</span>
+                      </div>
+                    )}
+                    {formData.vara && (
+                      <div className="view-field">
+                        <span className="field-label">Vara:</span>
+                        <span className="field-value">{formData.vara}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="view-section">
                     <h3>Datas</h3>
-                    <div className="view-field">
-                      <span className="field-label">Distribuição:</span>
-                      <span className="field-value">{formatDate(formData.data_distribuicao)}</span>
-                    </div>
-                    <div className="view-field">
-                      <span className="field-label">Última Movimentação:</span>
-                      <span className="field-value">{formatDate(formData.data_ultima_movimentacao)}</span>
-                    </div>
-                    <div className="view-field">
-                      <span className="field-label">Dias sem Movimento:</span>
-                      <span className="field-value">{formData.dias_sem_movimentacao || '-'}</span>
-                    </div>
+                    {formData.data_distribuicao && (
+                      <div className="view-field">
+                        <span className="field-label">Distribuição:</span>
+                        <span className="field-value">{formatDate(formData.data_distribuicao)}</span>
+                      </div>
+                    )}
+                    {formData.data_ultima_movimentacao && (
+                      <div className="view-field">
+                        <span className="field-label">Última Movimentação:</span>
+                        <span className="field-value">{formatDate(formData.data_ultima_movimentacao)}</span>
+                      </div>
+                    )}
+                    {formData.dias_sem_movimentacao !== null && formData.dias_sem_movimentacao !== undefined && (
+                      <div className="view-field">
+                        <span className="field-label">Dias sem Movimento:</span>
+                        <span className="field-value">{formData.dias_sem_movimentacao}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {formData.parte_contraria && (
+                  {(formData.parte_contraria || formData.valor_causa) && (
                     <div className="view-section">
-                      <h3>Partes</h3>
-                      <div className="view-field">
-                        <span className="field-label">Parte Contrária:</span>
-                        <span className="field-value">{formData.parte_contraria}</span>
-                      </div>
+                      <h3>Partes e Valores</h3>
+                      {formData.parte_contraria && (
+                        <div className="view-field">
+                          <span className="field-label">Parte Contrária:</span>
+                          <span className="field-value">{formData.parte_contraria}</span>
+                        </div>
+                      )}
+                      {formData.valor_causa && (
+                        <div className="view-field">
+                          <span className="field-label">Valor da Causa:</span>
+                          <span className="field-value">R$ {parseFloat(formData.valor_causa).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -397,7 +438,7 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
                       ✏️ Editar
                     </button>
                     <button className="btn btn-danger" onClick={handleDelete}>
-                      🗑️ Deletar
+                      🗑️ Apagar
                     </button>
                   </div>
                 </div>

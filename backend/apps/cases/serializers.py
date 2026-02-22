@@ -31,6 +31,8 @@ class CaseListSerializer(serializers.ModelSerializer):
     esta_ativo = serializers.ReadOnlyField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     tribunal_display = serializers.CharField(source='get_tribunal_display', read_only=True)
+    tipo_acao_display = serializers.CharField(source='get_tipo_acao_display', read_only=True)
+    posicao_cliente_display = serializers.CharField(source='get_posicao_cliente_display', read_only=True)
     
     class Meta:
         model = Case
@@ -44,6 +46,7 @@ class CaseListSerializer(serializers.ModelSerializer):
             'comarca',
             'vara',
             'tipo_acao',
+            'tipo_acao_display',
             'status',
             'status_display',
             'auto_status',
@@ -51,7 +54,10 @@ class CaseListSerializer(serializers.ModelSerializer):
             'data_ultima_movimentacao',
             'dias_sem_movimentacao',
             'esta_ativo',
+            'parte_autora',
             'parte_contraria',
+            'posicao_cliente',
+            'posicao_cliente_display',
             'observacoes',
             'tags',
             'created_at',
@@ -70,6 +76,8 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     nivel_urgencia = serializers.ReadOnlyField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     tribunal_display = serializers.CharField(source='get_tribunal_display', read_only=True)
+    tipo_acao_display = serializers.CharField(source='get_tipo_acao_display', read_only=True)
+    posicao_cliente_display = serializers.CharField(source='get_posicao_cliente_display', read_only=True)
     
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
@@ -87,6 +95,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'comarca',
             'vara',
             'tipo_acao',
+            'tipo_acao_display',
             'status',
             'status_display',
             'auto_status',
@@ -97,7 +106,10 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'esta_ativo',
             'nivel_urgencia',
             'valor_causa',
+            'parte_autora',
             'parte_contraria',
+            'posicao_cliente',
+            'posicao_cliente_display',
             'observacoes',
             'tags',
             'total_publicacoes',

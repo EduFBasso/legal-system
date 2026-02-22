@@ -154,7 +154,7 @@ export default function PublicationCard({
             <button
               className="btn-delete-publication"
               onClick={handleDeleteClick}
-              title="Deletar esta publicação"
+              title="Apagar esta publicação"
             >
               🗑️
             </button>

@@ -6,6 +6,19 @@ import './CaseCard.css';
  */
 export default function CaseCard({ caseData, onClick }) {
   /**
+   * Handle card click - open in new tab
+   */
+  const handleCardClick = (e) => {
+    // Previne a abertura se clicou no botão de copiar
+    if (e.target.closest('.btn-copy-processo')) {
+      return;
+    }
+    
+    // Abre em nova aba
+    window.open(`/cases/${caseData.id}`, '_blank');
+  };
+
+  /**
    * Get tribunal badge color
    */
   const getTribunalColor = (tribunal) => {
@@ -91,7 +104,7 @@ export default function CaseCard({ caseData, onClick }) {
   };
 
   return (
-    <div className="case-card" onClick={onClick}>
+    <div className="case-card" onClick={handleCardClick}>
       {/* Header */}
       <div className="case-header">
         <div className="case-badges">

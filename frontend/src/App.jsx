@@ -10,6 +10,7 @@ import Sidebar from './components/Sidebar';
 import ContactsPage from './pages/ContactsPage';
 import PublicationsPage from './pages/PublicationsPage';
 import CasesPage from './pages/CasesPage';
+import CaseDetailPage from './pages/CaseDetailPage';
 import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import PublicationsSummary from './components/PublicationsSummary';
@@ -22,23 +23,29 @@ function App() {
     <BrowserRouter>
       <NotificationsProvider>
         <PublicationsProvider>
-          <div className="app-container">
-            <Header />
-            {/* <Breadcrumb /> */}
-            
-            <div className="app-layout">
-              <Menu />
-              
-              <MainContent>
-                <Routes>
-                  <Route path="/" element={<ContactsPage />} />
-                  <Route path="/contacts" element={<ContactsPage />} />
-                  <Route path="/publications" element={<PublicationsPage />} />
-                  <Route path="/cases" element={<CasesPage />} />
-                  <Route path="/search-history" element={<SearchHistoryPage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
-                </Routes>
-              </MainContent>
+          <Routes>
+            {/* Rota dedicada para detalhes de processo (full width, sem sidebar) */}
+            <Route path="/cases/:id" element={<CaseDetailPage />} />
+
+            {/* Rotas normais com layout padrão */}
+            <Route path="/*" element={
+              <div className="app-container">
+                <Header />
+                {/* <Breadcrumb /> */}
+                
+                <div className="app-layout">
+                  <Menu />
+                  
+                  <MainContent>
+                    <Routes>
+                      <Route path="/" element={<ContactsPage />} />
+                      <Route path="/contacts" element={<ContactsPage />} />
+                      <Route path="/publications" element={<PublicationsPage />} />
+                      <Route path="/cases" element={<CasesPage />} />
+                      <Route path="/search-history" element={<SearchHistoryPage />} />
+                      <Route path="/notifications" element={<NotificationsPage />} />
+                    </Routes>
+                  </MainContent>
               
               <Sidebar>
                 <h2>Controles</h2>
@@ -55,6 +62,8 @@ function App() {
               </Sidebar>
             </div>
           </div>
+            } />
+          </Routes>
         </PublicationsProvider>
       </NotificationsProvider>
     </BrowserRouter>
