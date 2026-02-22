@@ -325,24 +325,14 @@ function CaseDetailPage() {
                 {/* Partes Envolvidas */}
                 <div className="summary-section">
                   <h4><Users size={16} /> Partes Envolvidas</h4>
-                  {formData.posicao_cliente && (
-                    <p className="summary-value">
-                      Cliente é: <strong>{formData.posicao_cliente_display || formData.posicao_cliente}</strong>
-                    </p>
-                  )}
-                  {formData.parte_autora && (
-                    <p className="summary-value">
-                      Parte Autora: <strong>{formData.parte_autora}</strong>
-                    </p>
-                  )}
-                  {formData.parte_contraria && (
-                    <p className="summary-value">
-                      Parte Contrária/Réu: <strong>{formData.parte_contraria}</strong>
-                    </p>
-                  )}
-                  {!formData.parte_autora && !formData.parte_contraria && (
+                  {formData.parte_contraria ? (
+                    <p className="summary-value">Parte Contrária: <strong>{formData.parte_contraria}</strong></p>
+                  ) : (
                     <p className="summary-value empty">Nenhuma parte cadastrada</p>
                   )}
+                  <p className="summary-value empty" style={{fontSize: '0.8rem', marginTop: '0.5rem', fontStyle: 'italic'}}>
+                    ℹ️ Use a aba "Partes" para gerenciar detalhadamente
+                  </p>
                 </div>
 
                 {/* Datas e Prazos */}
@@ -531,41 +521,9 @@ function CaseDetailPage() {
                   )}
                 </div>
 
-                {/* Posição do Cliente */}
-                <div className="info-field">
-                  <label>Cliente é</label>
-                  {isEditing ? (
-                    <select
-                      value={formData.posicao_cliente || ''}
-                      onChange={(e) => handleInputChange('posicao_cliente', e.target.value)}
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="AUTOR">Autor (Cliente move a ação)</option>
-                      <option value="REU">Réu (Cliente é processado)</option>
-                    </select>
-                  ) : (
-                    <p className="info-value">{formData.posicao_cliente_display || formData.posicao_cliente || '-'}</p>
-                  )}
-                </div>
-
-                {/* Parte Autora */}
-                <div className="info-field">
-                  <label>Parte Autora (quem move a ação)</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={formData.parte_autora || ''}
-                      onChange={(e) => handleInputChange('parte_autora', e.target.value)}
-                      placeholder="Nome da parte autora"
-                    />
-                  ) : (
-                    <p className="info-value">{formData.parte_autora || '-'}</p>
-                  )}
-                </div>
-
                 {/* Parte Contrária */}
                 <div className="info-field">
-                  <label>Parte Contrária/Réu</label>
+                  <label>Parte Contrária (campo legado)</label>
                   {isEditing ? (
                     <input
                       type="text"
