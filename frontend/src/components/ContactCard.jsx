@@ -1,5 +1,4 @@
 // src/components/ContactCard.jsx
-import { Link } from 'react-router-dom';
 import './ContactCard.css';
 
 export default function ContactCard({ contact, onView, onSelect, isSelected, onLinkToCase }) {
@@ -55,30 +54,32 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
         )}
       </div>
 
-      {/* Info */}
+      {/* Info - 4 linhas */}
       <div className="contact-info">
-        <div className="contact-header">
-          <span className="contact-name">{name}</span>
-          <div className="contact-badges">
-            <span className="contact-type">{person_type === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}</span>
-            {contact.is_client_anywhere && (
-              <span className="contact-type-client">Cliente</span>
-            )}
-            {/* Badges para outras partes (testemunha, etc) */}
-            {contact.linked_cases && contact.linked_cases.length > 0 && (() => {
-              // Coletar roles únicos que não são cliente
-              const nonClientRoles = [...new Set(
-                contact.linked_cases
-                  .filter(lc => !lc.is_client)
-                  .map(lc => lc.role_display)
-              )];
-              return nonClientRoles.map(role => (
-                <span key={role} className="contact-type-role">{role}</span>
-              ));
-            })()}
+        {/* LINHA 0: Nome + Badges + Olho */}
+        <div className="contact-row">
+          <div className="contact-row-left">
+            <span className="contact-name">{name}</span>
+            <div className="contact-badges">
+              <span className="contact-type">{person_type === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}</span>
+              {contact.is_client_anywhere && (
+                <span className="contact-type-client">Cliente</span>
+              )}
+              {/* Badges para outras partes (testemunha, etc) */}
+              {contact.linked_cases && contact.linked_cases.length > 0 && (() => {
+                // Coletar roles únicos que não são cliente
+                const nonClientRoles = [...new Set(
+                  contact.linked_cases
+                    .filter(lc => !lc.is_client)
+                    .map(lc => lc.role_display)
+                )];
+                return nonClientRoles.map(role => (
+                  <span key={role} className="contact-type-role">{role}</span>
+                ));
+              })()}
+            </div>
           </div>
-          {/* Actions - Botões de ação */}
-          <div className="contact-actions">
+          <div className="contact-row-right">
             <button 
               className="btn-view" 
               title="Visualizar contato"
@@ -92,6 +93,13 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
                 <circle cx="12" cy="12" r="3" />
               </svg>
             </button>
+          </div>
+        </div>
+
+        {/* LINHA 1: Vazio + Plus */}
+        <div className="contact-row">
+          <div className="contact-row-left"></div>
+          <div className="contact-row-right">
             <button 
               className="btn-link-case" 
               title="Vincular a processo"
@@ -107,93 +115,109 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
             </button>
           </div>
         </div>
-        <div className="contact-details">
-          {document_formatted && (
-            <div className="contact-detail">
-              <span className="detail-text">
-                {person_type === 'PF' ? 'CPF' : 'CNPJ'}: {document_formatted}
-              </span>
-              {/* Processos Vinculados na mesma linha */}
-              {contact.linked_cases && contact.linked_cases.length > 0 && (
-                <>
-                  <span className="detail-separator">•</span>
-                  <span className="detail-icon">📄</span>
-                  <span className="detail-text">
-                    {contact.linked_cases.map((linkedCase, index) => (
-                      <span key={linkedCase.id}>
-                        {index > 0 && ', '}
-                        <Link
-                          to={`/cases/${linkedCase.case_id}`}
-                          className="case-link-inline"
-                          onClick={(e) => e.stopPropagation()}
-                          title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
-                        >
-                          {linkedCase.numero_processo}
-                        </Link>
-                      </span>
-                    ))}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
-          {/* Se não tem documento mas tem processos, mostrar processos sozinhos */}
-          {!document_formatted && contact.linked_cases && contact.linked_cases.length > 0 && (
-            <div className="contact-detail">
-              <span className="detail-icon">📄</span>
-              <span className="detail-text">
-                {contact.linked_cases.map((linkedCase, index) => (
-                  <span key={linkedCase.id}>
-                    {index > 0 && ', '}
-                    <Link
-                      to={`/cases/${linkedCase.case_id}`}
-                      className="case-link-inline"
-                      onClick={(e) => e.stopPropagation()}
-                      title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
-                    >
-                      {linkedCase.numero_processo}
-                    </Link>
-                  </span>
-                ))}
-              </span>
-            </div>
-          )}
-          {primary_contact && (
-            <div className="contact-detail">
-              {isPhone ? (
-                <>
-                  {/* Phone number label and value */}
+
+        {/* LINHA 2: CPF + Processos + Telefone */}
+        <div className="contact-row">
+          <div className="contact-row-left">
+            {document_formatted && (
+              <>
+                <span className="detail-text">
+                  {person_type === 'PF' ? 'CPF' : 'CNPJ'}: {document_formatted}
+                </span>
+                {/* Processos Vinculados na mesma linha */}
+                {contact.linked_cases && contact.linked_cases.length > 0 && (
+                  <>
+                    <span className="detail-separator">•</span>
+                    <span className="detail-icon">📄</span>
+                    <span className="detail-text">
+                      {contact.linked_cases.map((linkedCase, index) => (
+                        <span key={linkedCase.id}>
+                          {index > 0 && ', '}
+                          <a
+                            href={`/cases/${linkedCase.case_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="case-link-inline"
+                            onClick={(e) => e.stopPropagation()}
+                            title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
+                          >
+                            {linkedCase.numero_processo}
+                          </a>
+                        </span>
+                      ))}
+                    </span>
+                  </>
+                )}
+              </>
+            )}
+            {/* Se não tem documento mas tem processos */}
+            {!document_formatted && contact.linked_cases && contact.linked_cases.length > 0 && (
+              <>
+                <span className="detail-icon">📄</span>
+                <span className="detail-text">
+                  {contact.linked_cases.map((linkedCase, index) => (
+                    <span key={linkedCase.id}>
+                      {index > 0 && ', '}
+                      <a
+                        href={`/cases/${linkedCase.case_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="case-link-inline"
+                        onClick={(e) => e.stopPropagation()}
+                        title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
+                      >
+                        {linkedCase.numero_processo}
+                      </a>
+                    </span>
+                  ))}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="contact-row-right">
+            {isPhone && telLink && (
+              <a 
+                href={telLink} 
+                className="btn-phone"
+                title="Ligar"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <PhoneIcon />
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* LINHA 3: TEL + WhatsApp */}
+        <div className="contact-row">
+          <div className="contact-row-left">
+            {primary_contact && (
+              <>
+                {isPhone ? (
                   <span className="detail-text">TEL: {primary_contact}</span>
-                  {/* Phone call icon */}
-                  <a 
-                    href={telLink} 
-                    className="contact-action-icon"
-                    title="Ligar"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <PhoneIcon />
-                  </a>
-                  {/* WhatsApp icon with green background */}
-                  <a 
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="contact-action-icon whatsapp-icon"
-                    title="WhatsApp"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <WhatsAppIcon />
-                  </a>
-                </>
-              ) : (
-                /* Email - just show icon and value */
-                <>
-                  <span className="detail-icon">📧</span>
-                  <span className="detail-value">{primary_contact}</span>
-                </>
-              )}
-            </div>
-          )}
+                ) : (
+                  <>
+                    <span className="detail-icon">📧</span>
+                    <span className="detail-value">{primary_contact}</span>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          <div className="contact-row-right">
+            {isPhone && whatsappLink && (
+              <a 
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-whatsapp"
+                title="WhatsApp"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <WhatsAppIcon />
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>

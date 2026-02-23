@@ -12,6 +12,7 @@ export default function LinkContactToCaseModal({
   onSuccess 
 }) {
   const [cases, setCases] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCaseId, setSelectedCaseId] = useState('');
   const [role, setRole] = useState('AUTOR');
   const [isClient, setIsClient] = useState(true);
@@ -87,6 +88,15 @@ export default function LinkContactToCaseModal({
     }
   };
 
+  // Filter cases based on search term
+  const filteredCases = cases.filter(c => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    const numero = (c.numero_processo || '').toLowerCase();
+    const assunto = (c.assunto || '').toLowerCase();
+    return numero.includes(search) || assunto.includes(search);
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -105,17 +115,36 @@ export default function LinkContactToCaseModal({
           <form onSubmit={handleSubmit}>
             {/* Seleção de Processo */}
             <div className="form-group">
-              <label htmlFor="case-select">
+              <label htmlFor="case-search">
                 Processo <span className="required">*</span>
               </label>
+              
+              {/* Campo de busca/filtro */}
+              <input
+                id="case-search"
+                type="text"
+                className="search-input"
+                placeholder="🔍 Buscar por número ou assunto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              
+              {/* Select com processos filtrados */}
               <select
                 id="case-select"
+                className="case-select"
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
                 required
+                size="5"
               >
-                <option value="">Selecione um processo...</option>
-                {cases.map(c => (
+                <option value="" disabled>
+                  {filteredCases.length === 0 
+                    ? 'Nenhum processo encontrado'
+                    : `${filteredCases.length} processo(s) encontrado(s)`
+                  }
+                </option>
+                {filteredCases.map(c => (
                   <option key={c.id} value={c.id}>
                     {c.numero_processo} - {c.assunto || 'Sem assunto'}
                   </option>

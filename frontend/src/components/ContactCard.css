@@ -1,7 +1,7 @@
 /* Contact Card - Mini-card com foto/ícone */
 .contact-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   padding: var(--card-padding-md, 16px);
   background: var(--card-bg, white);
@@ -35,6 +35,7 @@
   justify-content: center;
   background: #f1f5f9;
   border: 2px solid #cbd5e1;
+  margin-top: 0;
 }
 
 .contact-avatar img {
@@ -51,14 +52,33 @@
 .contact-info {
   flex: 1;
   min-width: 0; /* Enable text truncation */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.contact-header {
+/* Contact Row - Cada linha horizontal */
+.contact-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-bottom: 6px;
-  width: 100%;
+  min-height: 28px;
+}
+
+.contact-row-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.contact-row-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .contact-name {
@@ -68,6 +88,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.contact-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .contact-type {
@@ -82,23 +110,10 @@
   letter-spacing: 0.5px;
 }
 
-.contact-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.contact-detail {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 16px;
-  color: var(--color-text-light, #475569);
-}
-
 .detail-text {
   font-weight: 500;
   color: #1e293b;
+  font-size: 14px;
 }
 
 .detail-text::first-letter {
@@ -107,6 +122,13 @@
 
 .detail-icon {
   font-size: 16px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #1e293b;
+  font-size: 14px;
 }
 
 .detail-separator {
@@ -115,52 +137,7 @@
   font-weight: bold;
 }
 
-/* Clickable action icons (phone, WhatsApp) */
-.contact-action-icon {
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  background: #f1f5f9;
-  color: #475569;
-  margin-left: 8px;
-}
-
-.contact-action-icon:hover {
-  background: #3b82f6;
-  color: white;
-  transform: scale(1.15);
-}
-
-.contact-action-icon:active {
-  transform: scale(0.95);
-}
-
-/* WhatsApp icon with green background */
-.contact-action-icon.whatsapp-icon {
-  background: #25D366;
-  color: white;
-}
-
-.contact-action-icon.whatsapp-icon:hover {
-  background: #20BA5A;
-  transform: scale(1.15);
-}
-
-/* Actions */
-.contact-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
+/* Action Buttons - agora dentro de contact-row-right */
 .contact-card .btn-view {
   width: 36px;
   height: 36px;
@@ -209,6 +186,55 @@
   transform: scale(0.95);
 }
 
+.contact-card .btn-phone {
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.contact-card .btn-phone:hover {
+  background: #3b82f6;
+  color: white;
+  transform: scale(1.15);
+}
+
+.contact-card .btn-phone:active {
+  transform: scale(0.95);
+}
+
+.contact-card .btn-whatsapp {
+  width: 36px;
+  height: 36px;
+  background: #25D366;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.contact-card .btn-whatsapp:hover {
+  background: #1ea952;
+  transform: scale(1.15);
+}
+
+.contact-card .btn-whatsapp:active {
+  transform: scale(0.95);
+}
+
 .contact-card .btn-edit {
   width: 40px;
   height: 40px;
@@ -231,13 +257,6 @@
 
 .contact-card .btn-edit:active {
   transform: scale(0.95);
-}
-
-/* Contact Badges Container */
-.contact-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 /* Badge Cliente (verde) */
