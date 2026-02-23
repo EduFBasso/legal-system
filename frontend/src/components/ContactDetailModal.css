@@ -265,9 +265,9 @@ select.edit-input {
   border-top: 2px solid var(--color-border, #e0e0e0);
 }
 
-.btn-edit,
-.btn-save-edit,
-.btn-cancel-edit {
+.modal-content .btn-edit,
+.modal-content .btn-save-edit,
+.modal-content .btn-cancel-edit {
   padding: 14px 32px;
   font-size: 16px;
   font-weight: 600;
@@ -277,55 +277,55 @@ select.edit-input {
   border: 2px solid;
 }
 
-.btn-edit {
-  background: var(--color-primary, #3b82f6);
+.modal-content .btn-edit {
+  background: var(--color-primary-dark, #2563eb);
   color: white;
-  border-color: var(--color-primary, #3b82f6);
+  border-color: var(--color-primary-dark, #2563eb);
 }
 
-.btn-edit:hover {
-  background: var(--color-primary-dark, #2563eb);
-  border-color: var(--color-primary-dark, #2563eb);
+.modal-content .btn-edit:hover {
+  background: var(--color-primary, #3b82f6);
+  border-color: var(--color-primary, #3b82f6);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
-.btn-save-edit {
+.modal-content .btn-save-edit {
   background: #10b981;
   color: white;
   border-color: #10b981;
   min-width: 200px;
 }
 
-.btn-save-edit:hover:not(:disabled) {
+.modal-content .btn-save-edit:hover:not(:disabled) {
   background: #059669;
   border-color: #059669;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
 }
 
-.btn-cancel-edit {
+.modal-content .btn-cancel-edit {
   background: white;
   color: var(--color-text-muted, #6b7280);
   border-color: var(--color-border, #e0e0e0);
 }
 
-.btn-cancel-edit:hover:not(:disabled) {
+.modal-content .btn-cancel-edit:hover:not(:disabled) {
   background: #f7f7f7;
   border-color: #cbd5e1;
   color: var(--color-text, #222);
 }
 
-.btn-save-edit:disabled,
-.btn-cancel-edit:disabled {
+.modal-content .btn-save-edit:disabled,
+.modal-content .btn-cancel-edit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-edit:active,
-.btn-save-edit:active:not(:disabled),
-.btn-cancel-edit:active:not(:disabled) {
+.modal-content .btn-edit:active,
+.modal-content .btn-save-edit:active:not(:disabled),
+.modal-content .btn-cancel-edit:active:not(:disabled) {
   transform: translateY(0);
 }
 
@@ -523,4 +523,104 @@ select.edit-input {
 .btn-cancel-delete:active:not(:disabled),
 .btn-confirm-delete:active:not(:disabled) {
   transform: translateY(0);
+}
+
+/* Linked Cases Section */
+.linked-cases-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.linked-case-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s;
+  color: inherit;
+}
+
+.linked-case-item:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+  transform: translateX(4px);
+}
+
+.linked-case-number {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.linked-case-role {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.role-badge-small {
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.role-badge-small.role-autor {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.role-badge-small.role-reu {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.role-badge-small.role-testemunha {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.role-badge-small.role-perito {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.role-badge-small.role-terceiro {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.role-badge-small.role-cliente {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.client-badge-small {
+  padding: 0.25rem 0.625rem;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.linked-case-arrow {
+  color: #94a3b8;
+  font-size: 1.25rem;
+  transition: all 0.2s;
+}
+
+.linked-case-item:hover .linked-case-arrow {
+  color: #3b82f6;
+  transform: translate(2px, -2px);
 }

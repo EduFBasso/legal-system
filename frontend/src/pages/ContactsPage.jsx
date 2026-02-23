@@ -1,5 +1,6 @@
 // src/pages/ContactsPage.jsx
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
 import Toast from '../components/common/Toast';
@@ -7,6 +8,7 @@ import contactsAPI from '../services/api';
 import './ContactsPage.css';
 
 export default function ContactsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,22 @@ export default function ContactsPage() {
   useEffect(() => {
     loadContacts();
   }, []);
+
+  // Auto-open modal if "open" query param is present
+  useEffect(() => {
+    const contactIdToOpen = searchParams.get('open');
+    if (contactIdToOpen && contacts.length > 0) {
+      const contactId = parseInt(contactIdToOpen, 10);
+      // Check if contact exists in the list
+      const contactExists = contacts.some(c => c.id === contactId);
+      if (contactExists) {
+        setSelectedContactId(contactId);
+        setIsModalOpen(true);
+        // Remove query param after opening
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, contacts, setSearchParams]);
 
   const loadContacts = async () => {
     try {

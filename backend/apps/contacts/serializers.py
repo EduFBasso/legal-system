@@ -21,6 +21,9 @@ class ContactListSerializer(serializers.ModelSerializer):
     # Verifica se é cliente em algum processo
     is_client_anywhere = serializers.SerializerMethodField()
     
+    # Lista de processos vinculados
+    linked_cases = serializers.SerializerMethodField()
+    
     class Meta:
         model = Contact
         fields = [
@@ -37,6 +40,7 @@ class ContactListSerializer(serializers.ModelSerializer):
             'photo',
             'photo_thumbnail',
             'is_client_anywhere',
+            'linked_cases',
         ]
     
     def get_photo_thumbnail(self, obj):
@@ -56,6 +60,25 @@ class ContactListSerializer(serializers.ModelSerializer):
         Usado para determinar se pode editar/deletar em /contacts.
         """
         return obj.case_roles.filter(is_client=True).exists()
+    
+    def get_linked_cases(self, obj):
+        """
+        Retorna lista de processos vinculados a este contato (versão resumida para cards).
+        """
+        from apps.cases.models import CaseParty
+        
+        case_parties = obj.case_roles.select_related('case').all()
+        return [
+            {
+                'id': cp.case.id,
+                'numero_processo': cp.case.numero_processo_formatted or cp.case.numero_processo,
+                'case_id': cp.case.id,
+                'role': cp.role,
+                'role_display': cp.get_role_display(),
+                'is_client': cp.is_client,
+            }
+            for cp in case_parties
+        ]
 
 
 class ContactDetailSerializer(serializers.ModelSerializer):
@@ -78,6 +101,9 @@ class ContactDetailSerializer(serializers.ModelSerializer):
     
     # Verifica se é cliente em algum processo (permite editar/deletar)
     is_client_anywhere = serializers.SerializerMethodField()
+    
+    # Lista de processos vinculados
+    linked_cases = serializers.SerializerMethodField()
     
     class Meta:
         model = Contact
@@ -112,6 +138,7 @@ class ContactDetailSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'is_client_anywhere',
+            'linked_cases',
         ]
     
     def get_photo_large(self, obj):
@@ -132,6 +159,26 @@ class ContactDetailSerializer(serializers.ModelSerializer):
         Se True = Cliente → Pode editar/deletar em /contacts
         """
         return obj.case_roles.filter(is_client=True).exists()
+    
+    def get_linked_cases(self, obj):
+        """
+        Retorna lista de processos vinculados a este contato.
+        Cada processo inclui: id, número, papel (role) e se é cliente.
+        """
+        from apps.cases.models import CaseParty
+        
+        case_parties = obj.case_roles.select_related('case').all()
+        return [
+            {
+                'id': cp.case.id,
+                'numero_processo': cp.case.numero_processo_formatted or cp.case.numero_processo,
+                'case_id': cp.case.id,
+                'role': cp.role,
+                'role_display': cp.get_role_display(),
+                'is_client': cp.is_client,
+            }
+            for cp in case_parties
+        ]
 
 
 class ContactCreateUpdateSerializer(serializers.ModelSerializer):

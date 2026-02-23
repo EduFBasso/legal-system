@@ -58,6 +58,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 6px;
+  width: 100%;
 }
 
 .contact-name {
@@ -91,7 +92,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--card-text-size, 14px);
+  font-size: 16px;
   color: var(--color-text-light, #475569);
 }
 
@@ -105,7 +106,13 @@
 }
 
 .detail-icon {
-  font-size: 14px;
+  font-size: 16px;
+}
+
+.detail-separator {
+  color: #94a3b8;
+  margin: 0 4px;
+  font-weight: bold;
 }
 
 /* Clickable action icons (phone, WhatsApp) */
@@ -115,8 +122,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   transition: all 0.2s ease;
   background: #f1f5f9;
@@ -150,15 +157,40 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
-.btn-view {
+.contact-card .btn-view {
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.contact-card .btn-view:hover {
+  background: #3b82f6;
+  color: white;
+  transform: scale(1.15);
+}
+
+.contact-card .btn-view:active {
+  transform: scale(0.95);
+}
+
+.contact-card .btn-edit {
   width: 40px;
   height: 40px;
   background: transparent !important;
-  border: 2px solid #cbd5e1;
+  border: none;
   border-radius: 8px;
-  font-size: 18px;
+  color: #10b981;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -166,12 +198,46 @@
   transition: all 0.2s;
 }
 
-.btn-view:hover {
-  background: #f1f5f9 !important;
-  border-color: var(--color-border-focus);
-  transform: scale(1.08);
+.contact-card .btn-edit:hover {
+  background: #ecfdf5 !important;
+  color: #059669;
+  transform: scale(1.15);
 }
 
-.btn-view:active {
-  transform: scale(0.98);
+.contact-card .btn-edit:active {
+  transform: scale(0.95);
+}
+
+/* Contact Badges Container */
+.contact-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Badge Cliente (verde) */
+.contact-type-client {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 6px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Case Links - estilo inline igual CNPJ/CPF */
+.case-link-inline {
+  color: #1e293b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.case-link-inline:hover {
+  color: #3b82f6;
+  font-weight: 700;
+  font-size: 1.05em;
 }

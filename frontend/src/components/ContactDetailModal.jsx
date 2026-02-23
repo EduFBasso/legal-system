@@ -1,5 +1,6 @@
 // src/components/ContactDetailModal.jsx
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import ConfirmDialog from './common/ConfirmDialog';
 import { FormField, FormSelect, FormMaskedField, AddressFieldGroup } from './common';
@@ -462,6 +463,37 @@ export default function ContactDetailModal({
                   rows={5}
                   className="notes-field"
                 />
+              </section>
+            )}
+
+            {/* Processos Vinculados - only show in VIEW/EDIT mode */}
+            {!isCreating && contact.linked_cases && contact.linked_cases.length > 0 && (
+              <section className="detail-section">
+                <h3>📋 Processos Vinculados</h3>
+                <div className="linked-cases-list">
+                  {contact.linked_cases.map((linkedCase) => (
+                    <Link
+                      key={linkedCase.id}
+                      to={`/cases/${linkedCase.case_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="linked-case-item"
+                    >
+                      <div className="linked-case-number">
+                        📄 {linkedCase.numero_processo}
+                      </div>
+                      <div className="linked-case-role">
+                        <span className={`role-badge-small role-${linkedCase.role.toLowerCase()}`}>
+                          {linkedCase.role_display}
+                        </span>
+                        {linkedCase.is_client && (
+                          <span className="client-badge-small">✓ CLIENTE</span>
+                        )}
+                      </div>
+                      <div className="linked-case-arrow">↗</div>
+                    </Link>
+                  ))}
+                </div>
               </section>
             )}
 

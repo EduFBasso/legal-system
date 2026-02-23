@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Edit2, Save, X, Trash2, Search, Users, Calendar, FileText, Plus, UserPlus, RefreshCw, ExternalLink } from 'lucide-react';
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
@@ -420,11 +420,17 @@ function CaseDetailPage() {
                     <Plus size={18} />
                     Novo
                   </button>
-                  <button className="btn case-btn-edit" onClick={() => setIsEditing(true)}>
+                  <button className="btn case-btn-edit" onClick={() => {
+                    setActiveSection('info');
+                    setIsEditing(true);
+                  }}>
                     <Edit2 size={18} />
                     Editar
                   </button>
-                  <button className="btn btn-danger" onClick={handleDelete}>
+                  <button className="btn btn-danger" onClick={() => {
+                    setActiveSection('info');
+                    handleDelete();
+                  }}>
                     <Trash2 size={18} />
                     Apagar
                   </button>
@@ -488,13 +494,22 @@ function CaseDetailPage() {
                     <>
                       {/* Nossos clientes */}
                       {parties.filter(p => p.is_client).length > 0 && (
-                        <div style={{marginBottom: '0.5rem'}}>
-                          <p className="summary-value" style={{fontSize: '0.85rem', color: '#059669', fontWeight: '600'}}>
+                        <div style={{marginBottom: '0.75rem'}}>
+                          <p className="summary-value" style={{fontSize: '0.95rem', color: '#059669', fontWeight: '600', marginBottom: '0.25rem'}}>
                             Nossos Clientes:
                           </p>
                           {parties.filter(p => p.is_client).map(party => (
-                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '0.9rem'}}>
-                              <strong>{party.contact_name}</strong> ({party.role_display})
+                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '1rem', marginTop: '0.25rem'}}>
+                              <Link 
+                                to={`/contacts?open=${party.contact}`}
+                                className="party-contact-link"
+                                title="Ver detalhes do contato (abre em nova aba)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <strong>{party.contact_name}</strong> ↗
+                              </Link>
+                              {' '}({party.role_display})
                             </p>
                           ))}
                         </div>
@@ -502,11 +517,11 @@ function CaseDetailPage() {
                       {/* Parte contrária */}
                       {parties.filter(p => !p.is_client).length > 0 && (
                         <div>
-                          <p className="summary-value" style={{fontSize: '0.85rem', color: '#9ca3af', fontWeight: '600'}}>
+                          <p className="summary-value" style={{fontSize: '0.95rem', color: '#9ca3af', fontWeight: '600', marginBottom: '0.25rem'}}>
                             Outras Partes:
                           </p>
                           {parties.filter(p => !p.is_client).map(party => (
-                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '0.9rem'}}>
+                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '1rem', marginTop: '0.25rem'}}>
                               <strong>{party.contact_name}</strong> ({party.role_display})
                             </p>
                           ))}
