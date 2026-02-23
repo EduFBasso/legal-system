@@ -6,6 +6,7 @@ import ConfirmDialog from './common/ConfirmDialog';
 import { FormField, FormSelect, FormMaskedField, AddressFieldGroup } from './common';
 import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
+import { deleteParty } from '../services/casePartiesService';
 import { maskDocument, maskPhone, maskCEP, unmask } from '../utils/masks';
 import './ContactDetailModal.css';
 
@@ -16,6 +17,7 @@ export default function ContactDetailModal({
   onContactUpdated, 
   showLinkToProcessButton = false, 
   onLinkToProcess,
+  onLinkToCase, // Novo callback para abrir modal de vinculação
   allowModification = true  // Se false, bloqueia editar/deletar (apenas visualização)
 }) {
   const [contact, setContact] = useState(null);
@@ -27,6 +29,7 @@ export default function ContactDetailModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [unlinkingPartyId, setUnlinkingPartyId] = useState(null);
   const { settings } = useSettings();
 
   // Detect mode: CREATE if no contactId, VIEW/EDIT if contactId exists
@@ -93,7 +96,10 @@ export default function ContactDetailModal({
     try {
       setLoading(true);
       setError(null);
+      console.log('[ContactDetailModal] Loading contact details for ID:', contactId);
       const data = await contactsAPI.getById(contactId);
+      console.log('[ContactDetailModal] Contact loaded:', data);
+      console.log('[ContactDetailModal] linked_cases:', data.linked_cases);
       setContact(data);
       setEditedContact(applyMasksToContact(data)); // Apply masks for editing
     } catch (err) {
@@ -252,6 +258,37 @@ export default function ContactDetailModal({
     setShowDeleteConfirm(false);
     setDeletePassword('');
     setDeleteError('');
+  };
+
+  const handleUnlinkCase = async (partyId, numeroProcesso) => {
+    console.log('[handleUnlinkCase] Tentando desvincular:', { partyId, numeroProcesso });
+    console.log('[handleUnlinkCase] Todos os linked_cases do contato:', contact?.linked_cases);
+    
+    if (!window.confirm(`Confirma desvincular deste processo?\n\n📋 ${numeroProcesso}`)) {
+      return;
+    }
+
+    try {
+      setUnlinkingPartyId(partyId);
+      console.log('[handleUnlinkCase] Chamando deleteParty com ID:', partyId);
+      await deleteParty(partyId);
+      
+      console.log('[handleUnlinkCase] Vínculo removido com sucesso!');
+      
+      // Reload contact to get updated linked_cases
+      await loadContactDetails();
+      
+      // Notify parent to refresh the contact list
+      if (onContactUpdated) {
+        const updatedContact = await contactsAPI.getById(contactId);
+        onContactUpdated(updatedContact, false, false);
+      }
+    } catch (err) {
+      console.error('[handleUnlinkCase] Error unlinking case:', err);
+      alert(`❌ Erro ao desvincular: ${err.message}`);
+    } finally {
+      setUnlinkingPartyId(null);
+    }
   };
 
   if (!isOpen) return null;
@@ -467,33 +504,62 @@ export default function ContactDetailModal({
             )}
 
             {/* Processos Vinculados - only show in VIEW/EDIT mode */}
-            {!isCreating && contact.linked_cases && contact.linked_cases.length > 0 && (
+            {!isCreating && (
               <section className="detail-section">
-                <h3>📋 Processos Vinculados</h3>
-                <div className="linked-cases-list">
-                  {contact.linked_cases.map((linkedCase) => (
-                    <Link
-                      key={linkedCase.id}
-                      to={`/cases/${linkedCase.case_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="linked-case-item"
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3>📋 Processos Vinculados</h3>
+                  {onLinkToCase && (
+                    <button 
+                      className="btn-add-link"
+                      onClick={() => onLinkToCase(contact)}
+                      title="Vincular a outro processo"
                     >
-                      <div className="linked-case-number">
-                        📄 {linkedCase.numero_processo}
-                      </div>
-                      <div className="linked-case-role">
-                        <span className={`role-badge-small role-${linkedCase.role.toLowerCase()}`}>
-                          {linkedCase.role_display}
-                        </span>
-                        {linkedCase.is_client && (
-                          <span className="client-badge-small">✓ CLIENTE</span>
-                        )}
-                      </div>
-                      <div className="linked-case-arrow">↗</div>
-                    </Link>
-                  ))}
+                      ➕ Vincular Processo
+                    </button>
+                  )}
                 </div>
+                {contact.linked_cases && contact.linked_cases.length > 0 ? (
+                  <div className="linked-cases-list">
+                    {contact.linked_cases.map((linkedCase) => (
+                      <div key={linkedCase.id} className="linked-case-item">
+                        <Link
+                          to={`/cases/${linkedCase.case_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="linked-case-link"
+                        >
+                          <div className="linked-case-number">
+                            📄 {linkedCase.numero_processo}
+                          </div>
+                          <div className="linked-case-role">
+                            <span className={`role-badge-small role-${linkedCase.role.toLowerCase()}`}>
+                              {linkedCase.role_display}
+                            </span>
+                            {linkedCase.is_client && (
+                              <span className="client-badge-small">✓ CLIENTE</span>
+                            )}
+                          </div>
+                          <div className="linked-case-arrow">↗</div>
+                        </Link>
+                        <button
+                          className="btn-unlink-case"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUnlinkCase(linkedCase.id, linkedCase.numero_processo);
+                          }}
+                          disabled={unlinkingPartyId === linkedCase.id}
+                          title="Desvincular deste processo"
+                        >
+                          {unlinkingPartyId === linkedCase.id ? '⏳' : '🗑️'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#64748b', fontSize: '14px', fontStyle: 'italic' }}>
+                    Nenhum processo vinculado ainda.
+                  </p>
+                )}
               </section>
             )}
 
@@ -531,9 +597,22 @@ export default function ContactDetailModal({
                       <p>⚠️ <strong>Apenas Visualização</strong></p>
                       <p>Esta pessoa está vinculada apenas como parte de processos.</p>
                       <p>Para editar ou remover, acesse o processo correspondente.</p>
-                      <button className="btn-cancel-edit" onClick={onClose} style={{ marginTop: '1rem' }}>
-                        Fechar
-                      </button>
+                      {contact?.linked_cases && contact.linked_cases.length > 0 && (
+                        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {contact.linked_cases.map((linkedCase) => (
+                            <a
+                              key={linkedCase.id}
+                              href={`/cases/${linkedCase.case_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-go-to-process"
+                            >
+                              📋 Ir para Processo {linkedCase.numero_processo}
+                              <span className="role-info">({linkedCase.role_display})</span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>

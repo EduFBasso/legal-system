@@ -70,7 +70,7 @@ class ContactListSerializer(serializers.ModelSerializer):
         case_parties = obj.case_roles.select_related('case').all()
         return [
             {
-                'id': cp.case.id,
+                'id': cp.id,  # ID do CaseParty (não do Case!)
                 'numero_processo': cp.case.numero_processo_formatted or cp.case.numero_processo,
                 'case_id': cp.case.id,
                 'role': cp.role,
@@ -170,7 +170,7 @@ class ContactDetailSerializer(serializers.ModelSerializer):
         case_parties = obj.case_roles.select_related('case').all()
         return [
             {
-                'id': cp.case.id,
+                'id': cp.id,  # ID do CaseParty (não do Case!)
                 'numero_processo': cp.case.numero_processo_formatted or cp.case.numero_processo,
                 'case_id': cp.case.id,
                 'role': cp.role,

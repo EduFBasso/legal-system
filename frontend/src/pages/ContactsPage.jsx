@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
+import LinkContactToCaseModal from '../components/LinkContactToCaseModal';
 import Toast from '../components/common/Toast';
 import contactsAPI from '../services/api';
 import './ContactsPage.css';
@@ -17,6 +18,10 @@ export default function ContactsPage() {
   // Modal state
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Link to case modal state
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [contactToLink, setContactToLink] = useState(null);
   
   // Toast state
   const [showToast, setShowToast] = useState(false);
@@ -106,6 +111,20 @@ export default function ContactsPage() {
     }
   };
 
+  const handleLinkToCase = (contactId) => {
+    const contact = contacts.find(c => c.id === contactId);
+    if (contact) {
+      setContactToLink(contact);
+      setIsLinkModalOpen(true);
+    }
+  };
+
+  const handleLinkSuccess = async (linkData) => {
+    // Reload contacts to get updated linked_cases
+    await loadContacts();
+    displayToast('🔗 Contato vinculado ao processo com sucesso!', 'success');
+  };
+
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -159,6 +178,7 @@ export default function ContactsPage() {
               isSelected={selectedContactId === contact.id}
               onSelect={() => handleSelectContact(contact.id)}
               onView={() => handleViewContact(contact.id)}
+              onLinkToCase={() => handleLinkToCase(contact.id)}
             />
           ))
         )}
@@ -170,12 +190,37 @@ export default function ContactsPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onContactUpdated={handleContactUpdated}
+        onLinkToCase={(contact) => {
+          setContactToLink(contact);
+          setIsLinkModalOpen(true);
+        }}
         allowModification={
-          // Se não tem contact selecionado, permite criar (true)
-          // Se tem contact, verifica se is_client_anywhere ou se é novo contato
-          !selectedContactId || 
-          contacts.find(c => c.id === selectedContactId)?.is_client_anywhere !== false
+          // Permite edição em 3 casos:
+          // 1. Criando novo contato (sem selectedContactId)
+          // 2. Contato sem vínculos (linked_cases vazio)
+          // 3. Contato que é cliente em algum processo
+          !selectedContactId || (() => {
+            const contact = contacts.find(c => c.id === selectedContactId);
+            if (!contact) return true;
+            
+            // Se não tem vínculos, pode editar
+            if (!contact.linked_cases || contact.linked_cases.length === 0) {
+              return true;
+            }
+            
+            // Se tem vínculos, só pode editar se for cliente
+            return contact.is_client_anywhere === true;
+          })()
         }
+      />
+      
+      {/* Link to Case Modal */}
+      <LinkContactToCaseModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+        contactId={contactToLink?.id}
+        contactName={contactToLink?.name}
+        onSuccess={handleLinkSuccess}
       />
       
       {/* Toast Notifications */}

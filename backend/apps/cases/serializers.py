@@ -19,6 +19,7 @@ class CasePartySerializer(serializers.ModelSerializer):
         model = CaseParty
         fields = [
             'id',
+            'case',
             'contact',
             'contact_name',
             'contact_document',

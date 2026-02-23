@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import './ContactCard.css';
 
-export default function ContactCard({ contact, onView, onSelect, isSelected }) {
+export default function ContactCard({ contact, onView, onSelect, isSelected, onLinkToCase }) {
   const {
     name,
     person_type,
@@ -64,8 +64,20 @@ export default function ContactCard({ contact, onView, onSelect, isSelected }) {
             {contact.is_client_anywhere && (
               <span className="contact-type-client">Cliente</span>
             )}
+            {/* Badges para outras partes (testemunha, etc) */}
+            {contact.linked_cases && contact.linked_cases.length > 0 && (() => {
+              // Coletar roles únicos que não são cliente
+              const nonClientRoles = [...new Set(
+                contact.linked_cases
+                  .filter(lc => !lc.is_client)
+                  .map(lc => lc.role_display)
+              )];
+              return nonClientRoles.map(role => (
+                <span key={role} className="contact-type-role">{role}</span>
+              ));
+            })()}
           </div>
-          {/* Actions - Botão de visualização */}
+          {/* Actions - Botões de ação */}
           <div className="contact-actions">
             <button 
               className="btn-view" 
@@ -78,6 +90,19 @@ export default function ContactCard({ contact, onView, onSelect, isSelected }) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                 <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+            <button 
+              className="btn-link-case" 
+              title="Vincular a processo"
+              onClick={(e) => {
+                e.stopPropagation();
+                onLinkToCase && onLinkToCase();
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
             </button>
           </div>
