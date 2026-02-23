@@ -18,7 +18,6 @@ class CaseModelTest(TestCase):
         """Set up test data"""
         self.contact = Contact.objects.create(
             name='João Silva',
-            contact_type='CLIENT',
             person_type='PF',
         )
         
@@ -132,12 +131,10 @@ class CasePartyModelTest(TestCase):
         """Set up test data"""
         self.contact1 = Contact.objects.create(
             name='João Cliente',
-            contact_type='CLIENT',
             person_type='PF',
         )
         self.contact2 = Contact.objects.create(
             name='Maria Silva',
-            contact_type='OTHER',
             person_type='PF',
         )
         self.case = Case.objects.create(
@@ -219,7 +216,6 @@ class CaseAPITest(APITestCase):
         
         self.contact = Contact.objects.create(
             name='João Silva',
-            contact_type='CLIENT',
             person_type='PF',
         )
         
@@ -386,7 +382,6 @@ class CasePartyAPITest(APITestCase):
         
         self.contact = Contact.objects.create(
             name='João Silva',
-            contact_type='CLIENT',
             person_type='PF',
         )
         
