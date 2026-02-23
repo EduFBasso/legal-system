@@ -141,7 +141,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
                             onClick={(e) => e.stopPropagation()}
                             title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
                           >
-                            {linkedCase.numero_processo}
+                            <strong>{linkedCase.numero_processo}</strong>
                           </a>
                         </span>
                       ))}
@@ -166,7 +166,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
                         onClick={(e) => e.stopPropagation()}
                         title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
                       >
-                        {linkedCase.numero_processo}
+                        <strong>{linkedCase.numero_processo}</strong>
                       </a>
                     </span>
                   ))}
