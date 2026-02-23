@@ -96,10 +96,7 @@ export default function ContactDetailModal({
     try {
       setLoading(true);
       setError(null);
-      console.log('[ContactDetailModal] Loading contact details for ID:', contactId);
       const data = await contactsAPI.getById(contactId);
-      console.log('[ContactDetailModal] Contact loaded:', data);
-      console.log('[ContactDetailModal] linked_cases:', data.linked_cases);
       setContact(data);
       setEditedContact(applyMasksToContact(data)); // Apply masks for editing
     } catch (err) {
@@ -261,19 +258,13 @@ export default function ContactDetailModal({
   };
 
   const handleUnlinkCase = async (partyId, numeroProcesso) => {
-    console.log('[handleUnlinkCase] Tentando desvincular:', { partyId, numeroProcesso });
-    console.log('[handleUnlinkCase] Todos os linked_cases do contato:', contact?.linked_cases);
-    
     if (!window.confirm(`Confirma desvincular deste processo?\n\n📋 ${numeroProcesso}`)) {
       return;
     }
 
     try {
       setUnlinkingPartyId(partyId);
-      console.log('[handleUnlinkCase] Chamando deleteParty com ID:', partyId);
       await deleteParty(partyId);
-      
-      console.log('[handleUnlinkCase] Vínculo removido com sucesso!');
       
       // Reload contact to get updated linked_cases
       await loadContactDetails();

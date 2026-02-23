@@ -40,6 +40,15 @@ export default function ContactsPage() {
     loadContacts();
   }, []);
 
+  // Search effect with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadContacts();
+    }, 300); // Wait 300ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Auto-open modal if "open" query param is present
   useEffect(() => {
     const contactIdToOpen = searchParams.get('open');
@@ -60,7 +69,9 @@ export default function ContactsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await contactsAPI.getAll();
+      // Pass search parameter to backend
+      const params = searchTerm ? { search: searchTerm } : {};
+      const data = await contactsAPI.getAll(params);
       setContacts(data);
     } catch (err) {
       setError('Erro ao carregar contatos. Verifique se o backend está rodando.');
@@ -125,10 +136,6 @@ export default function ContactsPage() {
     displayToast('🔗 Contato vinculado ao processo com sucesso!', 'success');
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div className="contacts-page">
       {/* Search Bar + New Button */}
@@ -138,7 +145,7 @@ export default function ContactsPage() {
           <input
             type="text"
             className="search-input"
-            placeholder="Filtrar contatos..."
+            placeholder="Buscar por nome, CPF/CNPJ, telefone ou processo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -161,17 +168,18 @@ export default function ContactsPage() {
           <div className="contacts-loading">
             <p>Carregando contatos...</p>
           </div>
-        ) : contacts.length === 0 ? (
+        ) : contacts.length === 0 && !searchTerm ? (
           <div className="contacts-empty">
             <p>📋 Nenhum contato cadastrado ainda.</p>
             <p>Clique em "Novo Contato" para começar.</p>
           </div>
-        ) : filteredContacts.length === 0 ? (
+        ) : contacts.length === 0 && searchTerm ? (
           <div className="contacts-empty">
-            <p>🔍 Nenhum contato encontrado para "{searchTerm}"</p>
+            <p>🔍 Nenhum resultado para "{searchTerm}"</p>
+            <p>Tente buscar por nome, CPF/CNPJ, telefone ou número de processo</p>
           </div>
         ) : (
-          filteredContacts.map(contact => (
+          contacts.map(contact => (
             <ContactCard 
               key={contact.id} 
               contact={contact}

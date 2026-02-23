@@ -28,13 +28,10 @@ export default function LinkContactToCaseModal({
 
   const loadCases = async () => {
     try {
-      console.log('[LinkContactToCaseModal] Loading cases...');
       const data = await casesService.getAll();
-      console.log('[LinkContactToCaseModal] Cases loaded:', data);
       
       // Handle both paginated and non-paginated responses
       const casesList = data.results || data;
-      console.log('[LinkContactToCaseModal] Cases list:', casesList);
       
       setCases(Array.isArray(casesList) ? casesList : []);
     } catch (err) {
@@ -55,13 +52,6 @@ export default function LinkContactToCaseModal({
     setError(null);
 
     try {
-      console.log('[LinkContactToCaseModal] Creating party link:', {
-        case: selectedCaseId,
-        contact: contactId,
-        role: role,
-        is_client: isClient,
-      });
-      
       const data = await createParty({
         case: selectedCaseId,
         contact: contactId,
@@ -69,7 +59,6 @@ export default function LinkContactToCaseModal({
         is_client: isClient,
       });
 
-      console.log('[LinkContactToCaseModal] Party created successfully:', data);
       onSuccess && onSuccess(data);
       onClose();
     } catch (err) {

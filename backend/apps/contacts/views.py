@@ -27,7 +27,9 @@ class ContactViewSet(viewsets.ModelViewSet):
     - POST   /api/contacts/{id}/upload_photo/ → Upload de foto
     """
     
-    queryset = Contact.objects.all().order_by('name')
+    queryset = Contact.objects.prefetch_related(
+        'case_roles__case'
+    ).distinct().order_by('name')
     
     # Filtros e busca
     filter_backends = [
@@ -40,7 +42,16 @@ class ContactViewSet(viewsets.ModelViewSet):
     filterset_fields = ['person_type', 'state', 'city']
     
     # Campos para buscar (ex: /api/contacts/?search=joão)
-    search_fields = ['name', 'document_number', 'email', 'phone', 'mobile']
+    # Busca em: nome, CPF/CNPJ, email, telefone, celular E número de processo vinculado
+    search_fields = [
+        'name', 
+        'document_number', 
+        'email', 
+        'phone', 
+        'mobile',
+        'case_roles__case__numero_processo',  # Busca por processo formatado
+        'case_roles__case__numero_processo_unformatted',  # Busca por processo (só números)
+    ]
     
     # Campos para ordenar (ex: /api/contacts/?ordering=-created_at)
     ordering_fields = ['name', 'created_at', 'updated_at']
