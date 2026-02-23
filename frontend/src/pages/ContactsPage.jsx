@@ -152,6 +152,12 @@ export default function ContactsPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onContactUpdated={handleContactUpdated}
+        allowModification={
+          // Se não tem contact selecionado, permite criar (true)
+          // Se tem contact, verifica se is_client_anywhere ou se é novo contato
+          !selectedContactId || 
+          contacts.find(c => c.id === selectedContactId)?.is_client_anywhere !== false
+        }
       />
       
       {/* Toast Notifications */}

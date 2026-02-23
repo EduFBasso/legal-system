@@ -353,6 +353,53 @@ select.edit-input {
   transform: translateY(0);
 }
 
+/* Link to Process Button (green, used when creating from case context) */
+.btn-link-to-process {
+  padding: 14px 32px;
+  background: #10b981;
+  color: white;
+  border: 2px solid #10b981;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+
+.btn-link-to-process:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-link-to-process:active {
+  transform: translateY(0);
+}
+
+/* Read-only Notice (quando contato é apenas parte de processo) */
+.read-only-notice {
+  padding: 1.5rem;
+  background: #fef3c7;
+  border: 2px solid #fbbf24;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.read-only-notice p {
+  margin: 0.5rem 0;
+  color: #92400e;
+}
+
+.read-only-notice p:first-child {
+  font-size: 1.1rem;
+}
+
+.read-only-notice strong {
+  font-weight: 700;
+}
+
 /* Delete Confirmation Modal */
 .delete-confirm-content {
   display: flex;

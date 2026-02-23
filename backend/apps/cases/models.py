@@ -129,11 +129,27 @@ class Case(models.Model):
         help_text='Valor da causa em R$'
     )
 
-    parte_contraria = models.CharField(
-        max_length=200,
+    # ========== CLIENTE PRINCIPAL (ATALHO) ==========
+    # Campos de atalho para acesso rápido ao cliente principal.
+    # Sincronizados automaticamente com CaseParty no save().
+    cliente_principal = models.ForeignKey(
+        'contacts.Contact',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='casos_como_cliente',
+        help_text='Cliente principal deste processo (opcional - atalho para CaseParty)'
+    )
+
+    cliente_posicao = models.CharField(
+        max_length=20,
+        choices=[
+            ('AUTOR', 'Autor/Requerente'),
+            ('REU', 'Réu/Requerido'),
+        ],
         blank=True,
         default='',
-        help_text='Nome da parte contrária (campo legado - usar CaseParty)'
+        help_text='Posição do cliente principal no processo (opcional)'
     )
 
     # ========== OBSERVAÇÕES ==========
@@ -258,7 +274,20 @@ class Case(models.Model):
         # Auto-preencher numero_processo_unformatted
         if self.numero_processo:
             self.numero_processo_unformatted = ''.join(filter(str.isdigit, self.numero_processo))
+        
         super().save(*args, **kwargs)
+        
+        # Auto-sincronizar cliente_principal com CaseParty
+        if self.cliente_principal and self.cliente_posicao:
+            CaseParty.objects.update_or_create(
+                case=self,
+                contact=self.cliente_principal,
+                defaults={
+                    'role': self.cliente_posicao,
+                    'is_client': True,
+                    'observacoes': 'Cliente principal (sincronizado automaticamente)'
+                }
+            )
 
 
 class CaseParty(models.Model):
@@ -291,6 +320,11 @@ class CaseParty(models.Model):
         ],
         default='CLIENTE',
         help_text='Papel da parte no processo'
+    )
+
+    is_client = models.BooleanField(
+        default=False,
+        help_text='Indica se este contato é o cliente do escritório neste processo'
     )
 
     observacoes = models.TextField(

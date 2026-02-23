@@ -36,8 +36,8 @@ class ContactViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter
     ]
     
-    # Campos para filtrar (ex: /api/contacts/?contact_type=CLIENT)
-    filterset_fields = ['contact_type', 'person_type', 'state', 'city']
+    # Campos para filtrar (ex: /api/contacts/?person_type=PF)
+    filterset_fields = ['person_type', 'state', 'city']
     
     # Campos para buscar (ex: /api/contacts/?search=joão)
     search_fields = ['name', 'document_number', 'email', 'phone', 'mobile']
@@ -199,7 +199,6 @@ class ContactViewSet(viewsets.ModelViewSet):
         Retorna:
         {
             "total": 156,
-            "by_type": {"CLIENT": 120, "OPPOSING": 25, "WITNESS": 11},
             "by_person_type": {"PF": 140, "PJ": 16},
             "with_photo": 45,
             "with_email": 130
@@ -211,10 +210,6 @@ class ContactViewSet(viewsets.ModelViewSet):
         
         stats = {
             'total': queryset.count(),
-            'by_type': dict(
-                queryset.values_list('contact_type')
-                .annotate(count=Count('id'))
-            ),
             'by_person_type': dict(
                 queryset.values_list('person_type')
                 .annotate(count=Count('id'))

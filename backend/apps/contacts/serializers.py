@@ -10,7 +10,6 @@ class ContactListSerializer(serializers.ModelSerializer):
     Serializer para lista de contatos (sidebar).
     Retorna apenas dados essenciais para exibição no mini-card.
     """
-    contact_type_display = serializers.CharField(source='get_contact_type_display', read_only=True)
     person_type_display = serializers.CharField(source='get_person_type_display', read_only=True)
     document_formatted = serializers.CharField(read_only=True)
     primary_contact = serializers.CharField(read_only=True)
@@ -19,14 +18,15 @@ class ContactListSerializer(serializers.ModelSerializer):
     # Foto em tamanho pequeno para o card (thumbnail)
     photo_thumbnail = serializers.SerializerMethodField()
     
+    # Verifica se é cliente em algum processo
+    is_client_anywhere = serializers.SerializerMethodField()
+    
     class Meta:
         model = Contact
         fields = [
             'id',
             'name',
             'trading_name',
-            'contact_type',
-            'contact_type_display',
             'person_type',
             'person_type_display',
             'document_number',
@@ -36,6 +36,7 @@ class ContactListSerializer(serializers.ModelSerializer):
             'has_contact_info',
             'photo',
             'photo_thumbnail',
+            'is_client_anywhere',
         ]
     
     def get_photo_thumbnail(self, obj):
@@ -48,6 +49,13 @@ class ContactListSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.photo.url)
         return None
+    
+    def get_is_client_anywhere(self, obj):
+        """
+        Verifica se este contato é cliente em algum processo.
+        Usado para determinar se pode editar/deletar em /contacts.
+        """
+        return obj.case_roles.filter(is_client=True).exists()
 
 
 class ContactDetailSerializer(serializers.ModelSerializer):
@@ -55,7 +63,6 @@ class ContactDetailSerializer(serializers.ModelSerializer):
     Serializer para detalhes completos do contato (modal de visualização).
     Retorna todos os campos + properties calculadas.
     """
-    contact_type_display = serializers.CharField(source='get_contact_type_display', read_only=True)
     person_type_display = serializers.CharField(source='get_person_type_display', read_only=True)
     document_formatted = serializers.CharField(read_only=True)
     phone_formatted = serializers.CharField(read_only=True)
@@ -69,12 +76,13 @@ class ContactDetailSerializer(serializers.ModelSerializer):
     # Foto em tamanho grande para o modal (200x200px)
     photo_large = serializers.SerializerMethodField()
     
+    # Verifica se é cliente em algum processo (permite editar/deletar)
+    is_client_anywhere = serializers.SerializerMethodField()
+    
     class Meta:
         model = Contact
         fields = [
             'id',
-            'contact_type',
-            'contact_type_display',
             'person_type',
             'person_type_display',
             'name',
@@ -103,6 +111,7 @@ class ContactDetailSerializer(serializers.ModelSerializer):
             'notes',
             'created_at',
             'updated_at',
+            'is_client_anywhere',
         ]
     
     def get_photo_large(self, obj):
@@ -115,6 +124,14 @@ class ContactDetailSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.photo.url)
         return None
+    
+    def get_is_client_anywhere(self, obj):
+        """
+        Verifica se este contato é cliente em algum processo.
+        Se False = Apenas testemunha/parte → READ-ONLY em /contacts
+        Se True = Cliente → Pode editar/deletar em /contacts
+        """
+        return obj.case_roles.filter(is_client=True).exists()
 
 
 class ContactCreateUpdateSerializer(serializers.ModelSerializer):
@@ -125,7 +142,6 @@ class ContactCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = [
-            'contact_type',
             'person_type',
             'name',
             'trading_name',

@@ -45,7 +45,6 @@ class CaseAdmin(admin.ModelAdmin):
         'numero_processo',
         'numero_processo_unformatted',
         'titulo',
-        'parte_contraria',
         'observacoes',
         'comarca',
         'vara',
@@ -100,7 +99,6 @@ class CaseAdmin(admin.ModelAdmin):
         ('Informações Adicionais', {
             'fields': (
                 'valor_causa',
-                'parte_contraria',
                 'observacoes',
             )
         }),

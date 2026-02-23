@@ -63,12 +63,11 @@ export const contactsAPI = {
   /**
    * Busca todos os contatos com filtros opcionais
    * @param {Object} [params={}] - Parâmetros de filtro
-   * @param {string} [params.contact_type] - Filtrar por tipo (CLIENT, OPPOSING, etc)
    * @param {string} [params.person_type] - Filtrar por pessoa (PF, PJ)
    * @param {string} [params.search] - Busca textual
    * @returns {Promise<Array>} Lista de contatos
    * @example
-   * const clients = await contactsAPI.getAll({ contact_type: 'CLIENT' });
+   * const pessoasFisicas = await contactsAPI.getAll({ person_type: 'PF' });
    * const all = await contactsAPI.getAll();
    */
   getAll: async (params = {}) => {
@@ -95,7 +94,6 @@ export const contactsAPI = {
    * @param {Object} data - Dados do contato
    * @param {string} data.name - Nome (obrigatório)
    * @param {string} [data.person_type='PF'] - PF ou PJ
-   * @param {string} [data.contact_type='CLIENT'] - Tipo de contato
    * @param {string} [data.document_number] - CPF ou CNPJ (apenas números)
    * @param {string} [data.email] - Email
    * @param {string} [data.phone] - Telefone (apenas números)
@@ -202,10 +200,10 @@ export const contactsAPI = {
   },
 
   /**
-   * Filter by contact type
+   * Filter by person type (PF or PJ)
    */
-  filterByType: async (contactType) => {
-    return contactsAPI.getAll({ contact_type: contactType });
+  filterByPersonType: async (personType) => {
+    return contactsAPI.getAll({ person_type: personType });
   },
 };
 

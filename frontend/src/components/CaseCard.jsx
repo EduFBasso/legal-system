@@ -176,12 +176,6 @@ export default function CaseCard({ caseData, onClick }) {
               <span className="detail-value">{formatDate(caseData.data_ultima_movimentacao)}</span>
             </div>
           )}
-          {caseData.parte_contraria && (
-            <div className="detail-item">
-              <span className="detail-label">Parte Contrária:</span>
-              <span className="detail-value">{caseData.parte_contraria}</span>
-            </div>
-          )}
         </div>
 
         {/* Tags */}

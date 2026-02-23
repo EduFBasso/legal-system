@@ -7,18 +7,10 @@ from django.core.validators import RegexValidator
 
 class Contact(models.Model):
     """
-    Representa um contato - cliente, parte contrária, testemunha, etc.
+    Representa um contato (pessoa física ou jurídica).
+    O papel do contato em cada processo é definido através de CaseParty.
     Sistema inspirado em mini-cards com exibição condicional de campos.
     """
-    
-    # Tipo de contato
-    CONTACT_TYPE_CHOICES = [
-        ('CLIENT', 'Cliente'),
-        ('OPPOSING', 'Parte Contrária'),
-        ('WITNESS', 'Testemunha'),
-        ('LAWYER', 'Advogado Parceiro'),
-        ('OTHER', 'Outro'),
-    ]
     
     # Tipo de pessoa
     PERSON_TYPE_CHOICES = [
@@ -27,12 +19,6 @@ class Contact(models.Model):
     ]
     
     # === Identificação ===
-    contact_type = models.CharField(
-        'Tipo de Contato', 
-        max_length=10, 
-        choices=CONTACT_TYPE_CHOICES,
-        default='CLIENT'
-    )
     person_type = models.CharField(
         'Tipo de Pessoa', 
         max_length=2, 
@@ -103,11 +89,10 @@ class Contact(models.Model):
         ordering = ['name']
         indexes = [
             models.Index(fields=['name']),
-            models.Index(fields=['contact_type']),
         ]
     
     def __str__(self):
-        return f"{self.name} ({self.get_contact_type_display()})"
+        return f"{self.name} ({self.get_person_type_display()})"
     
     # === Properties para lógica de exibição no mini-card ===
     

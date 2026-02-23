@@ -15,7 +15,6 @@ class ContactAdmin(admin.ModelAdmin):
     # Lista de contatos
     list_display = [
         'name',
-        'contact_type',
         'person_type',
         'primary_contact',
         'city',
@@ -23,7 +22,6 @@ class ContactAdmin(admin.ModelAdmin):
     ]
     
     list_filter = [
-        'contact_type',
         'person_type',
         'state',
         'created_at',
@@ -41,7 +39,7 @@ class ContactAdmin(admin.ModelAdmin):
     # Formulário de edição
     fieldsets = (
         ('Identificação', {
-            'fields': ('contact_type', 'person_type', 'name', 'document_number')
+            'fields': ('person_type', 'name', 'document_number')
         }),
         ('Contatos', {
             'fields': ('email', 'phone', 'mobile'),

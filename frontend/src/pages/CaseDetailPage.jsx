@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Edit2, Save, X, Trash2, Search, Users, Calendar, FileText, Plus } from 'lucide-react';
+import { ArrowLeft, Edit2, Save, X, Trash2, Search, Users, Calendar, FileText, Plus, UserPlus, RefreshCw, ExternalLink } from 'lucide-react';
 import casesService from '../services/casesService';
+import contactsService from '../services/contactsService';
+import casePartiesService from '../services/casePartiesService';
 import Toast from '../components/common/Toast';
 import PublicationCard from '../components/PublicationCard';
+import ContactDetailModal from '../components/ContactDetailModal';
 import './CaseDetailPage.css';
 
 /**
@@ -19,11 +22,24 @@ function CaseDetailPage() {
   const [caseData, setCaseData] = useState(null);
   const [formData, setFormData] = useState({});
   const [publications, setPublications] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, publications, deadlines, parties
   const [toast, setToast] = useState(null);
+  const [showContactModal, setShowContactModal] = useState(false);
+  
+  // Parties state
+  const [parties, setParties] = useState([]);
+  const [loadingParties, setLoadingParties] = useState(false);
+  const [showAddPartyModal, setShowAddPartyModal] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [partyFormData, setPartyFormData] = useState({
+    role: 'AUTOR',
+    is_client: false,
+    observacoes: '',
+  });
 
   // Tribunal options
   const tribunalOptions = [
@@ -107,6 +123,144 @@ function CaseDetailPage() {
       document.title = 'Sistema Jurídico';
     };
   }, [caseData]);
+
+  // Carregar contatos quando entrar em modo de edição
+  const loadContacts = useCallback(async () => {
+    try {
+      const data = await contactsService.getAllContacts();
+      setContacts(data);
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+      showToast('Erro ao carregar contatos', 'error');
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    if (isEditing && contacts.length === 0) {
+      loadContacts();
+    }
+  }, [isEditing, contacts.length, loadContacts]);
+
+  /**
+   * Handle contact created - reload contacts and select the new one
+   */
+  const handleContactCreated = async (savedContact, isCreating) => {
+    await loadContacts();
+    
+    // Only close modal if NOT in parties context
+    // In parties context, onLinkToProcess will handle the flow
+    if (activeSection !== 'parties') {
+      setShowContactModal(false);
+      showToast('Cliente criado com sucesso!', 'success');
+    }
+  };
+
+  /**
+   * Handle linking newly created contact to this process
+   */
+  const handleLinkToProcess = (contact) => {
+    setFormData(prev => ({
+      ...prev,
+      cliente_principal: contact.id
+    }));
+    setShowContactModal(false);
+    showToast(`Cliente "${contact.name}" vinculado ao processo!`, 'success');
+    // Reload contacts to ensure dropdown is up to date
+    loadContacts();
+  };
+
+  /**
+   * Load parties for this case
+   */
+  const loadParties = useCallback(async () => {
+    if (!id) return;
+    
+    setLoadingParties(true);
+    try {
+      const data = await casePartiesService.getPartiesByCase(id);
+      setParties(data);
+    } catch (error) {
+      console.error('Error loading parties:', error);
+      showToast('Erro ao carregar partes do processo', 'error');
+    } finally {
+      setLoadingParties(false);
+    }
+  }, [id, showToast]);
+
+  /**
+   * Load parties on mount for summary display
+   */
+  useEffect(() => {
+    loadParties();
+  }, [loadParties]);
+
+  /**
+   * Load parties when entering parties section (if not already loaded)
+   */
+  useEffect(() => {
+    // Reload parties when switching to parties tab (in case data was updated elsewhere)
+    if (activeSection === 'parties') {
+      loadParties();
+    }
+  }, [activeSection, loadParties]);
+
+  /**
+   * Handle add party - select contact and show form
+   */
+  const handleSelectContactForParty = (contact) => {
+    setSelectedContact(contact);
+    setShowContactModal(false);
+    setShowAddPartyModal(true);
+  };
+
+  /**
+   * Handle save party (create CaseParty)
+   */
+  const handleSaveParty = async () => {
+    if (!selectedContact) {
+      showToast('Selecione um contato primeiro', 'error');
+      return;
+    }
+
+    try {
+      await casePartiesService.createParty({
+        case: parseInt(id),
+        contact: selectedContact.id,
+        role: partyFormData.role,
+        is_client: partyFormData.is_client,
+        observacoes: partyFormData.observacoes,
+      });
+
+      showToast('Parte adicionada com sucesso!', 'success');
+      setShowAddPartyModal(false);
+      setSelectedContact(null);
+      setPartyFormData({
+        role: 'AUTOR',
+        is_client: false,
+        observacoes: '',
+      });
+      loadParties();
+    } catch (error) {
+      console.error('Error saving party:', error);
+      showToast('Erro ao adicionar parte', 'error');
+    }
+  };
+
+  /**
+   * Handle remove party
+   */
+  const handleRemoveParty = async (partyId, partyName) => {
+    if (!window.confirm(`Remover ${partyName} deste processo?`)) return;
+
+    try {
+      await casePartiesService.deleteParty(partyId);
+      showToast('Parte removida do processo', 'success');
+      loadParties();
+    } catch (error) {
+      console.error('Error removing party:', error);
+      showToast('Erro ao remover parte', 'error');
+    }
+  };
 
   /**
    * Handle input change
@@ -243,7 +397,7 @@ function CaseDetailPage() {
               onClick={() => setActiveSection('parties')}
             >
               Partes
-              <span className="badge-soon">Em breve</span>
+              {parties.length > 0 && <span className="badge">{parties.length}</span>}
             </button>
           </div>
 
@@ -266,7 +420,7 @@ function CaseDetailPage() {
                     <Plus size={18} />
                     Novo
                   </button>
-                  <button className="btn btn-edit" onClick={() => setIsEditing(true)}>
+                  <button className="btn case-btn-edit" onClick={() => setIsEditing(true)}>
                     <Edit2 size={18} />
                     Editar
                   </button>
@@ -301,13 +455,18 @@ function CaseDetailPage() {
             <div className="case-summary-card">
               <div className="summary-main">
                 <div className="process-number-highlight">
-                  <span className="process-label">Processo Nº</span>
                   <div className="process-number-row">
-                    <h2 className="process-number">{formData.numero_processo_formatted || formData.numero_processo}</h2>
+                    <div className="process-number-group">
+                      <span className="process-label">Processo Nº</span>
+                      <h2 className="process-number">{formData.numero_processo_formatted || formData.numero_processo}</h2>
+                    </div>
                     {formData.tipo_acao && (
-                      <span className="process-tipo-badge">
-                        {formData.tipo_acao_display || formData.tipo_acao}
-                      </span>
+                      <div className="process-tipo-group">
+                        <span className="process-tipo-label">Tipo de Processo</span>
+                        <span className="process-tipo-badge">
+                          {formData.tipo_acao_display || formData.tipo_acao}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -325,8 +484,35 @@ function CaseDetailPage() {
                 {/* Partes Envolvidas */}
                 <div className="summary-section">
                   <h4><Users size={16} /> Partes Envolvidas</h4>
-                  {formData.parte_contraria ? (
-                    <p className="summary-value">Parte Contrária: <strong>{formData.parte_contraria}</strong></p>
+                  {parties.length > 0 ? (
+                    <>
+                      {/* Nossos clientes */}
+                      {parties.filter(p => p.is_client).length > 0 && (
+                        <div style={{marginBottom: '0.5rem'}}>
+                          <p className="summary-value" style={{fontSize: '0.85rem', color: '#059669', fontWeight: '600'}}>
+                            Nossos Clientes:
+                          </p>
+                          {parties.filter(p => p.is_client).map(party => (
+                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '0.9rem'}}>
+                              <strong>{party.contact_name}</strong> ({party.role_display})
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      {/* Parte contrária */}
+                      {parties.filter(p => !p.is_client).length > 0 && (
+                        <div>
+                          <p className="summary-value" style={{fontSize: '0.85rem', color: '#9ca3af', fontWeight: '600'}}>
+                            Outras Partes:
+                          </p>
+                          {parties.filter(p => !p.is_client).map(party => (
+                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '0.9rem'}}>
+                              <strong>{party.contact_name}</strong> ({party.role_display})
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <p className="summary-value empty">Nenhuma parte cadastrada</p>
                   )}
@@ -521,18 +707,76 @@ function CaseDetailPage() {
                   )}
                 </div>
 
-                {/* Parte Contrária */}
+                {/* Nosso Cliente */}
                 <div className="info-field">
-                  <label>Parte Contrária (campo legado)</label>
+                  <label>Nosso Cliente Neste Processo</label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      value={formData.parte_contraria || ''}
-                      onChange={(e) => handleInputChange('parte_contraria', e.target.value)}
-                      placeholder="Nome da parte contrária"
-                    />
+                    <>
+                      <div className="field-with-actions">
+                        <select
+                          value={formData.cliente_principal || ''}
+                          onChange={(e) => handleInputChange('cliente_principal', e.target.value)}
+                        >
+                          <option value="">Nenhum cliente vinculado</option>
+                          {contacts.map(contact => (
+                            <option key={contact.id} value={contact.id}>
+                              {contact.name} {contact.document_number ? `(${contact.document_number})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <button 
+                          type="button"
+                          className="btn-icon-action"
+                          onClick={() => loadContacts()}
+                          title="Atualizar lista de contatos"
+                        >
+                          <RefreshCw size={18} />
+                        </button>
+                        <button 
+                          type="button"
+                          className="btn-icon-action btn-icon-primary"
+                          onClick={() => window.open('/contacts', '_blank')}
+                          title="Buscar/Editar contatos em nova aba"
+                        >
+                          <ExternalLink size={18} />
+                        </button>
+                        <button 
+                          type="button"
+                          className="btn-text-action"
+                          onClick={() => setShowContactModal(true)}
+                          title="Cadastrar novo cliente"
+                        >
+                          <UserPlus size={16} />
+                          Novo
+                        </button>
+                      </div>
+                      <span className="field-hint">
+                        💡 Após editar em Contatos, clique em 🔄 para atualizar a lista
+                      </span>
+                    </>
                   ) : (
-                    <p className="info-value">{formData.parte_contraria || '-'}</p>
+                    <p className="info-value">{formData.cliente_nome || '-'}</p>
+                  )}
+                </div>
+
+                {/* Posição do Cliente */}
+                <div className="info-field">
+                  <label>Posição do Cliente no Processo</label>
+                  {isEditing ? (
+                    <select
+                      value={formData.cliente_posicao || ''}
+                      onChange={(e) => handleInputChange('cliente_posicao', e.target.value)}
+                      disabled={!formData.cliente_principal}
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="AUTOR">Autor/Requerente</option>
+                      <option value="REU">Réu/Requerido</option>
+                    </select>
+                  ) : (
+                    <p className="info-value">{formData.cliente_posicao_display || '-'}</p>
+                  )}
+                  {isEditing && !formData.cliente_principal && (
+                    <span className="field-hint">⚠️ Selecione um cliente primeiro</span>
                   )}
                 </div>
 
@@ -609,16 +853,90 @@ function CaseDetailPage() {
           </div>
         )}
 
-        {/* Partes Section - Coming Soon */}
+        {/* Partes Section */}
         {activeSection === 'parties' && (
           <div className="case-section">
             <div className="section-card">
-              <h2 className="section-title">Partes do Processo</h2>
-              <div className="empty-state">
-                <Users size={48} />
-                <p>Seção de Partes</p>
-                <p className="empty-state-hint">Em desenvolvimento</p>
+              <div className="section-header">
+                <h2 className="section-title">Partes do Processo</h2>
+                <button 
+                  className="btn btn-success"
+                  onClick={() => setShowContactModal(true)}
+                >
+                  <UserPlus size={18} />
+                  Adicionar Parte
+                </button>
               </div>
+
+              {loadingParties ? (
+                <div className="loading-container">
+                  <div className="loading-spinner"></div>
+                  <p>Carregando partes...</p>
+                </div>
+              ) : parties.length === 0 ? (
+                <div className="empty-state">
+                  <Users size={48} />
+                  <p>Nenhuma parte cadastrada</p>
+                  <p className="empty-state-hint">
+                    Clique em "Adicionar Parte" para vincular pessoas a este processo
+                  </p>
+                </div>
+              ) : (
+                <div className="parties-list">
+                  {parties.map(party => (
+                    <div key={party.id} className="party-card">
+                      <div className="party-info">
+                        <div className="party-header">
+                          <span className="party-icon">
+                            {party.contact_person_type === 'PF' ? '👤' : '🏢'}
+                          </span>
+                          <div className="party-details">
+                            <h3 className="party-name">{party.contact_name}</h3>
+                            <span className={`party-role-badge role-${party.role.toLowerCase()}`}>
+                              {party.role_display}
+                            </span>
+                            {party.is_client && (
+                              <span className="client-badge">✅ Cliente</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="party-contact-info">
+                          {party.contact_document && (
+                            <span className="party-detail">
+                              📄 {party.contact_document}
+                            </span>
+                          )}
+                          {party.contact_phone && (
+                            <span className="party-detail">
+                              📱 {party.contact_phone}
+                            </span>
+                          )}
+                          {party.contact_email && (
+                            <span className="party-detail">
+                              ✉️ {party.contact_email}
+                            </span>
+                          )}
+                        </div>
+
+                        {party.observacoes && (
+                          <div className="party-notes">
+                            <strong>Observações:</strong> {party.observacoes}
+                          </div>
+                        )}
+                      </div>
+
+                      <button 
+                        className="btn-remove-party"
+                        onClick={() => handleRemoveParty(party.id, party.contact_name)}
+                        title="Remover do processo"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -632,6 +950,109 @@ function CaseDetailPage() {
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {/* Modal de Novo Cliente/Parte */}
+      {showContactModal && (
+        <ContactDetailModal
+          contactId={null}
+          isOpen={showContactModal}
+          onClose={() => setShowContactModal(false)}
+          onContactUpdated={handleContactCreated}
+          showLinkToProcessButton={activeSection !== 'parties'}
+          onLinkToProcess={activeSection === 'parties' ? handleSelectContactForParty : handleLinkToProcess}
+        />
+      )}
+
+      {/* Modal de Definir Papel da Parte */}
+      {showAddPartyModal && selectedContact && (
+        <div className="modal-overlay" onClick={() => setShowAddPartyModal(false)}>
+          <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Adicionar ao Processo</h2>
+              <button className="modal-close" onClick={() => setShowAddPartyModal(false)}>×</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="selected-contact-info">
+                <span className="contact-icon">
+                  {selectedContact.person_type === 'PF' ? '👤' : '🏢'}
+                </span>
+                <div>
+                  <strong>{selectedContact.name}</strong>
+                  {selectedContact.document_number && (
+                    <span className="contact-doc"> • {selectedContact.document_number}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Papel no Processo *</label>
+                <select
+                  value={partyFormData.role}
+                  onChange={(e) => {
+                    const newRole = e.target.value;
+                    setPartyFormData(prev => ({
+                      ...prev,
+                      role: newRole,
+                      // Auto-set is_client based on role
+                      is_client: newRole === 'CLIENTE' ? true : 
+                                 (newRole === 'TESTEMUNHA' || newRole === 'PERITO') ? false : 
+                                 prev.is_client
+                    }));
+                  }}
+                >
+                  <option value="AUTOR">Autor/Requerente</option>
+                  <option value="REU">Réu/Requerido</option>
+                  <option value="TESTEMUNHA">Testemunha</option>
+                  <option value="PERITO">Perito</option>
+                  <option value="TERCEIRO">Terceiro Interessado</option>
+                  <option value="CLIENTE">Cliente/Representado</option>
+                </select>
+              </div>
+
+              {/* Only show checkbox for AUTOR/REU/TERCEIRO */}
+              {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(partyFormData.role) && (
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={partyFormData.is_client}
+                      onChange={(e) => setPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
+                    />
+                    <span>É cliente do escritório neste processo</span>
+                  </label>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>Observações</label>
+                <textarea
+                  value={partyFormData.observacoes}
+                  onChange={(e) => setPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  rows="3"
+                  placeholder="Observações sobre a participação desta parte..."
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowAddPartyModal(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn btn-success"
+                onClick={handleSaveParty}
+              >
+                <UserPlus size={18} />
+                Adicionar ao Processo
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

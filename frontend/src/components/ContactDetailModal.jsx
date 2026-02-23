@@ -8,7 +8,15 @@ import contactsAPI from '../services/api';
 import { maskDocument, maskPhone, maskCEP, unmask } from '../utils/masks';
 import './ContactDetailModal.css';
 
-export default function ContactDetailModal({ contactId, isOpen, onClose, onContactUpdated }) {
+export default function ContactDetailModal({ 
+  contactId, 
+  isOpen, 
+  onClose, 
+  onContactUpdated, 
+  showLinkToProcessButton = false, 
+  onLinkToProcess,
+  allowModification = true  // Se false, bloqueia editar/deletar (apenas visualização)
+}) {
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -20,7 +28,8 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
   const [deleteError, setDeleteError] = useState('');
   const { settings } = useSettings();
 
-  // Detect mode: CREATE if no contactId, VIEW/EDIT otherwise
+  // Detect mode: CREATE if no contactId, VIEW/EDIT if contactId exists
+  // Don't check contact state - it gets populated with empty object during creation
   const isCreating = !contactId;
 
   useEffect(() => {
@@ -30,12 +39,11 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         loadContactDetails();
         setIsEditing(false);
       } else {
-        // Creating new contact
+        // Creating new contact - reset state
         const emptyContact = {
           name: '',
           trading_name: '',
           person_type: 'PF',
-          contact_type: 'CLIENT',
           document: '',
           email: '',
           phone: '',
@@ -54,6 +62,12 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         setIsEditing(true); // Start in edit mode for CREATE
         setError(null);
       }
+    } else {
+      // Reset state when modal closes
+      setContact(null);
+      setEditedContact(null);
+      setIsEditing(false);
+      setError(null);
     }
   }, [isOpen, contactId]);
 
@@ -143,7 +157,6 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         name: editedContact.name.trim(),
         trading_name: editedContact.trading_name?.trim() || '',
         person_type: editedContact.person_type,
-        contact_type: editedContact.contact_type,
         document_number: unmask(editedContact.document || ''),
         email: editedContact.email || '',
         phone: unmask(editedContact.phone || ''),
@@ -164,7 +177,13 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         savedContact = await contactsAPI.create(dataToSend);
       } else {
         // UPDATE: PUT /api/contacts/{id}/
-        savedContact = await contactsAPI.update(contactId, dataToSend);
+        // Use contact.id if contactId prop is null but we have a contact
+        const idToUpdate = contactId || contact?.id;
+        if (!idToUpdate) {
+          setError('Erro: ID do contato não encontrado');
+          return;
+        }
+        savedContact = await contactsAPI.update(idToUpdate, dataToSend);
       }
 
       setContact(savedContact);
@@ -176,10 +195,16 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
         onContactUpdated(savedContact, isCreating);
       }
 
-      // Close modal after successful creation
-      if (isCreating) {
+      // Handle post-creation flow
+      if (isCreating && !showLinkToProcessButton) {
+        // If we're creating and NOT showing the link button, 
+        // it means we want to auto-link (e.g., adding party to case)
+        if (onLinkToProcess) {
+          onLinkToProcess(savedContact);
+        }
         onClose();
       }
+      // If showLinkToProcessButton is true, stay in view mode to show the link button
     } catch (err) {
       if (isCreating) {
         setError('Erro ao criar contato. Tente novamente.');
@@ -253,9 +278,12 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
       ) : error ? (
         <div className="detail-error">
           <p>❌ {error}</p>
-          <button onClick={loadContactDetails} className="btn-retry-detail">
-            🔄 Tentar Novamente
-          </button>
+          {/* Only show retry button if we were trying to load (not create) */}
+          {contactId && (
+            <button onClick={loadContactDetails} className="btn-retry-detail">
+              🔄 Tentar Novamente
+            </button>
+          )}
         </div>
       ) : contact ? (
         <div className="contact-detail-content">
@@ -302,21 +330,6 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
                     emptyText="Não informado"
                   />
                 )}
-                
-                <FormSelect
-                  label="Tipo de Contato"
-                  value={isEditing ? (editedContact.contact_type || 'CLIENT') : contact.contact_type}
-                  onChange={(value) => handleChange('contact_type', value)}
-                  options={[
-                    { value: 'CLIENT', label: 'Cliente' },
-                    { value: 'OPPOSING', label: 'Parte Contrária' },
-                    { value: 'WITNESS', label: 'Testemunha' },
-                    { value: 'LAWYER', label: 'Advogado Parceiro' },
-                    { value: 'OTHER', label: 'Outro' },
-                  ]}
-                  readOnly={!isEditing}
-                  displayValue={contact?.contact_type_display}
-                />
                 
                 <FormSelect
                   label="Tipo de Pessoa"
@@ -472,12 +485,34 @@ export default function ContactDetailModal({ contactId, isOpen, onClose, onConta
             <div className="detail-actions">
               {!isEditing && !isCreating ? (
                 <>
-                  <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
-                    🗑️ Excluir
-                  </button>
-                  <button className="btn-edit" onClick={handleEdit}>
-                    ✏️ Editar
-                  </button>
+                  {showLinkToProcessButton ? (
+                    <>
+                      <button className="btn-cancel-edit" onClick={onClose}>
+                        ❌ Cancelar
+                      </button>
+                      <button className="btn-link-to-process" onClick={() => onLinkToProcess?.(contact)}>
+                        ✅ Adicionar ao Processo
+                      </button>
+                    </>
+                  ) : !allowModification ? (
+                    <div className="read-only-notice">
+                      <p>⚠️ <strong>Apenas Visualização</strong></p>
+                      <p>Esta pessoa está vinculada apenas como parte de processos.</p>
+                      <p>Para editar ou remover, acesse o processo correspondente.</p>
+                      <button className="btn-cancel-edit" onClick={onClose} style={{ marginTop: '1rem' }}>
+                        Fechar
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
+                        🗑️ Excluir
+                      </button>
+                      <button className="btn-edit" onClick={handleEdit}>
+                        ✏️ Editar
+                      </button>
+                    </>
+                  )}
                 </>
               ) : isEditing && !isCreating ? (
                 <>

@@ -4,7 +4,6 @@ import './ContactCard.css';
 export default function ContactCard({ contact, onView, onSelect, isSelected }) {
   const {
     name,
-    contact_type_display,
     person_type,
     document_formatted,
     primary_contact,
@@ -59,7 +58,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected }) {
       <div className="contact-info">
         <div className="contact-header">
           <span className="contact-name">{name}</span>
-          <span className="contact-type">{contact_type_display}</span>
+          <span className="contact-type">{person_type === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}</span>
         </div>
         <div className="contact-details">
           {document_formatted && (

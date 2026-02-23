@@ -43,7 +43,6 @@ class CaseViewSet(viewsets.ModelViewSet):
         'numero_processo',
         'numero_processo_unformatted',
         'titulo',
-        'parte_contraria',
         'observacoes',
         'comarca',
         'vara',

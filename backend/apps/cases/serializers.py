@@ -6,8 +6,13 @@ from .models import Case, CaseParty
 
 
 class CasePartySerializer(serializers.ModelSerializer):
-    """Serializer for CaseParty through model"""
-    contact_name = serializers.CharField(source='contact.nome', read_only=True)
+    """Serializer for CaseParty through model with nested contact info"""
+    # Nested contact data (read-only)
+    contact_name = serializers.CharField(source='contact.name', read_only=True)
+    contact_document = serializers.CharField(source='contact.document_number', read_only=True)
+    contact_person_type = serializers.CharField(source='contact.person_type', read_only=True)
+    contact_phone = serializers.CharField(source='contact.mobile', read_only=True)
+    contact_email = serializers.CharField(source='contact.email', read_only=True)
     role_display = serializers.CharField(source='get_role_display', read_only=True)
     
     class Meta:
@@ -16,8 +21,13 @@ class CasePartySerializer(serializers.ModelSerializer):
             'id',
             'contact',
             'contact_name',
+            'contact_document',
+            'contact_person_type',
+            'contact_phone',
+            'contact_email',
             'role',
             'role_display',
+            'is_client',
             'observacoes',
             'created_at',
         ]
@@ -32,6 +42,8 @@ class CaseListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     tribunal_display = serializers.CharField(source='get_tribunal_display', read_only=True)
     tipo_acao_display = serializers.CharField(source='get_tipo_acao_display', read_only=True)
+    cliente_nome = serializers.CharField(source='cliente_principal.name', read_only=True)
+    cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
     
     class Meta:
         model = Case
@@ -53,7 +65,10 @@ class CaseListSerializer(serializers.ModelSerializer):
             'data_ultima_movimentacao',
             'dias_sem_movimentacao',
             'esta_ativo',
-            'parte_contraria',
+            'cliente_principal',
+            'cliente_nome',
+            'cliente_posicao',
+            'cliente_posicao_display',
             'observacoes',
             'tags',
             'created_at',
@@ -73,6 +88,9 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     tribunal_display = serializers.CharField(source='get_tribunal_display', read_only=True)
     tipo_acao_display = serializers.CharField(source='get_tipo_acao_display', read_only=True)
+    cliente_nome = serializers.CharField(source='cliente_principal.name', read_only=True)
+    cliente_document = serializers.CharField(source='cliente_principal.document_number', read_only=True)
+    cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
     
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
@@ -101,7 +119,11 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'esta_ativo',
             'nivel_urgencia',
             'valor_causa',
-            'parte_contraria',
+            'cliente_principal',
+            'cliente_nome',
+            'cliente_document',
+            'cliente_posicao',
+            'cliente_posicao_display',
             'observacoes',
             'tags',
             'total_publicacoes',
