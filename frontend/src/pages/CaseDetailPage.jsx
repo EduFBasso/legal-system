@@ -22,11 +22,13 @@ function CaseDetailPage() {
   const [caseData, setCaseData] = useState(null);
   const [formData, setFormData] = useState({});
   const [publications, setPublications] = useState([]);
+  const [movimentacoes, setMovimentacoes] = useState([]);
+  const [documentos, setDocumentos] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('info'); // info, publications, deadlines, parties
+  const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
   const [toast, setToast] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
   
@@ -376,28 +378,35 @@ function CaseDetailPage() {
               className={`nav-tab ${activeSection === 'info' ? 'active' : ''}`}
               onClick={() => setActiveSection('info')}
             >
-              Informações
-            </button>
-            <button
-              className={`nav-tab ${activeSection === 'publications' ? 'active' : ''}`}
-              onClick={() => setActiveSection('publications')}
-            >
-              Publicações
-              {publications.length > 0 && <span className="badge">{publications.length}</span>}
-            </button>
-            <button
-              className={`nav-tab ${activeSection === 'deadlines' ? 'active' : ''}`}
-              onClick={() => setActiveSection('deadlines')}
-            >
-              Prazos
-              <span className="badge-soon">Em breve</span>
+              📋 Informações
             </button>
             <button
               className={`nav-tab ${activeSection === 'parties' ? 'active' : ''}`}
               onClick={() => setActiveSection('parties')}
             >
-              Partes
+              👥 Partes
               {parties.length > 0 && <span className="badge">{parties.length}</span>}
+            </button>
+            <button
+              className={`nav-tab ${activeSection === 'movimentacoes' ? 'active' : ''}`}
+              onClick={() => setActiveSection('movimentacoes')}
+            >
+              ⚖️ Movimentações
+              {movimentacoes.length > 0 && <span className="badge">{movimentacoes.length}</span>}
+            </button>
+            <button
+              className={`nav-tab ${activeSection === 'documentos' ? 'active' : ''}`}
+              onClick={() => setActiveSection('documentos')}
+            >
+              📄 Documentos
+              {documentos.length > 0 && <span className="badge">{documentos.length}</span>}
+            </button>
+            <button
+              className={`nav-tab ${activeSection === 'deadlines' ? 'active' : ''}`}
+              onClick={() => setActiveSection('deadlines')}
+            >
+              ⏰ Prazos
+              <span className="badge-soon">Em breve</span>
             </button>
           </div>
 
@@ -830,23 +839,85 @@ function CaseDetailPage() {
           </div>
         )}
 
-        {/* Publicações Section */}
-        {activeSection === 'publications' && (
+        {/* Movimentações Section */}
+        {activeSection === 'movimentacoes' && (
           <div className="case-section">
             <div className="section-card">
-              <h2 className="section-title">Publicações Relacionadas</h2>
-              {publications.length === 0 ? (
+              <h2 className="section-title">⚖️ Movimentações Processuais</h2>
+              <p className="section-subtitle">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
+              
+              {movimentacoes.length === 0 ? (
                 <div className="empty-state">
-                  <FileText size={48} />
-                  <p>Nenhuma publicação encontrada para este processo</p>
+                  <FileText size={48} style={{ opacity: 0.3 }} />
+                  <p>Nenhuma movimentação cadastrada</p>
                   <p className="empty-state-hint">
-                    Publicações serão exibidas aqui quando forem vinculadas ao número do processo
+                    As movimentações serão importadas automaticamente das publicações do DJE vinculadas ao processo
                   </p>
                 </div>
               ) : (
-                <div className="publications-list">
-                  {publications.map(pub => (
-                    <PublicationCard key={pub.id} publication={pub} />
+                <div className="movimentacoes-timeline">
+                  {movimentacoes.map(mov => (
+                    <div key={mov.id} className="timeline-item">
+                      <div className="timeline-marker"></div>
+                      <div className="timeline-date">{mov.data}</div>
+                      <div className="timeline-content">
+                        <div className="timeline-tipo">{mov.tipo_display || mov.tipo}</div>
+                        <div className="timeline-descricao">{mov.descricao}</div>
+                        {mov.prazo && (
+                          <div className="timeline-prazo">⏰ Prazo: {mov.prazo} dias</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Documentos Section */}
+        {activeSection === 'documentos' && (
+          <div className="case-section">
+            <div className="section-card">
+              <div className="section-header">
+                <div>
+                  <h2 className="section-title">📄 Documentos do Processo</h2>
+                  <p className="section-subtitle">Petições, sentenças, contratos e outros documentos</p>
+                </div>
+                <button className="btn btn-primary">
+                  <Plus size={18} />
+                  Upload Documento
+                </button>
+              </div>
+              
+              {documentos.length === 0 ? (
+                <div className="empty-state">
+                  <FileText size={48} style={{ opacity: 0.3 }} />
+                  <p>Nenhum documento anexado</p>
+                  <p className="empty-state-hint">
+                    Faça upload de petições, sentenças, contratos e outros documentos relacionados ao processo
+                  </p>
+                </div>
+              ) : (
+                <div className="documentos-grid">
+                  {documentos.map(doc => (
+                    <div key={doc.id} className="documento-card">
+                      <div className="documento-icon">
+                        {doc.tipo === 'pdf' ? '📕' : doc.tipo === 'doc' ? '📘' : '📄'}
+                      </div>
+                      <div className="documento-info">
+                        <div className="documento-nome">{doc.nome}</div>
+                        <div className="documento-meta">
+                          {doc.tipo_documento && <span className="doc-tipo">{doc.tipo_documento}</span>}
+                          <span className="doc-data">{doc.data_upload}</span>
+                          {doc.tamanho && <span className="doc-tamanho">{(doc.tamanho / 1024).toFixed(0)} KB</span>}
+                        </div>
+                      </div>
+                      <div className="documento-actions">
+                        <button className="btn-icon-small" title="Baixar">⬇️</button>
+                        <button className="btn-icon-small" title="Excluir">🗑️</button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
