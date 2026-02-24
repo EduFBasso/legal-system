@@ -12,6 +12,8 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
   const [isEditing, setIsEditing] = useState(!caseData); // New case = editing mode
   const [loading, setLoading] = useState(false);
   const [parties, setParties] = useState([]);
+  const [movimentacoes, setMovimentacoes] = useState([]);
+  const [documentos, setDocumentos] = useState([]);
 
   /**
    * Load case parties
@@ -167,10 +169,16 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
                 👥 Partes ({parties.length})
               </button>
               <button
-                className={`tab ${activeTab === 'publications' ? 'active' : ''}`}
-                onClick={() => setActiveTab('publications')}
+                className={`tab ${activeTab === 'movimentacoes' ? 'active' : ''}`}
+                onClick={() => setActiveTab('movimentacoes')}
               >
-                📰 Publicações (0)
+                ⚖️ Movimentações ({movimentacoes.length})
+              </button>
+              <button
+                className={`tab ${activeTab === 'documentos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('documentos')}
+              >
+                📄 Documentos ({documentos.length})
               </button>
               <button
                 className={`tab ${activeTab === 'deadlines' ? 'active' : ''}`}
@@ -469,17 +477,97 @@ export default function CaseDetailModal({ caseData, onClose, onUpdate, onDelete 
             </div>
           )}
 
-          {/* Publications Tab */}
-          {activeTab === 'publications' && (
+          {/* Movimentações Tab */}
+          {activeTab === 'movimentacoes' && (
             <div className="tab-content">
-              <p className="coming-soon">🚧 Em construção: Publicações vinculadas ao processo</p>
+              <div className="movimentacoes-header">
+                <h3>Movimentações Processuais</h3>
+                <p className="help-text">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
+              </div>
+              
+              {movimentacoes.length === 0 ? (
+                <div className="empty-state">
+                  <span className="empty-icon">⚖️</span>
+                  <p className="empty-message">Nenhuma movimentação cadastrada</p>
+                  <p className="empty-hint">As movimentações serão importadas automaticamente das publicações do DJE</p>
+                </div>
+              ) : (
+                <div className="movimentacoes-timeline">
+                  {movimentacoes.map(mov => (
+                    <div key={mov.id} className="timeline-item">
+                      <div className="timeline-date">{formatDate(mov.data)}</div>
+                      <div className="timeline-content">
+                        <div className="timeline-tipo">{mov.tipo_display || mov.tipo}</div>
+                        <div className="timeline-descricao">{mov.descricao}</div>
+                        {mov.prazo && (
+                          <div className="timeline-prazo">⏰ Prazo: {mov.prazo} dias</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Documentos Tab */}
+          {activeTab === 'documentos' && (
+            <div className="tab-content">
+              <div className="documentos-header">
+                <h3>Documentos do Processo</h3>
+                <button className="btn btn-sm btn-primary">
+                  + Upload Documento
+                </button>
+              </div>
+              
+              {documentos.length === 0 ? (
+                <div className="empty-state">
+                  <span className="empty-icon">📄</span>
+                  <p className="empty-message">Nenhum documento anexado</p>
+                  <p className="empty-hint">Faça upload de petições, sentenças, contratos e outros documentos relacionados ao processo</p>
+                </div>
+              ) : (
+                <div className="documentos-list">
+                  {documentos.map(doc => (
+                    <div key={doc.id} className="documento-item">
+                      <div className="documento-icon">
+                        {doc.tipo === 'pdf' ? '📕' : doc.tipo === 'doc' ? '📘' : '📄'}
+                      </div>
+                      <div className="documento-info">
+                        <div className="documento-nome">{doc.nome}</div>
+                        <div className="documento-meta">
+                          {doc.tipo_documento && (
+                            <span className="documento-tipo">{doc.tipo_documento}</span>
+                          )}
+                          <span className="documento-data">{formatDate(doc.data_upload)}</span>
+                          {doc.tamanho && (
+                            <span className="documento-tamanho">{(doc.tamanho / 1024).toFixed(0)} KB</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="documento-actions">
+                        <button className="btn-icon" title="Baixar">
+                          ⬇️
+                        </button>
+                        <button className="btn-icon" title="Excluir">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* Deadlines Tab */}
           {activeTab === 'deadlines' && (
             <div className="tab-content">
-              <p className="coming-soon">🚧 Em construção: Prazos e agenda do processo</p>
+              <div className="empty-state">
+                <span className="empty-icon">⏰</span>
+                <p className="empty-message">Prazos e Agenda</p>
+                <p className="empty-hint">Os prazos serão gerados automaticamente a partir das publicações com prazo cadastrado</p>
+              </div>
             </div>
           )}
         </div>
