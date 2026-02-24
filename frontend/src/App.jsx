@@ -24,7 +24,8 @@ function App() {
       <NotificationsProvider>
         <PublicationsProvider>
           <Routes>
-            {/* Rota dedicada para detalhes de processo (full width, sem sidebar) */}
+            {/* Rotas dedicadas para processos (full width, sem sidebar) */}
+            <Route path="/cases/new" element={<CaseDetailPage />} />
             <Route path="/cases/:id" element={<CaseDetailPage />} />
 
             {/* Rotas normais com layout padrão */}

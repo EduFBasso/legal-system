@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import casesService from '../services/casesService';
 import CaseCard from '../components/CaseCard';
-import CaseDetailModal from '../components/CaseDetailModal';
 import Toast from '../components/common/Toast';
 import './CasesPage.css';
 
@@ -9,10 +9,9 @@ import './CasesPage.css';
  * Cases Page - Manage legal cases/processes
  */
 export default function CasesPage() {
+  const navigate = useNavigate();
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedCase, setSelectedCase] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [stats, setStats] = useState(null);
   const [allTribunals, setAllTribunals] = useState({});
@@ -149,78 +148,15 @@ export default function CasesPage() {
   };
 
   /**
-   * Open case detail modal
+   * Open case detail page
    */
   const openCaseDetail = (caseItem) => {
-    setSelectedCase(caseItem);
-    setIsModalOpen(true);
-  };
-
-  /**
-   * Close modal
-   */
-  const closeModal = () => {
-    setSelectedCase(null);
-    setIsModalOpen(false);
-  };
-
-  /**
-   * Handle case update (or create)
-   */
-  const handleCaseUpdate = async (updatedCase) => {
-    // Check if it's an update or new case
-    const exists = cases.some(c => c.id === updatedCase.id);
-    
-    if (exists) {
-      // Update existing case
-      setCases(prev => prev.map(c => c.id === updatedCase.id ? updatedCase : c));
-      // Update selected case if it's the same one
-      if (selectedCase?.id === updatedCase.id) {
-        setSelectedCase(updatedCase);
-      }
+    if (caseItem) {
+      // Navigate to existing case detail page
+      navigate(`/cases/${caseItem.id}`);
     } else {
-      // Add new case
-      setCases(prev => [updatedCase, ...prev]);
-    }
-    
-    setToast({
-      message: exists ? 'Processo atualizado com sucesso!' : 'Processo criado com sucesso!',
-      type: 'success'
-    });
-    
-    // Reload all tribunals in case a new one was added
-    const allStatsData = await casesService.getStats({});
-    setAllTribunals(allStatsData.by_tribunal || {});
-    
-    await loadStats();
-  };
-
-  /**
-   * Handle case delete
-   */
-  const handleCaseDelete = async (caseId) => {
-    const confirmMsg = 'Tem certeza que deseja deletar este processo?';
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      await casesService.delete(caseId, 'Deleted by user');
-      setCases(prev => prev.filter(c => c.id !== caseId));
-      setToast({
-        message: 'Processo deletado com sucesso!',
-        type: 'success'
-      });
-      closeModal();
-      
-      // Reload all tribunals in case one was removed
-      const allStatsData = await casesService.getStats({});
-      setAllTribunals(allStatsData.by_tribunal || {});
-      
-      await loadStats();
-    } catch (error) {
-      setToast({
-        message: 'Erro ao deletar processo: ' + error.message,
-        type: 'error'
-      });
+      // Open new case page in new tab
+      window.open('/cases/new', '_blank');
     }
   };
 
@@ -401,16 +337,6 @@ export default function CasesPage() {
           </div>
         )}
       </div>
-
-      {/* Case Detail Modal */}
-      {isModalOpen && (
-        <CaseDetailModal
-          caseData={selectedCase}
-          onClose={closeModal}
-          onUpdate={handleCaseUpdate}
-          onDelete={handleCaseDelete}
-        />
-      )}
 
       {/* Toast */}
       {toast && (

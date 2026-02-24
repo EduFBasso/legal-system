@@ -25,8 +25,8 @@ function CaseDetailPage() {
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [documentos, setDocumentos] = useState([]);
   const [contacts, setContacts] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(!id); // New case = editing mode
+  const [loading, setLoading] = useState(!!id); // Only load if has id
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
   const [toast, setToast] = useState(null);
@@ -91,6 +91,12 @@ function CaseDetailPage() {
    * Load case details
    */
   const loadCaseData = useCallback(async () => {
+    // Skip loading if creating new case
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const data = await casesService.getById(id);
@@ -118,13 +124,15 @@ function CaseDetailPage() {
   useEffect(() => {
     if (caseData?.numero_processo) {
       document.title = `Proc.: ${caseData.numero_processo_formatted || caseData.numero_processo}`;
+    } else if (!id) {
+      document.title = 'Novo Processo - Sistema Jurídico';
     }
     
     // Restaurar título original ao desmontar
     return () => {
       document.title = 'Sistema Jurídico';
     };
-  }, [caseData]);
+  }, [caseData, id]);
 
   // Carregar contatos quando entrar em modo de edição
   const loadContacts = useCallback(async () => {
