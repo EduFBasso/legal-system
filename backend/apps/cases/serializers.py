@@ -92,9 +92,19 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     cliente_nome = serializers.CharField(source='cliente_principal.name', read_only=True)
     cliente_document = serializers.CharField(source='cliente_principal.document_number', read_only=True)
     cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
+    ultima_movimentacao_resumo = serializers.SerializerMethodField()
     
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
+    
+    def get_ultima_movimentacao_resumo(self, obj):
+        """
+        Retorna resumo da última movimentação.
+        TODO: Quando implementar model Movimentacao, buscar da última movimentação:
+        - ultima_mov = obj.movimentacoes.order_by('-data').first()
+        - return ultima_mov.titulo ou ultima_mov.tipo_display
+        """
+        return None  # Por enquanto retorna None até implementar tabela Movimentações
     
     class Meta:
         model = Case
@@ -115,6 +125,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'auto_status',
             'data_distribuicao',
             'data_ultima_movimentacao',
+            'ultima_movimentacao_resumo',
             'data_encerramento',
             'dias_sem_movimentacao',
             'esta_ativo',

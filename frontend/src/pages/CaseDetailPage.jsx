@@ -561,7 +561,16 @@ function CaseDetailPage() {
                       <p className="summary-value">Distribuição: <strong>{formatDate(formData.data_distribuicao)}</strong></p>
                     )}
                     {formData.data_ultima_movimentacao && (
-                      <p className="summary-value">Última Movimentação: <strong>{formatDate(formData.data_ultima_movimentacao)}</strong></p>
+                      <div className="summary-value">
+                        <p style={{marginBottom: '0.25rem'}}>
+                          Última Movimentação: <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
+                        </p>
+                        {formData.ultima_movimentacao_resumo && (
+                          <p style={{fontSize: '0.85rem', color: '#6b7280', marginLeft: '0.5rem'}}>
+                            {formData.ultima_movimentacao_resumo}
+                          </p>
+                        )}
+                      </div>
                     )}
                     {formData.dias_sem_movimentacao !== null && formData.dias_sem_movimentacao !== undefined && (
                       <p className="summary-value highlight-days">
@@ -728,17 +737,26 @@ function CaseDetailPage() {
                 {/* Data Última Movimentação - Calculado Automaticamente */}
                 <div className="info-field">
                   <label>Última Movimentação</label>
-                  <p className="info-value">
-                    {formData.data_ultima_movimentacao ? (
-                      formatDate(formData.data_ultima_movimentacao)
-                    ) : (
+                  {formData.data_ultima_movimentacao ? (
+                    <div>
+                      <p className="info-value" style={{marginBottom: '0.25rem'}}>
+                        <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
+                      </p>
+                      {formData.ultima_movimentacao_resumo && (
+                        <p style={{fontSize: '0.9rem', color: '#6b7280'}}>
+                          {formData.ultima_movimentacao_resumo}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="info-value">
                       <span style={{color: '#9ca3af', fontStyle: 'italic'}}>
                         Nenhuma movimentação cadastrada
                       </span>
-                    )}
-                  </p>
+                    </p>
+                  )}
                   {isEditing && (
-                    <small style={{display: 'block', color: '#6b7280', fontSize: '0.75rem', marginTop: '0.25rem'}}>
+                    <small style={{display: 'block', color: '#6b7280', fontSize: '0.75rem', marginTop: '0.5rem'}}>
                       ℹ️ Atualizado automaticamente pela aba Movimentações
                     </small>
                   )}
