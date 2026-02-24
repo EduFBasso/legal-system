@@ -44,6 +44,17 @@ function CaseDetailPage() {
     observacoes: '',
   });
 
+  // Movimentações state
+  const [showMovimentacaoModal, setShowMovimentacaoModal] = useState(false);
+  const [movimentacaoFormData, setMovimentacaoFormData] = useState({
+    data: '',
+    tipo: 'DESPACHO',
+    titulo: '',
+    descricao: '',
+    prazo: '',
+  });
+  const [savingMovimentacao, setSavingMovimentacao] = useState(false);
+
   // Tribunal options
   const tribunalOptions = [
     { value: 'TJSP', label: 'TJSP - Tribunal de Justiça de São Paulo' },
@@ -356,6 +367,73 @@ function CaseDetailPage() {
       console.error('Error deleting case:', error);
       showToast('Erro ao deletar processo', 'error');
     }
+  };
+
+  /**
+   * Open modal to add new movimentacao
+   */
+  const handleOpenMovimentacaoModal = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setMovimentacaoFormData({
+      data: today,
+      tipo: 'DESPACHO',
+      titulo: '',
+      descricao: '',
+      prazo: '',
+    });
+    setShowMovimentacaoModal(true);
+  };
+
+  /**
+   * Save movimentacao
+   */
+  const handleSaveMovimentacao = async () => {
+    if (!movimentacaoFormData.data || !movimentacaoFormData.titulo) {
+      showToast('Preencha data e título da movimentação', 'error');
+      return;
+    }
+
+    setSavingMovimentacao(true);
+    try {
+      const dataToSave = {
+        case: parseInt(id),
+        data: movimentacaoFormData.data,
+        tipo: movimentacaoFormData.tipo,
+        titulo: movimentacaoFormData.titulo,
+        descricao: movimentacaoFormData.descricao || '',
+        prazo: movimentacaoFormData.prazo ? parseInt(movimentacaoFormData.prazo) : null,
+        origem: 'MANUAL',
+      };
+
+      await caseMovementsService.createMovement(dataToSave);
+      
+      showToast('Movimentação cadastrada com sucesso!', 'success');
+      
+      // Reload movimentacoes and case data (to update resumo)
+      await loadMovimentacoes();
+      await loadCaseData();
+      
+      setShowMovimentacaoModal(false);
+    } catch (error) {
+      console.error('Error saving movimentacao:', error);
+      showToast('Erro ao salvar movimentação', 'error');
+    } finally {
+      setSavingMovimentacao(false);
+    }
+  };
+
+  /**
+   * Close movimentacao modal
+   */
+  const handleCloseMovimentacaoModal = () => {
+    setShowMovimentacaoModal(false);
+    setMovimentacaoFormData({
+      data: '',
+      tipo: 'DESPACHO',
+      titulo: '',
+      descricao: '',
+      prazo: '',
+    });
   };
 
   /**
@@ -902,7 +980,7 @@ function CaseDetailPage() {
                   <p className="section-subtitle">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
                 </div>
                 {id && (
-                  <button className="btn btn-primary" onClick={() => showToast('Funcionalidade em desenvolvimento', 'info')}>
+                  <button className="btn btn-primary" onClick={handleOpenMovimentacaoModal}>
                     <Plus size={18} /> Nova Movimentação
                   </button>
                 )}
@@ -1205,6 +1283,117 @@ function CaseDetailPage() {
               >
                 <UserPlus size={18} />
                 Adicionar ao Processo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Adicionar Movimentação */}
+      {showMovimentacaoModal && (
+        <div className="modal-overlay" onClick={handleCloseMovimentacaoModal}>
+          <div className="modal-content modal-medium" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Nova Movimentação Processual</h3>
+              <button className="modal-close" onClick={handleCloseMovimentacaoModal}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Data *</label>
+                  <input
+                    type="date"
+                    value={movimentacaoFormData.data}
+                    onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, data: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Tipo *</label>
+                  <select
+                    value={movimentacaoFormData.tipo}
+                    onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, tipo: e.target.value }))}
+                  >
+                    <option value="DESPACHO">Despacho</option>
+                    <option value="DECISAO">Decisão Interlocutória</option>
+                    <option value="SENTENCA">Sentença</option>
+                    <option value="ACORDAO">Acórdão</option>
+                    <option value="AUDIENCIA">Audiência</option>
+                    <option value="JUNTADA">Juntada de Documento</option>
+                    <option value="INTIMACAO">Intimação</option>
+                    <option value="CITACAO">Citação</option>
+                    <option value="CONCLUSAO">Conclusos</option>
+                    <option value="RECURSO">Recurso</option>
+                    <option value="PETICAO">Petição Protocolada</option>
+                    <option value="OUTROS">Outros</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Título/Resumo *</label>
+                <input
+                  type="text"
+                  value={movimentacaoFormData.titulo}
+                  onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, titulo: e.target.value }))}
+                  placeholder="Ex: Audiência de conciliação designada"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Descrição Completa</label>
+                <textarea
+                  value={movimentacaoFormData.descricao}
+                  onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                  rows="5"
+                  placeholder="Descreva os detalhes da movimentação..."
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Prazo (em dias)</label>
+                <input
+                  type="number"
+                  value={movimentacaoFormData.prazo}
+                  onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, prazo: e.target.value }))}
+                  placeholder="Ex: 15"
+                  min="0"
+                />
+                <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                  Se houver prazo, informe em dias. A data limite será calculada automaticamente.
+                </small>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={handleCloseMovimentacaoModal}
+                disabled={savingMovimentacao}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn btn-success"
+                onClick={handleSaveMovimentacao}
+                disabled={savingMovimentacao}
+              >
+                {savingMovimentacao ? (
+                  <>
+                    <RefreshCw size={18} className="spinning" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    Salvar Movimentação
+                  </>
+                )}
               </button>
             </div>
           </div>
