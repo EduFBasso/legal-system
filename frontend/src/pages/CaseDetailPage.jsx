@@ -4,6 +4,7 @@ import { ArrowLeft, Edit2, Save, X, Trash2, Search, Users, Calendar, FileText, P
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
+import caseMovementsService from '../services/caseMovementsService';
 import Toast from '../components/common/Toast';
 import PublicationCard from '../components/PublicationCard';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -196,6 +197,27 @@ function CaseDetailPage() {
       setLoadingParties(false);
     }
   }, [id, showToast]);
+
+  /**
+   * Load movimentacoes for this case
+   */
+  const loadMovimentacoes = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      const data = await caseMovementsService.getMovementsByCase(id);
+      setMovimentacoes(data);
+    } catch (error) {
+      console.error('Error loading movimentacoes:', error);
+      showToast('Erro ao carregar movimentações', 'error');
+    }
+  }, [id, showToast]);
+
+  useEffect(() => {
+    if (id) {
+      loadMovimentacoes();
+    }
+  }, [id, loadMovimentacoes]);
 
   /**
    * Load parties on mount for summary display
@@ -874,15 +896,24 @@ function CaseDetailPage() {
         {activeSection === 'movimentacoes' && (
           <div className="case-section">
             <div className="section-card">
-              <h2 className="section-title">⚖️ Movimentações Processuais</h2>
-              <p className="section-subtitle">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
+              <div className="section-header">
+                <div>
+                  <h2 className="section-title">⚖️ Movimentações Processuais</h2>
+                  <p className="section-subtitle">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
+                </div>
+                {id && (
+                  <button className="btn btn-primary" onClick={() => showToast('Funcionalidade em desenvolvimento', 'info')}>
+                    <Plus size={18} /> Nova Movimentação
+                  </button>
+                )}
+              </div>
               
               {movimentacoes.length === 0 ? (
                 <div className="empty-state">
                   <FileText size={48} style={{ opacity: 0.3 }} />
                   <p>Nenhuma movimentação cadastrada</p>
                   <p className="empty-state-hint">
-                    As movimentações serão importadas automaticamente das publicações do DJE vinculadas ao processo
+                    Clique em "Nova Movimentação" para adicionar despachos, decisões, audiências, etc.
                   </p>
                 </div>
               ) : (
@@ -890,13 +921,29 @@ function CaseDetailPage() {
                   {movimentacoes.map(mov => (
                     <div key={mov.id} className="timeline-item">
                       <div className="timeline-marker"></div>
-                      <div className="timeline-date">{mov.data}</div>
+                      <div className="timeline-date">{formatDate(mov.data)}</div>
                       <div className="timeline-content">
                         <div className="timeline-tipo">{mov.tipo_display || mov.tipo}</div>
-                        <div className="timeline-descricao">{mov.descricao}</div>
-                        {mov.prazo && (
-                          <div className="timeline-prazo">⏰ Prazo: {mov.prazo} dias</div>
+                        <div className="timeline-titulo">{mov.titulo}</div>
+                        {mov.descricao && (
+                          <div className="timeline-descricao">{mov.descricao}</div>
                         )}
+                        {mov.prazo && (
+                          <div className="timeline-prazo">
+                            ⏰ Prazo: {mov.prazo} dias (até {formatDate(mov.data_limite_prazo)})
+                          </div>
+                        )}
+                        <div className="timeline-meta">
+                          <span className="timeline-origem">{mov.origem_display}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
                       </div>
                     </div>
                   ))}
