@@ -29,6 +29,19 @@ class CaseMovementSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at']
+    
+    def validate_data(self, value):
+        """Validate that data is not in the future"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        if value > today:
+            raise serializers.ValidationError(
+                "A data da movimentação não pode ser futura. "
+                "Movimentações registram eventos que já ocorreram."
+            )
+        
+        return value
 
 
 class CasePartySerializer(serializers.ModelSerializer):

@@ -393,6 +393,16 @@ function CaseDetailPage() {
       return;
     }
 
+    // Validar que data não é futura
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(movimentacaoFormData.data + 'T00:00:00');
+    
+    if (selectedDate > today) {
+      showToast('A data da movimentação não pode ser futura', 'error');
+      return;
+    }
+
     setSavingMovimentacao(true);
     try {
       const dataToSave = {
@@ -1308,8 +1318,12 @@ function CaseDetailPage() {
                     type="date"
                     value={movimentacaoFormData.data}
                     onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, data: e.target.value }))}
+                    max={new Date().toISOString().split('T')[0]}
                     required
                   />
+                  <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                    Apenas datas passadas ou de hoje são permitidas
+                  </small>
                 </div>
 
                 <div className="form-group">
