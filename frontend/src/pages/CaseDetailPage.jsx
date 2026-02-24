@@ -725,17 +725,22 @@ function CaseDetailPage() {
                   )}
                 </div>
 
-                {/* Data Última Movimentação */}
+                {/* Data Última Movimentação - Calculado Automaticamente */}
                 <div className="info-field">
                   <label>Última Movimentação</label>
-                  {isEditing ? (
-                    <input
-                      type="date"
-                      value={formData.data_ultima_movimentacao || ''}
-                      onChange={(e) => handleInputChange('data_ultima_movimentacao', e.target.value)}
-                    />
-                  ) : (
-                    <p className="info-value">{formatDate(formData.data_ultima_movimentacao)}</p>
+                  <p className="info-value">
+                    {formData.data_ultima_movimentacao ? (
+                      formatDate(formData.data_ultima_movimentacao)
+                    ) : (
+                      <span style={{color: '#9ca3af', fontStyle: 'italic'}}>
+                        Nenhuma movimentação cadastrada
+                      </span>
+                    )}
+                  </p>
+                  {isEditing && (
+                    <small style={{display: 'block', color: '#6b7280', fontSize: '0.75rem', marginTop: '0.25rem'}}>
+                      ℹ️ Atualizado automaticamente pela aba Movimentações
+                    </small>
                   )}
                 </div>
 
