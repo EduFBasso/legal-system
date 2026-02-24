@@ -944,14 +944,6 @@ function CaseDetailPage() {
             </div>
           </div>
         )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Documentos Section */}
         {activeSection === 'documentos' && (
