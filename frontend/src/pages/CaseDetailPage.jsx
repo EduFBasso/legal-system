@@ -640,23 +640,25 @@ function CaseDetailPage() {
                       <span className="process-label">Processo Nº</span>
                       <h2 className="process-number">{formData.numero_processo_formatted || formData.numero_processo}</h2>
                     </div>
-                    {formData.tipo_acao && (
-                      <div className="process-tipo-group">
-                        <span className="process-tipo-label">Tipo de Processo</span>
-                        <span className={`process-tipo-badge tipo-${formData.tipo_acao.toLowerCase()}`}>
-                          {formData.tipo_acao_display || formData.tipo_acao}
+                    <div className="process-number-right">
+                      {formData.titulo && (
+                        <p className="process-title">{formData.titulo}</p>
+                      )}
+                      <div className="process-badges-row">
+                        {formData.tipo_acao && (
+                          <span className={`process-tipo-badge tipo-${formData.tipo_acao.toLowerCase()}`}>
+                            {formData.tipo_acao_display || formData.tipo_acao}
+                          </span>
+                        )}
+                        <span className={`info-badge status status-${formData.status?.toLowerCase()}`}>
+                          {formData.status_display || formData.status}
+                        </span>
+                        <span className="info-badge tribunal">
+                          {formData.tribunal_display || formData.tribunal}
                         </span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-                <div className="summary-actions">
-                  <span className={`info-badge status status-${formData.status?.toLowerCase()}`}>
-                    {formData.status_display || formData.status}
-                  </span>
-                  <span className="info-badge tribunal">
-                    {formData.tribunal_display || formData.tribunal}
-                  </span>
                 </div>
               </div>
 
