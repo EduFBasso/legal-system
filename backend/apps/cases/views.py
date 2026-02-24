@@ -8,11 +8,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count
 
-from .models import Case, CaseParty
+from .models import Case, CaseParty, CaseMovement
 from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
     CasePartySerializer,
+    CaseMovementSerializer,
 )
 
 
@@ -128,3 +129,40 @@ class CasePartyViewSet(viewsets.ModelViewSet):
     }
     ordering_fields = ['created_at']
     ordering = ['-created_at']
+
+
+class CaseMovementViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for CaseMovement model (movimentações processuais)
+    
+    Provides CRUD operations for case movements.
+    Automatically updates Case.data_ultima_movimentacao on create/update/delete.
+    """
+    queryset = CaseMovement.objects.all().order_by('-data', '-created_at')
+    serializer_class = CaseMovementSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        'case': ['exact'],
+        'tipo': ['exact', 'in'],
+        'origem': ['exact', 'in'],
+        'data': ['gte', 'lte', 'exact'],
+        'data_limite_prazo': ['gte', 'lte', 'exact'],
+    }
+    search_fields = [
+        'titulo',
+        'descricao',
+        'case__numero_processo',
+    ]
+    ordering_fields = ['data', 'created_at', 'data_limite_prazo']
+    ordering = ['-data', '-created_at']
+    
+    def get_queryset(self):
+        """
+        Optionally filter by case_id from URL parameter
+        For use in nested routes like /api/cases/{id}/movimentacoes/
+        """
+        queryset = super().get_queryset()
+        case_id = self.request.query_params.get('case_id')
+        if case_id:
+            queryset = queryset.filter(case_id=case_id)
+        return queryset
