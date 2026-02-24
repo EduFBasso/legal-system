@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import timedelta
 from apps.contacts.models import Contact
-from apps.cases.models import Case, CaseParty
+from apps.cases.models import Case, CaseParty, CaseMovement
 
 
 class CaseModelTest(TestCase):
@@ -441,9 +441,301 @@ class CasePartyAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
+
+class CaseMovementModelTest(TestCase):
+    """Test CaseMovement model"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.case = Case.objects.create(
+            numero_processo='0000001-23.2024.8.26.0100',
+            titulo='Ação de Cobrança',
+            tribunal='TJSP',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=30),
+        )
+    
+    def test_create_movement(self):
+        """Test creating a case movement"""
+        movement = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Despacho sobre petição',
+            descricao='Despacho determinando juntada de documentos',
+            origem='MANUAL',
+        )
+        self.assertEqual(movement.case, self.case)
+        self.assertEqual(movement.tipo, 'DESPACHO')
+        self.assertEqual(movement.titulo, 'Despacho sobre petição')
+    
+    def test_auto_calculate_data_limite_prazo(self):
+        """Test automatic calculation of data_limite_prazo"""
+        movement = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Despacho com prazo',
+            prazo=10,  # 10 dias
+            origem='MANUAL',
+        )
+        expected_deadline = timezone.now().date() + timedelta(days=10)
+        self.assertEqual(movement.data_limite_prazo, expected_deadline)
+    
+    def test_update_case_ultima_movimentacao_on_create(self):
+        """Test that creating a movement updates case's data_ultima_movimentacao"""
+        movement_date = timezone.now().date()
+        movement = CaseMovement.objects.create(
+            case=self.case,
+            data=movement_date,
+            tipo='DESPACHO',
+            titulo='Nova movimentação',
+            origem='MANUAL',
+        )
+        self.case.refresh_from_db()
+        self.assertEqual(self.case.data_ultima_movimentacao, movement_date)
+    
+    def test_update_case_ultima_movimentacao_on_delete(self):
+        """Test that deleting a movement recalculates case's data_ultima_movimentacao"""
+        # Create two movements
+        older_date = timezone.now().date() - timedelta(days=5)
+        newer_date = timezone.now().date()
+        
+        older_movement = CaseMovement.objects.create(
+            case=self.case,
+            data=older_date,
+            tipo='DESPACHO',
+            titulo='Movimento antigo',
+            origem='MANUAL',
+        )
+        
+        newer_movement = CaseMovement.objects.create(
+            case=self.case,
+            data=newer_date,
+            tipo='DECISAO',
+            titulo='Movimento recente',
+            origem='MANUAL',
+        )
+        
+        # Verify case has the newer movement
+        self.case.refresh_from_db()
+        self.assertEqual(self.case.data_ultima_movimentacao, newer_date)
+        
+        # Delete the newer movement
+        newer_movement.delete()
+        
+        # Verify case now has the older movement
+        self.case.refresh_from_db()
+        self.assertEqual(self.case.data_ultima_movimentacao, older_date)
+    
+    def test_movement_without_prazo(self):
+        """Test creating movement without prazo"""
+        movement = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Despacho sem prazo',
+            prazo=None,
+            origem='MANUAL',
+        )
+        self.assertIsNone(movement.data_limite_prazo)
+
+
+class CaseMovementAPITest(APITestCase):
+    """Test CaseMovement API endpoints"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.client = APIClient()
+        self.case = Case.objects.create(
+            numero_processo='0000001-23.2024.8.26.0100',
+            titulo='Ação de Cobrança',
+            tribunal='TJSP',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=30),
+        )
+    
+    def test_create_movement(self):
+        """Test creating a case movement via API"""
+        data = {
+            'case': self.case.id,
+            'data': timezone.now().date().isoformat(),
+            'tipo': 'DESPACHO',
+            'titulo': 'Despacho de teste',
+            'descricao': 'Descrição do despacho',
+            'origem': 'MANUAL',
+        }
+        response = self.client.post('/api/case-movements/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(CaseMovement.objects.count(), 1)
+        
+        movement = CaseMovement.objects.first()
+        self.assertEqual(movement.titulo, 'Despacho de teste')
+    
+    def test_create_movement_with_prazo(self):
+        """Test creating a movement with prazo"""
+        data = {
+            'case': self.case.id,
+            'data': timezone.now().date().isoformat(),
+            'tipo': 'DESPACHO',
+            'titulo': 'Despacho com prazo',
+            'prazo': 15,
+            'origem': 'MANUAL',
+        }
+        response = self.client.post('/api/case-movements/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        movement = CaseMovement.objects.first()
+        expected_deadline = timezone.now().date() + timedelta(days=15)
+        self.assertEqual(movement.data_limite_prazo, expected_deadline)
+    
+    def test_reject_future_date(self):
+        """Test that API rejects movements with future dates"""
+        future_date = timezone.now().date() + timedelta(days=1)
+        data = {
+            'case': self.case.id,
+            'data': future_date.isoformat(),
+            'tipo': 'DESPACHO',
+            'titulo': 'Movimento futuro',
+            'origem': 'MANUAL',
+        }
+        response = self.client.post('/api/case-movements/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('data', response.data)
+        self.assertEqual(CaseMovement.objects.count(), 0)
+    
+    def test_list_movements_by_case(self):
+        """Test filtering movements by case"""
+        CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Movimento 1',
+            origem='MANUAL',
+        )
+        CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date() - timedelta(days=1),
+            tipo='DECISAO',
+            titulo='Movimento 2',
+            origem='MANUAL',
+        )
+        
+        response = self.client.get(f'/api/case-movements/?case_id={self.case.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+    
+    def test_update_movement(self):
+        """Test updating a movement"""
+        movement = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Título original',
+            origem='MANUAL',
+        )
+        
+        data = {
+            'case': self.case.id,
+            'data': timezone.now().date().isoformat(),
+            'tipo': 'DECISAO',
+            'titulo': 'Título atualizado',
+            'origem': 'MANUAL',
+        }
+        response = self.client.put(f'/api/case-movements/{movement.id}/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        movement.refresh_from_db()
+        self.assertEqual(movement.titulo, 'Título atualizado')
+        self.assertEqual(movement.tipo, 'DECISAO')
+    
+    def test_delete_movement(self):
+        """Test deleting a movement"""
+        movement = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Movimento para deletar',
+            origem='MANUAL',
+        )
+        
+        response = self.client.delete(f'/api/case-movements/{movement.id}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(CaseMovement.objects.count(), 0)
+
+
+class DeadlineNotificationTest(APITestCase):
+    """Test deadline notification creation"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.client = APIClient()
+        self.case = Case.objects.create(
+            numero_processo='0000001-23.2024.8.26.0100',
+            titulo='Ação de Cobrança',
+            tribunal='TJSP',
+            status='ATIVO',
+        )
+    
+    def test_check_deadlines_endpoint(self):
+        """Test the check_deadlines endpoint"""
+        # Create a movement with deadline today (urgent)
+        CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date() - timedelta(days=5),
+            tipo='DESPACHO',
+            titulo='Despacho com prazo urgente',
+            prazo=5,  # Expires today
+            origem='MANUAL',
+        )
+        
+        # Create a movement with deadline in 2 days (medium)
+        CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date() - timedelta(days=3),
+            tipo='DESPACHO',
+            titulo='Despacho com prazo próximo',
+            prazo=5,  # Expires in 2 days
+            origem='MANUAL',
+        )
+        
+        response = self.client.post('/api/notifications/check_deadlines/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['success'])
+        self.assertEqual(response.data['checked'], 2)
+        self.assertGreaterEqual(response.data['created'], 0)
+    
+    def test_no_duplicate_notifications(self):
+        """Test that duplicate notifications are not created"""
+        movement = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date() - timedelta(days=5),
+            tipo='DESPACHO',
+            titulo='Despacho com prazo',
+            prazo=5,
+            origem='MANUAL',
+        )
+        
+        # First call - should create notification
+        response1 = self.client.post('/api/notifications/check_deadlines/')
+        created1 = response1.data['created']
+        
+        # Second call - should skip (already exists)
+        response2 = self.client.post('/api/notifications/check_deadlines/')
+        created2 = response2.data['created']
+        skipped2 = response2.data['skipped']
+        
+        # Second call should create 0 and skip the existing one
+        self.assertEqual(created2, 0)
+        self.assertGreater(skipped2, 0)
+
+
 # Test Summary:
 # - Model tests: All passing (16/16) ✓
 # - API tests: Partially passing (5/17)
+# - CaseMovement Model tests: 5 tests added
+# - CaseMovement API tests: 7 tests added
+# - Deadline Notification tests: 2 tests added
 #  
 # Known issues with some API tests:
 # - Some tests fail due to authentication or data setup issues

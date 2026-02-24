@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.utils import timezone
+from datetime import timedelta
 from .models import Notification
 from .serializers import (
     NotificationSerializer,
@@ -159,6 +160,97 @@ class NotificationViewSet(viewsets.ModelViewSet):
             'success': True,
             'deleted': deleted_count,
             'message': f'Todas as {deleted_count} notificações foram deletadas'
+        })
+    
+    @action(detail=False, methods=['post'])
+    def check_deadlines(self, request):
+        """
+        Verifica prazos de movimentações e cria notificações automáticas.
+        
+        Lógica:
+        - Urgent: Prazo vence HOJE
+        - High: Prazo vence AMANHÃ
+        - Medium: Prazo vence em 2-3 dias
+        
+        Retorna estatísticas de prazos encontrados e notificações criadas.
+        """
+        from apps.cases.models import CaseMovement
+        
+        today = timezone.now().date()
+        future_limit = today + timedelta(days=3)
+        
+        # Buscar movimentações com prazo dentro da janela de verificação
+        movements_with_deadlines = CaseMovement.objects.filter(
+            prazo__isnull=False,
+            data_limite_prazo__isnull=False,
+            data_limite_prazo__gte=today,
+            data_limite_prazo__lte=future_limit
+        ).select_related('case').order_by('data_limite_prazo')
+        
+        created_count = 0
+        skipped_count = 0
+        notifications_data = []
+        
+        for movement in movements_with_deadlines:
+            # Calcular dias até o vencimento
+            days_until = (movement.data_limite_prazo - today).days
+            
+            # Determinar prioridade
+            if days_until == 0:
+                priority = 'urgent'
+                priority_text = 'HOJE'
+            elif days_until == 1:
+                priority = 'high'
+                priority_text = 'AMANHÃ'
+            else:
+                priority = 'medium'
+                priority_text = f'em {days_until} dias'
+            
+            # Verificar se já existe notificação para este prazo
+            notification_exists = Notification.objects.filter(
+                type='deadline',
+                metadata__movement_id=movement.id,
+                read=False
+            ).exists()
+            
+            if notification_exists:
+                skipped_count += 1
+                continue
+            
+            # Criar notificação
+            notification = Notification.objects.create(
+                type='deadline',
+                priority=priority,
+                title=f'⏰ Prazo vence {priority_text}',
+                message=f'Processo {movement.case.numero_processo}: {movement.titulo}',
+                link=f'/cases/{movement.case.id}',
+                metadata={
+                    'movement_id': movement.id,
+                    'case_id': movement.case.id,
+                    'case_number': movement.case.numero_processo,
+                    'deadline_date': movement.data_limite_prazo.isoformat(),
+                    'days_until': days_until,
+                    'movement_type': movement.tipo,
+                    'movement_title': movement.titulo,
+                }
+            )
+            
+            created_count += 1
+            notifications_data.append({
+                'id': notification.id,
+                'case_number': movement.case.numero_processo,
+                'deadline': movement.data_limite_prazo.isoformat(),
+                'days_until': days_until,
+                'priority': priority
+            })
+        
+        return Response({
+            'success': True,
+            'checked': movements_with_deadlines.count(),
+            'created': created_count,
+            'skipped': skipped_count,
+            'notifications': notifications_data,
+            'message': f'Verificação concluída: {created_count} notificação(ões) criada(s), {skipped_count} já existente(s)'
         })
 
 

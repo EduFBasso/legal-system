@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Edit2, Save, X, Trash2, Search, Users, Calendar, FileText, Plus, UserPlus, RefreshCw, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Edit2, Save, X, Trash2, Users, Calendar, FileText, Plus, UserPlus, RefreshCw, ExternalLink } from 'lucide-react';
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
 import caseMovementsService from '../services/caseMovementsService';
+import * as deadlinesService from '../services/deadlinesService';
 import Toast from '../components/common/Toast';
 import PublicationCard from '../components/PublicationCard';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -46,6 +47,7 @@ function CaseDetailPage() {
 
   // Movimentações state
   const [showMovimentacaoModal, setShowMovimentacaoModal] = useState(false);
+  const [editingMovimentacaoId, setEditingMovimentacaoId] = useState(null);
   const [movimentacaoFormData, setMovimentacaoFormData] = useState({
     data: '',
     tipo: 'DESPACHO',
@@ -54,6 +56,11 @@ function CaseDetailPage() {
     prazo: '',
   });
   const [savingMovimentacao, setSavingMovimentacao] = useState(false);
+
+  // Prazos state
+  const [deadlines, setDeadlines] = useState([]);
+  const [loadingDeadlines, setLoadingDeadlines] = useState(false);
+  const [deadlineFilter, setDeadlineFilter] = useState('all'); // all, overdue, upcoming, future
 
   // Tribunal options
   const tribunalOptions = [
@@ -231,6 +238,48 @@ function CaseDetailPage() {
   }, [id, loadMovimentacoes]);
 
   /**
+   * Load deadlines for this case
+   */
+  const loadDeadlines = useCallback(async () => {
+    if (!id) return;
+    
+    setLoadingDeadlines(true);
+    try {
+      const data = await deadlinesService.getDeadlinesByCase(id);
+      setDeadlines(data);
+    } catch (error) {
+      console.error('Error loading deadlines:', error);
+      showToast('Erro ao carregar prazos', 'error');
+    } finally {
+      setLoadingDeadlines(false);
+    }
+  }, [id, showToast]);
+
+  useEffect(() => {
+    if (id) {
+      loadDeadlines();
+    }
+  }, [id, loadDeadlines]);
+
+  /**
+   * Check deadlines and create notifications on page load
+   */
+  useEffect(() => {
+    const checkDeadlines = async () => {
+      try {
+        await deadlinesService.checkDeadlinesAndNotify();
+      } catch (error) {
+        console.error('Error checking deadlines:', error);
+        // Silent fail - não mostrar erro para o usuário
+      }
+    };
+    
+    if (id) {
+      checkDeadlines();
+    }
+  }, [id]);
+
+  /**
    * Load parties on mount for summary display
    */
   useEffect(() => {
@@ -385,7 +434,7 @@ function CaseDetailPage() {
   };
 
   /**
-   * Save movimentacao
+   * Save movimentacao (create or update)
    */
   const handleSaveMovimentacao = async () => {
     if (!movimentacaoFormData.data || !movimentacaoFormData.titulo) {
@@ -415,20 +464,66 @@ function CaseDetailPage() {
         origem: 'MANUAL',
       };
 
-      await caseMovementsService.createMovement(dataToSave);
+      if (editingMovimentacaoId) {
+        // UPDATE existing movimentacao
+        await caseMovementsService.updateMovement(editingMovimentacaoId, dataToSave);
+        showToast('Movimentação atualizada com sucesso!', 'success');
+      } else {
+        // CREATE new movimentacao
+        await caseMovementsService.createMovement(dataToSave);
+        showToast('Movimentação cadastrada com sucesso!', 'success');
+      }
       
-      showToast('Movimentação cadastrada com sucesso!', 'success');
-      
-      // Reload movimentacoes and case data (to update resumo)
+      // Reload movimentacoes, deadlines and case data (to update resumo)
       await loadMovimentacoes();
+      await loadDeadlines();
       await loadCaseData();
       
       setShowMovimentacaoModal(false);
+      setEditingMovimentacaoId(null);
     } catch (error) {
       console.error('Error saving movimentacao:', error);
-      showToast('Erro ao salvar movimentação', 'error');
+      const action = editingMovimentacaoId ? 'atualizar' : 'salvar';
+      showToast(`Erro ao ${action} movimentação`, 'error');
     } finally {
       setSavingMovimentacao(false);
+    }
+  };
+
+  /**
+   * Edit movimentacao
+   */
+  const handleEditMovimentacao = (mov) => {
+    setEditingMovimentacaoId(mov.id);
+    setMovimentacaoFormData({
+      data: mov.data,
+      tipo: mov.tipo,
+      titulo: mov.titulo,
+      descricao: mov.descricao || '',
+      prazo: mov.prazo || '',
+    });
+    setShowMovimentacaoModal(true);
+  };
+
+  /**
+   * Delete movimentacao
+   */
+  const handleDeleteMovimentacao = async (id) => {
+    if (!confirm('Tem certeza que deseja excluir esta movimentação?')) {
+      return;
+    }
+    
+    try {
+      await caseMovementsService.deleteMovement(id);
+      showToast('Movimentação excluída com sucesso!', 'success');
+      
+      // Reload movimentacoes, deadlines and case data (to update resumo)
+      await loadMovimentacoes();
+      await loadDeadlines();
+      await loadCaseData();
+    } catch (error) {
+      console.error('Error deleting movimentacao:', error);
+      showToast('Erro ao excluir movimentação', 'error');
     }
   };
 
@@ -437,6 +532,7 @@ function CaseDetailPage() {
    */
   const handleCloseMovimentacaoModal = () => {
     setShowMovimentacaoModal(false);
+    setEditingMovimentacaoId(null);
     setMovimentacaoFormData({
       data: '',
       tipo: 'DESPACHO',
@@ -524,57 +620,8 @@ function CaseDetailPage() {
               onClick={() => setActiveSection('deadlines')}
             >
               ⏰ Prazos
-              <span className="badge-soon">Em breve</span>
+              {deadlines.length > 0 && <span className="badge">{deadlines.length}</span>}
             </button>
-          </div>
-
-          {/* Search */}
-          <div className="case-navbar-search-row">
-            <div className="case-navbar-search">
-              <Search size={18} />
-              <input
-                type="text"
-                placeholder="Buscar mais processos (número, nomes, partes ou contrapartes)"
-                className="search-input"
-              />
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="case-navbar-actions">
-              {!isEditing ? (
-                <>
-                  <button className="btn btn-new" onClick={() => window.open('/cases/new', '_blank')}>
-                    <Plus size={18} />
-                    Novo
-                  </button>
-                  <button className="btn case-btn-edit" onClick={() => {
-                    setActiveSection('info');
-                    setIsEditing(true);
-                  }}>
-                    <Edit2 size={18} />
-                    Editar
-                  </button>
-                  <button className="btn btn-danger" onClick={() => {
-                    setActiveSection('info');
-                    handleDelete();
-                  }}>
-                    <Trash2 size={18} />
-                    Apagar
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="btn btn-success" onClick={handleSave} disabled={saving}>
-                    <Save size={18} />
-                    {saving ? 'Salvando...' : 'Salvar'}
-                  </button>
-                  <button className="btn btn-secondary" onClick={handleCancel}>
-                    <X size={18} />
-                    Cancelar
-                  </button>
-                </>
-              )}
-            </div>
           </div>
         </div>
       </nav>
@@ -596,7 +643,7 @@ function CaseDetailPage() {
                     {formData.tipo_acao && (
                       <div className="process-tipo-group">
                         <span className="process-tipo-label">Tipo de Processo</span>
-                        <span className="process-tipo-badge">
+                        <span className={`process-tipo-badge tipo-${formData.tipo_acao.toLowerCase()}`}>
                           {formData.tipo_acao_display || formData.tipo_acao}
                         </span>
                       </div>
@@ -616,17 +663,22 @@ function CaseDetailPage() {
               <div className="summary-grid">
                 {/* Partes Envolvidas */}
                 <div className="summary-section">
-                  <h4><Users size={16} /> Partes Envolvidas</h4>
+                  <h4><Users size={16} /> Partes</h4>
+
                   {parties.length > 0 ? (
                     <>
-                      {/* Nossos clientes */}
-                      {parties.filter(p => p.is_client).length > 0 && (
-                        <div style={{marginBottom: '0.75rem'}}>
-                          <p className="summary-value" style={{fontSize: '0.95rem', color: '#059669', fontWeight: '600', marginBottom: '0.25rem'}}>
-                            Nossos Clientes:
-                          </p>
-                          {parties.filter(p => p.is_client).map(party => (
-                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '1rem', marginTop: '0.25rem'}}>
+                      {/* Ordenar: Clientes primeiro, depois outros */}
+                      {[...parties].sort((a, b) => {
+                        if (a.is_client && !b.is_client) return -1;
+                        if (!a.is_client && b.is_client) return 1;
+                        return 0;
+                      }).map((party, index, array) => {
+                        // Adicionar espaço extra após o último cliente
+                        const isLastClient = party.is_client && index < array.length - 1 && !array[index + 1].is_client;
+                        
+                        return (
+                          <p key={party.id} className="summary-value" style={{marginTop: '0.5rem', marginBottom: isLastClient ? '1.5rem' : '0', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap'}}>
+                            {party.is_client ? (
                               <Link 
                                 to={`/contacts?open=${party.contact}`}
                                 className="party-contact-link"
@@ -634,26 +686,18 @@ function CaseDetailPage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
-                                <strong>{party.contact_name}</strong> ↗
+                                <strong className="party-name-client">{party.contact_name}</strong> ↗
                               </Link>
-                              {' '}({party.role_display})
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      {/* Parte contrária */}
-                      {parties.filter(p => !p.is_client).length > 0 && (
-                        <div>
-                          <p className="summary-value" style={{fontSize: '0.95rem', color: '#9ca3af', fontWeight: '600', marginBottom: '0.25rem'}}>
-                            Outras Partes:
+                            ) : (
+                              <strong style={{fontSize: '1.1rem'}}>{party.contact_name}</strong>
+                            )}
+                            {party.is_client && (
+                              <span className="client-badge" style={{fontSize: '0.95rem'}}>✅ Cliente</span>
+                            )}
+                            <span style={{color: '#64748b', fontSize: party.is_client ? '1.1rem' : '1rem'}}>({party.role_display})</span>
                           </p>
-                          {parties.filter(p => !p.is_client).map(party => (
-                            <p key={party.id} className="summary-value" style={{marginLeft: '0.5rem', fontSize: '1rem', marginTop: '0.25rem'}}>
-                              <strong>{party.contact_name}</strong> ({party.role_display})
-                            </p>
-                          ))}
-                        </div>
-                      )}
+                        );
+                      })}
                     </>
                   ) : (
                     <p className="summary-value empty">Nenhuma parte cadastrada</p>
@@ -676,7 +720,7 @@ function CaseDetailPage() {
                           Última Movimentação: <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
                         </p>
                         {formData.ultima_movimentacao_resumo && (
-                          <p style={{fontSize: '0.85rem', color: '#6b7280', marginLeft: '0.5rem'}}>
+                          <p style={{fontSize: '0.95rem', color: '#6b7280', marginLeft: '0.5rem'}}>
                             {formData.ultima_movimentacao_resumo}
                           </p>
                         )}
@@ -689,6 +733,59 @@ function CaseDetailPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Próximos Prazos */}
+                {deadlines.length > 0 && (
+                  <div className="summary-section">
+                    <h4>⚠️ Próximos Prazos</h4>
+                    {(() => {
+                      const urgentDeadlines = deadlines
+                        .filter(d => {
+                          const status = deadlinesService.getDeadlineStatus(d.data_limite_prazo);
+                          return status === 'overdue' || status === 'urgent' || status === 'upcoming';
+                        })
+                        .slice(0, 3);
+                      
+                      if (urgentDeadlines.length === 0) {
+                        return (
+                          <p className="summary-value" style={{color: '#10b981'}}>
+                            ✅ Nenhum prazo urgente
+                          </p>
+                        );
+                      }
+                      
+                      return (
+                        <>
+                          {urgentDeadlines.map(deadline => {
+                            const status = deadlinesService.getDeadlineStatus(deadline.data_limite_prazo);
+                            const statusInfo = deadlinesService.getDeadlineStatusInfo(status);
+                            
+                            return (
+                              <div key={deadline.id} className="summary-deadline" style={{borderLeftColor: statusInfo.color}}>
+                                <span className="deadline-status-label" style={{color: statusInfo.color}}>
+                                  {statusInfo.label}
+                                </span>
+                                <p className="summary-value" style={{margin: '0.25rem 0 0 0'}}>
+                                  <strong>{deadline.titulo}</strong>
+                                </p>
+                                <p className="summary-value" style={{fontSize: '0.95rem', color: '#6b7280', margin: '0.25rem 0 0 0'}}>
+                                  Vencimento: {formatDate(deadline.data_limite_prazo)}
+                                </p>
+                              </div>
+                            );
+                          })}
+                          <button 
+                            className="btn-link" 
+                            onClick={() => setActiveSection('deadlines')}
+                            style={{marginTop: '0.5rem', fontSize: '0.9rem'}}
+                          >
+                            Ver todos os prazos →
+                          </button>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
 
                 {/* Localização */}
                 <div className="summary-section">
@@ -713,13 +810,46 @@ function CaseDetailPage() {
               </div>
             </div>
 
-            {/* Detalhes Completos - Modo Edição */}
+            {/* Detalhes do Processo - Modo Edição */}
             <div className="section-card">
-              <h2 className="section-title">
-                {isEditing ? '✏️ Editando Informações' : '📋 Detalhes Completos'}
-              </h2>
+              <div className="section-header">
+                <h2 className="section-title">
+                  {isEditing ? '✏️ Editando Informações' : '📋 Detalhes do Processo'}
+                </h2>
+                <div className="section-header-actions">
+                  {!isEditing ? (
+                    <>
+                      <button className="btn case-btn-edit" onClick={() => {
+                        setActiveSection('info');
+                        setIsEditing(true);
+                      }}>
+                        <Edit2 size={18} />
+                        Editar
+                      </button>
+                      <button className="btn btn-danger" onClick={() => {
+                        setActiveSection('info');
+                        handleDelete();
+                      }}>
+                        <Trash2 size={18} />
+                        Apagar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="btn btn-success" onClick={handleSave} disabled={saving}>
+                        <Save size={18} />
+                        {saving ? 'Salvando...' : 'Salvar'}
+                      </button>
+                      <button className="btn btn-secondary" onClick={handleCancel}>
+                        <X size={18} />
+                        Cancelar
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
               
-              <div className="info-grid">
+              <div className={isEditing ? 'info-form-vertical' : 'info-grid'}>
                 {/* Título */}
                 <div className="info-field full-width">
                   <label>Título do Processo</label>
@@ -872,76 +1002,49 @@ function CaseDetailPage() {
                   )}
                 </div>
 
-                {/* Nosso Cliente */}
-                <div className="info-field">
+                {/* Nosso Cliente - Display only, gerenciado via aba Partes */}
+                <div className="info-field full-width">
                   <label>Nosso Cliente Neste Processo</label>
-                  {isEditing ? (
-                    <>
-                      <div className="field-with-actions">
-                        <select
-                          value={formData.cliente_principal || ''}
-                          onChange={(e) => handleInputChange('cliente_principal', e.target.value)}
-                        >
-                          <option value="">Nenhum cliente vinculado</option>
-                          {contacts.map(contact => (
-                            <option key={contact.id} value={contact.id}>
-                              {contact.name} {contact.document_number ? `(${contact.document_number})` : ''}
-                            </option>
-                          ))}
-                        </select>
-                        <button 
-                          type="button"
-                          className="btn-icon-action"
-                          onClick={() => loadContacts()}
-                          title="Atualizar lista de contatos"
-                        >
-                          <RefreshCw size={18} />
-                        </button>
-                        <button 
-                          type="button"
-                          className="btn-icon-action btn-icon-primary"
-                          onClick={() => window.open('/contacts', '_blank')}
-                          title="Buscar/Editar contatos em nova aba"
-                        >
-                          <ExternalLink size={18} />
-                        </button>
-                        <button 
-                          type="button"
-                          className="btn-text-action"
-                          onClick={() => setShowContactModal(true)}
-                          title="Cadastrar novo cliente"
-                        >
-                          <UserPlus size={16} />
-                          Novo
-                        </button>
+                  {(() => {
+                    const clientParty = parties.find(p => p.is_client);
+                    if (clientParty) {
+                      return (
+                        <div className="client-display">
+                          <p className="info-value">
+                            <strong>{clientParty.contact_name}</strong> ({clientParty.role_display})
+                          </p>
+                          {!isEditing && (
+                            <button 
+                              className="btn-link"
+                              onClick={() => setActiveSection('parties')}
+                              style={{fontSize: '0.875rem', marginTop: '0.25rem'}}
+                            >
+                              Gerenciar na aba Partes →
+                            </button>
+                          )}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="empty-state-inline">
+                        <p className="info-value empty">Nenhum cliente vinculado</p>
+                        {!isEditing && (
+                          <button 
+                            className="btn btn-sm btn-primary"
+                            onClick={() => setActiveSection('parties')}
+                            style={{marginTop: '0.5rem'}}
+                          >
+                            <UserPlus size={16} />
+                            Adicionar Cliente na aba Partes
+                          </button>
+                        )}
                       </div>
-                      <span className="field-hint">
-                        💡 Após editar em Contatos, clique em 🔄 para atualizar a lista
-                      </span>
-                    </>
-                  ) : (
-                    <p className="info-value">{formData.cliente_nome || '-'}</p>
-                  )}
-                </div>
-
-                {/* Posição do Cliente */}
-                <div className="info-field">
-                  <label>Posição do Cliente no Processo</label>
-                  {isEditing ? (
-                    <select
-                      value={formData.cliente_posicao || ''}
-                      onChange={(e) => handleInputChange('cliente_posicao', e.target.value)}
-                      disabled={!formData.cliente_principal}
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="AUTOR">Autor/Requerente</option>
-                      <option value="REU">Réu/Requerido</option>
-                    </select>
-                  ) : (
-                    <p className="info-value">{formData.cliente_posicao_display || '-'}</p>
-                  )}
-                  {isEditing && !formData.cliente_principal && (
-                    <span className="field-hint">⚠️ Selecione um cliente primeiro</span>
+                    );
+                  })()}
+                  {isEditing && (
+                    <span className="field-hint">
+                      💡 Clientes são gerenciados na aba "Partes". Marque "É nosso cliente?" ao adicionar.
+                    </span>
                   )}
                 </div>
 
@@ -1023,6 +1126,24 @@ function CaseDetailPage() {
                         )}
                         <div className="timeline-meta">
                           <span className="timeline-origem">{mov.origem_display}</span>
+                          {mov.origem === 'MANUAL' && (
+                            <div className="timeline-actions">
+                              <button 
+                                className="btn-icon-small" 
+                                onClick={() => handleEditMovimentacao(mov)}
+                                title="Editar"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button 
+                                className="btn-icon-small btn-danger" 
+                                onClick={() => handleDeleteMovimentacao(mov.id)}
+                                title="Excluir"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1083,16 +1204,106 @@ function CaseDetailPage() {
           </div>
         )}
 
-        {/* Prazos Section - Coming Soon */}
+        {/* Prazos Section */}
         {activeSection === 'deadlines' && (
           <div className="case-section">
             <div className="section-card">
-              <h2 className="section-title">Prazos</h2>
-              <div className="empty-state">
-                <Calendar size={48} />
-                <p>Seção de Prazos</p>
-                <p className="empty-state-hint">Em desenvolvimento</p>
+              <div className="section-header">
+                <div>
+                  <h2 className="section-title">⏰ Prazos Processuais</h2>
+                  <p className="section-subtitle">Gestão de prazos e vencimentos</p>
+                </div>
+                <div className="deadlines-filters">
+                  <button
+                    className={`filter-btn ${deadlineFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setDeadlineFilter('all')}
+                  >
+                    Todos ({deadlines.length})
+                  </button>
+                  <button
+                    className={`filter-btn ${deadlineFilter === 'overdue' ? 'active' : ''}`}
+                    onClick={() => setDeadlineFilter('overdue')}
+                  >
+                    Vencidos ({deadlines.filter(d => deadlinesService.getDeadlineStatus(d.data_limite_prazo) === 'overdue').length})
+                  </button>
+                  <button
+                    className={`filter-btn ${deadlineFilter === 'upcoming' ? 'active' : ''}`}
+                    onClick={() => setDeadlineFilter('upcoming')}
+                  >
+                    Próximos ({deadlines.filter(d => {
+                      const status = deadlinesService.getDeadlineStatus(d.data_limite_prazo);
+                      return status === 'urgent' || status === 'upcoming';
+                    }).length})
+                  </button>
+                  <button
+                    className={`filter-btn ${deadlineFilter === 'future' ? 'active' : ''}`}
+                    onClick={() => setDeadlineFilter('future')}
+                  >
+                    Futuros ({deadlines.filter(d => deadlinesService.getDeadlineStatus(d.data_limite_prazo) === 'future').length})
+                  </button>
+                </div>
               </div>
+
+              {loadingDeadlines ? (
+                <div className="loading-container">
+                  <RefreshCw className="spinning" size={32} />
+                  <p>Carregando prazos...</p>
+                </div>
+              ) : deadlines.length === 0 ? (
+                <div className="empty-state">
+                  <Calendar size={48} />
+                  <h3>Nenhum prazo cadastrado</h3>
+                  <p>
+                    Adicione prazos nas movimentações para acompanhar vencimentos.
+                  </p>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => setActiveSection('movimentacoes')}
+                  >
+                    Ir para Movimentações
+                  </button>
+                </div>
+              ) : (
+                <div className="deadlines-list">
+                  {deadlines
+                    .filter(deadline => {
+                      if (deadlineFilter === 'all') return true;
+                      const status = deadlinesService.getDeadlineStatus(deadline.data_limite_prazo);
+                      if (deadlineFilter === 'overdue') return status === 'overdue';
+                      if (deadlineFilter === 'upcoming') return status === 'urgent' || status === 'upcoming';
+                      if (deadlineFilter === 'future') return status === 'future';
+                      return true;
+                    })
+                    .map(deadline => {
+                      const status = deadlinesService.getDeadlineStatus(deadline.data_limite_prazo);
+                      const statusInfo = deadlinesService.getDeadlineStatusInfo(status);
+                      
+                      return (
+                        <div key={deadline.id} className="deadline-card" style={{ borderLeftColor: statusInfo.color }}>
+                          <div className="deadline-header">
+                            <span className="deadline-status" style={{ color: statusInfo.color }}>
+                              {statusInfo.label}
+                            </span>
+                            <span className="deadline-date">
+                              {formatDate(deadline.data_limite_prazo)}
+                            </span>
+                          </div>
+                          <div className="deadline-content">
+                            <div className="deadline-type">{deadline.tipo_display || deadline.tipo}</div>
+                            <h4 className="deadline-title">{deadline.titulo}</h4>
+                            {deadline.descricao && (
+                              <p className="deadline-description">{deadline.descricao}</p>
+                            )}
+                            <div className="deadline-meta">
+                              <span>📅 Movimentação: {formatDate(deadline.data)}</span>
+                              <span>⏱️ Prazo: {deadline.prazo} dias</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1304,7 +1515,7 @@ function CaseDetailPage() {
         <div className="modal-overlay" onClick={handleCloseMovimentacaoModal}>
           <div className="modal-content modal-medium" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Nova Movimentação Processual</h3>
+              <h3>{editingMovimentacaoId ? 'Editar Movimentação' : 'Nova Movimentação Processual'}</h3>
               <button className="modal-close" onClick={handleCloseMovimentacaoModal}>
                 <X size={20} />
               </button>
@@ -1405,7 +1616,7 @@ function CaseDetailPage() {
                 ) : (
                   <>
                     <Save size={18} />
-                    Salvar Movimentação
+                    {editingMovimentacaoId ? 'Atualizar Movimentação' : 'Salvar Movimentação'}
                   </>
                 )}
               </button>

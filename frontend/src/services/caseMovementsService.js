@@ -23,6 +23,11 @@ async function apiFetch(endpoint, options = {}) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
+    // DELETE requests typically return 204 No Content (no body)
+    if (response.status === 204) {
+      return null;
+    }
+
     return await response.json();
   } catch (error) {
     console.error('API fetch error:', error);
