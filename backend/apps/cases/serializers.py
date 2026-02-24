@@ -2,7 +2,33 @@
 Serializers for Cases app
 """
 from rest_framework import serializers
-from .models import Case, CaseParty
+from .models import Case, CaseParty, CaseMovement
+
+
+class CaseMovementSerializer(serializers.ModelSerializer):
+    """Serializer for CaseMovement"""
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    origem_display = serializers.CharField(source='get_origem_display', read_only=True)
+    
+    class Meta:
+        model = CaseMovement
+        fields = [
+            'id',
+            'case',
+            'data',
+            'tipo',
+            'tipo_display',
+            'titulo',
+            'descricao',
+            'prazo',
+            'data_limite_prazo',
+            'origem',
+            'origem_display',
+            'publicacao_id',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at']
 
 
 class CasePartySerializer(serializers.ModelSerializer):
@@ -99,12 +125,12 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     
     def get_ultima_movimentacao_resumo(self, obj):
         """
-        Retorna resumo da última movimentação.
-        TODO: Quando implementar model Movimentacao, buscar da última movimentação:
-        - ultima_mov = obj.movimentacoes.order_by('-data').first()
-        - return ultima_mov.titulo ou ultima_mov.tipo_display
+        Retorna resumo da última movimentação cadastrada.
         """
-        return None  # Por enquanto retorna None até implementar tabela Movimentações
+        ultima = obj.movimentacoes.order_by('-data').first()
+        if ultima:
+            return ultima.titulo
+        return None
     
     class Meta:
         model = Case

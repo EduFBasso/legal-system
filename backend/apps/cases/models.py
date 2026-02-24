@@ -244,6 +244,17 @@ class Case(models.Model):
         return 'NORMAL'
 
     # ========== METHODS ==========
+    def atualizar_data_ultima_movimentacao(self):
+        """
+        Recalcula data_ultima_movimentacao baseado nas movimentações cadastradas.
+        """
+        ultima = self.movimentacoes.order_by('-data').first()
+        if ultima:
+            self.data_ultima_movimentacao = ultima.data
+        else:
+            self.data_ultima_movimentacao = None
+        self.save(update_fields=['data_ultima_movimentacao'])
+    
     def atualizar_status_automatico(self):
         """
         Atualiza status baseado em atividade recente.
@@ -341,3 +352,135 @@ class CaseParty(models.Model):
 
     def __str__(self):
         return f"{self.contact.name} - {self.get_role_display()} ({self.case.numero_processo})"
+
+
+class CaseMovement(models.Model):
+    """
+    Movimentações processuais - despachos, decisões, audiências, publicações.
+    Cada registro representa um evento/movimentação no processo.
+    """
+    
+    case = models.ForeignKey(
+        'Case',
+        on_delete=models.CASCADE,
+        related_name='movimentacoes',
+        help_text='Processo ao qual esta movimentação pertence'
+    )
+    
+    # ========== DADOS PRINCIPAIS ==========
+    data = models.DateField(
+        db_index=True,
+        help_text='Data da movimentação/publicação'
+    )
+    
+    tipo = models.CharField(
+        max_length=30,
+        db_index=True,
+        choices=[
+            ('DESPACHO', 'Despacho'),
+            ('DECISAO', 'Decisão Interlocutória'),
+            ('SENTENCA', 'Sentença'),
+            ('ACORDAO', 'Acórdão'),
+            ('AUDIENCIA', 'Audiência'),
+            ('JUNTADA', 'Juntada de Documento'),
+            ('INTIMACAO', 'Intimação'),
+            ('CITACAO', 'Citação'),
+            ('CONCLUSAO', 'Conclusos'),
+            ('RECURSO', 'Recurso'),
+            ('PETICAO', 'Petição Protocolada'),
+            ('OUTROS', 'Outros'),
+        ],
+        default='OUTROS',
+        help_text='Tipo de movimentação'
+    )
+    
+    # ========== DESCRIÇÃO ==========
+    titulo = models.CharField(
+        max_length=200,
+        help_text='Resumo breve da movimentação (ex: "Audiência de conciliação designada")'
+    )
+    
+    descricao = models.TextField(
+        blank=True,
+        default='',
+        help_text='Descrição completa/observações detalhadas da movimentação'
+    )
+    
+    # ========== PRAZOS ==========
+    prazo = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='Prazo em dias (se aplicável)'
+    )
+    
+    data_limite_prazo = models.DateField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='Data limite calculada (data + prazo)'
+    )
+    
+    # ========== ORIGEM ==========
+    origem = models.CharField(
+        max_length=20,
+        choices=[
+            ('MANUAL', 'Cadastro Manual'),
+            ('DJE', 'Importado do DJE'),
+            ('ESAJ', 'Importado do e-SAJ'),
+            ('PJE', 'Importado do PJE'),
+        ],
+        default='MANUAL',
+        help_text='Origem/fonte da movimentação'
+    )
+    
+    # ========== METADADOS ==========
+    publicacao_id = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='ID da publicação original (se veio de importação)'
+    )
+    
+    # ========== TIMESTAMPS ==========
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-data', '-created_at']
+        verbose_name = 'Movimentação Processual'
+        verbose_name_plural = 'Movimentações Processuais'
+        indexes = [
+            models.Index(fields=['case', '-data']),
+            models.Index(fields=['-data']),
+            models.Index(fields=['tipo', '-data']),
+        ]
+    
+    def __str__(self):
+        return f"{self.case.numero_processo} - {self.get_tipo_display()} ({self.data})"
+    
+    def save(self, *args, **kwargs):
+        # Calcular data_limite_prazo automaticamente
+        if self.prazo and self.data:
+            from datetime import timedelta
+            self.data_limite_prazo = self.data + timedelta(days=self.prazo)
+        
+        super().save(*args, **kwargs)
+        
+        # Atualizar data_ultima_movimentacao do Case
+        self.atualizar_data_case()
+    
+    def delete(self, *args, **kwargs):
+        case = self.case
+        super().delete(*args, **kwargs)
+        # Recalcular após deletar
+        case.atualizar_data_ultima_movimentacao()
+    
+    def atualizar_data_case(self):
+        """Atualiza data_ultima_movimentacao do processo pai."""
+        ultima = self.case.movimentacoes.order_by('-data').first()
+        if ultima:
+            self.case.data_ultima_movimentacao = ultima.data
+            self.case.save(update_fields=['data_ultima_movimentacao'])
+        else:
+            # Se não há mais movimentações, limpa a data
+            self.case.data_ultima_movimentacao = None
+            self.case.save(update_fields=['data_ultima_movimentacao'])

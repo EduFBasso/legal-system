@@ -4,7 +4,21 @@ Admin configuration for Cases app
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils import timezone
-from .models import Case, CaseParty
+from .models import Case, CaseParty, CaseMovement
+
+
+class CaseMovementInline(admin.TabularInline):
+    """Inline for CaseMovement - display movements within Case admin"""
+    model = CaseMovement
+    extra = 0
+    fields = ['data', 'tipo', 'titulo', 'prazo', 'origem']
+    ordering = ['-data']
+    verbose_name = 'Movimentação'
+    verbose_name_plural = 'Movimentações Processuais'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('case')[:10]  # Limit to recent 10
 
 
 class CasePartyInline(admin.TabularInline):
@@ -127,7 +141,7 @@ class CaseAdmin(admin.ModelAdmin):
         }),
     )
     
-    inlines = [CasePartyInline]
+    inlines = [CasePartyInline, CaseMovementInline]
     
     actions = ['atualizar_status_automatico', 'marcar_como_arquivado', 'restaurar_deletados']
     
@@ -302,3 +316,129 @@ class CasePartyAdmin(admin.ModelAdmin):
             return obj.observacoes[:50] + '...' if len(obj.observacoes) > 50 else obj.observacoes
         return '-'
     observacoes_short.short_description = 'Observações'
+
+
+@admin.register(CaseMovement)
+class CaseMovementAdmin(admin.ModelAdmin):
+    """Admin interface for CaseMovement model"""
+    
+    list_display = [
+        'case_link',
+        'data',
+        'tipo_badge',
+        'titulo_short',
+        'prazo',
+        'data_limite_prazo',
+        'origem_badge',
+        'created_at',
+    ]
+    
+    list_filter = [
+        'tipo',
+        'origem',
+        'data',
+        'created_at',
+    ]
+    
+    search_fields = [
+        'case__numero_processo',
+        'case__numero_processo_unformatted',
+        'titulo',
+        'descricao',
+    ]
+    
+    readonly_fields = [
+        'data_limite_prazo',
+        'created_at',
+        'updated_at',
+    ]
+    
+    fieldsets = (
+        ('Processo', {
+            'fields': ('case',)
+        }),
+        ('Dados da Movimentação', {
+            'fields': (
+                'data',
+                'tipo',
+                'titulo',
+                'descricao',
+            )
+        }),
+        ('Prazos', {
+            'fields': (
+                'prazo',
+                'data_limite_prazo',
+            )
+        }),
+        ('Origem', {
+            'fields': (
+                'origem',
+                'publicacao_id',
+            )
+        }),
+        ('Metadata', {
+            'fields': (
+                'created_at',
+                'updated_at',
+            ),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    autocomplete_fields = ['case']
+    date_hierarchy = 'data'
+    
+    def case_link(self, obj):
+        """Link to case admin"""
+        return format_html(
+            '<a href="/admin/cases/case/{}/change/">{}</a>',
+            obj.case.id,
+            obj.case.numero_processo_formatted or obj.case.titulo
+        )
+    case_link.short_description = 'Processo'
+    
+    def tipo_badge(self, obj):
+        """Display tipo with colored badge"""
+        colors = {
+            'DESPACHO': '#2196f3',
+            'DECISAO': '#ff9800',
+            'SENTENCA': '#4caf50',
+            'ACORDAO': '#9c27b0',
+            'AUDIENCIA': '#00bcd4',
+            'JUNTADA': '#607d8b',
+            'INTIMACAO': '#f44336',
+            'CITACAO': '#e91e63',
+            'CONCLUSAO': '#9e9e9e',
+            'RECURSO': '#3f51b5',
+            'PETICAO': '#009688',
+            'OUTROS': '#757575',
+        }
+        color = colors.get(obj.tipo, '#757575')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_tipo_display()
+        )
+    tipo_badge.short_description = 'Tipo'
+    
+    def origem_badge(self, obj):
+        """Display origem with colored badge"""
+        colors = {
+            'MANUAL': '#4caf50',
+            'DJE': '#2196f3',
+            'ESAJ': '#ff9800',
+            'PJE': '#9c27b0',
+        }
+        color = colors.get(obj.origem, '#757575')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_origem_display()
+        )
+    origem_badge.short_description = 'Origem'
+    
+    def titulo_short(self, obj):
+        """Display truncated titulo"""
+        return obj.titulo[:60] + '...' if len(obj.titulo) > 60 else obj.titulo
+    titulo_short.short_description = 'Título'
