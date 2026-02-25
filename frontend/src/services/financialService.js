@@ -2,7 +2,41 @@
  * Financial Service - API para Payments e Expenses
  * Gerencia recebimentos de honorários e despesas do processo
  */
-import api from './api';
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+
+/**
+ * Generic API fetch wrapper with error handling
+ */
+async function apiFetch(endpoint, options = {}) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('API Error Response:', errorData);
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    // DELETE returns 204 No Content
+    if (response.status === 204) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Request failed:', error);
+    throw error;
+  }
+}
 
 const financialService = {
   // ========== PAYMENTS (Recebimentos) ==========
@@ -11,33 +45,36 @@ const financialService = {
    * Get all payments for a case
    */
   async getPaymentsByCase(caseId) {
-    const response = await api.get('/payments/', {
-      params: { case_id: caseId }
-    });
-    return response.data;
+    return await apiFetch(`/payments/?case_id=${caseId}`);
   },
 
   /**
    * Create new payment
    */
   async createPayment(paymentData) {
-    const response = await api.post('/payments/', paymentData);
-    return response.data;
+    return await apiFetch('/payments/', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
   },
 
   /**
    * Update payment
    */
   async updatePayment(id, paymentData) {
-    const response = await api.put(`/payments/${id}/`, paymentData);
-    return response.data;
+    return await apiFetch(`/payments/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(paymentData),
+    });
   },
 
   /**
    * Delete payment
    */
   async deletePayment(id) {
-    await api.delete(`/payments/${id}/`);
+    return await apiFetch(`/payments/${id}/`, {
+      method: 'DELETE',
+    });
   },
 
   // ========== EXPENSES (Despesas) ==========
@@ -46,33 +83,36 @@ const financialService = {
    * Get all expenses for a case
    */
   async getExpensesByCase(caseId) {
-    const response = await api.get('/expenses/', {
-      params: { case_id: caseId }
-    });
-    return response.data;
+    return await apiFetch(`/expenses/?case_id=${caseId}`);
   },
 
   /**
    * Create new expense
    */
   async createExpense(expenseData) {
-    const response = await api.post('/expenses/', expenseData);
-    return response.data;
+    return await apiFetch('/expenses/', {
+      method: 'POST',
+      body: JSON.stringify(expenseData),
+    });
   },
 
   /**
    * Update expense
    */
   async updateExpense(id, expenseData) {
-    const response = await api.put(`/expenses/${id}/`, expenseData);
-    return response.data;
+    return await apiFetch(`/expenses/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(expenseData),
+    });
   },
 
   /**
    * Delete expense
    */
   async deleteExpense(id) {
-    await api.delete(`/expenses/${id}/`);
+    return await apiFetch(`/expenses/${id}/`, {
+      method: 'DELETE',
+    });
   },
 };
 
