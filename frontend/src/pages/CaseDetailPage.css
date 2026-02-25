@@ -2441,9 +2441,9 @@
 }
 
 .financeiro-currency-label {
-  font-size: 1.2rem;
+  font-size: 1.44rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #1e293b;
   flex-shrink: 0;
 }
 
@@ -2452,7 +2452,7 @@
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: 0;
-  font-size: 1.2rem;
+  font-size: 1.44rem;
   font-weight: 700;
   color: #1e293b;
   transition: all 0.3s ease;
