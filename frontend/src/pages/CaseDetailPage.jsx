@@ -637,26 +637,14 @@ function CaseDetailPage() {
                 <div className="process-number-highlight">
                   <div className="process-number-row">
                     <div className="process-number-group">
-                      <span className="process-label">Processo Nº</span>
+                      <span className="process-label">PROCESSO Nº</span>
                       <h2 className="process-number">{formData.numero_processo_formatted || formData.numero_processo}</h2>
                     </div>
-                    <div className="process-number-right">
-                      {formData.titulo && (
-                        <p className="process-title">{formData.titulo}</p>
-                      )}
-                      <div className="process-badges-row">
-                        {formData.tipo_acao && (
-                          <span className={`process-tipo-badge tipo-${formData.tipo_acao.toLowerCase()}`}>
-                            {formData.tipo_acao_display || formData.tipo_acao}
-                          </span>
-                        )}
-                        <span className={`info-badge status status-${formData.status?.toLowerCase()}`}>
-                          {formData.status_display || formData.status}
-                        </span>
-                        <span className="info-badge tribunal">
-                          {formData.tribunal_display || formData.tribunal}
-                        </span>
-                      </div>
+                    <div className="process-title-group">
+                      <span className="process-label">TÍTULO</span>
+                      <h3 className="process-title-value">
+                        {formData.titulo || formData.tipo_acao_display || formData.tipo_acao || '—'}
+                      </h3>
                     </div>
                   </div>
                 </div>
@@ -858,16 +846,16 @@ function CaseDetailPage() {
                   <div className="details-group">
                     <h3 className="details-group-title">🔖 Identificação</h3>
                     <div className="details-content">
-                      <div className="detail-item highlight">
-                        <span className="detail-label">Processo Nº</span>
-                        <span className="detail-value-large">{formData.numero_processo_formatted || formData.numero_processo}</span>
-                      </div>
-                      {formData.titulo && (
-                        <div className="detail-item full">
-                          <span className="detail-label">Título</span>
-                          <span className="detail-value">{formData.titulo}</span>
+                      <div className="detail-item-row">
+                        <div className="detail-item-col">
+                          <span className="detail-label">PROCESSO Nº</span>
+                          <span className="detail-value-large">{formData.numero_processo_formatted || formData.numero_processo}</span>
                         </div>
-                      )}
+                        <div className="detail-item-col right">
+                          <span className="detail-label">TÍTULO</span>
+                          <span className="detail-value-medium">{formData.titulo || '—'}</span>
+                        </div>
+                      </div>
                       <div className="detail-badges-row">
                         {formData.tipo_acao && (
                           <div className="detail-badge-item">
