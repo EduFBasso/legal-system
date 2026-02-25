@@ -954,9 +954,13 @@ function CaseDetailPage() {
                           })()}
                         </div>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Valor da Causa</span>
-                        <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
+                      
+                      {/* Valor da Causa - Compacto */}
+                      <div className="detail-financeiro-row">
+                        <div className="detail-financeiro-item">
+                          <span className="detail-label">💰 Valor da Causa</span>
+                          <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -2159,6 +2159,32 @@
   text-align: left;
 }
 
+/* Financeiro Row - Layout compacto */
+.detail-financeiro-row {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.detail-financeiro-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  flex: 0 1 auto;
+  min-width: 280px;
+}
+
+.detail-financeiro-item:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 .detail-client-block {
   display: flex;
   flex-direction: column;
