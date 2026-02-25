@@ -1449,7 +1449,7 @@ function CaseDetailPage() {
               </div>
 
               {/* BLOCO A: Valor do Processo */}
-              <div className="financeiro-bloco">
+              <div className="financeiro-bloco financeiro-bloco-azul">
                 <h3 className="financeiro-bloco-title">📋 Valor do Processo</h3>
                 
                 <div className="financeiro-bloco-content">
@@ -1505,11 +1505,19 @@ function CaseDetailPage() {
                         Adicionar Recebimento
                       </button>
                     </div>
+                    
+                    {/* Lista de Recebimentos (futura implementação) */}
                     <div className="empty-state">
                       <p>Nenhum recebimento registrado</p>
                       <p className="empty-state-hint">
-                        Registre os valores recebidos do cliente
+                        Clique em "Adicionar Recebimento" para registrar valores pagos pelo cliente
                       </p>
+                    </div>
+
+                    {/* Total de Recebimentos */}
+                    <div className="financeiro-total-recebimentos">
+                      <span>Total Recebido:</span>
+                      <strong>R$ 0,00</strong>
                     </div>
                   </div>
 

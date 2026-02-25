@@ -2270,6 +2270,13 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
+/* Tema Azul para Bloco A (Valor do Processo) */
+.financeiro-bloco-azul .financeiro-bloco-title {
+  background: linear-gradient(to right, #dbeafe, #eff6ff);
+  color: #1e40af;
+  border-bottom: 2px solid #3b82f6;
+}
+
 .financeiro-bloco-content {
   padding: 1.75rem;
   display: flex;
@@ -2437,6 +2444,26 @@
 .financeiro-total strong {
   font-size: 1.25rem;
   color: #16a34a;
+}
+
+/* Total Recebimentos */
+.financeiro-total-recebimentos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #ecfdf5;
+  border: 2px solid #6ee7b7;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #047857;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+.financeiro-total-recebimentos strong {
+  font-size: 1.25rem;
+  color: #047857;
 }
 
 /* Responsivo para Financeiro */
