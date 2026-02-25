@@ -930,9 +930,7 @@ function CaseDetailPage() {
                           <button
                             className="btn-link detail-partes-hint"
                             onClick={() => setActiveSection('parties')}
-                          >
-                            ℹ️ Use a aba "Partes" para gerenciar detalhadamente
-                          </button>
+                          >ℹ️ Use a aba "Partes" para gerenciar detalhadamente</button>
                         </div>
                         <div className="detail-partes-col">
                           <span className="detail-label">Partes</span>
