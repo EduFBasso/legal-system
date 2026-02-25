@@ -50,13 +50,7 @@ class PublicationsService {
    * @returns {Promise<Object>} Publicações e informações da última busca
    */
   async retrieveLastSearch() {
-    const response = await fetch(`${API_BASE_URL}/publications/retrieve-last-search`);
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao carregar última busca: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiFetch(`/publications/retrieve-last-search`);
   }
 
   /**
@@ -130,13 +124,7 @@ class PublicationsService {
       params.append('q', q);
     }
 
-    const response = await fetch(`${API_BASE_URL}/publications/history?${params}`);
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar histórico: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiFetch(`/publications/history?${params}`);
   }
 
   /**
@@ -145,16 +133,7 @@ class PublicationsService {
    * @returns {Promise<Object>} Detalhes da busca e publicações
    */
   async getSearchHistoryDetail(searchId) {
-    const response = await fetch(`${API_BASE_URL}/publications/history/${searchId}`);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Busca não encontrada');
-      }
-      throw new Error(`Erro ao buscar detalhes: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiFetch(`/publications/history/${searchId}`);
   }
 
   /**
@@ -163,15 +142,9 @@ class PublicationsService {
    * @returns {Promise<Object>} Resultado da deleção
    */
   async deleteSearchHistory() {
-    const response = await fetch(`${API_BASE_URL}/publications/history/delete`, {
+    return await apiFetch(`/publications/history/delete`, {
       method: 'DELETE'
     });
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao deletar histórico: ${response.status}`);
-    }
-
-    return await response.json();
   }
 
   /**
@@ -180,15 +153,9 @@ class PublicationsService {
    * @returns {Promise<Object>} Resultado da deleção
    */
   async deletePublication(idApi) {
-    const response = await fetch(`${API_BASE_URL}/publications/${idApi}/delete`, {
+    return await apiFetch(`/publications/${publicationId}/delete`, {
       method: 'DELETE'
     });
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao deletar publicação: ${response.status}`);
-    }
-
-    return await response.json();
   }
 
   /**
@@ -197,19 +164,10 @@ class PublicationsService {
    * @returns {Promise<Object>} Resultado da deleção
    */
   async deleteMultiplePublications(publicationIds) {
-    const response = await fetch(`${API_BASE_URL}/publications/delete-multiple`, {
+    return await apiFetch('/publications/bulk-delete', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({ publication_ids: publicationIds })
     });
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao deletar publicações: ${response.status}`);
-    }
-
-    return await response.json();
   }
 
   /**
@@ -218,15 +176,9 @@ class PublicationsService {
    * @returns {Promise<Object>} Resultado da deleção
    */
   async deleteAllPublications() {
-    const response = await fetch(`${API_BASE_URL}/publications/delete-all`, {
-      method: 'POST'
+    return await apiFetch('/publications/delete-all', {
+      method: 'DELETE'
     });
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao deletar todas publicações: ${response.status}`);
-    }
-
-    return await response.json();
   }
 }
 
