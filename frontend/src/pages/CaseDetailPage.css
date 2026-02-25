@@ -2248,138 +2248,211 @@
 }
 
 /* ========================================
-   FINANCEIRO SECTION
+   FINANCEIRO SECTION - Dois Blocos
    ======================================== */
 
-/* Resumo Financeiro - Cards */
-.financeiro-resumo {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 2rem;
-}
-
-.financeiro-card {
+/* Bloco Financeiro */
+.financeiro-bloco {
   background: white;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.2s;
+  margin-bottom: 2rem;
+  overflow: hidden;
 }
 
-.financeiro-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+.financeiro-bloco-title {
+  background: #f8fafc;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-.financeiro-card-header {
+.financeiro-bloco-content {
+  padding: 1.75rem;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.financeiro-card-icon {
-  font-size: 1.5rem;
+/* Fields */
+.financeiro-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.financeiro-card-label {
-  font-size: 0.875rem;
+.financeiro-label {
+  font-size: 0.9rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.financeiro-card-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.financeiro-card-value.success {
-  color: #16a34a;
-}
-
-.financeiro-card-value.warning {
-  color: #f59e0b;
-}
-
-.financeiro-card-hint {
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-/* Seções de Controle */
-.financeiro-sections {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.financeiro-section {
-  background: #f8fafc;
+.financeiro-input-group input,
+.financeiro-radio-group input[type="number"] {
+  padding: 0.75rem 1rem;
   border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-}
-
-.financeiro-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.financeiro-section-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-/* Observações Financeiras */
-.financeiro-notes {
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-}
-
-.financeiro-notes h3 {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.financeiro-notes textarea {
-  font-family: inherit;
+  border-radius: 8px;
   font-size: 0.95rem;
   color: #1e293b;
-  resize: vertical;
-  min-height: 100px;
+  transition: all 0.2s;
+  font-family: inherit;
 }
 
-.financeiro-notes textarea:focus {
+.financeiro-input-group input:focus,
+.financeiro-radio-group input[type="number"]:focus {
   outline: none;
-  border-color: #1e293b !important;
+  border-color: #1e293b;
   box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
 }
 
-/* Responsivo para Detalhes Readonly */
+/* Radio Group para Percentual vs Fixo */
+.financeiro-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.financeiro-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.financeiro-radio input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.financeiro-radio-group input[type="number"] {
+  margin-left: 1.75rem;
+  max-width: 150px;
+}
+
+/* Valor Calculado */
+.financeiro-calculated {
+  padding: 0.75rem 1rem;
+  background: #d1fae5;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #065f46;
+  font-weight: 500;
+}
+
+/* Checkbox */
+.financeiro-checkbox {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.financeiro-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+}
+
+.financeiro-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Subsecção (Recebimentos, Despesas) */
+.financeiro-subsection {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+.financeiro-subsection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.financeiro-subsection-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Textarea */
+.financeiro-textarea-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.financeiro-textarea-group textarea {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.financeiro-textarea-group textarea:focus {
+  outline: none;
+  border-color: #1e293b;
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+/* Total Custos */
+.financeiro-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.financeiro-total strong {
+  font-size: 1.25rem;
+  color: #16a34a;
+}
+
+/* Responsivo para Financeiro */
 @media (max-width: 768px) {
-  .financeiro-resumo {
-    grid-template-columns: 1fr;
+  .financeiro-bloco-content {
+    padding: 1.25rem;
   }
 
-  .financeiro-sections {
-    grid-template-columns: 1fr;
+  .financeiro-input-group input,
+  .financeiro-radio-group input[type="number"] {
+    max-width: 100%;
+  }
+
+  .financeiro-radio-group input[type="number"] {
+    margin-left: 0;
+    max-width: 100%;
   }
 
   .details-group-title {

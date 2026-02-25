@@ -1444,95 +1444,123 @@ function CaseDetailPage() {
               <div className="section-header">
                 <div>
                   <h2 className="section-title">💰 Gestão Financeira</h2>
-                  <p className="section-subtitle">Controle de valores, recebimentos e despesas do processo</p>
+                  <p className="section-subtitle">Controle de valores e custos do processo</p>
                 </div>
               </div>
 
-              {/* Resumo Financeiro */}
-              <div className="financeiro-resumo">
-                <div className="financeiro-card">
-                  <div className="financeiro-card-header">
-                    <span className="financeiro-card-icon">💼</span>
-                    <span className="financeiro-card-label">Valor da Causa</span>
+              {/* BLOCO A: Valor do Processo */}
+              <div className="financeiro-bloco">
+                <h3 className="financeiro-bloco-title">📋 Valor do Processo</h3>
+                
+                <div className="financeiro-bloco-content">
+                  {/* Valor da Causa */}
+                  <div className="financeiro-field">
+                    <label className="financeiro-label">Valor da Causa</label>
+                    <div className="financeiro-input-group">
+                      <input 
+                        type="number" 
+                        placeholder="0,00" 
+                        value={formData.valor_causa || ''}
+                        onChange={(e) => handleInputChange('valor_causa', e.target.value)}
+                        step="0.01"
+                      />
+                    </div>
                   </div>
-                  <div className="financeiro-card-value">{formatCurrency(formData.valor_causa || 0)}</div>
-                </div>
 
-                <div className="financeiro-card">
-                  <div className="financeiro-card-header">
-                    <span className="financeiro-card-icon">✅</span>
-                    <span className="financeiro-card-label">Total Recebido</span>
+                  {/* Participação do Escritório */}
+                  <div className="financeiro-field">
+                    <label className="financeiro-label">Participação do Escritório</label>
+                    <div className="financeiro-radio-group">
+                      <label className="financeiro-radio">
+                        <input type="radio" name="participation_type" value="percentage" />
+                        Percentual (%)
+                      </label>
+                      <input type="number" placeholder="10" min="0" max="100" />
+                      
+                      <label className="financeiro-radio">
+                        <input type="radio" name="participation_type" value="fixed" />
+                        Valor Fixo
+                      </label>
+                      <input type="number" placeholder="0,00" step="0.01" />
+                    </div>
+                    <div className="financeiro-calculated">
+                      Valor estimado da participação: <strong>R$ 0,00</strong>
+                    </div>
                   </div>
-                  <div className="financeiro-card-value success">R$ 0,00</div>
-                  <div className="financeiro-card-hint">0 recebimentos</div>
-                </div>
 
-                <div className="financeiro-card">
-                  <div className="financeiro-card-header">
-                    <span className="financeiro-card-icon">⏳</span>
-                    <span className="financeiro-card-label">Saldo Pendente</span>
+                  {/* Check Ganho de Causa */}
+                  <div className="financeiro-checkbox">
+                    <label>
+                      <input type="checkbox" />
+                      <span>Cliente paga mediante ganho de causa?</span>
+                    </label>
                   </div>
-                  <div className="financeiro-card-value warning">{formatCurrency(formData.valor_causa || 0)}</div>
-                  <div className="financeiro-card-hint">100% a receber</div>
-                </div>
 
-                <div className="financeiro-card">
-                  <div className="financeiro-card-header">
-                    <span className="financeiro-card-icon">💸</span>
-                    <span className="financeiro-card-label">Total Despesas</span>
+                  {/* Recebimentos */}
+                  <div className="financeiro-subsection">
+                    <div className="financeiro-subsection-header">
+                      <h4>💵 Recebimentos do Cliente</h4>
+                      <button className="btn btn-success btn-sm">
+                        <Plus size={16} />
+                        Adicionar Recebimento
+                      </button>
+                    </div>
+                    <div className="empty-state">
+                      <p>Nenhum recebimento registrado</p>
+                      <p className="empty-state-hint">
+                        Registre os valores recebidos do cliente
+                      </p>
+                    </div>
                   </div>
-                  <div className="financeiro-card-value">R$ 0,00</div>
-                  <div className="financeiro-card-hint">0 despesas</div>
+
+                  {/* Observações Bloco A */}
+                  <div className="financeiro-textarea-group">
+                    <label className="financeiro-label">Observações</label>
+                    <textarea
+                      placeholder="Anotações sobre ajustes de valores, acordos, parcelamentos, etc..."
+                      rows="3"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Seções de Controle */}
-              <div className="financeiro-sections">
-                {/* Recebimentos */}
-                <div className="financeiro-section">
-                  <div className="financeiro-section-header">
-                    <h3>💵 Recebimentos</h3>
-                    <button className="btn btn-success btn-sm">
-                      <Plus size={16} />
-                      Adicionar Recebimento
-                    </button>
+              {/* BLOCO B: Custos do Escritório */}
+              <div className="financeiro-bloco">
+                <h3 className="financeiro-bloco-title">💸 Custos e Despesas do Escritório</h3>
+                
+                <div className="financeiro-bloco-content">
+                  {/* Despesas */}
+                  <div className="financeiro-subsection">
+                    <div className="financeiro-subsection-header">
+                      <h4>Registros de Gastos</h4>
+                      <button className="btn btn-secondary btn-sm">
+                        <Plus size={16} />
+                        Adicionar Despesa
+                      </button>
+                    </div>
+                    <div className="empty-state">
+                      <p>Nenhuma despesa registrada</p>
+                      <p className="empty-state-hint">
+                        Registre custas do tribunal, perícias, honorários e outros custos
+                      </p>
+                    </div>
                   </div>
-                  <div className="empty-state">
-                    <div style={{fontSize: '2rem'}}>💰</div>
-                    <p>Nenhum recebimento registrado</p>
-                    <p className="empty-state-hint">
-                      Registre os valores recebidos do cliente ou outras partes
-                    </p>
+
+                  {/* Total Despesas */}
+                  <div className="financeiro-total">
+                    <span>Total de Custos:</span>
+                    <strong>R$ 0,00</strong>
+                  </div>
+
+                  {/* Observações Bloco B */}
+                  <div className="financeiro-textarea-group">
+                    <label className="financeiro-label">Observações</label>
+                    <textarea
+                      placeholder="Descrições detalhadas dos custos, justificativas ou pendências..."
+                      rows="3"
+                    />
                   </div>
                 </div>
-
-                {/* Despesas */}
-                <div className="financeiro-section">
-                  <div className="financeiro-section-header">
-                    <h3>💸 Despesas e Custos</h3>
-                    <button className="btn btn-secondary btn-sm">
-                      <Plus size={16} />
-                      Adicionar Despesa
-                    </button>
-                  </div>
-                  <div className="empty-state">
-                    <div style={{fontSize: '2rem'}}>📋</div>
-                    <p>Nenhuma despesa registrada</p>
-                    <p className="empty-state-hint">
-                      Registre custas do tribunal, honorários e outras despesas
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Observações Financeiras */}
-              <div className="financeiro-notes">
-                <h3>📝 Observações Financeiras</h3>
-                <textarea
-                  placeholder="Adicione anotações sobre acordos, parcelamentos, pendências ou outras informações relevantes..."
-                  rows="4"
-                  style={{width: '100%', padding: '1rem', borderRadius: '8px', border: '2px solid #e2e8f0'}}
-                />
               </div>
             </div>
           </div>
