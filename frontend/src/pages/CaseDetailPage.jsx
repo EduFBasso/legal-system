@@ -622,6 +622,12 @@ function CaseDetailPage() {
               ⏰ Prazos
               {deadlines.length > 0 && <span className="badge">{deadlines.length}</span>}
             </button>
+            <button
+              className={`nav-tab ${activeSection === 'financeiro' ? 'active' : ''}`}
+              onClick={() => setActiveSection('financeiro')}
+            >
+              💰 Financeiro
+            </button>
           </div>
         </div>
       </nav>
@@ -960,6 +966,12 @@ function CaseDetailPage() {
                         <div className="detail-financeiro-item">
                           <span className="detail-label">💰 Valor da Causa</span>
                           <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
+                        </div>
+                        <div className="detail-financeiro-actions">
+                          <button
+                            className="btn-link detail-financeiro-hint"
+                            onClick={() => setActiveSection('financeiro')}
+                          >💰 Use a aba "Financeiro" para controlar recebimentos e despesas</button>
                         </div>
                       </div>
                     </div>
@@ -1421,6 +1433,107 @@ function CaseDetailPage() {
                     })}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Financeiro Section */}
+        {activeSection === 'financeiro' && (
+          <div className="case-section">
+            <div className="section-card">
+              <div className="section-header">
+                <div>
+                  <h2 className="section-title">💰 Gestão Financeira</h2>
+                  <p className="section-subtitle">Controle de valores, recebimentos e despesas do processo</p>
+                </div>
+              </div>
+
+              {/* Resumo Financeiro */}
+              <div className="financeiro-resumo">
+                <div className="financeiro-card">
+                  <div className="financeiro-card-header">
+                    <span className="financeiro-card-icon">💼</span>
+                    <span className="financeiro-card-label">Valor da Causa</span>
+                  </div>
+                  <div className="financeiro-card-value">{formatCurrency(formData.valor_causa || 0)}</div>
+                </div>
+
+                <div className="financeiro-card">
+                  <div className="financeiro-card-header">
+                    <span className="financeiro-card-icon">✅</span>
+                    <span className="financeiro-card-label">Total Recebido</span>
+                  </div>
+                  <div className="financeiro-card-value success">R$ 0,00</div>
+                  <div className="financeiro-card-hint">0 recebimentos</div>
+                </div>
+
+                <div className="financeiro-card">
+                  <div className="financeiro-card-header">
+                    <span className="financeiro-card-icon">⏳</span>
+                    <span className="financeiro-card-label">Saldo Pendente</span>
+                  </div>
+                  <div className="financeiro-card-value warning">{formatCurrency(formData.valor_causa || 0)}</div>
+                  <div className="financeiro-card-hint">100% a receber</div>
+                </div>
+
+                <div className="financeiro-card">
+                  <div className="financeiro-card-header">
+                    <span className="financeiro-card-icon">💸</span>
+                    <span className="financeiro-card-label">Total Despesas</span>
+                  </div>
+                  <div className="financeiro-card-value">R$ 0,00</div>
+                  <div className="financeiro-card-hint">0 despesas</div>
+                </div>
+              </div>
+
+              {/* Seções de Controle */}
+              <div className="financeiro-sections">
+                {/* Recebimentos */}
+                <div className="financeiro-section">
+                  <div className="financeiro-section-header">
+                    <h3>💵 Recebimentos</h3>
+                    <button className="btn btn-success btn-sm">
+                      <Plus size={16} />
+                      Adicionar Recebimento
+                    </button>
+                  </div>
+                  <div className="empty-state">
+                    <div style={{fontSize: '2rem'}}>💰</div>
+                    <p>Nenhum recebimento registrado</p>
+                    <p className="empty-state-hint">
+                      Registre os valores recebidos do cliente ou outras partes
+                    </p>
+                  </div>
+                </div>
+
+                {/* Despesas */}
+                <div className="financeiro-section">
+                  <div className="financeiro-section-header">
+                    <h3>💸 Despesas e Custos</h3>
+                    <button className="btn btn-secondary btn-sm">
+                      <Plus size={16} />
+                      Adicionar Despesa
+                    </button>
+                  </div>
+                  <div className="empty-state">
+                    <div style={{fontSize: '2rem'}}>📋</div>
+                    <p>Nenhuma despesa registrada</p>
+                    <p className="empty-state-hint">
+                      Registre custas do tribunal, honorários e outras despesas
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Observações Financeiras */}
+              <div className="financeiro-notes">
+                <h3>📝 Observações Financeiras</h3>
+                <textarea
+                  placeholder="Adicione anotações sobre acordos, parcelamentos, pendências ou outras informações relevantes..."
+                  rows="4"
+                  style={{width: '100%', padding: '1rem', borderRadius: '8px', border: '2px solid #e2e8f0'}}
+                />
+              </div>
             </div>
           </div>
         )}
