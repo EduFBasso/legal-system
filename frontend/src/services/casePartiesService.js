@@ -2,37 +2,7 @@
  * Service for Case Parties (vínculos entre processos e contatos)
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
-/**
- * Generic fetch wrapper with error handling
- */
-async function apiFetch(endpoint, options = {}) {
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
-    }
-
-    // DELETE returns 204 No Content (no body)
-    if (response.status === 204) {
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
-}
+import { apiFetch } from '@/utils/apiFetch.js';
 
 /**
  * Get all parties for a specific case

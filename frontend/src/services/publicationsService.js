@@ -3,7 +3,7 @@
  * Centraliza a comunicação com a API backend
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+import { apiFetch } from '@/utils/apiFetch.js';
 
 class PublicationsService {
   /**
@@ -26,13 +26,7 @@ class PublicationsService {
       params.append('tribunais', tribunal);
     });
 
-    const response = await fetch(`${API_BASE_URL}/publications/search?${params}`);
-    
-    if (!response.ok) {
-      throw new Error(`Erro na busca: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiFetch(`/publications/search?${params}`);
   }
 
   /**
@@ -40,13 +34,7 @@ class PublicationsService {
    * @returns {Promise<Object>} Publicações de hoje
    */
   async searchToday() {
-    const response = await fetch(`${API_BASE_URL}/publications/today`);
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar publicações de hoje: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiFetch(`/publications/today`);
   }
 
   /**
@@ -54,13 +42,7 @@ class PublicationsService {
    * @returns {Promise<Object>} Informações da última busca
    */
   async getLastSearchInfo() {
-    const response = await fetch(`${API_BASE_URL}/publications/last-search`);
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar informações: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiFetch(`/publications/last-search`);
   }
 
   /**

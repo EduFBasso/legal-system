@@ -5,49 +5,7 @@
  * Handles all API calls related to legal cases/processes
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
-/**
- * Generic API fetch wrapper with error handling
- */
-async function apiFetch(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('API Error Response:', errorData);
-      
-      // Format validation errors
-      if (errorData && typeof errorData === 'object') {
-        const errors = Object.entries(errorData)
-          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-          .join('\n');
-        throw new Error(errors || `API Error: ${response.status}`);
-      }
-      
-      throw new Error(errorData.detail || `API Error: ${response.status}`);
-    }
-
-    // DELETE returns 204 No Content
-    if (response.status === 204) {
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
-    throw error;
-  }
-}
+import { apiFetch } from '@/utils/apiFetch.js';
 
 /**
  * Cases Service

@@ -2,7 +2,7 @@
  * Service for Deadlines management
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+import { apiFetch } from '@/utils/apiFetch.js';
 
 /**
  * Get deadlines for a specific case
@@ -10,13 +10,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000/api';
  */
 export const getDeadlinesByCase = async (caseId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/case-movements/?case_id=${caseId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
+    const data = await apiFetch(`/case-movements/?case_id=${caseId}`);
     
     // Filter only movements with prazo and sort by deadline
     const deadlines = data
@@ -35,13 +29,7 @@ export const getDeadlinesByCase = async (caseId) => {
  */
 export const getAllDeadlines = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/case-movements/`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
+    const data = await apiFetch(`/case-movements/`);
     
     // Filter only movements with prazo and sort by deadline
     const deadlines = data
