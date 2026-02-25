@@ -62,6 +62,24 @@ function CaseDetailPage() {
   const [loadingDeadlines, setLoadingDeadlines] = useState(false);
   const [deadlineFilter, setDeadlineFilter] = useState('all'); // all, overdue, upcoming, future
 
+  // Financeiro state
+  const [recebimentos, setRecebimentos] = useState([]);
+  const [despesas, setDespesas] = useState([]);
+  const [participacaoTipo, setParticipacaoTipo] = useState('percentage');
+  const [participacaoPercentual, setParticipacaoPercentual] = useState('');
+  const [participacaoValorFixo, setParticipacaoValorFixo] = useState('');
+  const [pagaMedianteGanho, setPagaMedianteGanho] = useState(false);
+  const [recebimentoForm, setRecebimentoForm] = useState({
+    data: new Date().toISOString().split('T')[0],
+    descricao: '',
+    valor: ''
+  });
+  const [despesaForm, setDespesaForm] = useState({
+    data: new Date().toISOString().split('T')[0],
+    descricao: '',
+    valor: ''
+  });
+
   // Tribunal options
   const tribunalOptions = [
     { value: 'TJSP', label: 'TJSP - Tribunal de Justiça de São Paulo' },
@@ -557,6 +575,115 @@ function CaseDetailPage() {
   const formatCurrency = (value) => {
     if (!value) return '-';
     return `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // ========== FINANCEIRO FUNCTIONS ==========
+
+  /**
+   * Calculate participacao value based on type
+   */
+  const calcularParticipacao = () => {
+    const valorCausa = parseFloat(formData.valor_causa) || 0;
+    if (valorCausa === 0) return 0;
+
+    if (participacaoTipo === 'percentage') {
+      const percentual = parseFloat(participacaoPercentual) || 0;
+      return (valorCausa * percentual) / 100;
+    } else {
+      return parseFloat(participacaoValorFixo) || 0;
+    }
+  };
+
+  /**
+   * Calculate total recebimentos
+   */
+  const calcularTotalRecebimentos = () => {
+    return recebimentos.reduce((sum, r) => sum + parseFloat(r.valor || 0), 0);
+  };
+
+  /**
+   * Calculate total despesas
+   */
+  const calcularTotalDespesas = () => {
+    return despesas.reduce((sum, d) => sum + parseFloat(d.valor || 0), 0);
+  };
+
+  /**
+   * Handle adicionar recebimento
+   */
+  const handleAdicionarRecebimento = () => {
+    if (!recebimentoForm.data || !recebimentoForm.descricao || !recebimentoForm.valor) {
+      showToast('Preencha todos os campos do recebimento', 'error');
+      return;
+    }
+
+    const valor = parseFloat(recebimentoForm.valor);
+    if (isNaN(valor) || valor <= 0) {
+      showToast('Valor deve ser um número positivo', 'error');
+      return;
+    }
+
+    const novoRecebimento = {
+      id: Date.now(),
+      data: recebimentoForm.data,
+      descricao: recebimentoForm.descricao,
+      valor: valor
+    };
+
+    setRecebimentos(prev => [...prev, novoRecebimento]);
+    setRecebimentoForm({
+      data: new Date().toISOString().split('T')[0],
+      descricao: '',
+      valor: ''
+    });
+    showToast('Recebimento adicionado', 'success');
+  };
+
+  /**
+   * Handle remover recebimento
+   */
+  const handleRemoverRecebimento = (id) => {
+    setRecebimentos(prev => prev.filter(r => r.id !== id));
+    showToast('Recebimento removido', 'success');
+  };
+
+  /**
+   * Handle adicionar despesa
+   */
+  const handleAdicionarDespesa = () => {
+    if (!despesaForm.data || !despesaForm.descricao || !despesaForm.valor) {
+      showToast('Preencha todos os campos da despesa', 'error');
+      return;
+    }
+
+    const valor = parseFloat(despesaForm.valor);
+    if (isNaN(valor) || valor <= 0) {
+      showToast('Valor deve ser um número positivo', 'error');
+      return;
+    }
+
+    const novaDespesa = {
+      id: Date.now(),
+      data: despesaForm.data,
+      descricao: despesaForm.descricao,
+      valor: valor
+    };
+
+    setDespesas(prev => [...prev, novaDespesa]);
+    setDespesaForm({
+      data: new Date().toISOString().split('T')[0],
+      descricao: '',
+      valor: ''
+    });
+    showToast('Despesa adicionada', 'success');
+  };
+
+  /**
+   * Handle remover despesa
+   */
+  const handleRemoverDespesa = (id) => {
+    setDespesas(prev => prev.filter(d => d.id !== id));
+    showToast('Despesa removida', 'success');
   };
 
   if (loading) {
@@ -1478,7 +1605,11 @@ function CaseDetailPage() {
                         <label className="financeiro-label">Condição de Pagamento</label>
                         <div className="financeiro-checkbox-inline">
                           <label>
-                            <input type="checkbox" />
+                            <input 
+                              type="checkbox" 
+                              checked={pagaMedianteGanho}
+                              onChange={(e) => setPagaMedianteGanho(e.target.checked)}
+                            />
                             <span>Cliente paga mediante ganho de causa</span>
                           </label>
                         </div>
@@ -1493,7 +1624,13 @@ function CaseDetailPage() {
                     <div className="financeiro-participacao-group">
                       <div className="financeiro-participacao-options">
                         <label className="financeiro-radio-inline">
-                          <input type="radio" name="participation_type" value="percentage" defaultChecked />
+                          <input 
+                            type="radio" 
+                            name="participation_type" 
+                            value="percentage" 
+                            checked={participacaoTipo === 'percentage'}
+                            onChange={(e) => setParticipacaoTipo(e.target.value)}
+                          />
                           <span>Percentual (%)</span>
                         </label>
                         <input 
@@ -1501,24 +1638,36 @@ function CaseDetailPage() {
                           className="financeiro-input-compact" 
                           placeholder="10" 
                           min="0" 
-                          max="100" 
+                          max="100"
+                          value={participacaoPercentual}
+                          onChange={(e) => setParticipacaoPercentual(e.target.value)}
+                          disabled={participacaoTipo !== 'percentage'}
                         />
                         
                         <label className="financeiro-radio-inline">
-                          <input type="radio" name="participation_type" value="fixed" />
+                          <input 
+                            type="radio" 
+                            name="participation_type" 
+                            value="fixed"
+                            checked={participacaoTipo === 'fixed'}
+                            onChange={(e) => setParticipacaoTipo(e.target.value)}
+                          />
                           <span>Valor Fixo (R$)</span>
                         </label>
                         <input 
                           type="number" 
                           className="financeiro-input-compact" 
                           placeholder="0,00" 
-                          step="0.01" 
+                          step="0.01"
+                          value={participacaoValorFixo}
+                          onChange={(e) => setParticipacaoValorFixo(e.target.value)}
+                          disabled={participacaoTipo !== 'fixed'}
                         />
                       </div>
 
                       <div className="financeiro-resumo-participacao">
                         <span>Valor Estimado da Participação:</span>
-                        <strong>R$ 0,00</strong>
+                        <strong>R$ {calcularParticipacao().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                       </div>
                     </div>
                   </div>
@@ -1536,7 +1685,8 @@ function CaseDetailPage() {
                         <input 
                           type="date" 
                           className="financeiro-input"
-                          defaultValue={new Date().toISOString().split('T')[0]}
+                          value={recebimentoForm.data}
+                          onChange={(e) => setRecebimentoForm({...recebimentoForm, data: e.target.value})}
                         />
                       </div>
 
@@ -1546,6 +1696,8 @@ function CaseDetailPage() {
                           type="text" 
                           className="financeiro-input"
                           placeholder="Ex: Honorários - Parcela 1/3"
+                          value={recebimentoForm.descricao}
+                          onChange={(e) => setRecebimentoForm({...recebimentoForm, descricao: e.target.value})}
                         />
                       </div>
 
@@ -1557,27 +1709,57 @@ function CaseDetailPage() {
                           placeholder="0,00"
                           step="0.01"
                           min="0"
+                          value={recebimentoForm.valor}
+                          onChange={(e) => setRecebimentoForm({...recebimentoForm, valor: e.target.value})}
                         />
                       </div>
 
-                      <button className="btn btn-success">
+                      <button 
+                        className="btn btn-success"
+                        onClick={handleAdicionarRecebimento}
+                      >
                         <Plus size={16} />
                         Adicionar Recebimento
                       </button>
                     </div>
 
-                    {/* Lista de Recebimentos (futura implementação) */}
-                    <div className="empty-state">
-                      <p>Nenhum recebimento registrado</p>
-                      <p className="empty-state-hint">
-                        Preencha os campos acima e clique em "Adicionar Recebimento"
-                      </p>
-                    </div>
+                    {/* Lista de Recebimentos */}
+                    {recebimentos.length === 0 ? (
+                      <div className="empty-state">
+                        <p>Nenhum recebimento registrado</p>
+                        <p className="empty-state-hint">
+                          Preencha os campos acima e clique em "Adicionar Recebimento"
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="financeiro-lista">
+                        {recebimentos.map(recebimento => (
+                          <div key={recebimento.id} className="financeiro-item">
+                            <div className="financeiro-item-info">
+                              <span className="financeiro-item-data">{formatDate(recebimento.data)}</span>
+                              <span className="financeiro-item-descricao">{recebimento.descricao}</span>
+                            </div>
+                            <div className="financeiro-item-actions">
+                              <span className="financeiro-item-valor">
+                                R$ {recebimento.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <button 
+                                className="btn-icon-danger"
+                                onClick={() => handleRemoverRecebimento(recebimento.id)}
+                                title="Remover"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Total de Recebimentos */}
                     <div className="financeiro-total-recebimentos">
                       <span>Total Recebido:</span>
-                      <strong>R$ 0,00</strong>
+                      <strong>R$ {calcularTotalRecebimentos().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                     </div>
                   </div>
 
@@ -1601,23 +1783,91 @@ function CaseDetailPage() {
                   <div className="financeiro-subsection">
                     <div className="financeiro-subsection-header">
                       <h4>Registros de Gastos</h4>
-                      <button className="btn btn-success">
+                    </div>
+                    
+                    {/* Formulário para Nova Despesa */}
+                    <div className="financeiro-recebimento-form">
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Data</label>
+                        <input 
+                          type="date" 
+                          className="financeiro-input"
+                          value={despesaForm.data}
+                          onChange={(e) => setDespesaForm({...despesaForm, data: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Descrição</label>
+                        <input 
+                          type="text" 
+                          className="financeiro-input"
+                          placeholder="Ex: Custas processuais, Honorários perito"
+                          value={despesaForm.descricao}
+                          onChange={(e) => setDespesaForm({...despesaForm, descricao: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Valor (R$)</label>
+                        <input 
+                          type="number" 
+                          className="financeiro-input"
+                          placeholder="0,00"
+                          step="0.01"
+                          min="0"
+                          value={despesaForm.valor}
+                          onChange={(e) => setDespesaForm({...despesaForm, valor: e.target.value})}
+                        />
+                      </div>
+
+                      <button 
+                        className="btn btn-success"
+                        onClick={handleAdicionarDespesa}
+                      >
                         <Plus size={16} />
                         Adicionar Despesa
                       </button>
                     </div>
-                    <div className="empty-state">
-                      <p>Nenhuma despesa registrada</p>
-                      <p className="empty-state-hint">
-                        Registre custas do tribunal, perícias, honorários e outros custos
-                      </p>
-                    </div>
+
+                    {/* Lista de Despesas */}
+                    {despesas.length === 0 ? (
+                      <div className="empty-state">
+                        <p>Nenhuma despesa registrada</p>
+                        <p className="empty-state-hint">
+                          Registre custas do tribunal, perícias, honorários e outros custos
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="financeiro-lista">
+                        {despesas.map(despesa => (
+                          <div key={despesa.id} className="financeiro-item">
+                            <div className="financeiro-item-info">
+                              <span className="financeiro-item-data">{formatDate(despesa.data)}</span>
+                              <span className="financeiro-item-descricao">{despesa.descricao}</span>
+                            </div>
+                            <div className="financeiro-item-actions">
+                              <span className="financeiro-item-valor">
+                                R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <button 
+                                className="btn-icon-danger"
+                                onClick={() => handleRemoverDespesa(despesa.id)}
+                                title="Remover"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Total Despesas */}
                   <div className="financeiro-total">
                     <span>Total de Custos:</span>
-                    <strong>R$ 0,00</strong>
+                    <strong>R$ {calcularTotalDespesas().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                   </div>
 
                   {/* Observações Bloco B */}
