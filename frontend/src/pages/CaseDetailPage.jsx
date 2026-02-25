@@ -10,6 +10,14 @@ import * as deadlinesService from '../services/deadlinesService';
 import Toast from '../components/common/Toast';
 import PublicationCard from '../components/PublicationCard';
 import ContactDetailModal from '../components/ContactDetailModal';
+import { 
+  InformacaoTab, 
+  PartiesTab, 
+  MovimentacoesTab, 
+  DocumentosTab, 
+  DeadlinesTab, 
+  FinanceiroTab 
+} from '../components/CaseTabs';
 import './CaseDetailPage.css';
 
 /**
@@ -932,8 +940,29 @@ function CaseDetailPage() {
 
       {/* Content */}
       <main className="case-content">
-        {/* Informações Section */}
         {activeSection === 'info' && (
+          <InformacaoTab
+            id={id}
+            formData={formData}
+            setFormData={setFormData}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+            saving={saving}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            onDelete={handleDelete}
+            setActiveSection={setActiveSection}
+            parties={parties}
+            deadlines={deadlines}
+            caseData={caseData}
+            formatDate={formatDate}
+            formatCurrency={formatCurrency}
+            tribunalOptions={tribunalOptions}
+            statusOptions={statusOptions}
+            tipoAcaoOptions={tipoAcaoOptions}
+            onInputChange={handleInputChange}
+          />
+        )}
           <div className="case-section">
             {/* Cartão de Resumo - Destaque Principal */}
             <div className="case-summary-card">
