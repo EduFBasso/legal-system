@@ -1453,47 +1453,71 @@ function CaseDetailPage() {
                 <h3 className="financeiro-bloco-title">📋 Valor do Processo</h3>
                 
                 <div className="financeiro-bloco-content">
-                  {/* Valor da Causa */}
-                  <div className="financeiro-field">
-                    <label className="financeiro-label">Valor da Causa</label>
-                    <div className="financeiro-input-group">
-                      <input 
-                        type="number" 
-                        placeholder="0,00" 
-                        value={formData.valor_causa || ''}
-                        onChange={(e) => handleInputChange('valor_causa', e.target.value)}
-                        step="0.01"
-                      />
+                  
+                  {/* Card: Informações do Processo */}
+                  <div className="financeiro-card">
+                    <h4 className="financeiro-card-title">Informações do Processo</h4>
+                    
+                    <div className="financeiro-grid">
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Valor da Causa</label>
+                        <input 
+                          type="number" 
+                          className="financeiro-input"
+                          placeholder="0,00" 
+                          value={formData.valor_causa || ''}
+                          onChange={(e) => handleInputChange('valor_causa', e.target.value)}
+                          step="0.01"
+                        />
+                      </div>
+
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Condição de Pagamento</label>
+                        <div className="financeiro-checkbox-inline">
+                          <label>
+                            <input type="checkbox" />
+                            <span>Cliente paga mediante ganho de causa</span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Participação do Escritório */}
-                  <div className="financeiro-field">
-                    <label className="financeiro-label">Participação do Escritório</label>
-                    <div className="financeiro-radio-group">
-                      <label className="financeiro-radio">
-                        <input type="radio" name="participation_type" value="percentage" />
-                        Percentual (%)
-                      </label>
-                      <input type="number" placeholder="10" min="0" max="100" />
-                      
-                      <label className="financeiro-radio">
-                        <input type="radio" name="participation_type" value="fixed" />
-                        Valor Fixo
-                      </label>
-                      <input type="number" placeholder="0,00" step="0.01" />
-                    </div>
-                    <div className="financeiro-calculated">
-                      Valor estimado da participação: <strong>R$ 0,00</strong>
-                    </div>
-                  </div>
+                  {/* Card: Participação do Escritório */}
+                  <div className="financeiro-card">
+                    <h4 className="financeiro-card-title">Participação do Escritório</h4>
+                    
+                    <div className="financeiro-participacao-group">
+                      <div className="financeiro-participacao-options">
+                        <label className="financeiro-radio-inline">
+                          <input type="radio" name="participation_type" value="percentage" defaultChecked />
+                          <span>Percentual (%)</span>
+                        </label>
+                        <input 
+                          type="number" 
+                          className="financeiro-input-compact" 
+                          placeholder="10" 
+                          min="0" 
+                          max="100" 
+                        />
+                        
+                        <label className="financeiro-radio-inline">
+                          <input type="radio" name="participation_type" value="fixed" />
+                          <span>Valor Fixo (R$)</span>
+                        </label>
+                        <input 
+                          type="number" 
+                          className="financeiro-input-compact" 
+                          placeholder="0,00" 
+                          step="0.01" 
+                        />
+                      </div>
 
-                  {/* Check Ganho de Causa */}
-                  <div className="financeiro-checkbox">
-                    <label>
-                      <input type="checkbox" />
-                      <span>Cliente paga mediante ganho de causa?</span>
-                    </label>
+                      <div className="financeiro-resumo-participacao">
+                        <span>Valor Estimado da Participação:</span>
+                        <strong>R$ 0,00</strong>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Recebimentos */}

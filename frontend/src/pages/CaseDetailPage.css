@@ -2292,6 +2292,127 @@
   gap: 1.5rem;
 }
 
+/* Cards dentro do Bloco */
+.financeiro-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.financeiro-card-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Grid para campos em linha */
+.financeiro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+/* Checkbox inline */
+.financeiro-checkbox-inline {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 2px solid #e2e8f0;
+  height: 100%;
+}
+
+.financeiro-checkbox-inline label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin: 0;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.financeiro-checkbox-inline input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Grupo de Participação */
+.financeiro-participacao-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.financeiro-participacao-options {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.financeiro-radio-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.financeiro-radio-inline input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.financeiro-input-compact {
+  padding: 0.65rem 0.85rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  transition: all 0.2s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.financeiro-input-compact:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.financeiro-resumo-participacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: #d1fae5;
+  border: 2px solid #6ee7b7;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.financeiro-resumo-participacao strong {
+  font-size: 1.15rem;
+  color: #047857;
+}
+
 /* Fields */
 .financeiro-field {
   display: flex;
@@ -2514,6 +2635,23 @@
 @media (max-width: 768px) {
   .financeiro-bloco-content {
     padding: 1.25rem;
+  }
+
+  .financeiro-card {
+    padding: 1rem;
+  }
+
+  .financeiro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .financeiro-participacao-options {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .financeiro-radio-inline {
+    padding: 0.5rem 0;
   }
 
   .financeiro-input-group input,
