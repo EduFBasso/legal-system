@@ -1500,17 +1500,50 @@ function CaseDetailPage() {
                   <div className="financeiro-subsection">
                     <div className="financeiro-subsection-header">
                       <h4>💵 Recebimentos do Cliente</h4>
-                      <button className="btn btn-success btn-sm">
+                    </div>
+                    
+                    {/* Formulário para Novo Recebimento */}
+                    <div className="financeiro-recebimento-form">
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Data</label>
+                        <input 
+                          type="date" 
+                          className="financeiro-input"
+                          defaultValue={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Descrição</label>
+                        <input 
+                          type="text" 
+                          className="financeiro-input"
+                          placeholder="Ex: Honorários - Parcela 1/3"
+                        />
+                      </div>
+
+                      <div className="financeiro-field">
+                        <label className="financeiro-label">Valor (R$)</label>
+                        <input 
+                          type="number" 
+                          className="financeiro-input"
+                          placeholder="0,00"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+
+                      <button className="btn btn-success">
                         <Plus size={16} />
                         Adicionar Recebimento
                       </button>
                     </div>
-                    
+
                     {/* Lista de Recebimentos (futura implementação) */}
                     <div className="empty-state">
                       <p>Nenhum recebimento registrado</p>
                       <p className="empty-state-hint">
-                        Clique em "Adicionar Recebimento" para registrar valores pagos pelo cliente
+                        Preencha os campos acima e clique em "Adicionar Recebimento"
                       </p>
                     </div>
 
