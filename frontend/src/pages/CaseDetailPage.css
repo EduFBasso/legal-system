@@ -2254,33 +2254,33 @@
 /* Bloco Financeiro */
 .financeiro-bloco {
   background: white;
-  border: 2px solid #e2e8f0;
+  border: 3px solid #475569;
   border-radius: 12px;
   margin-bottom: 2rem;
   overflow: hidden;
 }
 
 .financeiro-bloco-title {
-  background: #f8fafc;
+  background: #334155;
   margin: 0;
   padding: 1.25rem 1.5rem;
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  color: #1e293b;
-  border-bottom: 2px solid #e2e8f0;
+  color: white;
+  border-bottom: 3px solid #1f2937;
 }
 
 /* Tema Azul para Bloco A (Valor do Processo) - Destaque forte */
 .financeiro-bloco-azul {
-  background: #f8fafc;
-  border: 3px solid #2563eb;
+  background: #eef2ff;
+  border: 4px solid #1e3a8a;
   border-radius: 12px;
 }
 
 .financeiro-bloco-azul .financeiro-bloco-title {
-  background: #2563eb;
+  background: #1e3a8a;
   color: white;
-  border-bottom: 3px solid #1e40af;
+  border-bottom: 3px solid #0f2a6b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -2295,23 +2295,24 @@
 /* Cards dentro do Bloco */
 .financeiro-card {
   background: white;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #94a3b8;
   border-radius: 8px;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .financeiro-card-title {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #475569;
+  color: #1e293b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #94a3b8;
 }
 
 /* Grid para campos em linha */
@@ -2325,10 +2326,8 @@
 .financeiro-checkbox-inline {
   display: flex;
   align-items: center;
-  padding: 0.75rem;
-  background: #f8fafc;
+  padding: 0.25rem 0;
   border-radius: 6px;
-  border: 2px solid #e2e8f0;
   height: 100%;
 }
 
@@ -2382,7 +2381,7 @@
   padding: 0.65rem 0.85rem;
   border: 2px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: #1e293b;
   transition: all 0.2s;
   font-family: inherit;
@@ -2400,17 +2399,17 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.875rem 1rem;
-  background: #d1fae5;
-  border: 2px solid #6ee7b7;
+  background: #f8fafc;
+  border: 2px solid #64748b;
   border-radius: 6px;
-  font-size: 0.95rem;
-  color: #065f46;
+  font-size: 1.05rem;
+  color: #1e293b;
   font-weight: 600;
 }
 
 .financeiro-resumo-participacao strong {
-  font-size: 1.15rem;
-  color: #047857;
+  font-size: 1.3rem;
+  color: #1e293b;
 }
 
 /* Fields */
@@ -2421,11 +2420,53 @@
 }
 
 .financeiro-label {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #64748b;
+  color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.financeiro-label-destaque {
+  font-size: 1.2rem;
+  color: #1e293b;
+}
+
+/* Input com ícone */
+.financeiro-input-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.financeiro-input-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.financeiro-input-clean {
+  padding: 0.75rem 0.5rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1e293b;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  width: 100%;
+  background: transparent;
+}
+
+.financeiro-input-clean:focus {
+  outline: none;
+  border-bottom-color: #1e3a8a;
+  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);
+}
+
+.financeiro-input-clean:hover:not(:focus) {
+  border-bottom-color: #cbd5e1;
 }
 
 .financeiro-input-group input,
@@ -2433,7 +2474,7 @@
   padding: 0.75rem 1rem;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: #1e293b;
   transition: all 0.2s;
   font-family: inherit;
@@ -2515,7 +2556,7 @@
   padding: 1rem;
   background: #f8fafc;
   border-radius: 8px;
-  border-left: 3px solid #3b82f6;
+  border: 2px solid #94a3b8;
 }
 
 .financeiro-subsection-header {
@@ -2527,9 +2568,11 @@
 
 .financeiro-subsection-header h4 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* Formulário de Recebimento */
@@ -2549,7 +2592,7 @@
   padding: 0.75rem 1rem;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: #1e293b;
   transition: all 0.2s;
   font-family: inherit;
@@ -2566,6 +2609,11 @@
   white-space: nowrap;
   height: fit-content;
   padding: 0.75rem 1rem;
+  background: #1e3a8a;
+  border: 2px solid #1e3a8a;
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
 /* Textarea */
@@ -2614,21 +2662,20 @@
 /* Total Recebimentos */
 .financeiro-total-recebimentos {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding: 1rem;
-  background: #ecfdf5;
-  border: 2px solid #6ee7b7;
+  padding: 0.25rem 0;
   border-radius: 8px;
-  font-size: 0.95rem;
-  color: #047857;
+  font-size: 1.32rem;
+  color: #1e3a8a;
   font-weight: 600;
   margin-top: 1rem;
+  gap: 0.5rem;
 }
 
 .financeiro-total-recebimentos strong {
-  font-size: 1.25rem;
-  color: #047857;
+  font-size: 1.32rem;
+  color: #1e3a8a;
 }
 
 /* Responsivo para Financeiro */
