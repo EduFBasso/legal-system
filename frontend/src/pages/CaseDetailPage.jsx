@@ -595,8 +595,18 @@ function CaseDetailPage() {
   const parseCurrencyValue = (value) => {
     if (value === null || value === undefined || value === '') return 0;
     if (typeof value === 'number') return value;
-    const normalized = value.toString().replace(/\./g, '').replace(',', '.');
-    return parseFloat(normalized) || 0;
+    
+    const str = value.toString();
+    
+    // Se contém vírgula, assume formato pt-BR (220.000,00)
+    if (str.includes(',')) {
+      const normalized = str.replace(/\./g, '').replace(',', '.');
+      return parseFloat(normalized) || 0;
+    }
+    
+    // Se contém apenas ponto ou nenhum separador, assume formato en-US/decimal (220000.00)
+    // Não remove o ponto, pois é o separador decimal
+    return parseFloat(str) || 0;
   };
 
   const formatCurrencyInput = (value) => {
