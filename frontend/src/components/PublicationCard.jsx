@@ -53,39 +53,53 @@ export default function PublicationCard({
   const handleCopyProcesso = (e) => {
     e.stopPropagation();
     if (publication.numero_processo) {
+      // Guardar referência do button antes da operação assincronada
+      const btn = e.currentTarget;
       navigator.clipboard.writeText(publication.numero_processo).then(() => {
+        // Verificar se o elemento ainda existe no DOM
+        if (!btn || !document.contains(btn)) return;
+        
         // Feedback visual temporário
-        const btn = e.currentTarget;
         const originalText = btn.innerHTML;
         btn.innerHTML = '✅ Copiado!';
         btn.classList.add('copied');
         setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.classList.remove('copied');
+          if (btn && document.contains(btn)) {
+            btn.innerHTML = originalText;
+            btn.classList.remove('copied');
+          }
         }, 2000);
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
       });
     }
   };
 
   const handleConsultarProcesso = (e, url) => {
     e.stopPropagation();
+    // Guardar referência do button antes da operação assincronada
+    const btn = e.currentTarget;
+    
     // Copiar automaticamente o número do processo
     if (publication.numero_processo) {
       navigator.clipboard.writeText(publication.numero_processo).then(() => {
-        // Mostrar feedback visual no botão
-        const btn = e.currentTarget;
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '✅ Copiado! Abrindo...';
+        // Verificar se o elemento ainda existe no DOM
+        if (btn && document.contains(btn)) {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '✅ Copiado! Abrindo...';
+          
+          // Restaurar texto original
+          setTimeout(() => {
+            if (btn && document.contains(btn)) {
+              btn.innerHTML = originalHTML;
+            }
+          }, 2000);
+        }
         
         // Abrir link
         if (url) {
           window.open(url, '_blank', 'noopener,noreferrer');
         }
-        
-        // Restaurar texto original
-        setTimeout(() => {
-          btn.innerHTML = originalHTML;
-        }, 2000);
       }).catch(err => {
         console.error('Erro ao copiar:', err);
         // Mesmo com erro, abre o link
