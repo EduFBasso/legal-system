@@ -391,9 +391,18 @@ function CaseDetailPage() {
     try {
       setSaving(true);
 
+      // Add financial fields from local state to formData
+      const dataToSave = {
+        ...formData,
+        participation_type: participacaoTipo,
+        participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
+        participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
+        payment_conditional: pagaMedianteGanho,
+      };
+
       // Clean empty values
       const cleanedData = {};
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries(dataToSave).forEach(([key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           cleanedData[key] = value;
         }
@@ -604,6 +613,25 @@ function CaseDetailPage() {
     setValorCausaInput(formatCurrencyInput(formData.valor_causa));
   }, [formData.valor_causa]);
 
+  // Sync financial fields from backend to local state
+  useEffect(() => {
+    if (!formData || !id) return;
+
+    // Sync participation fields
+    if (formData.participation_type) {
+      setParticipacaoTipo(formData.participation_type);
+    }
+    if (formData.participation_percentage !== null && formData.participation_percentage !== undefined) {
+      setParticipacaoPercentual(formData.participation_percentage.toString());
+    }
+    if (formData.participation_fixed_value !== null && formData.participation_fixed_value !== undefined) {
+      setParticipacaoValorFixo(formatCurrencyInput(formData.participation_fixed_value));
+    }
+    if (formData.payment_conditional !== undefined) {
+      setPagaMedianteGanho(formData.payment_conditional);
+    }
+  }, [formData, id]);
+
   // ========== FINANCEIRO FUNCTIONS ==========
 
   /**
@@ -672,6 +700,19 @@ function CaseDetailPage() {
       loadExpenses();
     }
   }, [activeSection, id, loadPayments, loadExpenses]);
+
+  // Save financial fields to formData when any changes
+  useEffect(() => {
+    if (!id) return;
+
+    setFormData(prev => ({
+      ...prev,
+      participation_type: participacaoTipo,
+      participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
+      participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
+      payment_conditional: pagaMedianteGanho,
+    }));
+  }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho]);
 
   /**
    * Handle adicionar recebimento
@@ -1867,6 +1908,8 @@ function CaseDetailPage() {
                     <textarea
                       placeholder="Anotações sobre ajustes de valores, acordos, parcelamentos, etc..."
                       rows="3"
+                      value={formData.observations_financial_block_a || ''}
+                      onChange={(e) => handleInputChange('observations_financial_block_a', e.target.value)}
                     />
                   </div>
                 </div>
@@ -1974,6 +2017,8 @@ function CaseDetailPage() {
                     <textarea
                       placeholder="Descrições detalhadas dos custos, justificativas ou pendências..."
                       rows="3"
+                      value={formData.observations_financial_block_b || ''}
+                      onChange={(e) => handleInputChange('observations_financial_block_b', e.target.value)}
                     />
                   </div>
                 </div>
