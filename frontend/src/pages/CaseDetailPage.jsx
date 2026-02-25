@@ -1593,7 +1593,7 @@ function CaseDetailPage() {
               </div>
 
               {/* BLOCO B: Custos do Escritório */}
-              <div className="financeiro-bloco">
+              <div className="financeiro-bloco financeiro-bloco-azul">
                 <h3 className="financeiro-bloco-title">💸 Custos e Despesas do Escritório</h3>
                 
                 <div className="financeiro-bloco-content">
@@ -1601,7 +1601,7 @@ function CaseDetailPage() {
                   <div className="financeiro-subsection">
                     <div className="financeiro-subsection-header">
                       <h4>Registros de Gastos</h4>
-                      <button className="btn btn-secondary btn-sm">
+                      <button className="btn btn-success">
                         <Plus size={16} />
                         Adicionar Despesa
                       </button>

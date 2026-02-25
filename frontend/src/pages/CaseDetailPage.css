@@ -2607,15 +2607,25 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.financeiro-recebimento-form .btn {
+.financeiro-recebimento-form .btn,
+.financeiro-subsection .btn-success {
   white-space: nowrap;
   height: fit-content;
   padding: 0.75rem 1rem;
-  background: #1e3a8a;
-  border: 2px solid #1e3a8a;
+  background: #3b82f6;
+  border: 2px solid #3b82f6;
   color: white;
   font-size: 1.05rem;
   font-weight: 700;
+}
+
+.financeiro-recebimento-form .btn:hover:not(:disabled),
+.financeiro-recebimento-form .btn:focus-visible,
+.financeiro-subsection .btn-success:hover:not(:disabled),
+.financeiro-subsection .btn-success:focus-visible {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
 }
 
 /* Textarea */
