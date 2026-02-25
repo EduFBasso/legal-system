@@ -812,7 +812,7 @@ function CaseDetailPage() {
               </div>
             </div>
 
-            {/* Detalhes do Processo - Modo Edição */}
+            {/* Detalhes do Processo */}
             <div className="section-card">
               <div className="section-header">
                 <h2 className="section-title">
@@ -851,24 +851,159 @@ function CaseDetailPage() {
                 </div>
               </div>
               
-              <div className={isEditing ? 'info-form-vertical' : 'info-grid'}>
-                {/* Título */}
-                <div className="info-field full-width">
-                  <label>Título do Processo</label>
-                  {isEditing ? (
+              {!isEditing ? (
+                /* MODO READONLY - Agrupamento Temático */
+                <div className="details-readonly">
+                  {/* Identificação do Processo */}
+                  <div className="details-group">
+                    <h3 className="details-group-title">🔖 Identificação</h3>
+                    <div className="details-content">
+                      <div className="detail-item highlight">
+                        <span className="detail-label">Processo Nº</span>
+                        <span className="detail-value-large">{formData.numero_processo_formatted || formData.numero_processo}</span>
+                      </div>
+                      {formData.titulo && (
+                        <div className="detail-item full">
+                          <span className="detail-label">Título</span>
+                          <span className="detail-value">{formData.titulo}</span>
+                        </div>
+                      )}
+                      <div className="detail-badges-row">
+                        {formData.tipo_acao && (
+                          <div className="detail-badge-item">
+                            <span className="detail-label-small">Tipo</span>
+                            <span className={`process-tipo-badge tipo-${formData.tipo_acao.toLowerCase()}`}>
+                              {formData.tipo_acao_display || formData.tipo_acao}
+                            </span>
+                          </div>
+                        )}
+                        <div className="detail-badge-item">
+                          <span className="detail-label-small">Status</span>
+                          <span className={`info-badge status status-${formData.status?.toLowerCase()}`}>
+                            {formData.status_display || formData.status}
+                          </span>
+                        </div>
+                        <div className="detail-badge-item">
+                          <span className="detail-label-small">Tribunal</span>
+                          <span className="info-badge tribunal">
+                            {formData.tribunal_display || formData.tribunal}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Localização */}
+                  <div className="details-group">
+                    <h3 className="details-group-title">📍 Localização</h3>
+                    <div className="details-content">
+                      <div className="detail-item">
+                        <span className="detail-label">Comarca</span>
+                        <span className="detail-value">{formData.comarca || '-'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Vara</span>
+                        <span className="detail-value">{formData.vara || '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cronologia */}
+                  <div className="details-group">
+                    <h3 className="details-group-title">📅 Cronologia</h3>
+                    <div className="details-content">
+                      <div className="detail-item">
+                        <span className="detail-label">Data de Distribuição</span>
+                        <span className="detail-value">{formatDate(formData.data_distribuicao)}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Última Movimentação</span>
+                        {formData.data_ultima_movimentacao ? (
+                          <div className="detail-value-stacked">
+                            <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
+                            {formData.ultima_movimentacao_resumo && (
+                              <span className="detail-value-sub">{formData.ultima_movimentacao_resumo}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="detail-value empty">Nenhuma movimentação cadastrada</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Partes e Financeiro */}
+                  <div className="details-group">
+                    <h3 className="details-group-title">👥 Partes e Financeiro</h3>
+                    <div className="details-content">
+                      <div className="detail-item full">
+                        <span className="detail-label">Nosso Cliente</span>
+                        {(() => {
+                          const clientParty = parties.find(p => p.is_client);
+                          if (clientParty) {
+                            return (
+                              <div className="detail-value-stacked">
+                                <strong>{clientParty.contact_name}</strong>
+                                <span className="detail-value-sub">({clientParty.role_display})</span>
+                                <button 
+                                  className="btn-link"
+                                  onClick={() => setActiveSection('parties')}
+                                  style={{fontSize: '0.875rem', marginTop: '0.5rem'}}
+                                >
+                                  Gerenciar na aba Partes →
+                                </button>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="detail-value-stacked">
+                              <span className="detail-value empty">Nenhum cliente vinculado</span>
+                              <button 
+                                className="btn btn-sm btn-primary"
+                                onClick={() => setActiveSection('parties')}
+                                style={{marginTop: '0.5rem'}}
+                              >
+                                <UserPlus size={16} />
+                                Adicionar Cliente na aba Partes
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Valor da Causa</span>
+                        <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Observações */}
+                  {formData.observacoes && (
+                    <div className="details-group">
+                      <h3 className="details-group-title">📝 Observações</h3>
+                      <div className="details-content">
+                        <div className="detail-item full">
+                          <p className="detail-value">{formData.observacoes}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* MODO EDIÇÃO - Formulário Vertical */
+                <div className="info-form-vertical">
+                  {/* Título */}
+                  <div className="info-field full-width">
+                    <label>Título do Processo</label>
                     <input
                       type="text"
                       value={formData.titulo || ''}
                       onChange={(e) => handleInputChange('titulo', e.target.value)}
                       placeholder="Ex: Ação de Cobrança"
                     />
-                  ) : (
-                    <p className="info-value">{formData.titulo}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Número do Processo */}
-                {isEditing && (
+                  {/* Número do Processo */}
                   <div className="info-field">
                     <label>Número do Processo (CNJ)</label>
                     <input
@@ -878,12 +1013,10 @@ function CaseDetailPage() {
                       placeholder="0000000-00.0000.0.00.0000"
                     />
                   </div>
-                )}
 
-                {/* Tribunal */}
-                <div className="info-field">
-                  <label>Tribunal</label>
-                  {isEditing ? (
+                  {/* Tribunal */}
+                  <div className="info-field">
+                    <label>Tribunal</label>
                     <select
                       value={formData.tribunal || ''}
                       onChange={(e) => handleInputChange('tribunal', e.target.value)}
@@ -893,15 +1026,11 @@ function CaseDetailPage() {
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
-                  ) : (
-                    <p className="info-value">{formData.tribunal_display || formData.tribunal}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Status */}
-                <div className="info-field">
-                  <label>Status</label>
-                  {isEditing ? (
+                  {/* Status */}
+                  <div className="info-field">
+                    <label>Status</label>
                     <select
                       value={formData.status || 'ATIVO'}
                       onChange={(e) => handleInputChange('status', e.target.value)}
@@ -910,15 +1039,11 @@ function CaseDetailPage() {
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
-                  ) : (
-                    <p className="info-value">{formData.status_display || formData.status}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Tipo de Ação */}
-                <div className="info-field">
-                  <label>Tipo de Ação</label>
-                  {isEditing ? (
+                  {/* Tipo de Ação */}
+                  <div className="info-field">
+                    <label>Tipo de Ação</label>
                     <select
                       value={formData.tipo_acao || ''}
                       onChange={(e) => handleInputChange('tipo_acao', e.target.value)}
@@ -927,110 +1052,83 @@ function CaseDetailPage() {
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
-                  ) : (
-                    <p className="info-value">{formData.tipo_acao_display || formData.tipo_acao || '-'}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Comarca */}
-                <div className="info-field">
-                  <label>Comarca</label>
-                  {isEditing ? (
+                  {/* Comarca */}
+                  <div className="info-field">
+                    <label>Comarca</label>
                     <input
                       type="text"
                       value={formData.comarca || ''}
                       onChange={(e) => handleInputChange('comarca', e.target.value)}
                       placeholder="Ex: São Paulo"
                     />
-                  ) : (
-                    <p className="info-value">{formData.comarca || '-'}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Vara */}
-                <div className="info-field">
-                  <label>Vara</label>
-                  {isEditing ? (
+                  {/* Vara */}
+                  <div className="info-field">
+                    <label>Vara</label>
                     <input
                       type="text"
                       value={formData.vara || ''}
                       onChange={(e) => handleInputChange('vara', e.target.value)}
                       placeholder="Ex: 1ª Vara Cível"
                     />
-                  ) : (
-                    <p className="info-value">{formData.vara || '-'}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Data Distribuição */}
-                <div className="info-field">
-                  <label>Data de Distribuição</label>
-                  {isEditing ? (
+                  {/* Data Distribuição */}
+                  <div className="info-field">
+                    <label>Data de Distribuição</label>
                     <input
                       type="date"
                       value={formData.data_distribuicao || ''}
                       onChange={(e) => handleInputChange('data_distribuicao', e.target.value)}
                     />
-                  ) : (
-                    <p className="info-value">{formatDate(formData.data_distribuicao)}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Data Última Movimentação - Calculado Automaticamente */}
-                <div className="info-field">
-                  <label>Última Movimentação</label>
-                  {formData.data_ultima_movimentacao ? (
-                    <div>
-                      <p className="info-value" style={{marginBottom: '0.25rem'}}>
-                        <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
-                      </p>
-                      {formData.ultima_movimentacao_resumo && (
-                        <p style={{fontSize: '0.9rem', color: '#6b7280'}}>
-                          {formData.ultima_movimentacao_resumo}
+                  {/* Data Última Movimentação - Calculado Automaticamente */}
+                  <div className="info-field">
+                    <label>Última Movimentação</label>
+                    {formData.data_ultima_movimentacao ? (
+                      <div>
+                        <p className="info-value" style={{marginBottom: '0.25rem'}}>
+                          <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
                         </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="info-value">
-                      <span style={{color: '#9ca3af', fontStyle: 'italic'}}>
-                        Nenhuma movimentação cadastrada
-                      </span>
-                    </p>
-                  )}
-                  {isEditing && (
+                        {formData.ultima_movimentacao_resumo && (
+                          <p style={{fontSize: '0.9rem', color: '#6b7280'}}>
+                            {formData.ultima_movimentacao_resumo}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="info-value">
+                        <span style={{color: '#9ca3af', fontStyle: 'italic'}}>
+                          Nenhuma movimentação cadastrada
+                        </span>
+                      </p>
+                    )}
                     <small style={{display: 'block', color: '#6b7280', fontSize: '0.75rem', marginTop: '0.5rem'}}>
                       ℹ️ Atualizado automaticamente pela aba Movimentações
                     </small>
-                  )}
-                </div>
+                  </div>
 
-                {/* Nosso Cliente - Display only, gerenciado via aba Partes */}
-                <div className="info-field full-width">
-                  <label>Nosso Cliente Neste Processo</label>
-                  {(() => {
-                    const clientParty = parties.find(p => p.is_client);
-                    if (clientParty) {
+                  {/* Nosso Cliente - Display only, gerenciado via aba Partes */}
+                  <div className="info-field full-width">
+                    <label>Nosso Cliente Neste Processo</label>
+                    {(() => {
+                      const clientParty = parties.find(p => p.is_client);
+                      if (clientParty) {
+                        return (
+                          <div className="client-display">
+                            <p className="info-value">
+                              <strong>{clientParty.contact_name}</strong> ({clientParty.role_display})
+                            </p>
+                          </div>
+                        );
+                      }
                       return (
-                        <div className="client-display">
-                          <p className="info-value">
-                            <strong>{clientParty.contact_name}</strong> ({clientParty.role_display})
-                          </p>
-                          {!isEditing && (
-                            <button 
-                              className="btn-link"
-                              onClick={() => setActiveSection('parties')}
-                              style={{fontSize: '0.875rem', marginTop: '0.25rem'}}
-                            >
-                              Gerenciar na aba Partes →
-                            </button>
-                          )}
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className="empty-state-inline">
-                        <p className="info-value empty">Nenhum cliente vinculado</p>
-                        {!isEditing && (
+                        <div className="empty-state-inline">
+                          <p className="info-value empty">Nenhum cliente vinculado</p>
                           <button 
                             className="btn btn-sm btn-primary"
                             onClick={() => setActiveSection('parties')}
@@ -1039,21 +1137,17 @@ function CaseDetailPage() {
                             <UserPlus size={16} />
                             Adicionar Cliente na aba Partes
                           </button>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  {isEditing && (
+                        </div>
+                      );
+                    })()}
                     <span className="field-hint">
                       💡 Clientes são gerenciados na aba "Partes". Marque "É nosso cliente?" ao adicionar.
                     </span>
-                  )}
-                </div>
+                  </div>
 
-                {/* Valor da Causa */}
-                <div className="info-field">
-                  <label>Valor da Causa</label>
-                  {isEditing ? (
+                  {/* Valor da Causa */}
+                  <div className="info-field">
+                    <label>Valor da Causa</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1061,26 +1155,20 @@ function CaseDetailPage() {
                       onChange={(e) => handleInputChange('valor_causa', e.target.value)}
                       placeholder="0.00"
                     />
-                  ) : (
-                    <p className="info-value">{formatCurrency(formData.valor_causa)}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Observações - Full Width */}
-                <div className="info-field full-width">
-                  <label>Observações</label>
-                  {isEditing ? (
+                  {/* Observações - Full Width */}
+                  <div className="info-field full-width">
+                    <label>Observações</label>
                     <textarea
                       value={formData.observacoes || ''}
                       onChange={(e) => handleInputChange('observacoes', e.target.value)}
                       rows="4"
                       placeholder="Observações sobre o processo..."
                     />
-                  ) : (
-                    <p className="info-value">{formData.observacoes || '-'}</p>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}

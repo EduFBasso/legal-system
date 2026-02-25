@@ -1934,3 +1934,177 @@
   color: #2563eb;
   text-decoration: underline;
 }
+
+/* ========================================
+   DETALHES DO PROCESSO - MODO READONLY
+   Agrupamento Temático com Alto Contraste
+   ======================================== */
+
+.details-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Grupo Temático */
+.details-group {
+  background: #f8fafc;
+  border: 3px solid #1e293b;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.details-group-title {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background: #1e293b;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 3px solid #0f172a;
+}
+
+.details-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Item Individual */
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.detail-item:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Item com destaque (ex: número do processo) */
+.detail-item.highlight {
+  background: #1e293b;
+  border-color: #0f172a;
+  color: white;
+}
+
+.detail-item.highlight .detail-label {
+  color: #94a3b8;
+}
+
+.detail-item.highlight .detail-value-large {
+  color: white;
+}
+
+/* Item ocupa largura total */
+.detail-item.full {
+  width: 100%;
+}
+
+/* Labels */
+.detail-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.detail-label-small {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+/* Valores */
+.detail-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.detail-value-large {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #1e293b;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.detail-value.empty {
+  color: #94a3b8;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Valor com múltiplas linhas */
+.detail-value-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-value-stacked strong {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.detail-value-sub {
+  font-size: 0.95rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Badges Row */
+.detail-badges-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.detail-badge-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Responsivo para Detalhes Readonly */
+@media (max-width: 768px) {
+  .details-group-title {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .details-content {
+    padding: 1.25rem;
+  }
+
+  .detail-item {
+    padding: 0.875rem 1rem;
+  }
+
+  .detail-value-large {
+    font-size: 1.5rem;
+  }
+
+  .detail-badges-row {
+    grid-template-columns: 1fr;
+  }
+}
