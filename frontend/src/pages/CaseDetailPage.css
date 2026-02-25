@@ -2657,18 +2657,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  color: #065f46;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border: 2px solid #64748b;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  color: #1e293b;
   font-weight: 600;
 }
 
 .financeiro-total strong {
-  font-size: 1.25rem;
-  color: #16a34a;
+  font-size: 1.3rem;
+  color: #1e293b;
 }
 
 /* Total Recebimentos */
