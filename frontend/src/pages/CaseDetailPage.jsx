@@ -5,6 +5,7 @@ import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
 import caseMovementsService from '../services/caseMovementsService';
+import financialService from '../services/financialService';
 import * as deadlinesService from '../services/deadlinesService';
 import Toast from '../components/common/Toast';
 import PublicationCard from '../components/PublicationCard';
@@ -624,20 +625,58 @@ function CaseDetailPage() {
    * Calculate total recebimentos
    */
   const calcularTotalRecebimentos = () => {
-    return recebimentos.reduce((sum, r) => sum + parseFloat(r.valor || 0), 0);
+    return recebimentos.reduce((sum, r) => sum + parseFloat(r.value || 0), 0);
   };
 
   /**
    * Calculate total despesas
    */
   const calcularTotalDespesas = () => {
-    return despesas.reduce((sum, d) => sum + parseFloat(d.valor || 0), 0);
+    return despesas.reduce((sum, d) => sum + parseFloat(d.value || 0), 0);
   };
+
+  /**
+   * Load payments (recebimentos) from backend
+   */
+  const loadPayments = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      const data = await financialService.getPaymentsByCase(id);
+      setRecebimentos(data);
+    } catch (error) {
+      console.error('Error loading payments:', error);
+      showToast('Erro ao carregar recebimentos', 'error');
+    }
+  }, [id, showToast]);
+
+  /**
+   * Load expenses (despesas) from backend
+   */
+  const loadExpenses = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      const data = await financialService.getExpensesByCase(id);
+      setDespesas(data);
+    } catch (error) {
+      console.error('Error loading expenses:', error);
+      showToast('Erro ao carregar despesas', 'error');
+    }
+  }, [id, showToast]);
+
+  // Load payments and expenses when entering financeiro section
+  useEffect(() => {
+    if (activeSection === 'financeiro' && id) {
+      loadPayments();
+      loadExpenses();
+    }
+  }, [activeSection, id, loadPayments, loadExpenses]);
 
   /**
    * Handle adicionar recebimento
    */
-  const handleAdicionarRecebimento = () => {
+  const handleAdicionarRecebimento = async () => {
     if (!recebimentoForm.data || !recebimentoForm.descricao || !recebimentoForm.valor) {
       showToast('Preencha todos os campos do recebimento', 'error');
       return;
@@ -649,34 +688,47 @@ function CaseDetailPage() {
       return;
     }
 
-    const novoRecebimento = {
-      id: Date.now(),
-      data: recebimentoForm.data,
-      descricao: recebimentoForm.descricao,
-      valor: valor
-    };
+    try {
+      const paymentData = {
+        case: id,
+        date: recebimentoForm.data,
+        description: recebimentoForm.descricao,
+        value: valor
+      };
 
-    setRecebimentos(prev => [...prev, novoRecebimento]);
-    setRecebimentoForm({
-      data: new Date().toISOString().split('T')[0],
-      descricao: '',
-      valor: ''
-    });
-    showToast('Recebimento adicionado', 'success');
+      await financialService.createPayment(paymentData);
+      await loadPayments(); // Reload from backend
+      
+      setRecebimentoForm({
+        data: new Date().toISOString().split('T')[0],
+        descricao: '',
+        valor: ''
+      });
+      showToast('Recebimento adicionado', 'success');
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      showToast('Erro ao adicionar recebimento', 'error');
+    }
   };
 
   /**
    * Handle remover recebimento
    */
-  const handleRemoverRecebimento = (id) => {
-    setRecebimentos(prev => prev.filter(r => r.id !== id));
-    showToast('Recebimento removido', 'success');
+  const handleRemoverRecebimento = async (paymentId) => {
+    try {
+      await financialService.deletePayment(paymentId);
+      await loadPayments(); // Reload from backend
+      showToast('Recebimento removido', 'success');
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      showToast('Erro ao remover recebimento', 'error');
+    }
   };
 
   /**
    * Handle adicionar despesa
    */
-  const handleAdicionarDespesa = () => {
+  const handleAdicionarDespesa = async () => {
     if (!despesaForm.data || !despesaForm.descricao || !despesaForm.valor) {
       showToast('Preencha todos os campos da despesa', 'error');
       return;
@@ -688,28 +740,41 @@ function CaseDetailPage() {
       return;
     }
 
-    const novaDespesa = {
-      id: Date.now(),
-      data: despesaForm.data,
-      descricao: despesaForm.descricao,
-      valor: valor
-    };
+    try {
+      const expenseData = {
+        case: id,
+        date: despesaForm.data,
+        description: despesaForm.descricao,
+        value: valor
+      };
 
-    setDespesas(prev => [...prev, novaDespesa]);
-    setDespesaForm({
-      data: new Date().toISOString().split('T')[0],
-      descricao: '',
-      valor: ''
-    });
-    showToast('Despesa adicionada', 'success');
+      await financialService.createExpense(expenseData);
+      await loadExpenses(); // Reload from backend
+      
+      setDespesaForm({
+        data: new Date().toISOString().split('T')[0],
+        descricao: '',
+        valor: ''
+      });
+      showToast('Despesa adicionada', 'success');
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      showToast('Erro ao adicionar despesa', 'error');
+    }
   };
 
   /**
    * Handle remover despesa
    */
-  const handleRemoverDespesa = (id) => {
-    setDespesas(prev => prev.filter(d => d.id !== id));
-    showToast('Despesa removida', 'success');
+  const handleRemoverDespesa = async (expenseId) => {
+    try {
+      await financialService.deleteExpense(expenseId);
+      await loadExpenses(); // Reload from backend
+      showToast('Despesa removida', 'success');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      showToast('Erro ao remover despesa', 'error');
+    }
   };
 
   if (loading) {
@@ -1769,12 +1834,12 @@ function CaseDetailPage() {
                         {recebimentos.map(recebimento => (
                           <div key={recebimento.id} className="financeiro-item">
                             <div className="financeiro-item-info">
-                              <span className="financeiro-item-data">{formatDate(recebimento.data)}</span>
-                              <span className="financeiro-item-descricao">{recebimento.descricao}</span>
+                              <span className="financeiro-item-data">{formatDate(recebimento.date)}</span>
+                              <span className="financeiro-item-descricao">{recebimento.description}</span>
                             </div>
                             <div className="financeiro-item-actions">
                               <span className="financeiro-item-valor">
-                                R$ {recebimento.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                R$ {recebimento.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
                               <button 
                                 className="btn-icon-danger"
@@ -1876,12 +1941,12 @@ function CaseDetailPage() {
                         {despesas.map(despesa => (
                           <div key={despesa.id} className="financeiro-item">
                             <div className="financeiro-item-info">
-                              <span className="financeiro-item-data">{formatDate(despesa.data)}</span>
-                              <span className="financeiro-item-descricao">{despesa.descricao}</span>
+                              <span className="financeiro-item-data">{formatDate(despesa.date)}</span>
+                              <span className="financeiro-item-descricao">{despesa.description}</span>
                             </div>
                             <div className="financeiro-item-actions">
                               <span className="financeiro-item-valor">
-                                R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                R$ {despesa.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
                               <button 
                                 className="btn-icon-danger"
