@@ -69,6 +69,7 @@ function CaseDetailPage() {
   const [participacaoPercentual, setParticipacaoPercentual] = useState('');
   const [participacaoValorFixo, setParticipacaoValorFixo] = useState('');
   const [pagaMedianteGanho, setPagaMedianteGanho] = useState(false);
+  const [valorCausaInput, setValorCausaInput] = useState('');
   const [recebimentoForm, setRecebimentoForm] = useState({
     data: new Date().toISOString().split('T')[0],
     descricao: '',
@@ -397,6 +398,10 @@ function CaseDetailPage() {
         }
       });
 
+      if (cleanedData.valor_causa !== undefined) {
+        cleanedData.valor_causa = parseCurrencyValue(cleanedData.valor_causa);
+      }
+
       const updated = await casesService.update(id, cleanedData);
       setCaseData(updated);
       setFormData(updated);
@@ -574,8 +579,29 @@ function CaseDetailPage() {
    */
   const formatCurrency = (value) => {
     if (!value) return '-';
-    return `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `R$ ${parseCurrencyValue(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
+
+  const parseCurrencyValue = (value) => {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'number') return value;
+    const normalized = value.toString().replace(/\./g, '').replace(',', '.');
+    return parseFloat(normalized) || 0;
+  };
+
+  const formatCurrencyInput = (value) => {
+    const numeric = parseCurrencyValue(value);
+    return numeric.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  useEffect(() => {
+    if (formData.valor_causa === null || formData.valor_causa === undefined || formData.valor_causa === '') {
+      setValorCausaInput('');
+      return;
+    }
+
+    setValorCausaInput(formatCurrencyInput(formData.valor_causa));
+  }, [formData.valor_causa]);
 
   // ========== FINANCEIRO FUNCTIONS ==========
 
@@ -583,14 +609,14 @@ function CaseDetailPage() {
    * Calculate participacao value based on type
    */
   const calcularParticipacao = () => {
-    const valorCausa = parseFloat(formData.valor_causa) || 0;
+    const valorCausa = parseCurrencyValue(formData.valor_causa);
     if (valorCausa === 0) return 0;
 
     if (participacaoTipo === 'percentage') {
       const percentual = parseFloat(participacaoPercentual) || 0;
       return (valorCausa * percentual) / 100;
     } else {
-      return parseFloat(participacaoValorFixo) || 0;
+      return parseCurrencyValue(participacaoValorFixo);
     }
   };
 
@@ -1591,12 +1617,17 @@ function CaseDetailPage() {
                         <div className="financeiro-input-icon-group">
                           <span className="financeiro-currency-label">💰 R$</span>
                           <input 
-                            type="number" 
+                            type="text" 
+                            inputMode="decimal"
                             className="financeiro-input-clean"
                             placeholder="1.000,00" 
-                            value={formData.valor_causa || ''}
-                            onChange={(e) => handleInputChange('valor_causa', e.target.value)}
-                            step="0.01"
+                            value={valorCausaInput}
+                            onChange={(e) => setValorCausaInput(e.target.value)}
+                            onBlur={(e) => {
+                              const numericValue = parseCurrencyValue(e.target.value);
+                              handleInputChange('valor_causa', numericValue);
+                              setValorCausaInput(formatCurrencyInput(numericValue));
+                            }}
                           />
                         </div>
                       </div>
@@ -1655,12 +1686,14 @@ function CaseDetailPage() {
                           <span>Valor Fixo (R$)</span>
                         </label>
                         <input 
-                          type="number" 
+                          type="text" 
+                          inputMode="decimal"
                           className="financeiro-input-compact" 
                           placeholder="0,00" 
                           step="0.01"
                           value={participacaoValorFixo}
                           onChange={(e) => setParticipacaoValorFixo(e.target.value)}
+                          onBlur={(e) => setParticipacaoValorFixo(formatCurrencyInput(e.target.value))}
                           disabled={participacaoTipo !== 'fixed'}
                         />
                       </div>
