@@ -715,6 +715,35 @@ function CaseDetailPage() {
   }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho]);
 
   /**
+   * Handle save financial data
+   */
+  const handleSaveFinancialData = async () => {
+    try {
+      setSaving(true);
+
+      const financialData = {
+        valor_causa: parseCurrencyValue(formData.valor_causa),
+        participation_type: participacaoTipo,
+        participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
+        participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
+        payment_conditional: pagaMedianteGanho,
+        observations_financial_block_a: formData.observations_financial_block_a || '',
+        observations_financial_block_b: formData.observations_financial_block_b || '',
+      };
+
+      const updated = await casesService.update(id, financialData);
+      setCaseData(updated);
+      setFormData(updated);
+      showToast('Dados financeiros salvos com sucesso!', 'success');
+    } catch (error) {
+      console.error('Error saving financial data:', error);
+      showToast('Erro ao salvar dados financeiros', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
    * Handle adicionar recebimento
    */
   const handleAdicionarRecebimento = async () => {
@@ -1705,6 +1734,14 @@ function CaseDetailPage() {
                   <h2 className="section-title">💰 Gestão Financeira</h2>
                   <p className="section-subtitle">Controle de valores e custos do processo</p>
                 </div>
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleSaveFinancialData}
+                  disabled={saving}
+                >
+                  <Save size={16} />
+                  {saving ? 'Salvando...' : 'Salvar Dados Financeiros'}
+                </button>
               </div>
 
               {/* BLOCO A: Valor do Processo */}
