@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Edit2, Save, X, Trash2, Users, Calendar, FileText, Plus, UserPlus, RefreshCw, ExternalLink, DollarSign } from 'lucide-react';
+import { ArrowLeft, Edit2, Save, X, Trash2, Users, Calendar, FileText, Plus, UserPlus, RefreshCw, ExternalLink } from 'lucide-react';
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
@@ -1462,7 +1462,7 @@ function CaseDetailPage() {
                       <div className="financeiro-field">
                         <label className="financeiro-label financeiro-label-destaque">Valor da Causa</label>
                         <div className="financeiro-input-icon-group">
-                          <DollarSign size={20} className="financeiro-input-icon" />
+                          <span className="financeiro-currency-label">💰 R$</span>
                           <input 
                             type="number" 
                             className="financeiro-input-clean"
