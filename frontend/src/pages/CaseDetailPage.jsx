@@ -881,17 +881,84 @@ function CaseDetailPage() {
                     </div>
                   </div>
 
-                  {/* Localização */}
+                  {/* Partes e Financeiro */}
                   <div className="details-group">
-                    <h3 className="details-group-title">📍 Localização</h3>
+                    <h3 className="details-group-title">👥 Partes e Financeiro</h3>
                     <div className="details-content">
-                      <div className="detail-item">
-                        <span className="detail-label">Comarca</span>
-                        <span className="detail-value">{formData.comarca || '-'}</span>
+                      <div className="detail-partes-row">
+                        <div className="detail-partes-col">
+                          {(() => {
+                            const clientParty = parties.find(p => p.is_client);
+                            const dynamicLabel = clientParty?.role_display 
+                              ? `${clientParty.role_display.toUpperCase()} DA AÇÃO` 
+                              : 'CLIENTE';
+                            
+                            return (
+                              <>
+                                <span className="detail-label">{dynamicLabel}</span>
+                                {clientParty ? (
+                                  <div className="detail-client-block">
+                                    <div className="detail-client-row">
+                                      <Link
+                                        to={`/contacts?open=${clientParty.contact}`}
+                                        className="party-contact-link detail-client-link"
+                                        title="Ver detalhes do contato (abre em nova aba)"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        <span className="detail-client-name">{clientParty.contact_name}</span> ↗
+                                      </Link>
+                                      <span className="client-badge">✅ CLIENTE</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="detail-client-block">
+                                    <span className="detail-value empty">Nenhum cliente vinculado</span>
+                                    <button
+                                      className="btn btn-sm btn-primary"
+                                      onClick={() => setActiveSection('parties')}
+                                      style={{marginTop: '0.5rem'}}
+                                    >
+                                      <UserPlus size={16} />
+                                      Adicionar Cliente na aba Partes
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                          <button
+                            className="btn-link detail-partes-hint"
+                            onClick={() => setActiveSection('parties')}
+                          >
+                            ℹ️ Use a aba "Partes" para gerenciar detalhadamente
+                          </button>
+                        </div>
+                        <div className="detail-partes-col">
+                          <span className="detail-label">Partes</span>
+                          {(() => {
+                            const otherParties = parties.filter(p => !p.is_client);
+                            if (otherParties.length > 0) {
+                              return (
+                                <div className="detail-partes-list">
+                                  {otherParties.map(party => (
+                                    <div key={party.id} className="detail-partes-item">
+                                      <strong>{party.contact_name}</strong>
+                                      <span className="detail-value-sub">({party.role_display})</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            }
+                            return (
+                              <span className="detail-value empty">Nenhuma outra parte cadastrada</span>
+                            );
+                          })()}
+                        </div>
                       </div>
                       <div className="detail-item">
-                        <span className="detail-label">Vara</span>
-                        <span className="detail-value">{formData.vara || '-'}</span>
+                        <span className="detail-label">Valor da Causa</span>
+                        <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
                       </div>
                     </div>
                   </div>
@@ -920,47 +987,17 @@ function CaseDetailPage() {
                     </div>
                   </div>
 
-                  {/* Partes e Financeiro */}
+                  {/* Localização */}
                   <div className="details-group">
-                    <h3 className="details-group-title">👥 Partes e Financeiro</h3>
+                    <h3 className="details-group-title">📍 Localização</h3>
                     <div className="details-content">
-                      <div className="detail-item full">
-                        <span className="detail-label">Nosso Cliente</span>
-                        {(() => {
-                          const clientParty = parties.find(p => p.is_client);
-                          if (clientParty) {
-                            return (
-                              <div className="detail-value-stacked">
-                                <strong>{clientParty.contact_name}</strong>
-                                <span className="detail-value-sub">({clientParty.role_display})</span>
-                                <button 
-                                  className="btn-link"
-                                  onClick={() => setActiveSection('parties')}
-                                  style={{fontSize: '0.875rem', marginTop: '0.5rem'}}
-                                >
-                                  Gerenciar na aba Partes →
-                                </button>
-                              </div>
-                            );
-                          }
-                          return (
-                            <div className="detail-value-stacked">
-                              <span className="detail-value empty">Nenhum cliente vinculado</span>
-                              <button 
-                                className="btn btn-sm btn-primary"
-                                onClick={() => setActiveSection('parties')}
-                                style={{marginTop: '0.5rem'}}
-                              >
-                                <UserPlus size={16} />
-                                Adicionar Cliente na aba Partes
-                              </button>
-                            </div>
-                          );
-                        })()}
+                      <div className="detail-item">
+                        <span className="detail-label">Comarca</span>
+                        <span className="detail-value">{formData.comarca || '-'}</span>
                       </div>
                       <div className="detail-item">
-                        <span className="detail-label">Valor da Causa</span>
-                        <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
+                        <span className="detail-label">Vara</span>
+                        <span className="detail-value">{formData.vara || '-'}</span>
                       </div>
                     </div>
                   </div>
