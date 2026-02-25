@@ -129,6 +129,50 @@ class Case(models.Model):
         help_text='Valor da causa em R$'
     )
 
+    # ========== FINANCEIRO ==========
+    participation_type = models.CharField(
+        max_length=20,
+        default='percentage',
+        choices=[
+            ('percentage', 'Percentual'),
+            ('fixed', 'Valor Fixo'),
+        ],
+        help_text='Tipo de participação: percentual ou valor fixo'
+    )
+
+    participation_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Percentual de participação do escritório (%)'
+    )
+
+    participation_fixed_value = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Valor fixo de participação do escritório (R$)'
+    )
+
+    payment_conditional = models.BooleanField(
+        default=False,
+        help_text='Cliente paga apenas mediante ganho de causa'
+    )
+
+    observations_financial_block_a = models.TextField(
+        blank=True,
+        default='',
+        help_text='Observações do bloco A (Valor do Processo)'
+    )
+
+    observations_financial_block_b = models.TextField(
+        blank=True,
+        default='',
+        help_text='Observações do bloco B (Custos e Despesas)'
+    )
+
     # ========== CLIENTE PRINCIPAL (ATALHO) ==========
     # Campos de atalho para acesso rápido ao cliente principal.
     # Sincronizados automaticamente com CaseParty no save().
@@ -484,3 +528,91 @@ class CaseMovement(models.Model):
             # Se não há mais movimentações, limpa a data
             self.case.data_ultima_movimentacao = None
             self.case.save(update_fields=['data_ultima_movimentacao'])
+
+
+class Payment(models.Model):
+    """
+    Recebimento de honorários do cliente.
+    Registra pagamentos recebidos pelo escritório.
+    """
+    
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        help_text='Processo relacionado'
+    )
+    
+    date = models.DateField(
+        help_text='Data do recebimento'
+    )
+    
+    description = models.CharField(
+        max_length=255,
+        help_text='Descrição do recebimento (ex: Honorários - Parcela 1/3)'
+    )
+    
+    value = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text='Valor recebido em R$'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-date', '-created_at']
+        verbose_name = 'Recebimento'
+        verbose_name_plural = 'Recebimentos'
+        indexes = [
+            models.Index(fields=['case', '-date']),
+            models.Index(fields=['-date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.case.numero_processo} - R$ {self.value:.2f} ({self.date})"
+
+
+class Expense(models.Model):
+    """
+    Despesa/custos do processo.
+    Registra gastos do escritório (custas, perícias, etc).
+    """
+    
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='expenses',
+        help_text='Processo relacionado'
+    )
+    
+    date = models.DateField(
+        help_text='Data da despesa'
+    )
+    
+    description = models.CharField(
+        max_length=255,
+        help_text='Descrição da despesa (ex: Custas processuais, Honorários perito)'
+    )
+    
+    value = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text='Valor da despesa em R$'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-date', '-created_at']
+        verbose_name = 'Despesa'
+        verbose_name_plural = 'Despesas'
+        indexes = [
+            models.Index(fields=['case', '-date']),
+            models.Index(fields=['-date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.case.numero_processo} - R$ {self.value:.2f} ({self.date})"

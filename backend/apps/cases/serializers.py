@@ -2,7 +2,7 @@
 Serializers for Cases app
 """
 from rest_framework import serializers
-from .models import Case, CaseParty, CaseMovement
+from .models import Case, CaseParty, CaseMovement, Payment, Expense
 
 
 class CaseMovementSerializer(serializers.ModelSerializer):
@@ -74,6 +74,40 @@ class CasePartySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+class PaymentSerializer(serializers.ModelSerializer):
+    """Serializer for Payment (Recebimentos)"""
+    
+    class Meta:
+        model = Payment
+        fields = [
+            'id',
+            'case',
+            'date',
+            'description',
+            'value',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    """Serializer for Expense (Despesas)"""
+    
+    class Meta:
+        model = Expense
+        fields = [
+            'id',
+            'case',
+            'date',
+            'description',
+            'value',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
 class CaseListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list view"""
     numero_processo_formatted = serializers.ReadOnlyField()
@@ -109,6 +143,11 @@ class CaseListSerializer(serializers.ModelSerializer):
             'cliente_nome',
             'cliente_posicao',
             'cliente_posicao_display',
+            'valor_causa',
+            'participation_type',
+            'participation_percentage',
+            'participation_fixed_value',
+            'payment_conditional',
             'observacoes',
             'tags',
             'created_at',
@@ -180,6 +219,12 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'total_publicacoes',
             'publicacoes_recentes',
             'parties',
+            'participation_type',
+            'participation_percentage',
+            'participation_fixed_value',
+            'payment_conditional',
+            'observations_financial_block_a',
+            'observations_financial_block_b',
             'deleted',
             'deleted_at',
             'deleted_reason',

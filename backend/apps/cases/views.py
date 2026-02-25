@@ -8,12 +8,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count
 
-from .models import Case, CaseParty, CaseMovement
+from .models import Case, CaseParty, CaseMovement, Payment, Expense
 from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
     CasePartySerializer,
     CaseMovementSerializer,
+    PaymentSerializer,
+    ExpenseSerializer,
 )
 
 
@@ -160,6 +162,64 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
         """
         Optionally filter by case_id from URL parameter
         For use in nested routes like /api/cases/{id}/movimentacoes/
+        """
+        queryset = super().get_queryset()
+        case_id = self.request.query_params.get('case_id')
+        if case_id:
+            queryset = queryset.filter(case_id=case_id)
+        return queryset
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Payment model (Recebimentos de honorários)
+    
+    Provides CRUD operations for client payments.
+    Automatically filters by case_id from query parameters or URL.
+    """
+    queryset = Payment.objects.all().order_by('-date', '-created_at')
+    serializer_class = PaymentSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = {
+        'case': ['exact'],
+        'date': ['gte', 'lte', 'exact'],
+    }
+    ordering_fields = ['date', 'value', 'created_at']
+    ordering = ['-date', '-created_at']
+    
+    def get_queryset(self):
+        """
+        Optionally filter by case_id from URL parameter.
+        For use in nested routes like /api/cases/{id}/payments/
+        """
+        queryset = super().get_queryset()
+        case_id = self.request.query_params.get('case_id')
+        if case_id:
+            queryset = queryset.filter(case_id=case_id)
+        return queryset
+
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Expense model (Despesas/custos do processo)
+    
+    Provides CRUD operations for case expenses.
+    Automatically filters by case_id from query parameters or URL.
+    """
+    queryset = Expense.objects.all().order_by('-date', '-created_at')
+    serializer_class = ExpenseSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = {
+        'case': ['exact'],
+        'date': ['gte', 'lte', 'exact'],
+    }
+    ordering_fields = ['date', 'value', 'created_at']
+    ordering = ['-date', '-created_at']
+    
+    def get_queryset(self):
+        """
+        Optionally filter by case_id from URL parameter.
+        For use in nested routes like /api/cases/{id}/expenses/
         """
         queryset = super().get_queryset()
         case_id = self.request.query_params.get('case_id')
