@@ -1134,7 +1134,7 @@ function CaseDetailPage() {
                   {editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
                 </span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                     <strong>{editingParty.contact_name}</strong>
                     <button
                       className="btn-edit-contact-link"
@@ -1142,16 +1142,28 @@ function CaseDetailPage() {
                       title="Editar dados pessoais do contato"
                       style={{
                         background: 'none',
-                        border: 'none',
-                        padding: '0.25rem',
+                        border: '1px solid #2563eb',
+                        borderRadius: '4px',
+                        padding: '0.4rem 0.8rem',
                         cursor: 'pointer',
                         color: '#2563eb',
-                        fontSize: '0.9rem',
+                        fontSize: '0.85rem',
                         display: 'inline-flex',
                         alignItems: 'center',
+                        gap: '0.4rem',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = '#2563eb';
+                        e.target.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'none';
+                        e.target.style.color = '#2563eb';
                       }}
                     >
-                      ✏️
+                      ✏️ Editar dados pessoais
                     </button>
                   </div>
                   {editingParty.contact_document && (
@@ -1223,6 +1235,7 @@ function CaseDetailPage() {
           onClose={() => setEditingContactId(null)}
           onContactUpdated={handleContactUpdated}
           showLinkToProcessButton={false}
+          openInEditMode={true}
         />
       )}
 

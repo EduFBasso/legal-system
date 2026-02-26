@@ -18,7 +18,8 @@ export default function ContactDetailModal({
   showLinkToProcessButton = false, 
   onLinkToProcess,
   onLinkToCase, // Novo callback para abrir modal de vinculação
-  allowModification = true  // Se false, bloqueia editar/deletar (apenas visualização)
+  allowModification = true,  // Se false, bloqueia editar/deletar (apenas visualização)
+  openInEditMode = false     // Se true, abre direto em modo edição
 }) {
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +42,7 @@ export default function ContactDetailModal({
       if (contactId) {
         // Load existing contact
         loadContactDetails();
-        setIsEditing(false);
+        setIsEditing(openInEditMode);  // Abrir em edit mode se prop indicar
       } else {
         // Creating new contact - reset state
         const emptyContact = {
@@ -374,16 +375,33 @@ export default function ContactDetailModal({
                 
                 {/* Documento: sempre mostra se config ativa OU se tiver valor */}
                 {(isEditing || settings.showEmptyFields || contact?.document_formatted) && (
-                  <FormMaskedField
-                    label={currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}
-                    value={isEditing ? editedContact.document : (contact?.document_formatted || '')}
-                    onChange={(value) => handleChange('document', value)}
-                    mask={(value) => maskDocument(value, currentData.person_type)}
-                    readOnly={!isEditing}
-                    placeholder={currentData.person_type === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
-                    maxLength={currentData.person_type === 'PF' ? 14 : 18}
-                    emptyText="Não informado ⚠️"
-                  />
+                  isEditing ? (
+                    <FormMaskedField
+                      label={currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}
+                      value={editedContact.document}
+                      onChange={(value) => handleChange('document', value)}
+                      mask={(value) => maskDocument(value, currentData.person_type)}
+                      readOnly={false}
+                      placeholder={currentData.person_type === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                      maxLength={currentData.person_type === 'PF' ? 14 : 18}
+                      emptyText="Não informado ⚠️"
+                    />
+                  ) : (
+                    <div className="detail-field full-width">
+                      <label className="form-field-label">
+                        {currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}
+                      </label>
+                      <span className="form-field-value">
+                        {contact?.document_formatted ? (
+                          <>
+                            <strong>{currentData.person_type === 'PF' ? 'CPF:' : 'CNPJ:'}</strong> {contact.document_formatted}
+                          </>
+                        ) : (
+                          'Não informado ⚠️'
+                        )}
+                      </span>
+                    </div>
+                  )
                 )}
               </div>
             </section>
