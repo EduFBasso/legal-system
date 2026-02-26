@@ -986,106 +986,15 @@ function CaseDetailPage() {
 
         {/* Prazos Section */}
         {activeSection === 'deadlines' && (
-          <div className="case-section">
-            <div className="section-card">
-              <div className="section-header">
-                <div>
-                  <h2 className="section-title">⏰ Prazos Processuais</h2>
-                  <p className="section-subtitle">Gestão de prazos e vencimentos</p>
-                </div>
-                <div className="deadlines-filters">
-                  <button
-                    className={`filter-btn ${deadlineFilter === 'all' ? 'active' : ''}`}
-                    onClick={() => setDeadlineFilter('all')}
-                  >
-                    Todos ({deadlines.length})
-                  </button>
-                  <button
-                    className={`filter-btn ${deadlineFilter === 'overdue' ? 'active' : ''}`}
-                    onClick={() => setDeadlineFilter('overdue')}
-                  >
-                    Vencidos ({deadlines.filter(d => deadlinesService.getDeadlineStatus(d.data_limite_prazo) === 'overdue').length})
-                  </button>
-                  <button
-                    className={`filter-btn ${deadlineFilter === 'upcoming' ? 'active' : ''}`}
-                    onClick={() => setDeadlineFilter('upcoming')}
-                  >
-                    Próximos ({deadlines.filter(d => {
-                      const status = deadlinesService.getDeadlineStatus(d.data_limite_prazo);
-                      return status === 'urgent' || status === 'upcoming';
-                    }).length})
-                  </button>
-                  <button
-                    className={`filter-btn ${deadlineFilter === 'future' ? 'active' : ''}`}
-                    onClick={() => setDeadlineFilter('future')}
-                  >
-                    Futuros ({deadlines.filter(d => deadlinesService.getDeadlineStatus(d.data_limite_prazo) === 'future').length})
-                  </button>
-                </div>
-              </div>
-
-              {loadingDeadlines ? (
-                <div className="loading-container">
-                  <RefreshCw className="spinning" size={32} />
-                  <p>Carregando prazos...</p>
-                </div>
-              ) : deadlines.length === 0 ? (
-                <div className="empty-state">
-                  <Calendar size={48} />
-                  <h3>Nenhum prazo cadastrado</h3>
-                  <p>
-                    Adicione prazos nas movimentações para acompanhar vencimentos.
-                  </p>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setActiveSection('movimentacoes')}
-                  >
-                    Ir para Movimentações
-                  </button>
-                </div>
-              ) : (
-                <div className="deadlines-list">
-                  {deadlines
-                    .filter(deadline => {
-                      if (deadlineFilter === 'all') return true;
-                      const status = deadlinesService.getDeadlineStatus(deadline.data_limite_prazo);
-                      if (deadlineFilter === 'overdue') return status === 'overdue';
-                      if (deadlineFilter === 'upcoming') return status === 'urgent' || status === 'upcoming';
-                      if (deadlineFilter === 'future') return status === 'future';
-                      return true;
-                    })
-                    .map(deadline => {
-                      const status = deadlinesService.getDeadlineStatus(deadline.data_limite_prazo);
-                      const statusInfo = deadlinesService.getDeadlineStatusInfo(status);
-                      
-                      return (
-                        <div key={deadline.id} className="deadline-card" style={{ borderLeftColor: statusInfo.color }}>
-                          <div className="deadline-header">
-                            <span className="deadline-status" style={{ color: statusInfo.color }}>
-                              {statusInfo.label}
-                            </span>
-                            <span className="deadline-date">
-                              {formatDate(deadline.data_limite_prazo)}
-                            </span>
-                          </div>
-                          <div className="deadline-content">
-                            <div className="deadline-type">{deadline.tipo_display || deadline.tipo}</div>
-                            <h4 className="deadline-title">{deadline.titulo}</h4>
-                            {deadline.descricao && (
-                              <p className="deadline-description">{deadline.descricao}</p>
-                            )}
-                            <div className="deadline-meta">
-                              <span>📅 Movimentação: {formatDate(deadline.data)}</span>
-                              <span>⏱️ Prazo: {deadline.prazo} dias</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-          </div>
+          <DeadlinesTab 
+            id={id}
+            deadlines={deadlines}
+            deadlineFilter={deadlineFilter}
+            setDeadlineFilter={setDeadlineFilter}
+            loadingDeadlines={loadingDeadlines}
+            setActiveSection={setActiveSection}
+            formatDate={formatDate}
+          />
         )}
 
         {/* Financeiro Section */}
