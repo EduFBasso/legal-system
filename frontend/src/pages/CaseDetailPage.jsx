@@ -43,6 +43,7 @@ function CaseDetailPage() {
   const [toast, setToast] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSelectContactModal, setShowSelectContactModal] = useState(false);
+  const [editingContactId, setEditingContactId] = useState(null);
   
   // Parties state
   const [parties, setParties] = useState([]);
@@ -398,6 +399,22 @@ function CaseDetailPage() {
       console.error('Error removing party:', error);
       showToast('Erro ao remover parte', 'error');
     }
+  };
+
+  /**
+   * Handle edit contact
+   */
+  const handleEditContact = (contactId) => {
+    setEditingContactId(contactId);
+  };
+
+  /**
+   * Handle contact updated (from edit modal)
+   */
+  const handleContactUpdated = () => {
+    setEditingContactId(null);
+    loadParties(); // Reload parties to show updated data
+    showToast('Contato atualizado com sucesso!', 'success');
   };
 
   /**
@@ -1028,6 +1045,7 @@ function CaseDetailPage() {
             loadingParties={loadingParties}
             onAddPartyClick={handleOpenContactSelection}
             onRemoveParty={handleRemoveParty}
+            onEditContact={handleEditContact}
           />
         )}
       </main>
@@ -1061,6 +1079,17 @@ function CaseDetailPage() {
           onContactUpdated={handleContactCreated}
           showLinkToProcessButton={activeSection !== 'parties'}
           onLinkToProcess={activeSection === 'parties' ? handleSelectContactForParty : handleLinkToProcess}
+        />
+      )}
+
+      {/* Modal de Edição de Contato */}
+      {editingContactId && (
+        <ContactDetailModal
+          contactId={editingContactId}
+          isOpen={!!editingContactId}
+          onClose={() => setEditingContactId(null)}
+          onContactUpdated={handleContactUpdated}
+          showLinkToProcessButton={false}
         />
       )}
 

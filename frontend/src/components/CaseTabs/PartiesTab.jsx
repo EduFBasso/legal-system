@@ -1,4 +1,4 @@
-import { Users, UserPlus, Trash2 } from 'lucide-react';
+import { Users, UserPlus, Trash2, Edit2 } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
 
 /**
@@ -11,6 +11,7 @@ function PartiesTab({
   loadingParties = false,
   onAddPartyClick = () => {},
   onRemoveParty = () => {},
+  onEditContact = () => {},
 }) {
   return (
     <div className="case-section">
@@ -82,13 +83,22 @@ function PartiesTab({
                   )}
                 </div>
 
-                <button 
-                  className="btn-remove-party"
-                  onClick={() => onRemoveParty(party.id, party.contact_name)}
-                  title="Remover do processo"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="party-actions">
+                  <button 
+                    className="btn-edit-party"
+                    onClick={() => onEditContact(party.contact_id)}
+                    title="Editar contato"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button 
+                    className="btn-remove-party"
+                    onClick={() => onRemoveParty(party.id, party.contact_name)}
+                    title="Remover do processo"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
