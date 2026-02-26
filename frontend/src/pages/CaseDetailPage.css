@@ -2590,6 +2590,11 @@
   border-radius: 8px;
 }
 
+/* Remover margin-bottom dos FormFields dentro do form */
+.financeiro-recebimento-form .form-field {
+  margin-bottom: 0;
+}
+
 .financeiro-input {
   padding: 0.75rem 1rem;
   border: 2px solid #e2e8f0;

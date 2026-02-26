@@ -1,5 +1,5 @@
 import { Save, Plus, Trash2 } from 'lucide-react';
-import { CurrencyInput, DateInput, TextAreaField } from '../FormFields';
+import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
 
 /**
  * FinanceiroTab - Aba de Gestão Financeira do Processo
@@ -168,7 +168,7 @@ function FinanceiroTab({
               
               {/* Formulário para Novo Recebimento */}
               <div className="financeiro-recebimento-form">
-                <DateInput
+                <DateInputMasked
                   label="Data"
                   value={recebimentoForm.data}
                   onChange={(value) => setRecebimentoForm({...recebimentoForm, data: value})}
@@ -265,7 +265,7 @@ function FinanceiroTab({
               
               {/* Formulário para Nova Despesa */}
               <div className="financeiro-recebimento-form">
-                <DateInput
+                <DateInputMasked
                   label="Data"
                   value={despesaForm.data}
                   onChange={(value) => setDespesaForm({...despesaForm, data: value})}

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Edit2, Save, X, Trash2, UserPlus } from 'lucide-react';
-import { SelectField, DateInput, CurrencyInput, TextAreaField } from '../FormFields';
+import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
 
 /**
  * InformacaoTab - Aba de Informações do Processo
@@ -341,7 +341,7 @@ function InformacaoTab({
             </div>
 
             {/* Data Distribuição */}
-            <DateInput
+            <DateInputMasked
               label="Data de Distribuição"
               value={formData.data_distribuicao || ''}
               onChange={(value) => handleInputChange('data_distribuicao', value)}

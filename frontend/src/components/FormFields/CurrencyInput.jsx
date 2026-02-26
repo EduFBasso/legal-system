@@ -22,7 +22,6 @@ export default function CurrencyInput({
   disabled = false,
   className = '',
 }) {
-  const [displayValue, setDisplayValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const prevValueRef = useRef(value);
 
@@ -39,14 +38,15 @@ export default function CurrencyInput({
     return parseFloat(strValue.replace(/\D/g, '')) / 100 || 0;
   };
 
-  // Sincronizar display com value externo apenas se mudou E não está focado
+  // Inicializar e sincronizar display com value externo
+  const [displayValue, setDisplayValue] = useState(() => formatCurrency(value));
+
+  // Sincronizar display com value externo quando NÃO está focado
   useEffect(() => {
     if (!isFocused && prevValueRef.current !== value) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setDisplayValue(formatCurrency(value));
       prevValueRef.current = value;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, isFocused]);
 
   const handleFocus = () => {

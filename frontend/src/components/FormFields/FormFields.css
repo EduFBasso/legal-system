@@ -92,8 +92,15 @@
 }
 
 /* Date Input */
+.date-input-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
 .date-input {
   font-family: inherit;
+  position: relative;
+  z-index: inherit;
 }
 
 .date-input::-webkit-calendar-picker-indicator {
