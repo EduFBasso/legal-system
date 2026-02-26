@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Edit2, Save, X, Trash2, Users, Calendar, FileText, Plus, UserPlus, RefreshCw, ExternalLink } from 'lucide-react';
+import { Save, X, UserPlus, RefreshCw } from 'lucide-react';
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
@@ -8,7 +8,6 @@ import caseMovementsService from '../services/caseMovementsService';
 import financialService from '../services/financialService';
 import * as deadlinesService from '../services/deadlinesService';
 import Toast from '../components/common/Toast';
-import PublicationCard from '../components/PublicationCard';
 import ContactDetailModal from '../components/ContactDetailModal';
 import { 
   InformacaoTab, 
@@ -32,7 +31,6 @@ function CaseDetailPage() {
   // State
   const [caseData, setCaseData] = useState(null);
   const [formData, setFormData] = useState({});
-  const [publications, setPublications] = useState([]);
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [documentos, setDocumentos] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -150,11 +148,6 @@ function CaseDetailPage() {
       setCaseData(data);
       setFormData(data);
 
-      // Load related publications
-      if (data.numero_processo) {
-        // TODO: Load publications filtered by numero_processo
-        setPublications([]);
-      }
     } catch (error) {
       console.error('Error loading case:', error);
       showToast('Erro ao carregar processo', 'error');
@@ -201,7 +194,7 @@ function CaseDetailPage() {
   /**
    * Handle contact created - reload contacts and select the new one
    */
-  const handleContactCreated = async (savedContact, isCreating) => {
+  const handleContactCreated = async (_savedContact, _isCreating) => {
     await loadContacts();
     
     // Only close modal if NOT in parties context
