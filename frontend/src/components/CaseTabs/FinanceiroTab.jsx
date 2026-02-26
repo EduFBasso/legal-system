@@ -1,4 +1,5 @@
 import { Save, Plus, Trash2 } from 'lucide-react';
+import { CurrencyInput, DateInput, TextAreaField } from '../FormFields';
 
 /**
  * FinanceiroTab - Aba de Gestão Financeira do Processo
@@ -7,14 +8,12 @@ import { Save, Plus, Trash2 } from 'lucide-react';
 function FinanceiroTab({
   id,
   formData = {},
-  setFormData = () => {},
   recebimentos = [],
   despesas = [],
   participacaoTipo = 'percentage',
   participacaoPercentual = '',
   participacaoValorFixo = '',
   pagaMedianteGanho = false,
-  valorCausaInput = '',
   recebimentoForm = { data: '', descricao: '', valor: '' },
   despesaForm = { data: '', descricao: '', valor: '' },
   onInputChange = () => {},
@@ -24,7 +23,6 @@ function FinanceiroTab({
   setParticipacaoPercentual = () => {},
   setParticipacaoValorFixo = () => {},
   setPagaMedianteGanho = () => {},
-  setValorCausaInput = () => {},
   onAddRecebimento = () => {},
   onRemoveRecebimento = () => {},
   onAddDespesa = () => {},
@@ -32,10 +30,6 @@ function FinanceiroTab({
   onSaveFinancial = () => {},
   saving = false,
   formatDate = (date) => date ? new Date(date).toLocaleDateString('pt-BR') : '—',
-  parseCurrencyValue = (value) => {
-    if (typeof value !== 'string') return value;
-    return parseFloat(value.replace(/\D/g, '')) / 100 || 0;
-  },
   formatCurrencyInput = (value) => {
     if (!value) return '';
     const num = typeof value === 'string' ? parseFloat(value.replace(/\D/g, '')) / 100 : value;
@@ -85,23 +79,12 @@ function FinanceiroTab({
               
               <div className="financeiro-grid">
                 <div className="financeiro-field">
-                  <label className="financeiro-label financeiro-label-destaque">Valor da Causa</label>
-                  <div className="financeiro-input-icon-group">
-                    <span className="financeiro-currency-label">💰 R$</span>
-                    <input 
-                      type="text" 
-                      inputMode="decimal"
-                      className="financeiro-input-clean"
-                      placeholder="1.000,00" 
-                      value={valorCausaInput}
-                      onChange={(e) => setValorCausaInput(e.target.value)}
-                      onBlur={(e) => {
-                        const numericValue = parseCurrencyValue(e.target.value);
-                        onInputChange('valor_causa', numericValue);
-                        setValorCausaInput(formatCurrencyInput(numericValue));
-                      }}
-                    />
-                  </div>
+                  <CurrencyInput
+                    label="💰 Valor da Causa"
+                    value={formData.valor_causa}
+                    onChange={(value) => onInputChange('valor_causa', value)}
+                    placeholder="1.000,00"
+                  />
                 </div>
 
                 <div className="financeiro-field">
@@ -185,15 +168,11 @@ function FinanceiroTab({
               
               {/* Formulário para Novo Recebimento */}
               <div className="financeiro-recebimento-form">
-                <div className="financeiro-field">
-                  <label className="financeiro-label">Data</label>
-                  <input 
-                    type="date" 
-                    className="financeiro-input"
-                    value={recebimentoForm.data}
-                    onChange={(e) => setRecebimentoForm({...recebimentoForm, data: e.target.value})}
-                  />
-                </div>
+                <DateInput
+                  label="Data"
+                  value={recebimentoForm.data}
+                  onChange={(value) => setRecebimentoForm({...recebimentoForm, data: value})}
+                />
 
                 <div className="financeiro-field">
                   <label className="financeiro-label">Descrição</label>
@@ -206,18 +185,12 @@ function FinanceiroTab({
                   />
                 </div>
 
-                <div className="financeiro-field">
-                  <label className="financeiro-label">Valor (R$)</label>
-                  <input 
-                    type="number" 
-                    className="financeiro-input"
-                    placeholder="0,00"
-                    step="0.01"
-                    min="0"
-                    value={recebimentoForm.valor}
-                    onChange={(e) => setRecebimentoForm({...recebimentoForm, valor: e.target.value})}
-                  />
-                </div>
+                <CurrencyInput
+                  label="Valor"
+                  value={recebimentoForm.valor}
+                  onChange={(value) => setRecebimentoForm({...recebimentoForm, valor: value})}
+                  placeholder="0,00"
+                />
 
                 <button 
                   className="btn btn-success"
@@ -269,15 +242,13 @@ function FinanceiroTab({
             </div>
 
             {/* Observações Bloco A */}
-            <div className="financeiro-textarea-group">
-              <label className="financeiro-label">Observações</label>
-              <textarea
-                placeholder="Anotações sobre ajustes de valores, acordos, parcelamentos, etc..."
-                rows="3"
-                value={formData.observations_financial_block_a || ''}
-                onChange={(e) => onInputChange('observations_financial_block_a', e.target.value)}
-              />
-            </div>
+            <TextAreaField
+              label="Observações"
+              value={formData.observations_financial_block_a || ''}
+              onChange={(value) => onInputChange('observations_financial_block_a', value)}
+              placeholder="Anotações sobre ajustes de valores, acordos, parcelamentos, etc..."
+              rows={3}
+            />
           </div>
         </div>
 
@@ -294,15 +265,11 @@ function FinanceiroTab({
               
               {/* Formulário para Nova Despesa */}
               <div className="financeiro-recebimento-form">
-                <div className="financeiro-field">
-                  <label className="financeiro-label">Data</label>
-                  <input 
-                    type="date" 
-                    className="financeiro-input"
-                    value={despesaForm.data}
-                    onChange={(e) => setDespesaForm({...despesaForm, data: e.target.value})}
-                  />
-                </div>
+                <DateInput
+                  label="Data"
+                  value={despesaForm.data}
+                  onChange={(value) => setDespesaForm({...despesaForm, data: value})}
+                />
 
                 <div className="financeiro-field">
                   <label className="financeiro-label">Descrição</label>
@@ -315,18 +282,12 @@ function FinanceiroTab({
                   />
                 </div>
 
-                <div className="financeiro-field">
-                  <label className="financeiro-label">Valor (R$)</label>
-                  <input 
-                    type="number" 
-                    className="financeiro-input"
-                    placeholder="0,00"
-                    step="0.01"
-                    min="0"
-                    value={despesaForm.valor}
-                    onChange={(e) => setDespesaForm({...despesaForm, valor: e.target.value})}
-                  />
-                </div>
+                <CurrencyInput
+                  label="Valor"
+                  value={despesaForm.valor}
+                  onChange={(value) => setDespesaForm({...despesaForm, valor: value})}
+                  placeholder="0,00"
+                />
 
                 <button 
                   className="btn btn-success"
@@ -378,15 +339,13 @@ function FinanceiroTab({
             </div>
 
             {/* Observações Bloco B */}
-            <div className="financeiro-textarea-group">
-              <label className="financeiro-label">Observações</label>
-              <textarea
-                placeholder="Descrições detalhadas dos custos, justificativas ou pendências..."
-                rows="3"
-                value={formData.observations_financial_block_b || ''}
-                onChange={(e) => onInputChange('observations_financial_block_b', e.target.value)}
-              />
-            </div>
+            <TextAreaField
+              label="Observações"
+              value={formData.observations_financial_block_b || ''}
+              onChange={(value) => onInputChange('observations_financial_block_b', value)}
+              placeholder="Descrições detalhadas dos custos, justificativas ou pendências..."
+              rows={3}
+            />
           </div>
         </div>
       </div>

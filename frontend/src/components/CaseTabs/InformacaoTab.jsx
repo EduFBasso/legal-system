@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Save, X, Trash2, UserPlus } from 'lucide-react';
+import { SelectField, DateInput, CurrencyInput, TextAreaField } from '../FormFields';
 
 /**
  * InformacaoTab - Aba de Informações do Processo
@@ -294,44 +294,29 @@ function InformacaoTab({
             </div>
 
             {/* Tribunal */}
-            <div className="info-field">
-              <label>Tribunal</label>
-              <select
-                value={formData.tribunal || ''}
-                onChange={(e) => handleInputChange('tribunal', e.target.value)}
-              >
-                <option value="">Selecione...</option>
-                {tribunalOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Tribunal"
+              value={formData.tribunal || ''}
+              onChange={(value) => handleInputChange('tribunal', value)}
+              options={tribunalOptions}
+              placeholder="Selecione..."
+            />
 
             {/* Status */}
-            <div className="info-field">
-              <label>Status</label>
-              <select
-                value={formData.status || 'ATIVO'}
-                onChange={(e) => handleInputChange('status', e.target.value)}
-              >
-                {statusOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Status"
+              value={formData.status || 'ATIVO'}
+              onChange={(value) => handleInputChange('status', value)}
+              options={statusOptions}
+            />
 
             {/* Tipo de Ação */}
-            <div className="info-field">
-              <label>Tipo de Ação</label>
-              <select
-                value={formData.tipo_acao || ''}
-                onChange={(e) => handleInputChange('tipo_acao', e.target.value)}
-              >
-                {tipoAcaoOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Tipo de Ação"
+              value={formData.tipo_acao || ''}
+              onChange={(value) => handleInputChange('tipo_acao', value)}
+              options={tipoAcaoOptions}
+            />
 
             {/* Comarca */}
             <div className="info-field">
@@ -356,14 +341,11 @@ function InformacaoTab({
             </div>
 
             {/* Data Distribuição */}
-            <div className="info-field">
-              <label>Data de Distribuição</label>
-              <input
-                type="date"
-                value={formData.data_distribuicao || ''}
-                onChange={(e) => handleInputChange('data_distribuicao', e.target.value)}
-              />
-            </div>
+            <DateInput
+              label="Data de Distribuição"
+              value={formData.data_distribuicao || ''}
+              onChange={(value) => handleInputChange('data_distribuicao', value)}
+            />
 
             {/* Data Última Movimentação - Calculado Automaticamente */}
             <div className="info-field">
@@ -425,27 +407,22 @@ function InformacaoTab({
             </div>
 
             {/* Valor da Causa */}
-            <div className="info-field">
-              <label>Valor da Causa</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.valor_causa || ''}
-                onChange={(e) => handleInputChange('valor_causa', e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
+            <CurrencyInput
+              label="Valor da Causa"
+              value={formData.valor_causa || 0}
+              onChange={(value) => handleInputChange('valor_causa', value)}
+              placeholder="0,00"
+            />
 
             {/* Observações - Full Width */}
-            <div className="info-field full-width">
-              <label>Observações</label>
-              <textarea
-                value={formData.observacoes || ''}
-                onChange={(e) => handleInputChange('observacoes', e.target.value)}
-                rows="4"
-                placeholder="Observações sobre o processo..."
-              />
-            </div>
+            <TextAreaField
+              label="Observações"
+              value={formData.observacoes || ''}
+              onChange={(value) => handleInputChange('observacoes', value)}
+              rows={4}
+              placeholder="Observações sobre o processo..."
+              className="full-width"
+            />
           </div>
         )}
       </div>
