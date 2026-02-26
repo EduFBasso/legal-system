@@ -86,7 +86,7 @@ function PartiesTab({
                 <div className="party-actions">
                   <button 
                     className="btn-edit-party"
-                    onClick={() => onEditContact(party.contact_id)}
+                    onClick={() => onEditContact(party.contact)}
                     title="Editar contato"
                   >
                     <Edit2 size={18} />
