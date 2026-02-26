@@ -50,6 +50,7 @@ function CaseDetailPage() {
   const [showAddPartyModal, setShowAddPartyModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [editingParty, setEditingParty] = useState(null);
+  const [editingContactId, setEditingContactId] = useState(null);
   const [editingPartyFormData, setEditingPartyFormData] = useState({
     role: 'AUTOR',
     is_client: false,
@@ -416,6 +417,22 @@ function CaseDetailPage() {
       is_client: party.is_client,
       observacoes: party.observacoes || '',
     });
+  };
+
+  /**
+   * Handle edit contact
+   */
+  const handleEditContact = (contactId) => {
+    setEditingContactId(contactId);
+  };
+
+  /**
+   * Handle contact updated (reloads parties)
+   */
+  const handleContactUpdated = () => {
+    setEditingContactId(null);
+    loadParties();
+    showToast('Dados pessoais atualizados!', 'success');
   };
 
   /**
@@ -1116,8 +1133,27 @@ function CaseDetailPage() {
                 <span className="contact-icon">
                   {editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
                 </span>
-                <div>
-                  <strong>{editingParty.contact_name}</strong>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <strong>{editingParty.contact_name}</strong>
+                    <button
+                      className="btn-edit-contact-link"
+                      onClick={() => handleEditContact(editingParty.contact)}
+                      title="Editar dados pessoais do contato"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: '0.25rem',
+                        cursor: 'pointer',
+                        color: '#2563eb',
+                        fontSize: '0.9rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      ✏️
+                    </button>
+                  </div>
                   {editingParty.contact_document && (
                     <span className="contact-doc"> • {editingParty.contact_document}</span>
                   )}
@@ -1177,6 +1213,17 @@ function CaseDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Edição de Contato (dados pessoais) */}
+      {editingContactId && (
+        <ContactDetailModal
+          contactId={editingContactId}
+          isOpen={!!editingContactId}
+          onClose={() => setEditingContactId(null)}
+          onContactUpdated={handleContactUpdated}
+          showLinkToProcessButton={false}
+        />
       )}
 
       {/* Modal de Definir Papel da Parte */}
