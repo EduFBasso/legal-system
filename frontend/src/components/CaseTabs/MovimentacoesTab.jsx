@@ -1,4 +1,5 @@
 import { Plus, FileText, Edit2, Trash2 } from 'lucide-react';
+import EmptyState from '../common/EmptyState';
 
 /**
  * MovimentacoesTab - Aba de Movimentações Processuais
@@ -28,13 +29,12 @@ function MovimentacoesTab({
         </div>
         
         {movimentacoes.length === 0 ? (
-          <div className="empty-state">
-            <FileText size={48} style={{ opacity: 0.3 }} />
-            <p>Nenhuma movimentação cadastrada</p>
-            <p className="empty-state-hint">
-              Clique em "Nova Movimentação" para adicionar despachos, decisões, audiências, etc.
-            </p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            iconStyle={{ opacity: 0.3 }}
+            message="Nenhuma movimentação cadastrada"
+            hint="Clique em 'Nova Movimentação' para adicionar despachos, decisões, audiências, etc."
+          />
         ) : (
           <div className="movimentacoes-timeline">
             {movimentacoes.map(mov => (

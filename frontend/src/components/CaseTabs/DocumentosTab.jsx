@@ -1,4 +1,5 @@
 import { Plus, FileText } from 'lucide-react';
+import EmptyState from '../common/EmptyState';
 
 /**
  * DocumentosTab - Aba de Documentos do Processo
@@ -20,13 +21,12 @@ function DocumentosTab({ documentos = [], setDocumentos = () => {} }) {
         </div>
         
         {documentos.length === 0 ? (
-          <div className="empty-state">
-            <FileText size={48} style={{ opacity: 0.3 }} />
-            <p>Nenhum documento anexado</p>
-            <p className="empty-state-hint">
-              Faça upload de petições, sentenças, contratos e outros documentos relacionados ao processo
-            </p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            iconStyle={{ opacity: 0.3 }}
+            message="Nenhum documento anexado"
+            hint="Faça upload de petições, sentenças, contratos e outros documentos relacionados ao processo"
+          />
         ) : (
           <div className="documentos-grid">
             {documentos.map(doc => (

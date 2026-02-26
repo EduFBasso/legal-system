@@ -1,5 +1,6 @@
 import { Calendar, RefreshCw } from 'lucide-react';
 import * as deadlinesService from '../../services/deadlinesService';
+import EmptyState from '../common/EmptyState';
 
 /**
  * DeadlinesTab - Aba de Prazos Processuais
@@ -84,19 +85,19 @@ function DeadlinesTab({
             <p>Carregando prazos...</p>
           </div>
         ) : deadlines.length === 0 ? (
-          <div className="empty-state">
-            <Calendar size={48} />
-            <h3>Nenhum prazo cadastrado</h3>
-            <p>
-              Adicione prazos nas movimentações para acompanhar vencimentos.
-            </p>
-            <button 
-              className="btn btn-primary"
-              onClick={() => setActiveSection('movimentacoes')}
-            >
-              Ir para Movimentações
-            </button>
-          </div>
+          <EmptyState
+            icon={Calendar}
+            message="Nenhum prazo cadastrado"
+            hint="Adicione prazos nas movimentações para acompanhar vencimentos."
+            action={
+              <button 
+                className="btn btn-primary"
+                onClick={() => setActiveSection('movimentacoes')}
+              >
+                Ir para Movimentações
+              </button>
+            }
+          />
         ) : (
           <div className="deadlines-list">
             {getFilteredDeadlines().map(deadline => {

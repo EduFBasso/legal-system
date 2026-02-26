@@ -1,4 +1,5 @@
 import { Users, UserPlus, Trash2 } from 'lucide-react';
+import EmptyState from '../common/EmptyState';
 
 /**
  * PartiesTab - Aba de Partes do Processo
@@ -31,13 +32,11 @@ function PartiesTab({
             <p>Carregando partes...</p>
           </div>
         ) : parties.length === 0 ? (
-          <div className="empty-state">
-            <Users size={48} />
-            <p>Nenhuma parte cadastrada</p>
-            <p className="empty-state-hint">
-              Clique em "Adicionar Parte" para vincular pessoas a este processo
-            </p>
-          </div>
+          <EmptyState
+            icon={Users}
+            message="Nenhuma parte cadastrada"
+            hint="Clique em 'Adicionar Parte' para vincular pessoas a este processo"
+          />
         ) : (
           <div className="parties-list">
             {parties.map(party => (

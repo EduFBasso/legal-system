@@ -1,5 +1,6 @@
 import { Save, Plus, Trash2 } from 'lucide-react';
 import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
+import EmptyState from '../common/EmptyState';
 
 /**
  * FinanceiroTab - Aba de Gestão Financeira do Processo
@@ -203,12 +204,10 @@ function FinanceiroTab({
 
               {/* Lista de Recebimentos */}
               {recebimentos.length === 0 ? (
-                <div className="empty-state">
-                  <p>Nenhum recebimento registrado</p>
-                  <p className="empty-state-hint">
-                    Preencha os campos acima e clique em "Adicionar Recebimento"
-                  </p>
-                </div>
+                <EmptyState
+                  message="Nenhum recebimento registrado"
+                  hint="Preencha os campos acima e clique em 'Adicionar Recebimento'"
+                />
               ) : (
                 <div className="financeiro-lista">
                   {recebimentos.map(recebimento => (
@@ -300,12 +299,10 @@ function FinanceiroTab({
 
               {/* Lista de Despesas */}
               {despesas.length === 0 ? (
-                <div className="empty-state">
-                  <p>Nenhuma despesa registrada</p>
-                  <p className="empty-state-hint">
-                    Registre custas do tribunal, perícias, honorários e outros custos
-                  </p>
-                </div>
+                <EmptyState
+                  message="Nenhuma despesa registrada"
+                  hint="Registre custas do tribunal, perícias, honorários e outros custos"
+                />
               ) : (
                 <div className="financeiro-lista">
                   {despesas.map(despesa => (
