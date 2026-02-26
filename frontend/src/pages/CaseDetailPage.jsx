@@ -893,7 +893,8 @@ function CaseDetailPage() {
     );
   }
 
-  if (!caseData) {
+  // Mostrar erro só se tem ID mas não carregou dados
+  if (id && !caseData) {
     return (
       <div className="case-detail-page">
         <div className="error-container">
