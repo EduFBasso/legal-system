@@ -966,73 +966,14 @@ function CaseDetailPage() {
 
         {/* Movimentações Section */}
         {activeSection === 'movimentacoes' && (
-          <div className="case-section">
-            <div className="section-card">
-              <div className="section-header">
-                <div>
-                  <h2 className="section-title">⚖️ Movimentações Processuais</h2>
-                  <p className="section-subtitle">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
-                </div>
-                {id && (
-                  <button className="btn btn-primary" onClick={handleOpenMovimentacaoModal}>
-                    <Plus size={18} /> Nova Movimentação
-                  </button>
-                )}
-              </div>
-              
-              {movimentacoes.length === 0 ? (
-                <div className="empty-state">
-                  <FileText size={48} style={{ opacity: 0.3 }} />
-                  <p>Nenhuma movimentação cadastrada</p>
-                  <p className="empty-state-hint">
-                    Clique em "Nova Movimentação" para adicionar despachos, decisões, audiências, etc.
-                  </p>
-                </div>
-              ) : (
-                <div className="movimentacoes-timeline">
-                  {movimentacoes.map(mov => (
-                    <div key={mov.id} className="timeline-item">
-                      <div className="timeline-marker"></div>
-                      <div className="timeline-date">{formatDate(mov.data)}</div>
-                      <div className="timeline-content">
-                        <div className="timeline-tipo">{mov.tipo_display || mov.tipo}</div>
-                        <div className="timeline-titulo">{mov.titulo}</div>
-                        {mov.descricao && (
-                          <div className="timeline-descricao">{mov.descricao}</div>
-                        )}
-                        {mov.prazo && (
-                          <div className="timeline-prazo">
-                            ⏰ Prazo: {mov.prazo} dias (até {formatDate(mov.data_limite_prazo)})
-                          </div>
-                        )}
-                        <div className="timeline-meta">
-                          <span className="timeline-origem">{mov.origem_display}</span>
-                          {mov.origem === 'MANUAL' && (
-                            <div className="timeline-actions">
-                              <button 
-                                className="btn-icon-small" 
-                                onClick={() => handleEditMovimentacao(mov)}
-                                title="Editar"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button 
-                                className="btn-icon-small btn-danger" 
-                                onClick={() => handleDeleteMovimentacao(mov.id)}
-                                title="Excluir"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <MovimentacoesTab 
+            id={id}
+            movimentacoes={movimentacoes}
+            formatDate={formatDate}
+            onOpenModal={handleOpenMovimentacaoModal}
+            onEdit={handleEditMovimentacao}
+            onDelete={handleDeleteMovimentacao}
+          />
         )}
 
         {/* Documentos Section */}
