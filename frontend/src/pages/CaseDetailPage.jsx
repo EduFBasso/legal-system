@@ -9,6 +9,7 @@ import financialService from '../services/financialService';
 import * as deadlinesService from '../services/deadlinesService';
 import Toast from '../components/common/Toast';
 import ContactDetailModal from '../components/ContactDetailModal';
+import SelectContactModal from '../components/SelectContactModal';
 import { 
   InformacaoTab, 
   PartiesTab, 
@@ -40,6 +41,7 @@ function CaseDetailPage() {
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
   const [toast, setToast] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showSelectContactModal, setShowSelectContactModal] = useState(false);
   
   // Parties state
   const [parties, setParties] = useState([]);
@@ -324,12 +326,28 @@ function CaseDetailPage() {
   }, [activeSection, loadParties]);
 
   /**
-   * Handle add party - select contact and show form
+   * Handle opening contact selection modal
+   */
+  const handleOpenContactSelection = () => {
+    setShowSelectContactModal(true);
+  };
+
+  /**
+   * Handle contact selection from SelectContactModal
    */
   const handleSelectContactForParty = (contact) => {
     setSelectedContact(contact);
+    setShowSelectContactModal(false);
     setShowContactModal(false);
     setShowAddPartyModal(true);
+  };
+
+  /**
+   * Handle create new contact from SelectContactModal
+   */
+  const handleCreateNewContactForParty = () => {
+    setShowSelectContactModal(false);
+    setShowContactModal(true);
   };
 
   /**
@@ -1040,7 +1058,7 @@ function CaseDetailPage() {
             id={id}
             parties={parties}
             loadingParties={loadingParties}
-            onAddPartyClick={() => setShowContactModal(true)}
+            onAddPartyClick={handleOpenContactSelection}
             onRemoveParty={handleRemoveParty}
           />
         )}
@@ -1053,6 +1071,16 @@ function CaseDetailPage() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Modal de Seleção de Contato */}
+      {showSelectContactModal && (
+        <SelectContactModal
+          isOpen={showSelectContactModal}
+          onClose={() => setShowSelectContactModal(false)}
+          onSelectContact={handleSelectContactForParty}
+          onCreateNew={handleCreateNewContactForParty}
         />
       )}
 
