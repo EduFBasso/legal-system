@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Edit2, Save, X, Trash2, UserPlus } from 'lucide-react';
+import { formatDate } from '../../utils/formatters';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
 
 /**
@@ -20,7 +21,6 @@ function InformacaoTab({
   parties = [],
   deadlines = [],
   caseData = null,
-  formatDate = (date) => date ? new Date(date).toLocaleDateString('pt-BR') : '—',
   formatCurrency = (value) => {
     if (!value) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {

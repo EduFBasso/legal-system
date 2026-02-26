@@ -1,4 +1,5 @@
 import { Save, Plus, Trash2 } from 'lucide-react';
+import { formatDate, formatCurrencyValue, parseCurrencyValue } from '../../utils/formatters';
 import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
 import EmptyState from '../common/EmptyState';
 
@@ -30,7 +31,6 @@ function FinanceiroTab({
   onRemoveDespesa = () => {},
   onSaveFinancial = () => {},
   saving = false,
-  formatDate = (date) => date ? new Date(date).toLocaleDateString('pt-BR') : '—',
   formatCurrencyInput = (value) => {
     if (!value) return '';
     const num = typeof value === 'string' ? parseFloat(value.replace(/\D/g, '')) / 100 : value;
@@ -156,7 +156,7 @@ function FinanceiroTab({
 
                 <div className="financeiro-resumo-participacao">
                   <span>Valor Estimado da Participação:</span>
-                  <strong>R$ {calcularParticipacao().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  <strong>R$ {formatCurrencyValue(calcularParticipacao())}</strong>
                 </div>
               </div>
             </div>
@@ -218,7 +218,7 @@ function FinanceiroTab({
                       </div>
                       <div className="financeiro-item-actions">
                         <span className="financeiro-item-valor">
-                          R$ {recebimento.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          R$ {formatCurrencyValue(recebimento.value)}
                         </span>
                         <button 
                           className="btn-icon-danger"
@@ -236,7 +236,7 @@ function FinanceiroTab({
               {/* Total de Recebimentos */}
               <div className="financeiro-total-recebimentos">
                 <span>Total Recebido:</span>
-                <strong>R$ {calcularTotalRecebimentos().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                <strong>R$ {formatCurrencyValue(calcularTotalRecebimentos())}</strong>
               </div>
             </div>
 
@@ -313,7 +313,7 @@ function FinanceiroTab({
                       </div>
                       <div className="financeiro-item-actions">
                         <span className="financeiro-item-valor">
-                          R$ {despesa.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          R$ {formatCurrencyValue(despesa.value)}
                         </span>
                         <button 
                           className="btn-icon-danger"
@@ -332,7 +332,7 @@ function FinanceiroTab({
             {/* Total Despesas */}
             <div className="financeiro-total">
               <span>Total de Custos:</span>
-              <strong>R$ {calcularTotalDespesas().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              <strong>R$ {formatCurrencyValue(calcularTotalDespesas())}</strong>
             </div>
 
             {/* Observações Bloco B */}

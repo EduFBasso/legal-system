@@ -1,4 +1,5 @@
 import { Plus, FileText, Edit2, Trash2 } from 'lucide-react';
+import { formatDate } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
 
 /**
@@ -8,7 +9,6 @@ import EmptyState from '../common/EmptyState';
 function MovimentacoesTab({ 
   id,
   movimentacoes = [],
-  formatDate = (date) => new Date(date).toLocaleDateString('pt-BR'),
   onOpenModal = () => {},
   onEdit = () => {},
   onDelete = () => {}

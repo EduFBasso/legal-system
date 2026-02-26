@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Save, X, UserPlus, RefreshCw } from 'lucide-react';
+import { formatDate, parseCurrencyValue, formatCurrency } from '../utils/formatters';
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
@@ -598,40 +599,6 @@ function CaseDetailPage() {
       descricao: '',
       prazo: '',
     });
-  };
-
-  /**
-   * Format date for display
-   */
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR');
-  };
-
-  /**
-   * Format currency
-   */
-  const formatCurrency = (value) => {
-    if (!value) return '-';
-    return `R$ ${parseCurrencyValue(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  const parseCurrencyValue = (value) => {
-    if (value === null || value === undefined || value === '') return 0;
-    if (typeof value === 'number') return value;
-    
-    const str = value.toString();
-    
-    // Se contém vírgula, assume formato pt-BR (220.000,00)
-    if (str.includes(',')) {
-      const normalized = str.replace(/\./g, '').replace(',', '.');
-      return parseFloat(normalized) || 0;
-    }
-    
-    // Se contém apenas ponto ou nenhum separador, assume formato en-US/decimal (220000.00)
-    // Não remove o ponto, pois é o separador decimal
-    return parseFloat(str) || 0;
   };
 
   const formatCurrencyInput = (value) => {

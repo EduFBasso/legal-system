@@ -137,6 +137,83 @@ export function formatTitleCase(text) {
 }
 
 /**
+ * Parse currency string to numeric value
+ * Removes currency formatting and converts to number
+ * 
+ * @param {string|number} value - Formatted currency or number
+ * @returns {number} Numeric value
+ * 
+ * @example
+ * parseCurrencyValue('R$ 1.234,56') // 1234.56
+ * parseCurrencyValue('1234,56') // 1234.56
+ * parseCurrencyValue(1234.56) // 1234.56
+ */
+export function parseCurrencyValue(value) {
+  if (!value && value !== 0) return 0;
+  
+  if (typeof value === 'number') return value;
+  
+  // Remove 'R$' and whitespace, replace Brazilian decimal separator
+  const cleaned = String(value)
+    .replace(/R\$/g, '')
+    .replace(/\s/g, '')
+    .replace(/\./g, '')       // Remove thousand separators
+    .replace(/,/g, '.');      // Replace decimal separator
+  
+  const numeric = parseFloat(cleaned);
+  return isNaN(numeric) ? 0 : numeric;
+}
+
+/**
+ * Format number as Brazilian currency
+ * 
+ * @param {string|number} value - Value to format
+ * @returns {string} Formatted currency (e.g., "R$ 1.234,56")
+ * 
+ * @example
+ * formatCurrency(1234.56) // "R$ 1.234,56"
+ * formatCurrency('1234.56') // "R$ 1.234,56"
+ */
+export function formatCurrency(value) {
+  if (!value && value !== 0) return '-';
+  
+  try {
+    const numeric = parseCurrencyValue(value);
+    return `R$ ${numeric.toLocaleString('pt-BR', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    })}`;
+  } catch (error) {
+    console.warn(`Failed to format currency: ${value}`, error);
+    return '-';
+  }
+}
+
+/**
+ * Format number as Brazilian currency without 'R$' prefix
+ * 
+ * @param {string|number} value - Value to format
+ * @returns {string} Formatted number (e.g., "1.234,56")
+ * 
+ * @example
+ * formatCurrencyValue(1234.56) // "1.234,56"
+ */
+export function formatCurrencyValue(value) {
+  if (!value && value !== 0) return '-';
+  
+  try {
+    const numeric = parseCurrencyValue(value);
+    return numeric.toLocaleString('pt-BR', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  } catch (error) {
+    console.warn(`Failed to format currency value: ${value}`, error);
+    return '-';
+  }
+}
+
+/**
  * Truncate text with ellipsis
  * 
  * @param {string} text - Text to truncate
@@ -157,5 +234,8 @@ export default {
   formatRelativeTime,
   formatNumber,
   formatTitleCase,
+  parseCurrencyValue,
+  formatCurrency,
+  formatCurrencyValue,
   truncateText,
 };

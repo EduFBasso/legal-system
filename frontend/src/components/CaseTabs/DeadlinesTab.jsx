@@ -1,4 +1,5 @@
 import { Calendar, RefreshCw } from 'lucide-react';
+import { formatDate } from '../../utils/formatters';
 import * as deadlinesService from '../../services/deadlinesService';
 import EmptyState from '../common/EmptyState';
 
@@ -14,7 +15,6 @@ function DeadlinesTab({
   loadingDeadlines = false,
   loadDeadlines = () => {},
   setActiveSection = () => {},
-  formatDate = (date) => new Date(date).toLocaleDateString('pt-BR'),
 }) {
   const getFilteredDeadlines = () => {
     return deadlines.filter(deadline => {
