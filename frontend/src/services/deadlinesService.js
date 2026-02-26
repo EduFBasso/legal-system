@@ -49,18 +49,9 @@ export const getAllDeadlines = async () => {
  */
 export const checkDeadlinesAndNotify = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/notifications/check_deadlines/`, {
+    return await apiFetch('/notifications/check_deadlines/', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
   } catch (error) {
     console.error('Error checking deadlines:', error);
     throw error;

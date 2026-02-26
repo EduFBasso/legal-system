@@ -258,6 +258,12 @@ function CaseDetailPage() {
     }
   }, [id, loadMovimentacoes]);
 
+  useEffect(() => {
+    if (activeSection !== 'info' && isEditing) {
+      setIsEditing(false);
+    }
+  }, [activeSection, isEditing]);
+
   /**
    * Load deadlines for this case
    */
