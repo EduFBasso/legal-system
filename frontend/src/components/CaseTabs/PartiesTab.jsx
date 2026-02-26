@@ -11,7 +11,7 @@ function PartiesTab({
   loadingParties = false,
   onAddPartyClick = () => {},
   onRemoveParty = () => {},
-  onEditContact = () => {},
+  onEditParty = () => {},
 }) {
   return (
     <div className="case-section">
@@ -86,8 +86,8 @@ function PartiesTab({
                 <div className="party-actions">
                   <button 
                     className="btn-edit-party"
-                    onClick={() => onEditContact(party.contact)}
-                    title="Editar contato"
+                    onClick={() => onEditParty(party)}
+                    title="Editar papel da parte no processo"
                   >
                     <Edit2 size={18} />
                   </button>

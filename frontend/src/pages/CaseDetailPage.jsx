@@ -43,13 +43,18 @@ function CaseDetailPage() {
   const [toast, setToast] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSelectContactModal, setShowSelectContactModal] = useState(false);
-  const [editingContactId, setEditingContactId] = useState(null);
   
   // Parties state
   const [parties, setParties] = useState([]);
   const [loadingParties, setLoadingParties] = useState(false);
   const [showAddPartyModal, setShowAddPartyModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
+  const [editingParty, setEditingParty] = useState(null);
+  const [editingPartyFormData, setEditingPartyFormData] = useState({
+    role: 'AUTOR',
+    is_client: false,
+    observacoes: '',
+  });
   const [partyFormData, setPartyFormData] = useState({
     role: 'AUTOR',
     is_client: false,
@@ -402,20 +407,35 @@ function CaseDetailPage() {
   };
 
   /**
-   * Handle edit contact
+   * Handle edit party (papel/role)
    */
-  const handleEditContact = (contactId) => {
-    setEditingContactId(contactId);
+  const handleEditParty = (party) => {
+    setEditingParty(party);
+    setEditingPartyFormData({
+      role: party.role,
+      is_client: party.is_client,
+      observacoes: party.observacoes || '',
+    });
   };
 
   /**
-   * Handle contact updated (from edit modal)
+   * Handle save party changes
    */
-  const handleContactUpdated = () => {
-    setEditingContactId(null);
-    loadParties(); // Reload parties to show updated data
-    showToast('Contato atualizado com sucesso!', 'success');
+  const handleSavePartyChanges = async () => {
+    if (!editingParty) return;
+
+    try {
+      await casePartiesService.updateParty(editingParty.id, editingPartyFormData);
+      showToast('Papel da parte atualizado com sucesso!', 'success');
+      setEditingParty(null);
+      loadParties();
+    } catch (error) {
+      console.error('Error updating party:', error);
+      showToast('Erro ao atualizar papel da parte', 'error');
+    }
   };
+
+
 
   /**
    * Handle input change
@@ -1045,7 +1065,7 @@ function CaseDetailPage() {
             loadingParties={loadingParties}
             onAddPartyClick={handleOpenContactSelection}
             onRemoveParty={handleRemoveParty}
-            onEditContact={handleEditContact}
+            onEditParty={handleEditParty}
           />
         )}
       </main>
@@ -1082,15 +1102,81 @@ function CaseDetailPage() {
         />
       )}
 
-      {/* Modal de Edição de Contato */}
-      {editingContactId && (
-        <ContactDetailModal
-          contactId={editingContactId}
-          isOpen={!!editingContactId}
-          onClose={() => setEditingContactId(null)}
-          onContactUpdated={handleContactUpdated}
-          showLinkToProcessButton={false}
-        />
+      {/* Modal de Edição de Papel da Parte */}
+      {editingParty && (
+        <div className="modal-overlay" onClick={() => setEditingParty(null)}>
+          <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Papel da Parte</h2>
+              <button className="modal-close" onClick={() => setEditingParty(null)}>×</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="selected-contact-info">
+                <span className="contact-icon">
+                  {editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
+                </span>
+                <div>
+                  <strong>{editingParty.contact_name}</strong>
+                  {editingParty.contact_document && (
+                    <span className="contact-doc"> • {editingParty.contact_document}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Papel no Processo *</label>
+                <select
+                  value={editingPartyFormData.role}
+                  onChange={(e) => {
+                    const newRole = e.target.value;
+                    setEditingPartyFormData(prev => ({
+                      ...prev,
+                      role: newRole,
+                    }));
+                  }}
+                >
+                  <option value="AUTOR">Autor/Requerente</option>
+                  <option value="REU">Réu/Requerido</option>
+                  <option value="TESTEMUNHA">Testemunha</option>
+                  <option value="PERITO">Perito</option>
+                  <option value="TERCEIRO">Terceiro Interessado</option>
+                  <option value="CLIENTE">Cliente/Representado</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={editingPartyFormData.is_client}
+                    onChange={(e) => setEditingPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
+                  />
+                  <span>É cliente do escritório neste processo</span>
+                </label>
+              </div>
+
+              <div className="form-group">
+                <label>Observações</label>
+                <textarea
+                  value={editingPartyFormData.observacoes}
+                  onChange={(e) => setEditingPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  placeholder="Ex: Cliente pela contraparte, não é nosso cliente..."
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setEditingParty(null)}>
+                Cancelar
+              </button>
+              <button className="btn btn-success" onClick={handleSavePartyChanges}>
+                Salvar Alterações
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal de Definir Papel da Parte */}
