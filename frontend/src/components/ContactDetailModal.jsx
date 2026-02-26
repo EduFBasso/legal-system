@@ -114,15 +114,11 @@ export default function ContactDetailModal({
   };
 
   const handleCancel = () => {
-    if (isCreating) {
-      // Close modal if creating
-      onClose();
-    } else {
-      // Revert changes if editing
-      setEditedContact({ ...contact });
-      setIsEditing(false);
-      setError(null);
-    }
+    // Always close the modal and discard changes (whether creating or editing)
+    setEditedContact(null);
+    setIsEditing(false);
+    setError(null);
+    onClose();
   };
 
   const handleChange = (field, value) => {
@@ -291,7 +287,7 @@ export default function ContactDetailModal({
     <>
     <Modal
       isOpen={isOpen}
-      onClose={isEditing && !isCreating ? null : onClose}
+      onClose={onClose}
       title={
         isCreating 
           ? "➕ Novo Contato" 
