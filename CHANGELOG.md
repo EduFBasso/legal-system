@@ -8,16 +8,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### 📚 Documentation
+
 - Comprehensive README.md with project overview and setup instructions
 - Updated STRUCTURE.md with complete frontend and backend architecture
 - Updated frontend/README.md with component documentation and conventions
 - This CHANGELOG.md
+
+## [0.2.0] - 2026-02-27 - "Cases & Publications Complete"
+
+### ✨ Features
+
+#### Backend
+
+- **Publications Integration**
+  - Added `case` FK to Publication model (optional, for integration tracking)
+  - Added `integration_status`, `integration_attempted_at`, `integration_notes` fields
+  - New migration for publication integration fields
+  - Endpoint: GET `/publications/{id_api}/` para obter publicação por ID
+
+#### Frontend
+
+- **New Cases App** (Complete workflow)
+  - CaseDetailPage: Full-width editor para criar/editar casos
+  - Suporte a criação de casos a partir de publicações (com prefill automático)
+  - Integração com publicações: numero_processo, tribunal, vara, observacoes
+
+- **Publication → Case Workflow**
+  - Publicações abrem em **nova janela** (não modal)
+  - PublicationDetailsPage: Página dedicada com layout full-width
+  - Rota: `/publications/:idApi/details`
+  - Carga de dados com logging e feedback visual
+
+- **Case Parties Management** (Draft Pattern)
+  - Parties podem ser adicionadas antes de salvar o caso
+  - Sistema de "draft parties": armazenadas em state local com `is_draft: true`
+  - Salvamento orchestrado: Create case → Add parties → Integrate publication
+  - Tratamento de falhas parciais (alguns parties falham, mas caso criado)
+
+- **Case Movements (Movimentações)**
+  - Modal de Movimentação Processual com styling padronizado
+  - Validação obrigatória: Caso deve estar salvo antes de adicionar movimentação
+  - Font size aumentado +20% para melhor legibilidade
+  - Botão "Adicionar Movimentação" agora removido do form de edição
+  - Campos de movimento: data, tipo, título, descrição, prazo, origem
+
+- **Improved UI/UX**
+  - Modal movimentação: form-row para campos lado-a-lado
+  - Input styling consistente (date, text, number, select, textarea)
+  - Helper text com classe dedicada `.form-helper-text`
+  - Button estados: disabled com validação clara
+  - Tooltip ao passar mouse em botão desabilitado
+
+### 🐛 Bug Fixes
+
+- Movimentação: Extrair corretamente dados da publicação da resposta da API
+- Publications: Serviço ajustado para retornar dados corretos
+- Modal: Correção de z-index e overlay
+- Form validation: Parties não validarem antes do caso ser salvo
+
+### 🧹 Chores
+
+- Removido campo "Última Movimentação" do form de edição de caso
+- Removido modal de publicação (substituído por nova janela)
+- Limpeza de imports não utilizados (PublicationDetailModal do PublicationsPage)
+- Geração de migrations para Publication model
+- .gitignore: Documentação em desenvolvimento ignorada
+
+### 📚 Documentation
+
+- **NEW**: API_ROUTES_MAP.md - Documentação completa de rotas com exemplos
+  - 8 recursos principais (Cases, Parties, Movements, Payments, Expenses, Contacts, Publications, Notifications)
+  - Todos os endpoints, métodos, campos, filtros
+  - Status codes e padrões de resposta
+  - Exemplos práticos de requisição
+  - ⚠️ Avisos sobre ordem de criação obrigatória
+
+### 🔧 Technical Details
+
+- **Frontend**: React 19.2.0, React Router v6, Vite 7.3.1
+- **Backend**: Django 4.2.28, DRF 3.16.1
+- **Branch**: feature/cases (1 novo commit)
+- **Build**: 1852 modules (Vite build validated)
+- **Validação**: Fluxo completo testado (Publicação → Caso → Parties → Movimentações)
 
 ## [0.1.0] - 2026-02-16 - "Contacts CRUD Complete"
 
 ### ✨ Features
 
 #### Backend
+
 - **Contacts App** (Complete CRUD API)
   - Model Contact with 19 fields (identification, document, contact info, full address, notes, metadata)
   - Computed properties: `document_formatted`, `address_oneline`, `has_contact_info`, `has_complete_address`
@@ -28,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CORS configuration for frontend communication
 
 #### Frontend
+
 - **Complete CRUD Interface**
   - CREATE: ➕ New contact form with validation (name required)
   - READ: Detailed view in organized modal with sections
@@ -70,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No page reload required
 
 ### 🐛 Bug Fixes
+
 - Fixed JSX structure: Wrapped multiple modals in Fragment (`<>...</>`)
 - Fixed field name mapping between frontend and backend:
   - Frontend `document` ↔ Backend `document_number`
@@ -83,10 +164,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Applied field mapping when saving contact (create/update)
 
 ### 🧹 Chores
+
 - Removed unused `renderField` function (64 lines of dead code)
 - Updated .gitignore
 
 ### 🔧 Technical Details
+
 - **Backend**: Django 4.2.28, DRF 3.16.1, SQLite, django-filter 24.2, django-cors-headers 4.6.0
 - **Frontend**: React 19.2.0, Vite 7.3.1, Node.js 20.20.0 LTS
 - **Branch**: feature/contacts (22 commits)
@@ -95,6 +178,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.1] - 2026-02-14 - "Project Bootstrap"
 
 ### ✨ Features
+
 - Project structure setup (backend, frontend, docs, data, tools, infra)
 - Django backend configuration
 - React + Vite frontend setup
@@ -102,6 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pub_fetcher tool for TJSP publications scraping
 
 ### 🔧 Configuration
+
 - Python 3.11+ environment
 - Django settings with CORS configuration
 - Vite dev server configuration
@@ -110,6 +195,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Previous Work] - Before 2026-02-14
 
 ### Legacy Features (Pre-refactor)
+
 - Theme system with 5 high-contrast themes
 - Font size controls
 - Database models for clinic management (previous project)

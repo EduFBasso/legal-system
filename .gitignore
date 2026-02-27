@@ -63,6 +63,13 @@ frontend/info/
 backend/db.sqlite3
 backend/scripts/
 
+# === Documentação (não atualizada/em desenvolvimento) ===
+docs/ANALISE_*.md
+docs/INFO_*.md
+docs/QUICK_*.md
+docs/*.md
+!docs/API_ROUTES_MAP.md
+
 # === Outros ===
 pub_fetcher/
 
