@@ -648,6 +648,97 @@ def get_pending_count(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET'])
+def get_publications_by_case(request, case_id):
+    """
+    Retorna publicacoes vinculadas a um caso especifico.
+    
+    GET /api/publications/by-case/<case_id>
+    Query params: ordering, limit, offset
+    
+    Response:
+    {
+        "success": true,
+        "count": 3,
+        "results": [
+            {
+                "id": 123,
+                "id_api": 1000760,
+                "numero_processo": "0000004-11.2021.8.26.0533",
+                "tribunal": "TJSP",
+                "tipo_comunicacao": "Intimação",
+                "data_disponibilizacao": "2026-02-20",
+                "orgao": "1ª Vara Cível",
+                "texto_resumo": "...",
+                "texto_completo": "...",
+                "link_oficial": "https://...",
+                "integration_status": "INTEGRATED",
+                "created_at": "2026-02-27T10:00:00Z"
+            }
+        ]
+    }
+    """
+    try:
+        ordering = request.query_params.get('ordering', '-data_disponibilizacao')
+        limit = int(request.query_params.get('limit', 50))
+        offset = int(request.query_params.get('offset', 0))
+        
+        # Validar ordenação
+        allowed_ordering = {
+            'data_disponibilizacao',
+            '-data_disponibilizacao',
+            'tribunal',
+            '-tribunal',
+            'tipo_comunicacao',
+            '-tipo_comunicacao',
+            'created_at',
+            '-created_at',
+        }
+        if ordering not in allowed_ordering:
+            ordering = '-data_disponibilizacao'
+        
+        # Buscar publicações do caso (incluindo deletadas soft-delete false)
+        queryset = Publication.objects.filter(
+            case_id=case_id,
+            deleted=False
+        )
+        
+        total = queryset.count()
+        queryset = queryset.order_by(ordering)[offset:offset + limit]
+        
+        results = []
+        for pub in queryset:
+            results.append({
+                'id': pub.id,
+                'id_api': pub.id_api,
+                'numero_processo': pub.numero_processo,
+                'tribunal': pub.tribunal,
+                'tipo_comunicacao': pub.tipo_comunicacao,
+                'data_disponibilizacao': pub.data_disponibilizacao.isoformat(),
+                'orgao': pub.orgao,
+                'meio': pub.meio,
+                'texto_resumo': pub.texto_resumo,
+                'texto_completo': pub.texto_completo,
+                'link_oficial': pub.link_oficial,
+                'integration_status': pub.integration_status,
+                'created_at': pub.created_at.isoformat(),
+            })
+        
+        return Response({
+            'success': True,
+            'count': total,
+            'results': results,
+            'limit': limit,
+            'offset': offset,
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['POST'])
 def integrate_publication(request, id_api):
     """

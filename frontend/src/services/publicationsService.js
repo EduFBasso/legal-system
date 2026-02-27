@@ -200,6 +200,23 @@ class PublicationsService {
   }
 
   /**
+   * Busca publicações vinculadas a um caso específico
+   * @param {number|string} caseId - ID do caso
+   * @param {Object} options - Opções de paginação e ordenação
+   * @returns {Promise<Object>} Resultado com lista de publicações
+   */
+  async getPublicationsByCase(caseId, { ordering = '-data_disponibilizacao', limit = 50, offset = 0 } = {}) {
+    const params = new URLSearchParams({
+      ordering,
+      limit: String(limit),
+      offset: String(offset)
+    });
+    
+    const data = await apiFetch(`/publications/by-case/${caseId}?${params}`);
+    return data.results || [];
+  }
+
+  /**
    * Integra publicação com um caso
    * @param {number} idApi - ID da publicação na API
    * @param {Object} payload - dados de integração

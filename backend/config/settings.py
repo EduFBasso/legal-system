@@ -172,3 +172,39 @@ ADVOGADA_NOME = config('ADVOGADA_NOME', default='Vitoria Rocha de Morais')
 # 1. POSITIVO: Garante menção à OAB/nome no texto (evita falsos positivos)
 # 2. NEGATIVO: Exclui publicações de outras advogadas (ex: LÚCIA VITÓRIA - OAB 407729)
 # Ajuste em services/pje_comunica.py → EXCLUDED_LAWYERS
+
+# ===== SISTEMA DE CONFIGURAÇÕES =====
+# Configurações centralizadas para controlar comportamento do sistema
+# Editáveis via API /api/system-settings
+LEGAL_SYSTEM_SETTINGS = {
+    # ===== PUBLICAÇÕES =====
+    'AUTO_LOAD_PUBLICATIONS_ON_CASE': True,
+    'AUTO_LOAD_PUBLICATIONS_ON_CONTACTS': True,
+    'AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION': False,
+    'PUBLICATION_CACHE_DURATION': 300,  # em segundos, 0 = sem cache
+    
+    # ===== MOVIMENTAÇÕES =====
+    'AUTO_LOAD_MOVEMENTS_ON_CASE': True,
+    'AUTO_CHECK_DEADLINES': True,
+    'DEADLINE_NOTIFICATION_DAYS': 7,
+    'DEADLINE_NOTIFICATION_BEFORE_DAYS': 3,
+    
+    # ===== PARTES =====
+    'AUTO_LOAD_PARTIES_ON_CASE': True,
+    'ALLOW_MULTIPLE_ROLES_PER_CONTACT': True,  # Um contato pode ter vários papéis no caso
+    
+    # ===== PAGAMENTOS E DESPESAS =====
+    'AUTO_LOAD_PAYMENTS_ON_CASE': True,
+    'AUTO_LOAD_EXPENSES_ON_CASE': True,
+    
+    # ===== INTERFACE E UX =====
+    'AUTO_LOAD_DOCUMENTS_ON_CASE': True,
+    'ENABLE_SOFT_DELETE': True,  # Manter registros deletados no banco (não permanentemente apagá-los)
+    'DEFAULT_PAGE_SIZE': 20,
+    'MAX_RESULTS_PER_SEARCH': 100,
+    
+    # ===== SISTEMA =====
+    'ENVIRONMENT': config('ENVIRONMENT', default='development'),
+    'DEBUG_MODE': DEBUG,
+    'LOG_API_REQUESTS': config('LOG_API_REQUESTS', default=False, cast=bool),
+}

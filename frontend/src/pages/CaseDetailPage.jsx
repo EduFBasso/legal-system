@@ -9,6 +9,7 @@ import publicationsService from '../services/publicationsService';
 import caseMovementsService from '../services/caseMovementsService';
 import financialService from '../services/financialService';
 import * as deadlinesService from '../services/deadlinesService';
+import systemSettingsService from '../services/systemSettingsService';
 import Toast from '../components/common/Toast';
 import ContactDetailModal from '../components/ContactDetailModal';
 import SelectContactModal from '../components/SelectContactModal';
@@ -77,6 +78,7 @@ function CaseDetailPage() {
   const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
   const [toast, setToast] = useState(null);
+  const [systemSettings, setSystemSettings] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSelectContactModal, setShowSelectContactModal] = useState(false);
   const [sourcePublication, setSourcePublication] = useState(null);
@@ -202,6 +204,24 @@ function CaseDetailPage() {
       setLoading(false);
     }
   }, [id, showToast]);
+
+  /**
+   * Load system settings on mount
+   */
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await systemSettingsService.getAllSettings();
+        setSystemSettings(settings);
+        console.log('⚙️ System settings carregadas:', settings);
+      } catch (error) {
+        console.error('Erro ao carregar system settings:', error);
+        // Continuar com padrões mesmo se erro (settings é opcional)
+      }
+    };
+    
+    loadSettings();
+  }, []);
 
   useEffect(() => {
     loadCaseData();
@@ -335,10 +355,13 @@ function CaseDetailPage() {
   }, [id, showToast]);
 
   useEffect(() => {
-    if (id) {
+    // Verificar setting antes de carregar
+    const shouldAutoLoad = systemSettings?.AUTO_LOAD_MOVEMENTS_ON_CASE !== false;
+    
+    if (id && shouldAutoLoad) {
       loadMovimentacoes();
     }
-  }, [id, loadMovimentacoes]);
+  }, [id, loadMovimentacoes, systemSettings]);
 
   useEffect(() => {
     if (activeSection !== 'info' && isEditing) {
@@ -365,10 +388,40 @@ function CaseDetailPage() {
   }, [id, showToast]);
 
   useEffect(() => {
-    if (id) {
+    // Verificar setting antes de carregar
+    const shouldAutoLoad = systemSettings?.AUTO_CHECK_DEADLINES !== false;
+    
+    if (id && shouldAutoLoad) {
       loadDeadlines();
     }
-  }, [id, loadDeadlines]);
+  }, [id, loadDeadlines, systemSettings]);
+
+  /**
+   * Load publications linked to this case
+   */
+  const loadPublicacoes = useCallback(async () => {
+    if (!id) return;
+    
+    setLoadingPublicacoes(true);
+    try {
+      const data = await publicationsService.getPublicationsByCase(id);
+      setPublicacoes(data);
+    } catch (error) {
+      console.error('Error loading publications:', error);
+      showToast('Erro ao carregar publicações', 'error');
+    } finally {
+      setLoadingPublicacoes(false);
+    }
+  }, [id, showToast]);
+
+  useEffect(() => {
+    // Verificar setting antes de carregar
+    const shouldAutoLoad = systemSettings?.AUTO_LOAD_PUBLICATIONS_ON_CASE !== false;
+    
+    if (id && shouldAutoLoad) {
+      loadPublicacoes();
+    }
+  }, [id, loadPublicacoes, systemSettings]);
 
   /**
    * Check deadlines and create notifications on page load
@@ -392,8 +445,13 @@ function CaseDetailPage() {
    * Load parties on mount for summary display
    */
   useEffect(() => {
-    loadParties();
-  }, [loadParties]);
+    // Verificar setting antes de carregar
+    const shouldAutoLoad = systemSettings?.AUTO_LOAD_PARTIES_ON_CASE !== false;
+    
+    if (shouldAutoLoad) {
+      loadParties();
+    }
+  }, [loadParties, systemSettings]);
 
   /**
    * Load parties when entering parties section (if not already loaded)
@@ -1237,13 +1295,7 @@ function CaseDetailPage() {
               console.log('Desvincular publicação:', publicacaoId);
               setPublicacoes(prev => prev.filter(p => p.id !== publicacaoId));
             }}
-            onRefresh={() => {
-              // TODO: Implementar handler para recarregar publicações
-              console.log('Refresh publicações');
-              setLoadingPublicacoes(true);
-              // Simular carregamento
-              setTimeout(() => setLoadingPublicacoes(false), 500);
-            }}
+            onRefresh={loadPublicacoes}
           />
         )}
 

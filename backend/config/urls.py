@@ -18,9 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from .api_views import get_system_settings, get_specific_setting
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # System Settings: /api/system-settings
+    path('api/system-settings/<str:setting_key>', get_specific_setting, name='get_setting'),
+    path('api/system-settings', get_system_settings, name='system_settings'),
     # Contacts: /api/contacts/ (o router adiciona 'contacts' automaticamente)
     path('api/', include('apps.contacts.urls')),
     # Publications: /api/publications/today
