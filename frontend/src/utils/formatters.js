@@ -153,12 +153,24 @@ export function parseCurrencyValue(value) {
   
   if (typeof value === 'number') return value;
   
-  // Remove 'R$' and whitespace, replace Brazilian decimal separator
-  const cleaned = String(value)
-    .replace(/R\$/g, '')
-    .replace(/\s/g, '')
-    .replace(/\./g, '')       // Remove thousand separators
-    .replace(/,/g, '.');      // Replace decimal separator
+  const str = String(value).trim();
+  
+  // Remove 'R$' prefix and whitespace
+  let cleaned = str.replace(/R\$/g, '').replace(/\s/g, '');
+  
+  // Detect format and normalize
+  if (cleaned.includes(',')) {
+    // Brazilian format with comma as decimal: "1.234,56" → "1234.56"
+    // Remove all dots (thousand separators), then replace comma with dot
+    cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.');
+  } else if (cleaned.match(/\d+\.\d{2}$/)) {
+    // Likely ISO format with decimal point: "15000.00"
+    // Keep as-is (dot is already decimal separator)
+  } else {
+    // Plain number or thousand-separated without decimal: "1234" or "1.234"
+    // Remove dots (they're thousand separators)
+    cleaned = cleaned.replace(/\./g, '');
+  }
   
   const numeric = parseFloat(cleaned);
   return isNaN(numeric) ? 0 : numeric;
