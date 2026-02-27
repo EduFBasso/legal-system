@@ -1,46 +1,94 @@
 // src/components/Menu.jsx
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { useNotifications } from '../hooks/useNotifications';
+import publicationsService from '../services/publicationsService';
 import './Menu.css';
 
 export default function Menu() {
-  const { unreadCount } = useNotifications();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const loadPendingCount = async () => {
+      try {
+        const result = await publicationsService.getPendingCount();
+        if (result.success) {
+          setPendingCount(result.count || 0);
+        }
+      } catch {
+        setPendingCount(0);
+      }
+    };
+
+    loadPendingCount();
+  }, []);
   
   return (
     <nav className="app-menu">
       <ul className="menu-list">
         <li className="menu-item">
-          <NavLink to="/contacts" className={({ isActive }) => isActive ? 'active' : ''}>
-            <span className="menu-icon">👥</span>
-            <span className="menu-label">Contatos</span>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+          >
+            <span className="menu-icon">🏠</span>
+            <span className="menu-label">Dashboard</span>
           </NavLink>
         </li>
         <li className="menu-item">
-          <NavLink to="/publications" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink
+            to="/cases"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+          >
+            <span className="menu-icon">⚖️</span>
+            <span className="menu-label">Processos</span>
+          </NavLink>
+        </li>
+
+        <li className="menu-group-spacer" aria-hidden="true" />
+
+        <li className="menu-item">
+          <NavLink
+            to="/publications"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+          >
             <span className="menu-icon">📰</span>
             <span className="menu-label">Publicações</span>
           </NavLink>
         </li>
         <li className="menu-item">
-          <NavLink to="/search-history" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink
+            to="/search-history"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+          >
             <span className="menu-icon">📋</span>
             <span className="menu-label">Histórico</span>
           </NavLink>
         </li>
         <li className="menu-item">
-          <NavLink to="/notifications" className={({ isActive }) => isActive ? 'active' : ''}>
-            <span className="menu-icon">🔔</span>
-            <span className="menu-label">Notificações</span>
-            {unreadCount > 0 && (
-              <span className="notification-badge">{unreadCount}</span>
+          <NavLink
+            to="/publications/pending"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+          >
+            <span className="menu-icon">⚠️</span>
+            <span className="menu-label">Pendentes</span>
+            {pendingCount > 0 && (
+              <span className="notification-badge">{pendingCount}</span>
             )}
           </NavLink>
         </li>
+
+        <li className="menu-group-spacer" aria-hidden="true" />
+
         <li className="menu-item">
-          <NavLink to="/cases" className={({ isActive }) => isActive ? 'active' : ''}>
-            <span className="menu-icon">⚖️</span>
-            <span className="menu-label">Processos</span>
-          </NavLink>
+          <a href="#deadlines">
+            <span className="menu-icon">⏰</span>
+            <span className="menu-label">Prazos</span>
+          </a>
         </li>
         <li className="menu-item">
           <a href="#calendar">

@@ -18,6 +18,10 @@
   margin: 4px 0;
 }
 
+.menu-group-spacer {
+  height: 24px;
+}
+
 .menu-item a {
   display: flex;
   align-items: center;

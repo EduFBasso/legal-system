@@ -14,7 +14,10 @@ export default function PublicationsList({
   selectionMode = false,
   selectedIds = new Set(),
   onToggleSelect = () => {},
-  onDelete = () => {}
+  onDelete = () => {},
+  showActionButtons = false,
+  onIntegrate = () => {},
+  onCreateCase = () => {}
 }) {
   // Estado de carregamento
   if (loading) {
@@ -67,6 +70,10 @@ export default function PublicationsList({
           isSelected={selectedIds.has(pub.id_api)}
           onToggleSelect={() => onToggleSelect(pub.id_api)}
           onDelete={() => onDelete(pub.id_api)}
+          showActionButtons={showActionButtons}
+          onIntegrate={() => onIntegrate(pub)}
+          onCreateCase={() => onCreateCase(pub)}
+          caseSuggestion={pub.case_suggestion}
         />
       ))}
     </div>
@@ -81,5 +88,8 @@ PublicationsList.propTypes = {
   selectionMode: PropTypes.bool,
   selectedIds: PropTypes.instanceOf(Set),
   onToggleSelect: PropTypes.func,
-  onDelete: PropTypes.func
+  onDelete: PropTypes.func,
+  showActionButtons: PropTypes.bool,
+  onIntegrate: PropTypes.func,
+  onCreateCase: PropTypes.func
 };

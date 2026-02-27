@@ -13,6 +13,7 @@ from rest_framework import status
 
 from services.pje_comunica import PJeComunicaService
 from apps.notifications.models import Notification
+from apps.cases.models import Case, CaseMovement
 from .models import Publication, SearchHistory
 
 
@@ -32,6 +33,13 @@ def normalize_string(text):
     # Depois remove categoria Mn (Nonspacing Mark = acentos)
     nfd = unicodedata.normalize('NFD', text)
     return ''.join(char for char in nfd if unicodedata.category(char) != 'Mn').lower()
+
+
+def normalize_processo_numero(numero_processo):
+    """Remove caracteres nao numericos do numero do processo."""
+    if not numero_processo:
+        return ''
+    return ''.join(char for char in str(numero_processo) if char.isdigit())
 
 
 @api_view(['GET'])
@@ -351,6 +359,7 @@ def _save_publications_to_db(publicacoes):
                 texto_completo=pub.get('texto_completo', ''),
                 link_oficial=pub.get('link_oficial'),
                 hash_pub=pub.get('hash'),
+                integration_status='PENDING',
                 search_metadata={
                     'original_data': pub
                 }
@@ -507,6 +516,324 @@ def retrieve_last_search_publications(request):
             'from_database': True
         })
         
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def _build_case_suggestion(numero_processo):
+    if not numero_processo:
+        return None
+    numero_limpo = normalize_processo_numero(numero_processo)
+    if not numero_limpo:
+        return None
+    case = Case.objects.filter(numero_processo_unformatted=numero_limpo).first()
+    if not case:
+        return None
+    return {
+        'id': case.id,
+        'numero_processo': case.numero_processo,
+        'titulo': case.titulo,
+    }
+
+
+def _create_movement_from_publication(publication, case):
+    tipo_map = {
+        'intimação': 'INTIMACAO',
+        'intimacao': 'INTIMACAO',
+        'citação': 'CITACAO',
+        'citacao': 'CITACAO',
+        'despacho': 'DESPACHO',
+        'sentença': 'SENTENCA',
+        'sentenca': 'SENTENCA',
+    }
+    tipo_comunicacao = (publication.tipo_comunicacao or '').lower()
+    tipo_mov = tipo_map.get(tipo_comunicacao, 'OUTROS')
+
+    CaseMovement.objects.create(
+        case=case,
+        data=publication.data_disponibilizacao,
+        tipo=tipo_mov,
+        titulo=publication.tipo_comunicacao or 'Publicacao',
+        descricao=publication.texto_resumo or publication.texto_completo or '',
+        origem='DJE',
+        publicacao_id=publication.id,
+    )
+
+
+@api_view(['GET'])
+def get_pending_publications(request):
+    """
+    Lista publicacoes pendentes de integracao.
+
+    GET /api/publications/pending
+    Query params: tribunal, ordering, limit, offset
+    """
+    try:
+        tribunal = request.query_params.get('tribunal')
+        ordering = request.query_params.get('ordering', '-data_disponibilizacao')
+        limit = int(request.query_params.get('limit', 20))
+        offset = int(request.query_params.get('offset', 0))
+
+        allowed_ordering = {
+            'data_disponibilizacao',
+            '-data_disponibilizacao',
+            'tribunal',
+            '-tribunal',
+            'created_at',
+            '-created_at',
+        }
+        if ordering not in allowed_ordering:
+            ordering = '-data_disponibilizacao'
+
+        queryset = Publication.objects.filter(
+            deleted=False,
+            integration_status='PENDING'
+        )
+
+        if tribunal:
+            queryset = queryset.filter(tribunal=tribunal)
+
+        total = queryset.count()
+        queryset = queryset.order_by(ordering)[offset:offset + limit]
+
+        results = []
+        for pub in queryset:
+            results.append({
+                'id': pub.id,
+                'id_api': pub.id_api,
+                'numero_processo': pub.numero_processo,
+                'tribunal': pub.tribunal,
+                'tipo_comunicacao': pub.tipo_comunicacao,
+                'data_disponibilizacao': pub.data_disponibilizacao.isoformat(),
+                'orgao': pub.orgao,
+                'texto_resumo': pub.texto_resumo,
+                'texto_completo': pub.texto_completo,
+                'link_oficial': pub.link_oficial,
+                'case_suggestion': _build_case_suggestion(pub.numero_processo),
+            })
+
+        return Response({
+            'success': True,
+            'count': total,
+            'results': results,
+            'limit': limit,
+            'offset': offset,
+        })
+
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_pending_count(request):
+    try:
+        count = Publication.objects.filter(
+            deleted=False,
+            integration_status='PENDING'
+        ).count()
+        return Response({
+            'success': True,
+            'count': count
+        })
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def integrate_publication(request, id_api):
+    """
+    Vincula publicacao a um caso.
+
+    POST /api/publications/<id_api>/integrate
+    Body: { case_id, create_movement, notes }
+    """
+    try:
+        case_id = request.data.get('case_id')
+        create_movement = bool(request.data.get('create_movement', False))
+        notes = request.data.get('notes', '')
+
+        if not case_id:
+            return Response({
+                'success': False,
+                'error': 'case_id é obrigatório'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        publication = Publication.objects.get(id_api=id_api, deleted=False)
+        case = Case.objects.get(id=case_id)
+
+        publication.case = case
+        publication.integration_status = 'INTEGRATED'
+        publication.integration_attempted_at = timezone.now()
+        if notes:
+            publication.integration_notes = notes
+        publication.save(update_fields=[
+            'case',
+            'integration_status',
+            'integration_attempted_at',
+            'integration_notes',
+            'updated_at'
+        ])
+
+        movement_created = False
+        if create_movement:
+            _create_movement_from_publication(publication, case)
+            movement_created = True
+
+        return Response({
+            'success': True,
+            'message': 'Publicação vinculada com sucesso',
+            'movement_created': movement_created,
+            'publication': {
+                'id': publication.id,
+                'id_api': publication.id_api,
+                'numero_processo': publication.numero_processo,
+                'tribunal': publication.tribunal,
+                'tipo_comunicacao': publication.tipo_comunicacao,
+                'data_disponibilizacao': publication.data_disponibilizacao.isoformat(),
+                'case_id': case.id,
+                'integration_status': publication.integration_status,
+            }
+        })
+
+    except Publication.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Publicação não encontrada'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Case.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Caso não encontrado'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def batch_integrate_publications(request):
+    """
+    Integra publicacoes da ultima busca (ou search_id informado).
+
+    POST /api/publications/batch-integrate
+    Body: { 
+        search_id, 
+        auto_link, 
+        create_movement, 
+        auto_integration (setting do cliente)
+    }
+    
+    Parâmetros:
+        - auto_link: Se True, tenta auto-vincular por número de processo
+        - create_movement: Se True, cria CaseMovement após integração
+        - auto_integration: Setting do cliente (informado apenas para logging/auditoria)
+    """
+    try:
+        search_id = request.data.get('search_id')
+        auto_link = request.data.get('auto_link', True)
+        create_movement = request.data.get('create_movement', False)
+        auto_integration = request.data.get('auto_integration', False)
+
+        if search_id:
+            search = SearchHistory.objects.filter(id=search_id).first()
+        else:
+            search = SearchHistory.objects.first()
+
+        if not search:
+            return Response({
+                'success': False,
+                'error': 'Nenhuma busca encontrada'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        queryset = Publication.objects.filter(
+            deleted=False,
+            tribunal__in=search.tribunais,
+            data_disponibilizacao__gte=search.data_inicio,
+            data_disponibilizacao__lte=search.data_fim
+        ).order_by('-data_disponibilizacao')
+
+        integrated = 0
+        pending = 0
+        ignored = 0
+
+        for pub in queryset:
+            if pub.integration_status == 'IGNORED':
+                ignored += 1
+                continue
+
+            if not auto_link:
+                if pub.integration_status != 'INTEGRATED':
+                    pub.integration_status = 'PENDING'
+                    pub.integration_attempted_at = timezone.now()
+                    pub.integration_notes = 'Integracao adiada'
+                    pub.save(update_fields=[
+                        'integration_status',
+                        'integration_attempted_at',
+                        'integration_notes',
+                        'updated_at'
+                    ])
+                    pending += 1
+                else:
+                    integrated += 1
+                continue
+
+            if pub.integration_status == 'INTEGRATED' and pub.case_id:
+                integrated += 1
+                continue
+
+            case = None
+            if pub.numero_processo:
+                numero_limpo = normalize_processo_numero(pub.numero_processo)
+                if numero_limpo:
+                    case = Case.objects.filter(numero_processo_unformatted=numero_limpo).first()
+
+            if case:
+                pub.case = case
+                pub.integration_status = 'INTEGRATED'
+                pub.integration_attempted_at = timezone.now()
+                pub.integration_notes = 'Integrada automaticamente'
+                pub.save(update_fields=[
+                    'case',
+                    'integration_status',
+                    'integration_attempted_at',
+                    'integration_notes',
+                    'updated_at'
+                ])
+
+                if create_movement:
+                    _create_movement_from_publication(pub, case)
+                integrated += 1
+            else:
+                pub.integration_status = 'PENDING'
+                pub.integration_attempted_at = timezone.now()
+                pub.integration_notes = 'Processo nao cadastrado'
+                pub.save(update_fields=[
+                    'integration_status',
+                    'integration_attempted_at',
+                    'integration_notes',
+                    'updated_at'
+                ])
+                pending += 1
+
+        return Response({
+            'success': True,
+            'integrated': integrated,
+            'pending': pending,
+            'ignored': ignored,
+            'search_id': search.id
+        })
+
     except Exception as e:
         return Response({
             'success': False,
@@ -891,6 +1218,7 @@ def delete_publication(request, id_api):
         publication.deleted = True
         publication.deleted_at = timezone.now()
         publication.deleted_reason = 'Exclusão manual pela advogada'
+        publication.integration_status = 'IGNORED'
         publication.save()
         
         # CASCADE: Marcar notificações relacionadas como lidas (não deletar)
@@ -952,7 +1280,8 @@ def delete_multiple_publications(request):
         ).update(
             deleted=True,
             deleted_at=timezone.now(),
-            deleted_reason='Exclusão múltipla pela advogada'
+            deleted_reason='Exclusão múltipla pela advogada',
+            integration_status='IGNORED'
         )
         
         # Marcar notificações relacionadas como lidas
@@ -1003,7 +1332,8 @@ def delete_all_publications(request):
         deleted_count = Publication.objects.filter(deleted=False).update(
             deleted=True,
             deleted_at=timezone.now(),
-            deleted_reason='Limpeza geral pelo usuário'
+            deleted_reason='Limpeza geral pelo usuário',
+            integration_status='IGNORED'
         )
         
         # Marcar TODAS notificações de publicação como lidas

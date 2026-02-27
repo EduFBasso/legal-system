@@ -19,6 +19,7 @@ export function SettingsProvider({ children }) {
       showEmptyFields: false,
       deletePassword: '',
       retroactiveDays: 7,  // Notificações para publicações dos últimos 7 dias
+      autoIntegration: false,  // Integração automática de publicações
     };
   });
 

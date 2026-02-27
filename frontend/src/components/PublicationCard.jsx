@@ -8,7 +8,11 @@ export default function PublicationCard({
   selectionMode = false,
   isSelected = false,
   onToggleSelect = () => {},
-  onDelete = () => {}
+  onDelete = () => {},
+  showActionButtons = false,
+  onIntegrate = () => {},
+  onCreateCase = () => {},
+  caseSuggestion = null
 }) {
   const getTipoBadgeColor = (tipo) => {
     const colors = {
@@ -199,6 +203,35 @@ export default function PublicationCard({
           {getResumo()}
         </div>
       </div>
+
+      {/* Action Buttons Section (Integrar, Criar caso, etc.) */}
+      {showActionButtons && (
+        <div className="publication-actions">
+          {caseSuggestion ? (
+            <button
+              className="btn-integrate"
+              onClick={(e) => {
+                e.stopPropagation();
+                onIntegrate();
+              }}
+              title="Vincular ao caso sugerido"
+            >
+              🔗 Vincular ao Caso #{caseSuggestion.id}
+            </button>
+          ) : (
+            <button
+              className="btn-create-case"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCreateCase();
+              }}
+              title="Criar novo caso para esta publicação"
+            >
+              ➕ Criar Caso
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="publication-footer">
         <button className="btn-view-details">

@@ -118,6 +118,36 @@ export default function SettingsModal({ isOpen, onClose }) {
           </div>
         </section>
 
+        {/* Integração de Publicações */}
+        <section className="settings-section">
+          <h3 className="settings-section-title">🔗 Integração de Publicações</h3>
+          
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Integração automática</label>
+              <p className="setting-description">
+                Quando ativado, ao buscar publicações, o sistema tentará integrar automaticamente 
+                as publicações encontradas aos casos existentes. Se desativado, será sempre 
+                exibida uma modal para confirmar a ação.
+              </p>
+            </div>
+            <button
+              className={`toggle-button ${localSettings.autoIntegration ? 'active' : ''}`}
+              onClick={() => handleToggle('autoIntegration')}
+              aria-label="Alternar integração automática de publicações"
+            >
+              <span className="toggle-slider"></span>
+            </button>
+          </div>
+
+          <div className="setting-hint-box">
+            <p>
+              <strong>Automático ativado:</strong> Publicações com caso identificado são integradas sem confirmação.<br/>
+              <strong>Automático desativado:</strong> Sempre exibe modal permitindo que você escolha "Integrar agora" ou "Deixar pendente".
+            </p>
+          </div>
+        </section>
+
         {/* Botões de ação */}
         <div className="settings-actions">
           <button className="btn-cancel" onClick={handleCancel}>

@@ -32,7 +32,8 @@
 }
 
 .btn-settings,
-.btn-logout {
+.btn-logout,
+.btn-notifications {
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
@@ -40,16 +41,42 @@
   font-size: 18px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
 }
 
 .btn-settings:hover,
-.btn-logout:hover {
+.btn-logout:hover,
+.btn-notifications:hover {
   background: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.5);
   transform: scale(1.05);
 }
 
 .btn-settings:active,
-.btn-logout:active {
+.btn-logout:active,
+.btn-notifications:active {
   transform: scale(0.98);
+}
+
+.header-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }

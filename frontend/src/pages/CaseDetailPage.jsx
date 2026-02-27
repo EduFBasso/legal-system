@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Save, X, UserPlus, RefreshCw } from 'lucide-react';
 import { formatDate, parseCurrencyValue, formatCurrency } from '../utils/formatters';
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
+import publicationsService from '../services/publicationsService';
 import caseMovementsService from '../services/caseMovementsService';
 import financialService from '../services/financialService';
 import * as deadlinesService from '../services/deadlinesService';
@@ -17,7 +18,8 @@ import {
   MovimentacoesTab, 
   DocumentosTab, 
   DeadlinesTab, 
-  FinanceiroTab 
+  FinanceiroTab,
+  PublicacoesTab 
 } from '../components/CaseTabs';
 import './CaseDetailPage.css';
 
@@ -29,20 +31,55 @@ import './CaseDetailPage.css';
  */
 function CaseDetailPage() {
   const { id } = useParams();
+  const location = useLocation();
+  const publicationId = new URLSearchParams(location.search).get('pub_id');
+
+  const getRoleDisplay = (role) => {
+    const labels = {
+      AUTOR: 'Autor/Requerente',
+      REU: 'Réu/Requerido',
+      TESTEMUNHA: 'Testemunha',
+      PERITO: 'Perito',
+      TERCEIRO: 'Terceiro Interessado',
+      CLIENTE: 'Cliente/Representado',
+    };
+    return labels[role] || role;
+  };
+
+  const buildPublicationObservation = (publication) => {
+    if (!publication) return '';
+
+    const lines = [
+      '[Origem automática: Publicação DJE]',
+      `ID Publicação: ${publication.id_api}`,
+      `Data disponibilização: ${publication.data_disponibilizacao || '-'}`,
+      `Tipo: ${publication.tipo_comunicacao || '-'}`,
+      `Órgão: ${publication.orgao || '-'}`,
+    ];
+
+    if (publication.link_oficial) {
+      lines.push(`Link oficial: ${publication.link_oficial}`);
+    }
+
+    return lines.join('\n');
+  };
 
   // State
   const [caseData, setCaseData] = useState(null);
   const [formData, setFormData] = useState({});
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [documentos, setDocumentos] = useState([]);
+  const [publicacoes, setPublicacoes] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [isEditing, setIsEditing] = useState(!id); // New case = editing mode
   const [loading, setLoading] = useState(!!id); // Only load if has id
   const [saving, setSaving] = useState(false);
+  const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
   const [toast, setToast] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSelectContactModal, setShowSelectContactModal] = useState(false);
+  const [sourcePublication, setSourcePublication] = useState(null);
   
   // Parties state
   const [parties, setParties] = useState([]);
@@ -169,6 +206,41 @@ function CaseDetailPage() {
   useEffect(() => {
     loadCaseData();
   }, [loadCaseData]);
+
+  useEffect(() => {
+    const loadPublicationPrefill = async () => {
+      if (id || !publicationId) return;
+
+      try {
+        const result = await publicationsService.getPublicationById(publicationId);
+        const publication = result?.publication;
+
+        if (!publication) return;
+
+        setSourcePublication(publication);
+
+        setFormData((prev) => {
+          const prefillObservacao = buildPublicationObservation(publication);
+          const alreadyTagged = (prev.observacoes || '').includes('[Origem automática: Publicação DJE]');
+
+          return {
+            ...prev,
+            numero_processo: prev.numero_processo || publication.numero_processo || '',
+            tribunal: prev.tribunal || publication.tribunal || '',
+            vara: prev.vara || publication.orgao || '',
+            observacoes: alreadyTagged
+              ? prev.observacoes
+              : (prev.observacoes ? `${prev.observacoes}\n\n${prefillObservacao}` : prefillObservacao),
+          };
+        });
+      } catch (error) {
+        console.error('Error loading publication prefill:', error);
+        showToast('Não foi possível carregar os dados da publicação para pré-preenchimento', 'warning');
+      }
+    };
+
+    loadPublicationPrefill();
+  }, [id, publicationId, showToast]);
 
   // Atualizar título da aba do navegador
   useEffect(() => {
@@ -368,6 +440,36 @@ function CaseDetailPage() {
     }
 
     try {
+      if (!id) {
+        const draftId = `draft-${Date.now()}-${selectedContact.id}`;
+        const draftParty = {
+          id: draftId,
+          contact: selectedContact.id,
+          contact_name: selectedContact.name,
+          contact_person_type: selectedContact.person_type,
+          contact_document: selectedContact.document_number,
+          contact_phone: selectedContact.phone,
+          contact_email: selectedContact.email,
+          role: partyFormData.role,
+          role_display: getRoleDisplay(partyFormData.role),
+          is_client: partyFormData.is_client,
+          observacoes: partyFormData.observacoes,
+          is_draft: true,
+        };
+
+        setParties((prev) => {
+          const withoutSameContact = prev.filter((p) => p.contact !== selectedContact.id);
+          if (draftParty.is_client) {
+            return [...withoutSameContact.map((p) => ({ ...p, is_client: false })), draftParty];
+          }
+          return [...withoutSameContact, draftParty];
+        });
+
+        showToast('Parte adicionada ao rascunho do processo', 'success');
+        handleCloseAddPartyModal();
+        return;
+      }
+
       await casePartiesService.createParty({
         case: parseInt(id),
         contact: selectedContact.id,
@@ -377,18 +479,25 @@ function CaseDetailPage() {
       });
 
       showToast('Parte adicionada com sucesso!', 'success');
-      setShowAddPartyModal(false);
-      setSelectedContact(null);
-      setPartyFormData({
-        role: 'AUTOR',
-        is_client: false,
-        observacoes: '',
-      });
+      handleCloseAddPartyModal();
       loadParties();
     } catch (error) {
       console.error('Error saving party:', error);
       showToast('Erro ao adicionar parte', 'error');
     }
+  };
+
+  /**
+   * Handle close add party modal
+   */
+  const handleCloseAddPartyModal = () => {
+    setShowAddPartyModal(false);
+    setSelectedContact(null);
+    setPartyFormData({
+      role: 'AUTOR',
+      is_client: false,
+      observacoes: '',
+    });
   };
 
   /**
@@ -398,6 +507,12 @@ function CaseDetailPage() {
     if (!window.confirm(`Remover ${partyName} deste processo?`)) return;
 
     try {
+      if (!id) {
+        setParties((prev) => prev.filter((party) => party.id !== partyId));
+        showToast('Parte removida do rascunho', 'success');
+        return;
+      }
+
       await casePartiesService.deleteParty(partyId);
       showToast('Parte removida do processo', 'success');
       loadParties();
@@ -442,6 +557,28 @@ function CaseDetailPage() {
     if (!editingParty) return;
 
     try {
+      if (!id) {
+        setParties((prev) => prev.map((party) => {
+          if (party.id !== editingParty.id) return party;
+          return {
+            ...party,
+            role: editingPartyFormData.role,
+            role_display: getRoleDisplay(editingPartyFormData.role),
+            is_client: editingPartyFormData.is_client,
+            observacoes: editingPartyFormData.observacoes,
+          };
+        }).map((party) => {
+          if (editingPartyFormData.is_client && party.id !== editingParty.id) {
+            return { ...party, is_client: false };
+          }
+          return party;
+        }));
+
+        showToast('Papel da parte atualizado no rascunho!', 'success');
+        setEditingParty(null);
+        return;
+      }
+
       await casePartiesService.updateParty(editingParty.id, editingPartyFormData);
       showToast('Papel da parte atualizado com sucesso!', 'success');
       setEditingParty(null);
@@ -492,6 +629,54 @@ function CaseDetailPage() {
         cleanedData.valor_causa = parseCurrencyValue(cleanedData.valor_causa);
       }
 
+      if (!id) {
+        const created = await casesService.create(cleanedData);
+
+        let failedParties = 0;
+        for (const party of parties) {
+          try {
+            await casePartiesService.createParty({
+              case: created.id,
+              contact: party.contact,
+              role: party.role,
+              is_client: !!party.is_client,
+              observacoes: party.observacoes || '',
+            });
+          } catch (partyError) {
+            failedParties += 1;
+            console.error('Error creating party after case creation:', partyError);
+          }
+        }
+
+        const pubId = sourcePublication?.id_api || publicationId;
+        if (pubId) {
+          try {
+            await publicationsService.integratePublication(pubId, {
+              caseId: created.id,
+              createMovement: false,
+            });
+          } catch (integrationError) {
+            console.error('Error integrating source publication:', integrationError);
+            showToast('Processo criado, mas houve falha ao vincular a publicação automaticamente', 'warning');
+          }
+        }
+
+        setCaseData(created);
+        setFormData(created);
+        setIsEditing(false);
+
+        if (failedParties > 0) {
+          showToast(`Processo criado! ${failedParties} parte(s) não foram vinculadas`, 'warning');
+        } else {
+          showToast('Processo criado com sucesso!', 'success');
+        }
+
+        setTimeout(() => {
+          window.location.href = `/cases/${created.id}`;
+        }, 700);
+        return;
+      }
+
       const updated = await casesService.update(id, cleanedData);
       setCaseData(updated);
       setFormData(updated);
@@ -535,6 +720,12 @@ function CaseDetailPage() {
    * Open modal to add new movimentacao
    */
   const handleOpenMovimentacaoModal = () => {
+    // Validar que o caso já foi salvo (tem id)
+    if (!id) {
+      showToast('Salve o caso primeiro antes de adicionar movimentações', 'warning');
+      return;
+    }
+
     const today = new Date().toISOString().split('T')[0];
     setMovimentacaoFormData({
       data: today,
@@ -961,6 +1152,13 @@ function CaseDetailPage() {
               {documentos.length > 0 && <span className="badge">{documentos.length}</span>}
             </button>
             <button
+              className={`nav-tab ${activeSection === 'publicacoes' ? 'active' : ''}`}
+              onClick={() => setActiveSection('publicacoes')}
+            >
+              📰 Publicações
+              {publicacoes.length > 0 && <span className="badge">{publicacoes.length}</span>}
+            </button>
+            <button
               className={`nav-tab ${activeSection === 'deadlines' ? 'active' : ''}`}
               onClick={() => setActiveSection('deadlines')}
             >
@@ -991,6 +1189,7 @@ function CaseDetailPage() {
             onCancel={handleCancel}
             onDelete={handleDelete}
             setActiveSection={setActiveSection}
+            onAddPartyClick={handleOpenContactSelection}
             parties={parties}
             deadlines={deadlines}
             caseData={caseData}
@@ -1020,6 +1219,31 @@ function CaseDetailPage() {
           <DocumentosTab 
             documentos={documentos}
             setDocumentos={setDocumentos}
+          />
+        )}
+
+        {/* Publicações Section */}
+        {activeSection === 'publicacoes' && (
+          <PublicacoesTab
+            caseId={id}
+            publicacoes={publicacoes}
+            loading={loadingPublicacoes}
+            onVincularPublicacao={(publicacao) => {
+              // TODO: Implementar handler para vincular publicação ao caso
+              console.log('Vincular publicação:', publicacao);
+            }}
+            onDesvincularPublicacao={(publicacaoId) => {
+              // TODO: Implementar handler para desvincular publicação
+              console.log('Desvincular publicação:', publicacaoId);
+              setPublicacoes(prev => prev.filter(p => p.id !== publicacaoId));
+            }}
+            onRefresh={() => {
+              // TODO: Implementar handler para recarregar publicações
+              console.log('Refresh publicações');
+              setLoadingPublicacoes(true);
+              // Simular carregamento
+              setTimeout(() => setLoadingPublicacoes(false), 500);
+            }}
           />
         )}
 
@@ -1241,11 +1465,11 @@ function CaseDetailPage() {
 
       {/* Modal de Definir Papel da Parte */}
       {showAddPartyModal && selectedContact && (
-        <div className="modal-overlay" onClick={() => setShowAddPartyModal(false)}>
+        <div className="modal-overlay" onClick={handleCloseAddPartyModal}>
           <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Adicionar ao Processo</h2>
-              <button className="modal-close" onClick={() => setShowAddPartyModal(false)}>×</button>
+              <button className="modal-close" onClick={handleCloseAddPartyModal}>×</button>
             </div>
 
             <div className="modal-body">
@@ -1314,7 +1538,7 @@ function CaseDetailPage() {
             <div className="modal-footer">
               <button 
                 className="btn btn-secondary"
-                onClick={() => setShowAddPartyModal(false)}
+                onClick={handleCloseAddPartyModal}
               >
                 Cancelar
               </button>
@@ -1352,7 +1576,7 @@ function CaseDetailPage() {
                     max={new Date().toISOString().split('T')[0]}
                     required
                   />
-                  <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                  <small className="form-helper-text">
                     Apenas datas passadas ou de hoje são permitidas
                   </small>
                 </div>
@@ -1409,7 +1633,7 @@ function CaseDetailPage() {
                   placeholder="Ex: 15"
                   min="0"
                 />
-                <small style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                <small className="form-helper-text">
                   Se houver prazo, informe em dias. A data limite será calculada automaticamente.
                 </small>
               </div>

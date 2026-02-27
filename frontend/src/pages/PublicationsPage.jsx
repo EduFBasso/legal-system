@@ -6,8 +6,8 @@ import publicationsService from '../services/publicationsService';
 import PublicationsSearchForm from  '../components/PublicationsSearchForm';
 import PublicationsList from '../components/PublicationsList';
 import PublicationsStats from '../components/PublicationsStats';
-import PublicationDetailModal from '../components/PublicationDetailModal';
 import Toast from '../components/common/Toast';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import './PublicationsPage.css';
 
 /**
@@ -21,6 +21,9 @@ export default function PublicationsPage() {
   // Estado de seleção para exclusão
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showIntegrateConfirm, setShowIntegrateConfirm] = useState(false);
+  const [integrateCount, setIntegrateCount] = useState(0);
+  const [integrateLoading, setIntegrateLoading] = useState(false);
   
   // Obter estado e ações do contexto
   const {
@@ -28,30 +31,67 @@ export default function PublicationsPage() {
     loading,
     searchParams,
     lastSearch,
-    selectedPublication,
-    isModalOpen,
     toast,
     search,
     loadLastSearch,
     openModal,
-    closeModal,
-    hideToast
+    hideToast,
+    showToast
   } = usePublicationsContext();
 
   /**
    * Handler para busca com filtros
    * Adiciona retroactiveDays do settings
+   * Se autoIntegration ativado, integra automaticamente
    */
   const handleSearch = useCallback(async (filters) => {
     const retroactiveDays = settings.retroactiveDays ?? 7;
-    
-    await search({
+    const autoIntegration = settings.autoIntegration ?? false;
+
+    const result = await search({
       dataInicio: filters.dataInicio,
       dataFim: filters.dataFim,
       tribunais: filters.tribunais,
       retroactiveDays
     });
-  }, [search, settings.retroactiveDays]);
+
+    if (result?.success && result.total_publicacoes > 0) {
+      setIntegrateCount(result.total_publicacoes);
+      
+      if (autoIntegration) {
+        // Integração automática ativada - integra sem confirmação
+        await handleConfirmIntegrate();
+      } else {
+        // Integração manual - mostra modal
+        setShowIntegrateConfirm(true);
+      }
+    }
+  }, [search, settings.retroactiveDays, settings.autoIntegration]);
+
+  const handleConfirmIntegrate = useCallback(async () => {
+    setIntegrateLoading(true);
+    try {
+      const result = await publicationsService.batchIntegratePublications({
+        autoLink: true,
+        createMovement: false,
+        autoIntegration: settings.autoIntegration ?? false
+      });
+
+      if (result.success) {
+        showToast(
+          `${result.integrated} integrada(s), ${result.pending} pendente(s), ${result.ignored} ignorada(s).`,
+          'success'
+        );
+      } else {
+        showToast(result.error || 'Erro ao integrar publicacoes.', 'error');
+      }
+    } catch (error) {
+      showToast(error.message || 'Erro ao integrar publicacoes.', 'error');
+    } finally {
+      setIntegrateLoading(false);
+      setShowIntegrateConfirm(false);
+    }
+  }, [showToast, settings.autoIntegration]);
 
   /**
    * Funções de seleção para exclusão
@@ -136,6 +176,62 @@ export default function PublicationsPage() {
     } catch (error) {
       alert(`Erro ao deletar publicação: ${error.message}`);
     }
+  };
+
+  /**
+   * Handler para integrar uma publicação individual da aba Publicações
+   */
+  const handleIntegrateSingle = async (pub) => {
+    if (pub.case_suggestion?.id) {
+      // Tem case_suggestion - perguntar se deseja vincular
+      const confirmed = window.confirm(
+        `Vincular ao caso #${pub.case_suggestion.id}?`
+      );
+      if (!confirmed) return;
+
+      try {
+        const result = await publicationsService.integratePublication(pub.id_api, {
+          caseId: pub.case_suggestion.id,
+          createMovement: false
+        });
+
+        if (result.success) {
+          showToast('✅ Publicação integrada com sucesso!', 'success');
+          await loadLastSearch();
+        } else {
+          showToast(result.error || '❌ Erro ao integrar publicação', 'error');
+        }
+      } catch (error) {
+        showToast(error.message || '❌ Erro ao integrar publicação', 'error');
+      }
+    } else {
+      // Sem case_suggestion - deixar pendente ou criar novo caso
+      const confirmed = window.confirm(
+        'Nenhum caso foi encontrado automaticamente. Deseja deixar pendente para integração posterior?'
+      );
+      if (!confirmed) {
+        window.location.href = `/cases/new?pub_id=${pub.id_api}`;
+      } else {
+        try {
+          const result = await publicationsService.integratePublication(pub.id_api, {
+            createMovement: false
+          });
+          if (result.success) {
+            showToast('⏸️ Publicação deixada pendente', 'info');
+            await loadLastSearch();
+          }
+        } catch (error) {
+          showToast(error.message || '❌ Erro ao atualizar publicação', 'error');
+        }
+      }
+    }
+  };
+
+  /**
+   * Handler para criar novo caso a partir de uma publicação
+   */
+  const handleCreateCaseSingle = async (pub) => {
+    window.location.href = `/cases/new?pub_id=${pub.id_api}`;
   };
 
   const handleDeleteAll = async () => {
@@ -271,16 +367,10 @@ export default function PublicationsPage() {
         selectedIds={selectedIds}
         onToggleSelect={toggleSelectPublication}
         onDelete={handleDeleteSingle}
+        showActionButtons={true}
+        onIntegrate={handleIntegrateSingle}
+        onCreateCase={handleCreateCaseSingle}
       />
-
-      {/* Detail Modal */}
-      {selectedPublication && (
-        <PublicationDetailModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          publication={selectedPublication}
-        />
-      )}
 
       {/* Toast Notifications */}
       {toast.show && (
@@ -290,6 +380,18 @@ export default function PublicationsPage() {
           onClose={hideToast}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showIntegrateConfirm}
+        type="info"
+        title="🔗 Integrar publicações agora?"
+        message={`Encontramos ${integrateCount} publicação(ões). Deseja integrar agora?`}
+        warningMessage="Se escolher 'Deixar pendente', elas ficarão na aba Pendentes para integração posterior."
+        confirmText={integrateLoading ? 'Integrando...' : '✅ Integrar agora'}
+        cancelText="⏸️ Deixar pendente"
+        onConfirm={handleConfirmIntegrate}
+        onCancel={() => setShowIntegrateConfirm(false)}
+      />
     </div>
   );
 }

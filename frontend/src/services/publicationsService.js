@@ -153,8 +153,84 @@ class PublicationsService {
    * @returns {Promise<Object>} Resultado da deleção
    */
   async deletePublication(idApi) {
-    return await apiFetch(`/publications/${publicationId}/delete`, {
+    return await apiFetch(`/publications/${idApi}/delete`, {
       method: 'DELETE'
+    });
+  }
+
+  /**
+   * Lista publicações pendentes de integração
+   * @param {Object} params - filtros
+   * @returns {Promise<Object>} Resultado
+   */
+  async getPendingPublications({
+    limit = 20,
+    offset = 0,
+    tribunal = null,
+    ordering = '-data_disponibilizacao'
+  } = {}) {
+    const params = new URLSearchParams({
+      limit,
+      offset,
+      ordering
+    });
+
+    if (tribunal) {
+      params.append('tribunal', tribunal);
+    }
+
+    return await apiFetch(`/publications/pending?${params}`);
+  }
+
+  /**
+   * Retorna contagem de pendentes
+   * @returns {Promise<Object>} Resultado
+   */
+  async getPendingCount() {
+    return await apiFetch('/publications/pending/count');
+  }
+
+  /**
+   * Busca uma publicação específica por id_api
+   * @param {number|string} idApi - ID da publicação na API
+   * @returns {Promise<Object>} Resultado com publication
+   */
+  async getPublicationById(idApi) {
+    return await apiFetch(`/publications/${idApi}`);
+  }
+
+  /**
+   * Integra publicação com um caso
+   * @param {number} idApi - ID da publicação na API
+   * @param {Object} payload - dados de integração
+   * @returns {Promise<Object>} Resultado
+   */
+  async integratePublication(idApi, { caseId, createMovement = false, notes = '' }) {
+    return await apiFetch(`/publications/${idApi}/integrate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        case_id: caseId,
+        create_movement: createMovement,
+        notes
+      })
+    });
+  }
+
+  /**
+   * Integra publicacoes da ultima busca
+   * @param {Object} payload - parametros de integracao
+   * @param {boolean} payload.autoIntegration - setting de integração automática
+   * @returns {Promise<Object>} Resultado
+   */
+  async batchIntegratePublications({ searchId = null, autoLink = true, createMovement = false, autoIntegration = false } = {}) {
+    return await apiFetch('/publications/batch-integrate', {
+      method: 'POST',
+      body: JSON.stringify({
+        search_id: searchId,
+        auto_link: autoLink,
+        create_movement: createMovement,
+        auto_integration: autoIntegration
+      })
     });
   }
 
@@ -164,7 +240,7 @@ class PublicationsService {
    * @returns {Promise<Object>} Resultado da deleção
    */
   async deleteMultiplePublications(publicationIds) {
-    return await apiFetch('/publications/bulk-delete', {
+    return await apiFetch('/publications/delete-multiple', {
       method: 'POST',
       body: JSON.stringify({ publication_ids: publicationIds })
     });
@@ -177,7 +253,7 @@ class PublicationsService {
    */
   async deleteAllPublications() {
     return await apiFetch('/publications/delete-all', {
-      method: 'DELETE'
+      method: 'POST'
     });
   }
 }

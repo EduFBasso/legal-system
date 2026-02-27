@@ -74,6 +74,41 @@ class Publication(models.Model):
         null=True,
         help_text='Hash da publicação (quando disponível)'
     )
+
+    # Integração com casos
+    case = models.ForeignKey(
+        'cases.Case',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_index=True,
+        related_name='publicacoes',
+        help_text='Caso ao qual esta publicação está vinculada'
+    )
+
+    integration_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDING', 'Pendente de Integração'),
+            ('INTEGRATED', 'Integrada ao Caso'),
+            ('IGNORED', 'Ignorada pela Advogada'),
+        ],
+        default='PENDING',
+        db_index=True,
+        help_text='Status da integração com o sistema'
+    )
+
+    integration_attempted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Última tentativa de integração automática'
+    )
+
+    integration_notes = models.TextField(
+        blank=True,
+        default='',
+        help_text='Observações sobre a integração (ex: Processo não cadastrado)'
+    )
     
     # Metadados de busca
     search_metadata = models.JSONField(
@@ -120,6 +155,7 @@ class Publication(models.Model):
             models.Index(fields=['tribunal', '-data_disponibilizacao']),
             models.Index(fields=['numero_processo']),
             models.Index(fields=['-created_at']),
+            models.Index(fields=['integration_status', 'deleted']),
         ]
     
     def __str__(self):

@@ -11,8 +11,10 @@ import ContactsPage from './pages/ContactsPage';
 import PublicationsPage from './pages/PublicationsPage';
 import CasesPage from './pages/CasesPage';
 import CaseDetailPage from './pages/CaseDetailPage';
+import PublicationDetailsPage from './pages/PublicationDetailsPage';
 import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
+import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
 import './App.css';
@@ -27,6 +29,9 @@ function App() {
             {/* Rotas dedicadas para processos (full width, sem sidebar) */}
             <Route path="/cases/new" element={<CaseDetailPage />} />
             <Route path="/cases/:id" element={<CaseDetailPage />} />
+            
+            {/* Rota de detalhes de publicação em nova janela */}
+            <Route path="/publications/:idApi/details" element={<PublicationDetailsPage />} />
 
             {/* Rotas normais com layout padrão */}
             <Route path="/*" element={
@@ -42,6 +47,7 @@ function App() {
                       <Route path="/" element={<ContactsPage />} />
                       <Route path="/contacts" element={<ContactsPage />} />
                       <Route path="/publications" element={<PublicationsPage />} />
+                      <Route path="/publications/pending" element={<PendingPublicationsPage />} />
                       <Route path="/cases" element={<CasesPage />} />
                       <Route path="/search-history" element={<SearchHistoryPage />} />
                       <Route path="/notifications" element={<NotificationsPage />} />

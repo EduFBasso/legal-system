@@ -12,7 +12,7 @@ export function usePublications() {
   const [searchParams, setSearchParams] = useState(null);
   const [lastSearch, setLastSearch] = useState(null);
 
-  // Estados de modal
+  // Estados de notificação
   const [selectedPublication, setSelectedPublication] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -134,10 +134,12 @@ export function usePublications() {
           );
         }
       }
+      return data;
     } catch (error) {
       console.error('Erro ao buscar publicações de hoje:', error);
       showToast('Erro ao buscar publicações de hoje.', 'error');
       setPublications([]);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -174,25 +176,27 @@ export function usePublications() {
           );
         }
       }
+      return data;
     } catch (error) {
       console.error('Erro ao buscar publicações:', error);
       showToast('Erro ao buscar publicações.', 'error');
       setPublications([]);
+      return null;
     } finally {
       setLoading(false);
     }
   }, [fetchLastSearch, showToast]);
 
   /**
-   * Abre o modal com detalhes de uma publicação
+   * Abre os detalhes de uma publicação em uma nova janela
    */
   const openModal = useCallback((publication) => {
-    setSelectedPublication(publication);
-    setIsModalOpen(true);
+    const url = `/publications/${publication.id_api}/details`;
+    window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
   }, []);
 
   /**
-   * Fecha o modal
+   * Fecha o modal (mantido para compatibilidade, não usado mais)
    */
   const closeModal = useCallback(() => {
     setIsModalOpen(false);

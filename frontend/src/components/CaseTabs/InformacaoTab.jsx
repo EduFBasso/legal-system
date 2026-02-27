@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Edit2, Save, X, Trash2, UserPlus } from 'lucide-react';
+import { Edit2, Save, X, Trash2, UserPlus, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
 
@@ -18,6 +18,7 @@ function InformacaoTab({
   onCancel = () => {},
   onDelete = () => {},
   setActiveSection = () => {},
+  onAddPartyClick,
   parties = [],
   deadlines = [],
   caseData = null,
@@ -162,11 +163,15 @@ function InformacaoTab({
                               <span className="detail-value empty">Nenhum cliente vinculado</span>
                               <button
                                 className="btn btn-sm btn-primary"
-                                onClick={() => setActiveSection('parties')}
+                                onClick={() => {
+                                  if (onAddPartyClick) {
+                                    onAddPartyClick();
+                                  }
+                                }}
                                 style={{marginTop: '0.5rem'}}
                               >
-                                <UserPlus size={16} />
-                                Adicionar Cliente na aba Partes
+                                  <UserPlus size={16} />
+                                  Selecionar Contato
                               </button>
                             </div>
                           )}
@@ -284,7 +289,7 @@ function InformacaoTab({
 
             {/* Número do Processo */}
             <div className="info-field">
-              <label>Número do Processo (CNJ)</label>
+              <label>Número do Processo (CNJ) <span style={{color: '#ef4444'}}>*</span></label>
               <input
                 type="text"
                 value={formData.numero_processo || ''}
@@ -295,7 +300,7 @@ function InformacaoTab({
 
             {/* Tribunal */}
             <SelectField
-              label="Tribunal"
+              label={<span>Tribunal <span style={{color: '#ef4444'}}>*</span></span>}
               value={formData.tribunal || ''}
               onChange={(value) => handleInputChange('tribunal', value)}
               options={tribunalOptions}
@@ -347,32 +352,6 @@ function InformacaoTab({
               onChange={(value) => handleInputChange('data_distribuicao', value)}
             />
 
-            {/* Data Última Movimentação - Calculado Automaticamente */}
-            <div className="info-field">
-              <label>Última Movimentação</label>
-              {formData.data_ultima_movimentacao ? (
-                <div>
-                  <p className="info-value" style={{marginBottom: '0.25rem'}}>
-                    <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
-                  </p>
-                  {formData.ultima_movimentacao_resumo && (
-                    <p style={{fontSize: '0.9rem', color: '#6b7280'}}>
-                      {formData.ultima_movimentacao_resumo}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="info-value">
-                  <span style={{color: '#9ca3af', fontStyle: 'italic'}}>
-                    Nenhuma movimentação cadastrada
-                  </span>
-                </p>
-              )}
-              <small style={{display: 'block', color: '#6b7280', fontSize: '0.75rem', marginTop: '0.5rem'}}>
-                ℹ️ Atualizado automaticamente pela aba Movimentações
-              </small>
-            </div>
-
             {/* Nosso Cliente - Display only, gerenciado via aba Partes */}
             <div className="info-field full-width">
               <label>Nosso Cliente Neste Processo</label>
@@ -390,17 +369,38 @@ function InformacaoTab({
                 return (
                   <div className="empty-state-inline">
                     <p className="info-value empty">Nenhum cliente vinculado</p>
-                    <button 
+                    <button
                       className="btn btn-sm btn-primary"
-                      onClick={() => setActiveSection('parties')}
+                      onClick={() => {
+                        if (onAddPartyClick) {
+                          onAddPartyClick();
+                        }
+                      }}
                       style={{marginTop: '0.5rem'}}
                     >
                       <UserPlus size={16} />
-                      Adicionar Cliente na aba Partes
+                      Selecionar Contato
                     </button>
                   </div>
                 );
               })()}
+              <div style={{ marginTop: '0.5rem' }}>
+                {parties.length > 0 ? (
+                  <p className="info-value" style={{ color: '#4b5563' }}>
+                    <strong>Partes cadastradas:</strong>{' '}
+                    {parties.map((party, index) => (
+                      <span key={party.id}>
+                        {party.contact_name} ({party.role_display})
+                        {index < parties.length - 1 ? ' • ' : ''}
+                      </span>
+                    ))}
+                  </p>
+                ) : (
+                  <p className="info-value" style={{ color: '#9ca3af' }}>
+                    Nenhuma parte vinculada
+                  </p>
+                )}
+              </div>
               <span className="field-hint">
                 💡 Clientes são gerenciados na aba "Partes". Marque "É nosso cliente?" ao adicionar.
               </span>
