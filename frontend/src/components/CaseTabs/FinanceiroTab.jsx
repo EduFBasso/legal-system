@@ -37,11 +37,11 @@ function FinanceiroTab({
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   },
   calcularParticipacao = () => {
-    const valorCausa = formData.valor_causa || 0;
+    const valorCausa = parseCurrencyValue(formData.valor_causa);
     if (participacaoTipo === 'percentage') {
       return (valorCausa * (parseFloat(participacaoPercentual) || 0)) / 100;
     }
-    return parseFloat(participacaoValorFixo) || 0;
+    return parseCurrencyValue(participacaoValorFixo);
   },
   calcularTotalRecebimentos = () => {
     return recebimentos.reduce((sum, r) => sum + (r.value || 0), 0);
