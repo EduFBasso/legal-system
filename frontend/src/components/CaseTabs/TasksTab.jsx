@@ -92,13 +92,14 @@ function TasksTab({
   const urgencyBadgeStyle = (urgencia) => ({
     background: urgencyColor(urgencia),
     color: '#ffffff',
-    border: `1px solid ${urgencyColor(urgencia)}`,
+    border: `2px solid ${urgencyColor(urgencia)}`,
     fontWeight: 800,
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     letterSpacing: '0.5px',
-    padding: '0.3rem 0.6rem',
+    padding: '0.4rem 0.75rem',
     borderRadius: '4px',
     display: 'inline-block',
+    textTransform: 'uppercase',
   });
 
   const statusBadgeStyle = (status) => ({
