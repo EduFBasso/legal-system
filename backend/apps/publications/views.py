@@ -766,6 +766,11 @@ def integrate_publication(request, id_api):
         publication = Publication.objects.get(id_api=id_api, deleted=False)
         case = Case.objects.get(id=case_id)
 
+        # Rastreabilidade: se o caso ainda não possui origem, registrar esta publicação
+        if not case.publicacao_origem_id:
+            case.publicacao_origem = publication
+            case.save(update_fields=['publicacao_origem', 'updated_at'])
+
         publication.case = case
         publication.integration_status = 'INTEGRATED'
         publication.integration_attempted_at = timezone.now()
@@ -1309,6 +1314,20 @@ def delete_publication(request, id_api):
     """
     try:
         publication = Publication.objects.get(id_api=id_api, deleted=False)
+
+        has_linked_case = False
+        if publication.case_id:
+            has_linked_case = Case.objects.filter(id=publication.case_id, deleted=False).exists()
+
+        created_cases_count = publication.casos_criados.filter(deleted=False).count()
+
+        if has_linked_case or created_cases_count > 0:
+            return Response({
+                'success': False,
+                'error': 'Não é possível apagar publicação com processo vinculado. Desvincule/desative o processo primeiro.',
+                'linked_case_id': publication.case_id,
+                'created_cases_count': created_cases_count,
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # SOFT DELETE: Marcar como deletada
         publication.deleted = True
@@ -1369,9 +1388,29 @@ def delete_multiple_publications(request):
                 'message': 'Nenhuma publicação especificada'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # SOFT DELETE: Marcar publicações como deletadas
-        deleted_count = Publication.objects.filter(
+        queryset = Publication.objects.filter(
             id_api__in=publication_ids,
+            deleted=False
+        )
+
+        protected_ids = []
+        deletable_ids = []
+
+        for publication in queryset:
+            has_linked_case = False
+            if publication.case_id:
+                has_linked_case = Case.objects.filter(id=publication.case_id, deleted=False).exists()
+
+            has_created_case = publication.casos_criados.filter(deleted=False).exists()
+
+            if has_linked_case or has_created_case:
+                protected_ids.append(publication.id_api)
+            else:
+                deletable_ids.append(publication.id_api)
+
+        # SOFT DELETE: Marcar apenas publicações permitidas
+        deleted_count = Publication.objects.filter(
+            id_api__in=deletable_ids,
             deleted=False
         ).update(
             deleted=True,
@@ -1392,6 +1431,8 @@ def delete_multiple_publications(request):
         return Response({
             'success': True,
             'deleted': deleted_count,
+            'protected': len(protected_ids),
+            'protected_ids': protected_ids,
             'notifications_updated': notifications_updated,
             'message': f'{deleted_count} publicação(ões) marcada(s) como deletadas'
         })
@@ -1424,8 +1465,18 @@ def delete_all_publications(request):
     }
     """
     try:
-        # SOFT DELETE: Marcar TODAS publicações como deletadas
-        deleted_count = Publication.objects.filter(deleted=False).update(
+        linked_case_pub_ids = set(
+            Publication.objects.filter(deleted=False, case__deleted=False)
+            .values_list('id', flat=True)
+        )
+        linked_origin_pub_ids = set(
+            Publication.objects.filter(deleted=False, casos_criados__deleted=False)
+            .values_list('id', flat=True)
+        )
+        protected_pub_ids = linked_case_pub_ids | linked_origin_pub_ids
+
+        # SOFT DELETE: Marcar apenas publicações não protegidas
+        deleted_count = Publication.objects.filter(deleted=False).exclude(id__in=protected_pub_ids).update(
             deleted=True,
             deleted_at=timezone.now(),
             deleted_reason='Limpeza geral pelo usuário',
@@ -1444,6 +1495,7 @@ def delete_all_publications(request):
         return Response({
             'success': True,
             'deleted': deleted_count,
+            'protected': len(protected_pub_ids),
             'notifications_updated': notifications_updated,
             'history_deleted': history_deleted,
             'message': f'Todas as {deleted_count} publicações foram marcadas como deletadas, {notifications_updated} notificações marcadas como lidas e {history_deleted} históricos removidos'
