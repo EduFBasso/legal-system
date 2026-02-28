@@ -825,6 +825,70 @@ def integrate_publication(request, id_api):
 
 
 @api_view(['POST'])
+def create_movement_from_publication(request, id_api):
+    """
+    Cria uma movimentação a partir de uma publicação já vinculada.
+    
+    POST /api/publications/<id_api>/create-movement
+    
+    Útil para modo manual: quando AUTO_CREATE_MOVEMENT está desativado,
+    permite criar movimentação manualmente de cada publicação.
+    """
+    try:
+        publication = Publication.objects.get(id_api=id_api, deleted=False)
+        
+        if not publication.case:
+            return Response({
+                'success': False,
+                'error': 'Publicação não está vinculada a nenhum caso'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar se já existe movimentação desta publicação (evitar duplicação)
+        existing = CaseMovement.objects.filter(
+            case=publication.case,
+            publicacao_id=publication.id
+        ).first()
+        
+        if existing:
+            return Response({
+                'success': False,
+                'error': 'Já existe uma movimentação criada a partir desta publicação',
+                'movement_id': existing.id
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Criar movimentação
+        _create_movement_from_publication(publication, publication.case)
+        
+        # Buscar a movimentação recém-criada para retornar
+        movement = CaseMovement.objects.filter(
+            case=publication.case,
+            publicacao_id=publication.id
+        ).first()
+        
+        return Response({
+            'success': True,
+            'message': 'Movimentação criada com sucesso',
+            'movement': {
+                'id': movement.id,
+                'titulo': movement.titulo,
+                'tipo': movement.tipo,
+                'data': movement.data.isoformat(),
+            }
+        })
+        
+    except Publication.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Publicação não encontrada'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
 def batch_integrate_publications(request):
     """
     Integra publicacoes da ultima busca (ou search_id informado).

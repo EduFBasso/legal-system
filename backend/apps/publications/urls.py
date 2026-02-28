@@ -21,6 +21,7 @@ urlpatterns = [
     path('delete-all', views.delete_all_publications, name='delete_all'),
     path('by-case/<int:case_id>', views.get_publications_by_case, name='publications_by_case'),
     path('<int:id_api>/integrate', views.integrate_publication, name='integrate_publication'),
+    path('<int:id_api>/create-movement', views.create_movement_from_publication, name='create_movement_from_publication'),
     path('<int:id_api>/delete', views.delete_publication, name='delete'),
     path('<int:id_api>', views.get_publication_by_id, name='get_by_id'),
     path('debug', views.debug_search, name='debug'),

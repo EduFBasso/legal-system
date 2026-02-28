@@ -252,6 +252,18 @@ class PublicationsService {
   }
 
   /**
+   * Cria uma movimentação a partir de uma publicação já vinculada
+   * Útil para modo manual quando AUTO_CREATE_MOVEMENT está desativado
+   * @param {number} idApi - ID da publicação na API
+   * @returns {Promise<Object>} Resultado com dados da movimentação criada
+   */
+  async createMovementFromPublication(idApi) {
+    return await apiFetch(`/publications/${idApi}/create-movement`, {
+      method: 'POST'
+    });
+  }
+
+  /**
    * Deleta múltiplas publicações
    * @param {Array<number>} publicationIds - Array de id_api
    * @returns {Promise<Object>} Resultado da deleção

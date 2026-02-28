@@ -1027,6 +1027,28 @@ function CaseDetailPage() {
   };
 
   /**
+   * Create movement from publication (manual mode)
+   */
+  const handleCreateMovementFromPublication = async (publicationIdApi) => {
+    try {
+      const result = await publicationsService.createMovementFromPublication(publicationIdApi);
+      
+      if (result.success) {
+        showToast('Movimentação criada com sucesso!', 'success');
+        
+        // Reload movimentacoes and deadlines
+        await loadMovimentacoes();
+        await loadDeadlines();
+      } else {
+        showToast(result.error || 'Erro ao criar movimentação', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating movement from publication:', error);
+      showToast('Erro ao criar movimentação', 'error');
+    }
+  };
+
+  /**
    * Close movimentacao modal
    */
   const handleCloseMovimentacaoModal = () => {
@@ -1440,6 +1462,7 @@ function CaseDetailPage() {
             caseId={id}
             publicacoes={publicacoes}
             loading={loadingPublicacoes}
+            systemSettings={systemSettings}
             onVincularPublicacao={(publicacao) => {
               // TODO: Implementar handler para vincular publicação ao caso
               console.log('Vincular publicação:', publicacao);
@@ -1449,6 +1472,7 @@ function CaseDetailPage() {
               console.log('Desvincular publicação:', publicacaoId);
               setPublicacoes(prev => prev.filter(p => p.id !== publicacaoId));
             }}
+            onCreateMovement={handleCreateMovementFromPublication}
             onRefresh={loadPublicacoes}
           />
         )}

@@ -129,6 +129,15 @@
   border-color: #fecaca;
 }
 
+.btn-icon-small.btn-success-ghost {
+  color: #16a34a;
+}
+
+.btn-icon-small.btn-success-ghost:hover {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
 /* Órgão */
 .publicacao-orgao {
   font-size: 0.875rem;

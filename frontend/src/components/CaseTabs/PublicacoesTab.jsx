@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link2, FileText, Calendar, Building2, ExternalLink } from 'lucide-react';
+import { Link2, FileText, Calendar, Building2, ExternalLink, PlusCircle } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
 import { formatDate } from '../../utils/formatters';
 import './PublicacoesTab.css';
@@ -19,8 +19,10 @@ import './PublicacoesTab.css';
 function PublicacoesTab({ 
   publicacoes = [], 
   loading = false,
+  systemSettings = null,
   onVincularPublicacao = () => {},
   onDesvincularPublicacao = () => {},
+  onCreateMovement = () => {},
   onRefresh = () => {},
 }) {
   const [filter, setFilter] = useState('todas'); // 'todas', 'intimacoes', 'despachos', 'outras'
@@ -171,6 +173,16 @@ function PublicacoesTab({
                   </div>
                   
                   <div className="publicacao-actions">
+                    {/* Botão criar movimentação - só aparece em modo manual */}
+                    {systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION === false && (
+                      <button
+                        className="btn-icon-small btn-success-ghost"
+                        onClick={() => onCreateMovement(pub.id_api)}
+                        title="Criar movimentação a partir desta publicação"
+                      >
+                        <PlusCircle size={16} />
+                      </button>
+                    )}
                     {pub.link_oficial && (
                       <a
                         href={pub.link_oficial}
