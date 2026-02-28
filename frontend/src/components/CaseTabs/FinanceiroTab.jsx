@@ -31,11 +31,6 @@ function FinanceiroTab({
   onRemoveDespesa = () => {},
   onSaveFinancial = () => {},
   saving = false,
-  formatCurrencyInput = (value) => {
-    if (!value) return '';
-    const num = typeof value === 'string' ? parseFloat(value.replace(/\D/g, '')) / 100 : value;
-    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  },
   calcularParticipacao = () => {
     const valorCausa = parseCurrencyValue(formData.valor_causa);
     if (participacaoTipo === 'percentage') {
@@ -167,12 +162,20 @@ function FinanceiroTab({
                       }
                     }}
                     onBlur={(e) => {
-                      // Formatar apenas ao sair do campo
-                      const val = e.target.value.replace(/\D/g, '');
+                      // Validar e formatar apenas se necessário, preservando centavos
+                      const val = e.target.value.trim();
                       if (val) {
-                        const numVal = parseInt(val) / 100;
-                        const formatted = numVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        setParticipacaoValorFixo(formatted);
+                        // Separar inteiros e decimais
+                        const parts = val.split(',');
+                        const inteiros = parts[0].replace(/\D/g, '');
+                        const decimais = parts[1] ? parts[1].replace(/\D/g, '').slice(0, 2) : '00';
+                        
+                        if (inteiros) {
+                          // Formatar apenas os milhares
+                          const num = parseInt(inteiros);
+                          const formatted = num.toLocaleString('pt-BR') + ',' + (decimais.padEnd(2, '0'));
+                          setParticipacaoValorFixo(formatted);
+                        }
                       }
                     }}
                     disabled={participacaoTipo !== 'fixed'}
