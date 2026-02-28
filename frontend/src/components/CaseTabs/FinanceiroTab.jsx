@@ -154,28 +154,10 @@ function FinanceiroTab({
                     placeholder="3000,00" 
                     value={participacaoValorFixo}
                     onChange={(e) => {
-                      // Permitir digitação livre - apenas dígitos e vírgula
+                      // Permitir apenas dígitos, ponto e vírgula
                       const val = e.target.value;
-                      const regex = /^[0-9.,]*$/;
-                      if (regex.test(val)) {
+                      if (/^[0-9.,]*$/.test(val)) {
                         setParticipacaoValorFixo(val);
-                      }
-                    }}
-                    onBlur={(e) => {
-                      // Validar e formatar apenas se necessário, preservando centavos
-                      const val = e.target.value.trim();
-                      if (val) {
-                        // Separar inteiros e decimais
-                        const parts = val.split(',');
-                        const inteiros = parts[0].replace(/\D/g, '');
-                        const decimais = parts[1] ? parts[1].replace(/\D/g, '').slice(0, 2) : '00';
-                        
-                        if (inteiros) {
-                          // Formatar apenas os milhares
-                          const num = parseInt(inteiros);
-                          const formatted = num.toLocaleString('pt-BR') + ',' + (decimais.padEnd(2, '0'));
-                          setParticipacaoValorFixo(formatted);
-                        }
                       }
                     }}
                     disabled={participacaoTipo !== 'fixed'}
