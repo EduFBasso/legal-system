@@ -8,12 +8,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count
 
-from .models import Case, CaseParty, CaseMovement, Payment, Expense
+from .models import Case, CaseParty, CaseMovement, CaseTask, Payment, Expense
 from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
     CasePartySerializer,
     CaseMovementSerializer,
+    CaseTaskSerializer,
     PaymentSerializer,
     ExpenseSerializer,
 )
@@ -167,6 +168,45 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
+        return queryset
+
+
+class CaseTaskViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para tarefas vinculadas ao processo.
+
+    Permite tarefas vinculadas a movimentações e tarefas soltas do caso.
+    """
+    queryset = CaseTask.objects.all().order_by('data_vencimento', '-created_at')
+    serializer_class = CaseTaskSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        'case': ['exact'],
+        'movimentacao': ['exact', 'isnull'],
+        'urgencia': ['exact', 'in'],
+        'status': ['exact', 'in'],
+        'data_vencimento': ['gte', 'lte', 'exact'],
+    }
+    search_fields = [
+        'titulo',
+        'descricao',
+        'case__numero_processo',
+        'movimentacao__titulo',
+    ]
+    ordering_fields = ['data_vencimento', 'urgencia', 'status', 'created_at']
+    ordering = ['data_vencimento', '-created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        case_id = self.request.query_params.get('case_id')
+        if case_id:
+            queryset = queryset.filter(case_id=case_id)
+
+        movimentacao_id = self.request.query_params.get('movimentacao_id')
+        if movimentacao_id:
+            queryset = queryset.filter(movimentacao_id=movimentacao_id)
+
         return queryset
 
 

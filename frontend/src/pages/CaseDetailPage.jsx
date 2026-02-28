@@ -7,6 +7,7 @@ import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
 import publicationsService from '../services/publicationsService';
 import caseMovementsService from '../services/caseMovementsService';
+import caseTasksService from '../services/caseTasksService';
 import financialService from '../services/financialService';
 import * as deadlinesService from '../services/deadlinesService';
 import systemSettingsService from '../services/systemSettingsService';
@@ -20,7 +21,8 @@ import {
   DocumentosTab, 
   DeadlinesTab, 
   FinanceiroTab,
-  PublicacoesTab 
+  PublicacoesTab,
+  TasksTab,
 } from '../components/CaseTabs';
 import './CaseDetailPage.css';
 
@@ -76,6 +78,7 @@ function CaseDetailPage() {
   const [loading, setLoading] = useState(!!id); // Only load if has id
   const [saving, setSaving] = useState(false);
   const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
+  const [loadingTasks, setLoadingTasks] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
   const [toast, setToast] = useState(null);
   const [systemSettings, setSystemSettings] = useState(null);
@@ -104,12 +107,17 @@ function CaseDetailPage() {
   // Movimentações state
   const [showMovimentacaoModal, setShowMovimentacaoModal] = useState(false);
   const [editingMovimentacaoId, setEditingMovimentacaoId] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [movimentacaoFormData, setMovimentacaoFormData] = useState({
     data: '',
     tipo: 'DESPACHO',
     titulo: '',
     descricao: '',
     prazo: '',
+    create_task: false,
+    task_urgencia: 'NORMAL',
+    task_titulo: '',
+    task_descricao: '',
   });
   const [savingMovimentacao, setSavingMovimentacao] = useState(false);
 
@@ -424,6 +432,32 @@ function CaseDetailPage() {
   }, [id, loadPublicacoes, systemSettings]);
 
   /**
+   * Load tasks linked to this case
+   */
+  const loadTasks = useCallback(async () => {
+    if (!id) return;
+
+    setLoadingTasks(true);
+    try {
+      const data = await caseTasksService.getTasksByCase(id);
+      setTasks(data);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      showToast('Erro ao carregar tarefas', 'error');
+    } finally {
+      setLoadingTasks(false);
+    }
+  }, [id, showToast]);
+
+  useEffect(() => {
+    const shouldAutoLoad = systemSettings?.AUTO_LOAD_TASKS_ON_CASE !== false;
+
+    if (id && shouldAutoLoad) {
+      loadTasks();
+    }
+  }, [id, loadTasks, systemSettings]);
+
+  /**
    * Check deadlines and create notifications on page load
    */
   useEffect(() => {
@@ -468,6 +502,41 @@ function CaseDetailPage() {
    */
   const handleOpenContactSelection = () => {
     setShowSelectContactModal(true);
+  };
+
+  const handleCreateTask = async (taskPayload) => {
+    try {
+      await caseTasksService.createTask(taskPayload);
+      await loadTasks();
+      showToast('Tarefa criada com sucesso', 'success');
+    } catch (error) {
+      console.error('Error creating task:', error);
+      showToast('Erro ao criar tarefa', 'error');
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId, nextStatus) => {
+    try {
+      await caseTasksService.patchTask(taskId, { status: nextStatus });
+      await loadTasks();
+      showToast('Status da tarefa atualizado', 'success');
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      showToast('Erro ao atualizar tarefa', 'error');
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (!confirm('Deseja excluir esta tarefa?')) return;
+
+    try {
+      await caseTasksService.deleteTask(taskId);
+      await loadTasks();
+      showToast('Tarefa excluída', 'success');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      showToast('Erro ao excluir tarefa', 'error');
+    }
   };
 
   /**
@@ -791,6 +860,10 @@ function CaseDetailPage() {
       titulo: '',
       descricao: '',
       prazo: '',
+      create_task: false,
+      task_urgencia: 'NORMAL',
+      task_titulo: '',
+      task_descricao: '',
     });
     setShowMovimentacaoModal(true);
   };
@@ -838,13 +911,26 @@ function CaseDetailPage() {
         showToast('Movimentação atualizada com sucesso!', 'success');
       } else {
         // CREATE new movimentacao
-        await caseMovementsService.createMovement(dataToSave);
+        const createdMovement = await caseMovementsService.createMovement(dataToSave);
+
+        if (movimentacaoFormData.create_task) {
+          await caseTasksService.createTask({
+            case: parseInt(id),
+            movimentacao: createdMovement.id,
+            titulo: (movimentacaoFormData.task_titulo || '').trim() || `Tarefa: ${movimentacaoFormData.titulo}`,
+            descricao: (movimentacaoFormData.task_descricao || '').trim(),
+            urgencia: movimentacaoFormData.task_urgencia || 'NORMAL',
+            status: 'PENDENTE',
+          });
+        }
+
         showToast('Movimentação cadastrada com sucesso!', 'success');
       }
       
       // Reload movimentacoes, deadlines and case data (to update resumo)
       await loadMovimentacoes();
       await loadDeadlines();
+      await loadTasks();
       await loadCaseData();
       
       setShowMovimentacaoModal(false);
@@ -869,6 +955,10 @@ function CaseDetailPage() {
       titulo: mov.titulo,
       descricao: mov.descricao || '',
       prazo: mov.prazo || '',
+      create_task: false,
+      task_urgencia: 'NORMAL',
+      task_titulo: '',
+      task_descricao: '',
     });
     setShowMovimentacaoModal(true);
   };
@@ -907,6 +997,10 @@ function CaseDetailPage() {
       titulo: '',
       descricao: '',
       prazo: '',
+      create_task: false,
+      task_urgencia: 'NORMAL',
+      task_titulo: '',
+      task_descricao: '',
     });
   };
 
@@ -1230,6 +1324,13 @@ function CaseDetailPage() {
               {deadlines.length > 0 && <span className="badge">{deadlines.length}</span>}
             </button>
             <button
+              className={`nav-tab ${activeSection === 'tasks' ? 'active' : ''}`}
+              onClick={() => setActiveSection('tasks')}
+            >
+              ✅ Tarefas
+              {tasks.length > 0 && <span className="badge">{tasks.length}</span>}
+            </button>
+            <button
               className={`nav-tab ${activeSection === 'financeiro' ? 'active' : ''}`}
               onClick={() => setActiveSection('financeiro')}
             >
@@ -1315,6 +1416,19 @@ function CaseDetailPage() {
             loadingDeadlines={loadingDeadlines}
             setActiveSection={setActiveSection}
             formatDate={formatDate}
+          />
+        )}
+
+        {activeSection === 'tasks' && (
+          <TasksTab
+            caseId={id}
+            tasks={tasks}
+            movimentacoes={movimentacoes}
+            loading={loadingTasks}
+            onRefresh={loadTasks}
+            onCreateTask={handleCreateTask}
+            onUpdateTaskStatus={handleUpdateTaskStatus}
+            onDeleteTask={handleDeleteTask}
           />
         )}
 
@@ -1698,6 +1812,77 @@ function CaseDetailPage() {
                   IMPORTANTE: Preencha com o número de dias para que a movimentação apareça na aba Prazos. A data limite será calculada automaticamente.
                 </small>
               </div>
+
+              {!editingMovimentacaoId && (
+                <div className="form-group" style={{ background: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '1.25rem', borderRadius: '4px' }}>
+                  <label style={{ fontWeight: 600 }}>Criar tarefa relacionada</label>
+
+                  <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(movimentacaoFormData.create_task)}
+                        onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, create_task: e.target.checked }))}
+                      />
+                      Gerar tarefa automaticamente para esta movimentação
+                    </label>
+                  </div>
+
+                  {movimentacaoFormData.create_task && (
+                    <>
+                      <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                        <label>Título da tarefa</label>
+                        <input
+                          type="text"
+                          value={movimentacaoFormData.task_titulo}
+                          onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, task_titulo: e.target.value }))}
+                          placeholder="Ex: Telefonar para cliente antes da audiência"
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                        <label>Urgência</label>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className={`filter-btn ${movimentacaoFormData.task_urgencia === 'NORMAL' ? 'active' : ''}`}
+                            onClick={() => setMovimentacaoFormData(prev => ({ ...prev, task_urgencia: 'NORMAL' }))}
+                            style={{ borderColor: '#10b981' }}
+                          >
+                            Normal
+                          </button>
+                          <button
+                            type="button"
+                            className={`filter-btn ${movimentacaoFormData.task_urgencia === 'URGENTE' ? 'active' : ''}`}
+                            onClick={() => setMovimentacaoFormData(prev => ({ ...prev, task_urgencia: 'URGENTE' }))}
+                            style={{ borderColor: '#f59e0b' }}
+                          >
+                            Urgente
+                          </button>
+                          <button
+                            type="button"
+                            className={`filter-btn ${movimentacaoFormData.task_urgencia === 'URGENTISSIMO' ? 'active' : ''}`}
+                            onClick={() => setMovimentacaoFormData(prev => ({ ...prev, task_urgencia: 'URGENTISSIMO' }))}
+                            style={{ borderColor: '#dc2626' }}
+                          >
+                            Urgentíssimo
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Descrição da tarefa (opcional)</label>
+                        <textarea
+                          rows="2"
+                          value={movimentacaoFormData.task_descricao}
+                          onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, task_descricao: e.target.value }))}
+                          placeholder="Detalhes extras da tarefa..."
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="modal-footer">

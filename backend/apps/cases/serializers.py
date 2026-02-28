@@ -2,7 +2,7 @@
 Serializers for Cases app
 """
 from rest_framework import serializers
-from .models import Case, CaseParty, CaseMovement, Payment, Expense
+from .models import Case, CaseParty, CaseMovement, CaseTask, Payment, Expense
 
 
 class CaseMovementSerializer(serializers.ModelSerializer):
@@ -42,6 +42,51 @@ class CaseMovementSerializer(serializers.ModelSerializer):
             )
         
         return value
+
+
+class CaseTaskSerializer(serializers.ModelSerializer):
+    """Serializer for CaseTask (tarefas vinculadas ao processo)"""
+
+    urgencia_display = serializers.CharField(source='get_urgencia_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    case_numero = serializers.CharField(source='case.numero_processo', read_only=True)
+    movimentacao_titulo = serializers.CharField(source='movimentacao.titulo', read_only=True)
+    cor_urgencia = serializers.ReadOnlyField()
+    vencida = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CaseTask
+        fields = [
+            'id',
+            'case',
+            'case_numero',
+            'movimentacao',
+            'movimentacao_titulo',
+            'titulo',
+            'descricao',
+            'urgencia',
+            'urgencia_display',
+            'cor_urgencia',
+            'data_vencimento',
+            'status',
+            'status_display',
+            'vencida',
+            'concluida_em',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'concluida_em', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        case = attrs.get('case') or getattr(self.instance, 'case', None)
+        movimentacao = attrs.get('movimentacao') or getattr(self.instance, 'movimentacao', None)
+
+        if movimentacao and case and movimentacao.case_id != case.id:
+            raise serializers.ValidationError(
+                'A movimentação informada não pertence ao processo selecionado.'
+            )
+
+        return attrs
 
 
 class CasePartySerializer(serializers.ModelSerializer):

@@ -4,7 +4,7 @@ Admin configuration for Cases app
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils import timezone
-from .models import Case, CaseParty, CaseMovement
+from .models import Case, CaseParty, CaseMovement, CaseTask
 
 
 class CaseMovementInline(admin.TabularInline):
@@ -19,6 +19,16 @@ class CaseMovementInline(admin.TabularInline):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('case')[:10]  # Limit to recent 10
+
+
+class CaseTaskInline(admin.TabularInline):
+    """Inline for CaseTask - display tasks within Case admin"""
+    model = CaseTask
+    extra = 0
+    fields = ['titulo', 'urgencia', 'status', 'data_vencimento', 'movimentacao']
+    ordering = ['data_vencimento']
+    verbose_name = 'Tarefa'
+    verbose_name_plural = 'Tarefas do Processo'
 
 
 class CasePartyInline(admin.TabularInline):
@@ -141,7 +151,7 @@ class CaseAdmin(admin.ModelAdmin):
         }),
     )
     
-    inlines = [CasePartyInline, CaseMovementInline]
+    inlines = [CasePartyInline, CaseMovementInline, CaseTaskInline]
     
     actions = ['atualizar_status_automatico', 'marcar_como_arquivado', 'restaurar_deletados']
     
@@ -442,3 +452,83 @@ class CaseMovementAdmin(admin.ModelAdmin):
         """Display truncated titulo"""
         return obj.titulo[:60] + '...' if len(obj.titulo) > 60 else obj.titulo
     titulo_short.short_description = 'Título'
+
+
+@admin.register(CaseTask)
+class CaseTaskAdmin(admin.ModelAdmin):
+    """Admin interface for CaseTask model"""
+
+    list_display = [
+        'case_link',
+        'movimentacao_link',
+        'titulo',
+        'urgencia_badge',
+        'status_badge',
+        'data_vencimento',
+        'concluida_em',
+        'created_at',
+    ]
+
+    list_filter = [
+        'urgencia',
+        'status',
+        'data_vencimento',
+        'created_at',
+    ]
+
+    search_fields = [
+        'titulo',
+        'descricao',
+        'case__numero_processo',
+        'movimentacao__titulo',
+    ]
+
+    autocomplete_fields = ['case', 'movimentacao']
+    readonly_fields = ['concluida_em', 'created_at', 'updated_at']
+
+    def case_link(self, obj):
+        return format_html(
+            '<a href="/admin/cases/case/{}/change/">{}</a>',
+            obj.case.id,
+            obj.case.numero_processo
+        )
+    case_link.short_description = 'Processo'
+
+    def movimentacao_link(self, obj):
+        if not obj.movimentacao:
+            return '-'
+        return format_html(
+            '<a href="/admin/cases/casemovement/{}/change/">{}</a>',
+            obj.movimentacao.id,
+            obj.movimentacao.titulo[:40]
+        )
+    movimentacao_link.short_description = 'Movimentação'
+
+    def urgencia_badge(self, obj):
+        colors = {
+            'NORMAL': '#10b981',
+            'URGENTE': '#f59e0b',
+            'URGENTISSIMO': '#dc2626',
+        }
+        color = colors.get(obj.urgencia, '#64748b')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_urgencia_display()
+        )
+    urgencia_badge.short_description = 'Urgência'
+
+    def status_badge(self, obj):
+        colors = {
+            'PENDENTE': '#64748b',
+            'EM_ANDAMENTO': '#0ea5e9',
+            'CONCLUIDA': '#16a34a',
+            'CANCELADA': '#ef4444',
+        }
+        color = colors.get(obj.status, '#64748b')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_status_display()
+        )
+    status_badge.short_description = 'Status'

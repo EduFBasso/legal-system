@@ -5,3 +5,4 @@ export { default as DocumentosTab } from './DocumentosTab';
 export { default as DeadlinesTab } from './DeadlinesTab';
 export { default as FinanceiroTab } from './FinanceiroTab';
 export { default as PublicacoesTab } from './PublicacoesTab';
+export { default as TasksTab } from './TasksTab';

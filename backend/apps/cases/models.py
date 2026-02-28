@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from django.conf import settings
 
 
 class Case(models.Model):
@@ -528,6 +529,148 @@ class CaseMovement(models.Model):
             # Se não há mais movimentações, limpa a data
             self.case.data_ultima_movimentacao = None
             self.case.save(update_fields=['data_ultima_movimentacao'])
+
+
+class CaseTask(models.Model):
+    """
+    Tarefas operacionais vinculadas ao processo.
+    Podem estar vinculadas a uma movimentação específica ou serem "soltas" do caso.
+    """
+
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+        help_text='Processo relacionado à tarefa'
+    )
+
+    movimentacao = models.ForeignKey(
+        CaseMovement,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tasks',
+        help_text='Movimentação de origem (opcional)'
+    )
+
+    titulo = models.CharField(
+        max_length=255,
+        help_text='Título curto da tarefa'
+    )
+
+    descricao = models.TextField(
+        blank=True,
+        default='',
+        help_text='Descrição detalhada da tarefa'
+    )
+
+    urgencia = models.CharField(
+        max_length=20,
+        choices=[
+            ('NORMAL', 'Prazo Normal'),
+            ('URGENTE', 'Prazo Urgente'),
+            ('URGENTISSIMO', 'Prazo Urgentíssimo'),
+        ],
+        default='NORMAL',
+        db_index=True,
+        help_text='Nível de urgência da tarefa'
+    )
+
+    data_vencimento = models.DateField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='Data limite da tarefa (auto-calculada se não informada)'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDENTE', 'Pendente'),
+            ('EM_ANDAMENTO', 'Em andamento'),
+            ('CONCLUIDA', 'Concluída'),
+            ('CANCELADA', 'Cancelada'),
+        ],
+        default='PENDENTE',
+        db_index=True,
+        help_text='Status de execução da tarefa'
+    )
+
+    concluida_em = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Quando a tarefa foi concluída'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['data_vencimento', '-created_at']
+        verbose_name = 'Tarefa do Processo'
+        verbose_name_plural = 'Tarefas do Processo'
+        indexes = [
+            models.Index(fields=['case', 'status']),
+            models.Index(fields=['urgencia', 'data_vencimento']),
+            models.Index(fields=['movimentacao']),
+        ]
+
+    def __str__(self):
+        return f"{self.case.numero_processo} - {self.titulo}"
+
+    @property
+    def cor_urgencia(self):
+        cores = {
+            'NORMAL': 'green',
+            'URGENTE': 'orange',
+            'URGENTISSIMO': 'red',
+        }
+        return cores.get(self.urgencia, 'green')
+
+    @property
+    def vencida(self):
+        if not self.data_vencimento or self.status == 'CONCLUIDA':
+            return False
+        return self.data_vencimento < timezone.now().date()
+
+    def _get_urgency_days(self):
+        system_settings = getattr(settings, 'LEGAL_SYSTEM_SETTINGS', {})
+
+        normal = int(system_settings.get('TASK_NORMAL_DAYS', 15))
+        urgent = int(system_settings.get('TASK_URGENT_DAYS', 7))
+        urgentissimo = int(system_settings.get('TASK_URGENTISSIMO_DAYS', 3))
+
+        if not (normal > urgent > urgentissimo):
+            return {
+                'NORMAL': 15,
+                'URGENTE': 7,
+                'URGENTISSIMO': 3,
+            }
+
+        return {
+            'NORMAL': normal,
+            'URGENTE': urgent,
+            'URGENTISSIMO': urgentissimo,
+        }
+
+    def save(self, *args, **kwargs):
+        if not self.data_vencimento:
+            urgency_days = self._get_urgency_days()
+            days = urgency_days.get(self.urgencia, 15)
+
+            base_date = timezone.now().date()
+            if self.movimentacao and self.movimentacao.data:
+                base_date = self.movimentacao.data
+
+            from datetime import timedelta
+            self.data_vencimento = base_date + timedelta(days=days)
+
+        if self.status == 'CONCLUIDA' and not self.concluida_em:
+            self.concluida_em = timezone.now()
+        elif self.status != 'CONCLUIDA' and self.concluida_em:
+            self.concluida_em = None
+
+        super().save(*args, **kwargs)
 
 
 class Payment(models.Model):
