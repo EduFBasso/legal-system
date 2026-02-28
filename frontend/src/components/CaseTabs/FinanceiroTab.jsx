@@ -135,19 +135,10 @@ function FinanceiroTab({
                     />
                     <span>Valor Fixo (R$)</span>
                   </label>
-                  <input 
-                    type="text" 
-                    inputMode="decimal"
-                    className="financeiro-input-compact" 
-                    placeholder="3000,00" 
+                  <CurrencyInput
                     value={participacaoValorFixo}
-                    onChange={(e) => {
-                      // Permitir apenas dígitos, ponto e vírgula
-                      const val = e.target.value;
-                      if (/^[0-9.,]*$/.test(val)) {
-                        setParticipacaoValorFixo(val);
-                      }
-                    }}
+                    onChange={(value) => setParticipacaoValorFixo(value)}
+                    placeholder="0,00"
                     disabled={participacaoTipo !== 'fixed'}
                   />
                 </div>
