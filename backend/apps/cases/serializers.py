@@ -216,6 +216,8 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     cliente_document = serializers.CharField(source='cliente_principal.document_number', read_only=True)
     cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
     ultima_movimentacao_resumo = serializers.SerializerMethodField()
+    publicacao_origem_data = serializers.DateField(source='publicacao_origem.data_disponibilizacao', read_only=True, allow_null=True)
+    publicacao_origem_tipo = serializers.CharField(source='publicacao_origem.tipo_comunicacao', read_only=True, allow_null=True)
     
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
@@ -263,6 +265,9 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'tags',
             'total_publicacoes',
             'publicacoes_recentes',
+            'publicacao_origem',
+            'publicacao_origem_data',
+            'publicacao_origem_tipo',
             'parties',
             'participation_type',
             'participation_percentage',

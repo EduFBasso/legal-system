@@ -197,6 +197,17 @@ class Case(models.Model):
         help_text='Posição do cliente principal no processo (opcional)'
     )
 
+    # ========== ORIGEM (PUBLICAÇÃO) ==========
+    publicacao_origem = models.ForeignKey(
+        'publications.Publication',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='casos_criados',
+        db_index=True,
+        help_text='Publicação a partir da qual este caso foi criado (read-only, rastreabilidade)'
+    )
+
     # ========== OBSERVAÇÕES ==========
     observacoes = models.TextField(
         blank=True,

@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.db.models.deletion import ProtectedError
 
 
 class Publication(models.Model):
@@ -161,6 +162,23 @@ class Publication(models.Model):
     def __str__(self):
         processo = self.numero_processo or 'Sem número'
         return f"{self.tribunal} - {processo} - {self.data_disponibilizacao}"
+    
+    def delete(self, *args, **kwargs):
+        """
+        Impede exclusão de publicação se houver casos vinculados via publicacao_origem.
+        Casos vinculados via Publication.case podem ser desvinculados antes.
+        """
+        # Verificar se há casos criados a partir desta publicação
+        casos_criados = self.casos_criados.filter(deleted=False).count()
+        
+        if casos_criados > 0:
+            raise ProtectedError(
+                f"Não é possível deletar esta publicação pois existem {casos_criados} "
+                f"caso(s) criado(s) a partir dela. Desabilite os casos primeiro.",
+                [self]
+            )
+        
+        super().delete(*args, **kwargs)
 
 
 class SearchHistory(models.Model):

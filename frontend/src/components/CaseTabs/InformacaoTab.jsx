@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Edit2, Save, X, Trash2, UserPlus, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
+import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
 
 /**
@@ -41,6 +42,94 @@ function InformacaoTab({
     if (onInputChange) {
       onInputChange(field, value);
     }
+  };
+
+  // Renderizar botões de consulta processual
+  const renderProcessConsultaButtons = () => {
+    if (!formData.publicacao_origem) return null;
+
+    // Simular objeto publication a partir dos dados de case
+    const simulatedPublication = {
+      tribunal: formData.tribunal,
+      numero_processo: formData.numero_processo,
+      link_oficial: null, // Será construído dinamicamente
+    };
+
+    const consultaLinks = generateAllConsultaLinks(simulatedPublication);
+
+    const handleConsultarProcesso = (url) => {
+      if (!formData.numero_processo) return;
+
+      // Copiar automaticamente o número do processo
+      navigator.clipboard.writeText(formData.numero_processo).then(() => {
+        // Abrir link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
+        // Mesmo com erro, abre o link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      });
+    };
+
+    return (
+      <div className="publication-buttons-group" style={{
+        display: 'flex',
+        gap: '0.5rem',
+        marginTop: '0.75rem',
+        flexWrap: 'wrap'
+      }}>
+        {/* Link oficial (ESAJ ou principal) */}
+        {consultaLinks.linkOficial && (
+          <button 
+            className="btn-official-link btn btn-sm"
+            onClick={() => handleConsultarProcesso(consultaLinks.linkOficial)}
+            title="Copia o número e abre o portal do tribunal"
+            style={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem'
+            }}
+          >
+            🔍 {formData.tribunal || 'Consultar'}
+          </button>
+        )}
+        
+        {/* Links alternativos (eProc, TRF3, TRT15, etc.) */}
+        {consultaLinks.linksAlternativos.map((system, index) => (
+          <button 
+            key={index}
+            className="btn-alternative-link btn btn-sm"
+            onClick={() => handleConsultarProcesso(system.url)}
+            title={system.description}
+            style={{
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem'
+            }}
+          >
+            {system.icon} {system.shortName}
+          </button>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -265,6 +354,30 @@ function InformacaoTab({
                 </div>
               </div>
             </div>
+
+            {/* Origem - Criado a partir de Publicação */}
+            {formData.publicacao_origem && (
+              <div className="details-group">
+                <h3 className="details-group-title">🔗 Origem da Publicação</h3>
+                <div className="details-content">
+                  <div className="detail-item">
+                    <span className="detail-label">Data de Publicação</span>
+                    <span className="detail-value">{formatDate(formData.publicacao_origem_data)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Tipo de Comunicação</span>
+                    <span className="detail-value">{formData.publicacao_origem_tipo || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-value-sub" style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>
+                      Este processo foi criado a partir de uma publicação.
+                    </span>
+                  </div>
+                  {/* Botões de Consulta */}
+                  {renderProcessConsultaButtons()}
+                </div>
+              </div>
+            )}
 
             {/* Observações */}
             {formData.observacoes && (
