@@ -488,8 +488,10 @@ def retrieve_last_search_publications(request):
         # Serializar publicações no formato idêntico à API
         publicacoes_json = []
         for pub in publicacoes_db:
+            case_suggestion = _build_case_suggestion(pub.numero_processo)
             publicacoes_json.append({
                 'id_api': pub.id_api,
+                'id': pub.id,
                 'numero_processo': pub.numero_processo,
                 'tribunal': pub.tribunal,
                 'tipo_comunicacao': pub.tipo_comunicacao,
@@ -500,6 +502,9 @@ def retrieve_last_search_publications(request):
                 'texto_completo': pub.texto_completo,
                 'link_oficial': pub.link_oficial,
                 'hash': pub.hash_pub,
+                'integration_status': pub.integration_status,
+                'case_id': pub.case_id,
+                'case_suggestion': case_suggestion,
             })
         
         return Response({

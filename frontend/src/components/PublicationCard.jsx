@@ -143,6 +143,8 @@ export default function PublicationCard({
     onDelete();
   };
 
+  const isIntegrated = publication.integration_status === 'INTEGRATED' || !!publication.case_id;
+
   return (
     <div className={cardClassName} onClick={handleCardClick}>      {selectionMode && (
         <div className="selection-checkbox-overlay">
@@ -207,7 +209,15 @@ export default function PublicationCard({
       {/* Action Buttons Section (Integrar, Criar caso, etc.) */}
       {showActionButtons && (
         <div className="publication-actions">
-          {caseSuggestion ? (
+          {isIntegrated ? (
+            <button
+              className="btn-integrate"
+              disabled
+              title={publication.case_id ? `Já vinculada ao caso #${publication.case_id}` : 'Publicação já integrada'}
+            >
+              ✅ Caso já criado/vinculado
+            </button>
+          ) : caseSuggestion ? (
             <button
               className="btn-integrate"
               onClick={(e) => {
