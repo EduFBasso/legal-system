@@ -1887,7 +1887,34 @@ function CaseDetailPage() {
                       </div>
 
                       <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                        <label>Urgência</label>
+                        <label style={{
+                          display: 'block',
+                          background:
+                            movimentacaoFormData.task_urgencia === 'URGENTE'
+                              ? '#fff7ed'
+                              : movimentacaoFormData.task_urgencia === 'URGENTISSIMO'
+                              ? '#fef2f2'
+                              : '#ecfdf5',
+                          borderLeft: `4px solid ${
+                            movimentacaoFormData.task_urgencia === 'URGENTE'
+                              ? '#f59e0b'
+                              : movimentacaoFormData.task_urgencia === 'URGENTISSIMO'
+                              ? '#dc2626'
+                              : '#10b981'
+                          }`,
+                          padding: '0.5rem 0.75rem',
+                          borderRadius: '4px',
+                          marginBottom: '0.75rem',
+                          fontWeight: 700,
+                          color:
+                            movimentacaoFormData.task_urgencia === 'URGENTE'
+                              ? '#b45309'
+                              : movimentacaoFormData.task_urgencia === 'URGENTISSIMO'
+                              ? '#991b1b'
+                              : '#065f46',
+                        }}>
+                          Urgência
+                        </label>
                         <div style={{
                           display: 'flex',
                           gap: '0.5rem',
