@@ -70,6 +70,11 @@ export default function PendingPublicationsPage() {
     window.location.href = `/cases/new?pub_id=${pub.id_api}`;
   };
 
+  const handleOpenPublicationDetails = (pub) => {
+    const url = `/publications/${pub.id_api}/details`;
+    window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+  };
+
   const handleDelete = async (pub) => {
     const linkedToCase = !!pub.case_id || pub.integration_status === 'INTEGRATED';
 
@@ -156,7 +161,7 @@ export default function PendingPublicationsPage() {
             <PublicationCard
               key={pub.id_api}
               publication={pub}
-              onClick={() => {}}
+              onClick={() => handleOpenPublicationDetails(pub)}
               highlighted={false}
               showActionButtons={true}
               onIntegrate={() => handleIntegrate(pub)}
