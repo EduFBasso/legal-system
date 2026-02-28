@@ -552,6 +552,35 @@ function CaseDetailPage() {
     }, 3000);
   };
 
+  const handleOpenLatestMovimentacao = () => {
+    setActiveSection('movimentacoes');
+
+    if (!movimentacoes || movimentacoes.length === 0) {
+      return;
+    }
+
+    const latestMov = [...movimentacoes].sort((a, b) => {
+      const dateA = new Date(a.data);
+      const dateB = new Date(b.data);
+
+      if (dateB.getTime() !== dateA.getTime()) {
+        return dateB - dateA;
+      }
+
+      return (b.id || 0) - (a.id || 0);
+    })[0];
+
+    if (!latestMov?.id) {
+      return;
+    }
+
+    setHighlightedMovimentacaoId(Number(latestMov.id));
+
+    setTimeout(() => {
+      setHighlightedMovimentacaoId(null);
+    }, 3000);
+  };
+
   /**
    * Handle contact selection from SelectContactModal
    */
@@ -1381,6 +1410,7 @@ function CaseDetailPage() {
             onCancel={handleCancel}
             onDelete={handleDelete}
             setActiveSection={setActiveSection}
+            onOpenLatestMovimentacao={handleOpenLatestMovimentacao}
             onAddPartyClick={handleOpenContactSelection}
             parties={parties}
             deadlines={deadlines}

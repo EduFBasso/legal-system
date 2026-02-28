@@ -17,6 +17,7 @@ function InformacaoTab({
   onCancel = () => {},
   onDelete = () => {},
   setActiveSection = () => {},
+  onOpenLatestMovimentacao = () => {},
   onAddPartyClick,
   parties = [],
   formatCurrency = (value) => {
@@ -235,6 +236,13 @@ function InformacaoTab({
                       {formData.ultima_movimentacao_resumo && (
                         <span className="detail-value-sub">{formData.ultima_movimentacao_resumo}</span>
                       )}
+                      <button
+                        className="btn-link detail-partes-hint"
+                        style={{ marginTop: '0.35rem', alignSelf: 'flex-start' }}
+                        onClick={onOpenLatestMovimentacao}
+                      >
+                        🔎 Ver movimentação destacada
+                      </button>
                     </div>
                   ) : (
                     <span className="detail-value empty">Nenhuma movimentação cadastrada</span>
