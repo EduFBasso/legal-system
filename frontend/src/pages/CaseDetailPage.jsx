@@ -306,7 +306,7 @@ function CaseDetailPage() {
   /**
    * Handle contact created - reload contacts and select the new one
    */
-  const handleContactCreated = async (_savedContact, _isCreating) => {
+  const handleContactCreated = async () => {
     await loadContacts();
     
     // Only close modal if NOT in parties context
