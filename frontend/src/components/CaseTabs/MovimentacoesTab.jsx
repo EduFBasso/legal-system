@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, FileText, Edit2, Trash2 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
@@ -15,6 +15,30 @@ function MovimentacoesTab({
   onEdit = () => {},
   onDelete = () => {}
 }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredMovimentacoes = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return movimentacoes;
+
+    return movimentacoes.filter((mov) => {
+      const searchableText = [
+        mov.titulo,
+        mov.descricao,
+        mov.tipo,
+        mov.tipo_display,
+        mov.origem,
+        mov.origem_display,
+        mov.data,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return searchableText.includes(query);
+    });
+  }, [movimentacoes, searchTerm]);
+
   useEffect(() => {
     if (!highlightedMovimentacaoId) return;
 
@@ -22,7 +46,7 @@ function MovimentacoesTab({
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [highlightedMovimentacaoId, movimentacoes]);
+  }, [highlightedMovimentacaoId, filteredMovimentacoes]);
 
   return (
     <div className="case-section">
@@ -39,6 +63,19 @@ function MovimentacoesTab({
           )}
         </div>
         
+        {movimentacoes.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar movimentações por título, descrição, tipo, origem ou data..."
+              className="financeiro-input"
+              style={{ width: '100%' }}
+            />
+          </div>
+        )}
+
         {movimentacoes.length === 0 ? (
           <EmptyState
             icon={FileText}
@@ -46,9 +83,16 @@ function MovimentacoesTab({
             message="Nenhuma movimentação cadastrada"
             hint="Clique em 'Nova Movimentação' para adicionar despachos, decisões, audiências, etc."
           />
+        ) : filteredMovimentacoes.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            iconStyle={{ opacity: 0.3 }}
+            message="Nenhuma movimentação encontrada"
+            hint="Tente ajustar o texto de busca"
+          />
         ) : (
           <div className="movimentacoes-timeline">
-            {movimentacoes.map(mov => (
+            {filteredMovimentacoes.map(mov => (
               <div
                 key={mov.id}
                 id={`movimentacao-${mov.id}`}
