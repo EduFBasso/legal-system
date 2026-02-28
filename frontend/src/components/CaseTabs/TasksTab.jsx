@@ -9,6 +9,26 @@ const URGENCY_OPTIONS = [
   { value: 'URGENTISSIMO', label: 'Urgentíssimo', color: '#dc2626' },
 ];
 
+const URGENCY_LIGHT_BACKGROUNDS = {
+  NORMAL: '#ecfdf5',
+  URGENTE: '#fff7ed',
+  URGENTISSIMO: '#fef2f2',
+};
+
+const STATUS_COLORS = {
+  PENDENTE: '#0f172a',
+  EM_ANDAMENTO: '#1d4ed8',
+  CONCLUIDA: '#6b7280',
+  CANCELADA: '#b91c1c',
+};
+
+const STATUS_LIGHT_BACKGROUNDS = {
+  PENDENTE: '#f8fafc',
+  EM_ANDAMENTO: '#eff6ff',
+  CONCLUIDA: '#f3f4f6',
+  CANCELADA: '#fef2f2',
+};
+
 function TasksTab({
   caseId,
   tasks = [],
@@ -54,6 +74,44 @@ function TasksTab({
     const option = URGENCY_OPTIONS.find(item => item.value === urgencia);
     return option?.color || '#64748b';
   };
+
+  const taskCardStyle = (task) => {
+    if (task.status === 'CONCLUIDA') {
+      return {
+        borderLeft: '5px solid #9ca3af',
+        background: '#f3f4f6',
+      };
+    }
+
+    return {
+      borderLeft: `5px solid ${urgencyColor(task.urgencia)}`,
+      background: URGENCY_LIGHT_BACKGROUNDS[task.urgencia] || '#ffffff',
+    };
+  };
+
+  const urgencyBadgeStyle = (urgencia) => ({
+    background: urgencyColor(urgencia),
+    color: '#ffffff',
+    border: `1px solid ${urgencyColor(urgencia)}`,
+    fontWeight: 800,
+    fontSize: '0.85rem',
+    letterSpacing: '0.5px',
+    padding: '0.3rem 0.6rem',
+    borderRadius: '4px',
+    display: 'inline-block',
+  });
+
+  const statusBadgeStyle = (status) => ({
+    background: STATUS_COLORS[status] || '#0f172a',
+    color: '#ffffff',
+    border: `1px solid ${STATUS_COLORS[status] || '#0f172a'}`,
+    fontWeight: 800,
+    letterSpacing: '0.5px',
+    fontSize: '0.9rem',
+    padding: '0.2rem 0.5rem',
+    borderRadius: '999px',
+    display: 'inline-block',
+  });
 
   return (
     <div className="case-section">
@@ -151,14 +209,25 @@ function TasksTab({
         ) : (
           <div className="publicacoes-list">
             {tasks.map(task => (
-              <div key={task.id} className="publicacao-card" style={{ borderLeft: `5px solid ${urgencyColor(task.urgencia)}` }}>
+              <div key={task.id} className="publicacao-card" style={taskCardStyle(task)}>
                 <div className="publicacao-header">
                   <div className="publicacao-meta-group">
-                    <span className="publicacao-tipo" style={{ background: urgencyColor(task.urgencia), color: '#fff' }}>
+                    <span className="publicacao-tipo" style={urgencyBadgeStyle(task.urgencia)}>
                       {task.urgencia_display || task.urgencia}
                     </span>
-                    <span className="publicacao-date">Vence: {formatDate(task.data_vencimento)}</span>
-                    <span className="publicacao-tribunal">{task.status_display || task.status}</span>
+                    <span
+                      className="publicacao-date"
+                      style={{
+                        fontSize: '0.95rem',
+                        fontWeight: 700,
+                        color: task.status === 'CONCLUIDA' ? '#4b5563' : urgencyColor(task.urgencia),
+                      }}
+                    >
+                      Vence em {formatDate(task.data_vencimento)}
+                    </span>
+                    <span className="publicacao-tribunal" style={statusBadgeStyle(task.status)}>
+                      {task.status_display || task.status}
+                    </span>
                   </div>
 
                   <div className="publicacao-actions">
@@ -167,7 +236,7 @@ function TasksTab({
                       title={task.status === 'CONCLUIDA' ? 'Marcar como pendente' : 'Marcar como concluída'}
                       onClick={() => onUpdateTaskStatus(task.id, task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA')}
                     >
-                      {task.status === 'CONCLUIDA' ? <Circle size={16} /> : <CheckCircle2 size={16} />}
+                      {task.status === 'CONCLUIDA' ? <CheckCircle2 size={16} style={{ color: '#10b981' }} /> : <Circle size={16} />}
                     </button>
                     <button
                       className="btn-icon-small btn-danger-ghost"
@@ -179,8 +248,16 @@ function TasksTab({
                   </div>
                 </div>
 
-                <h4 style={{ margin: '0.5rem 0' }}>{task.titulo}</h4>
-                {task.descricao && <p style={{ margin: 0, color: '#334155' }}>{task.descricao}</p>}
+                <h4 style={{ 
+                  margin: '0.5rem 0',
+                  textDecoration: task.status === 'CONCLUIDA' ? 'line-through' : 'none',
+                  color: task.status === 'CONCLUIDA' ? '#6b7280' : '#1e293b',
+                }}>{task.titulo}</h4>
+                {task.descricao && (
+                  <p style={{ margin: 0, color: task.status === 'CONCLUIDA' ? '#6b7280' : '#334155' }}>
+                    {task.descricao}
+                  </p>
+                )}
                 {task.movimentacao_titulo && (
                   <small className="form-helper-text">Movimentação: {task.movimentacao_titulo}</small>
                 )}

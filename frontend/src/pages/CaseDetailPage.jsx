@@ -111,6 +111,7 @@ function CaseDetailPage() {
   const [movimentacaoFormData, setMovimentacaoFormData] = useState({
     data: '',
     tipo: 'DESPACHO',
+    tipo_customizado: '',
     titulo: '',
     descricao: '',
     prazo: '',
@@ -857,6 +858,7 @@ function CaseDetailPage() {
     setMovimentacaoFormData({
       data: today,
       tipo: 'DESPACHO',
+      tipo_customizado: '',
       titulo: '',
       descricao: '',
       prazo: '',
@@ -874,6 +876,12 @@ function CaseDetailPage() {
   const handleSaveMovimentacao = async () => {
     if (!movimentacaoFormData.data || !movimentacaoFormData.titulo) {
       showToast('Preencha data e título da movimentação', 'error');
+      return;
+    }
+
+    // Validar tipo customizado se tipo = OUTROS
+    if (movimentacaoFormData.tipo === 'OUTROS' && !movimentacaoFormData.tipo_customizado?.trim()) {
+      showToast('Especifique o tipo de movimentação', 'error');
       return;
     }
 
@@ -904,6 +912,11 @@ function CaseDetailPage() {
         prazo: movimentacaoFormData.prazo ? parseInt(movimentacaoFormData.prazo) : null,
         origem: 'MANUAL',
       };
+
+      // Enviar tipo customizado se aplicável
+      if (movimentacaoFormData.tipo === 'OUTROS') {
+        dataToSave.tipo_customizado = movimentacaoFormData.tipo_customizado.trim();
+      }
 
       if (editingMovimentacaoId) {
         // UPDATE existing movimentacao
@@ -952,6 +965,7 @@ function CaseDetailPage() {
     setMovimentacaoFormData({
       data: mov.data,
       tipo: mov.tipo,
+      tipo_customizado: mov.tipo_customizado || '',
       titulo: mov.titulo,
       descricao: mov.descricao || '',
       prazo: mov.prazo || '',
@@ -994,6 +1008,7 @@ function CaseDetailPage() {
     setMovimentacaoFormData({
       data: '',
       tipo: 'DESPACHO',
+      tipo_customizado: '',
       titulo: '',
       descricao: '',
       prazo: '',
@@ -1773,6 +1788,19 @@ function CaseDetailPage() {
                     <option value="OUTROS">Outros</option>
                   </select>
                 </div>
+
+                {movimentacaoFormData.tipo === 'OUTROS' && (
+                  <div className="form-group">
+                    <label>Especifique o tipo de movimentação *</label>
+                    <input
+                      type="text"
+                      value={movimentacaoFormData.tipo_customizado || ''}
+                      onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, tipo_customizado: e.target.value }))}
+                      placeholder="Ex: Despacho do juiz, Comunicado da secretaria, etc..."
+                      required
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -1815,7 +1843,7 @@ function CaseDetailPage() {
 
               {!editingMovimentacaoId && (
                 <div className="form-group" style={{ background: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '1.25rem', borderRadius: '4px' }}>
-                  <label style={{ fontWeight: 600 }}>Criar tarefa relacionada</label>
+                  <label style={{ fontWeight: 600 }}>Vincular tarefa a esta movimentação</label>
 
                   <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -1824,12 +1852,30 @@ function CaseDetailPage() {
                         checked={Boolean(movimentacaoFormData.create_task)}
                         onChange={(e) => setMovimentacaoFormData(prev => ({ ...prev, create_task: e.target.checked }))}
                       />
-                      Gerar tarefa automaticamente para esta movimentação
+                      Gerar tarefa automaticamente
                     </label>
                   </div>
 
                   {movimentacaoFormData.create_task && (
-                    <>
+                    <div
+                      style={{
+                        background:
+                          movimentacaoFormData.task_urgencia === 'URGENTE'
+                            ? '#fff7ed'
+                            : movimentacaoFormData.task_urgencia === 'URGENTISSIMO'
+                            ? '#fef2f2'
+                            : '#ecfdf5',
+                        border:
+                          movimentacaoFormData.task_urgencia === 'URGENTE'
+                            ? '1px solid #f59e0b'
+                            : movimentacaoFormData.task_urgencia === 'URGENTISSIMO'
+                            ? '1px solid #dc2626'
+                            : '1px solid #10b981',
+                        borderRadius: '6px',
+                        padding: '1rem',
+                        marginTop: '0.75rem',
+                      }}
+                    >
                       <div className="form-group" style={{ marginBottom: '0.75rem' }}>
                         <label>Título da tarefa</label>
                         <input
@@ -1842,28 +1888,64 @@ function CaseDetailPage() {
 
                       <div className="form-group" style={{ marginBottom: '0.75rem' }}>
                         <label>Urgência</label>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          background:
+                            movimentacaoFormData.task_urgencia === 'URGENTE'
+                              ? '#fff7ed'
+                              : movimentacaoFormData.task_urgencia === 'URGENTISSIMO'
+                              ? '#fef2f2'
+                              : '#ecfdf5',
+                          padding: '0.75rem',
+                          borderRadius: '4px',
+                        }}>
                           <button
                             type="button"
-                            className={`filter-btn ${movimentacaoFormData.task_urgencia === 'NORMAL' ? 'active' : ''}`}
                             onClick={() => setMovimentacaoFormData(prev => ({ ...prev, task_urgencia: 'NORMAL' }))}
-                            style={{ borderColor: '#10b981' }}
+                            style={{
+                              background: movimentacaoFormData.task_urgencia === 'NORMAL' ? '#10b981' : '#ffffff',
+                              color: movimentacaoFormData.task_urgencia === 'NORMAL' ? '#ffffff' : '#10b981',
+                              border: '1px solid #10b981',
+                              borderRadius: '4px',
+                              padding: '0.5rem 1rem',
+                              fontWeight: movimentacaoFormData.task_urgencia === 'NORMAL' ? 700 : 500,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
                           >
                             Normal
                           </button>
                           <button
                             type="button"
-                            className={`filter-btn ${movimentacaoFormData.task_urgencia === 'URGENTE' ? 'active' : ''}`}
                             onClick={() => setMovimentacaoFormData(prev => ({ ...prev, task_urgencia: 'URGENTE' }))}
-                            style={{ borderColor: '#f59e0b' }}
+                            style={{
+                              background: movimentacaoFormData.task_urgencia === 'URGENTE' ? '#f59e0b' : '#ffffff',
+                              color: movimentacaoFormData.task_urgencia === 'URGENTE' ? '#ffffff' : '#f59e0b',
+                              border: '1px solid #f59e0b',
+                              borderRadius: '4px',
+                              padding: '0.5rem 1rem',
+                              fontWeight: movimentacaoFormData.task_urgencia === 'URGENTE' ? 700 : 500,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
                           >
                             Urgente
                           </button>
                           <button
                             type="button"
-                            className={`filter-btn ${movimentacaoFormData.task_urgencia === 'URGENTISSIMO' ? 'active' : ''}`}
                             onClick={() => setMovimentacaoFormData(prev => ({ ...prev, task_urgencia: 'URGENTISSIMO' }))}
-                            style={{ borderColor: '#dc2626' }}
+                            style={{
+                              background: movimentacaoFormData.task_urgencia === 'URGENTISSIMO' ? '#dc2626' : '#ffffff',
+                              color: movimentacaoFormData.task_urgencia === 'URGENTISSIMO' ? '#ffffff' : '#dc2626',
+                              border: '1px solid #dc2626',
+                              borderRadius: '4px',
+                              padding: '0.5rem 1rem',
+                              fontWeight: movimentacaoFormData.task_urgencia === 'URGENTISSIMO' ? 700 : 500,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
                           >
                             Urgentíssimo
                           </button>
@@ -1879,7 +1961,7 @@ function CaseDetailPage() {
                           placeholder="Detalhes extras da tarefa..."
                         />
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
