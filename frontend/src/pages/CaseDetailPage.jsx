@@ -808,7 +808,7 @@ function CaseDetailPage() {
           try {
             await publicationsService.integratePublication(pubId, {
               caseId: created.id,
-              createMovement: false,
+              createMovement: systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION || false,
             });
           } catch (integrationError) {
             console.error('Error integrating source publication:', integrationError);
@@ -1351,13 +1351,16 @@ function CaseDetailPage() {
               📄 Documentos
               {documentos.length > 0 && <span className="badge">{documentos.length}</span>}
             </button>
-            <button
-              className={`nav-tab ${activeSection === 'publicacoes' ? 'active' : ''}`}
-              onClick={() => setActiveSection('publicacoes')}
-            >
-              📰 Publicações
-              {publicacoes.length > 0 && <span className="badge">{publicacoes.length}</span>}
-            </button>
+            {/* Oculta aba Publicações se auto-sync estiver ativo e configuração permitir */}
+            {!(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
+              <button
+                className={`nav-tab ${activeSection === 'publicacoes' ? 'active' : ''}`}
+                onClick={() => setActiveSection('publicacoes')}
+              >
+                📰 Publicações
+                {publicacoes.length > 0 && <span className="badge">{publicacoes.length}</span>}
+              </button>
+            )}
             <button
               className={`nav-tab ${activeSection === 'deadlines' ? 'active' : ''}`}
               onClick={() => setActiveSection('deadlines')}
@@ -1431,8 +1434,8 @@ function CaseDetailPage() {
           />
         )}
 
-        {/* Publicações Section */}
-        {activeSection === 'publicacoes' && (
+        {/* Publicações Section - Oculta se auto-sync estiver ativo */}
+        {activeSection === 'publicacoes' && !(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
           <PublicacoesTab
             caseId={id}
             publicacoes={publicacoes}

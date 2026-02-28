@@ -181,6 +181,7 @@ LEGAL_SYSTEM_SETTINGS = {
     'AUTO_LOAD_PUBLICATIONS_ON_CASE': True,
     'AUTO_LOAD_PUBLICATIONS_ON_CONTACTS': True,
     'AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION': False,
+    'HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC': False,  # Oculta aba Publicações se auto-create movement estiver ativo
     'PUBLICATION_CACHE_DURATION': 300,  # em segundos, 0 = sem cache
     
     # ===== MOVIMENTAÇÕES =====
