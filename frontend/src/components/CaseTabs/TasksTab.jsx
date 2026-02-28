@@ -89,18 +89,37 @@ function TasksTab({
     };
   };
 
-  const urgencyBadgeStyle = (urgencia) => ({
-    background: urgencyColor(urgencia),
-    color: '#ffffff',
-    border: `2px solid ${urgencyColor(urgencia)}`,
-    fontWeight: 800,
-    fontSize: '0.9rem',
-    letterSpacing: '0.5px',
-    padding: '0.4rem 0.75rem',
-    borderRadius: '4px',
-    display: 'inline-block',
-    textTransform: 'uppercase',
-  });
+  const urgencyBadgeStyle = (urgencia, status) => {
+    // Se tarefa concluída, usa tema cinza
+    if (status === 'CONCLUIDA') {
+      return {
+        background: '#6b7280',
+        color: '#ffffff',
+        border: '2px solid #6b7280',
+        fontWeight: 800,
+        fontSize: '0.9rem',
+        letterSpacing: '0.5px',
+        padding: '0.4rem 0.75rem',
+        borderRadius: '4px',
+        display: 'inline-block',
+        textTransform: 'uppercase',
+      };
+    }
+
+    // Caso contrário, usa cor da urgência
+    return {
+      background: urgencyColor(urgencia),
+      color: '#ffffff',
+      border: `2px solid ${urgencyColor(urgencia)}`,
+      fontWeight: 800,
+      fontSize: '0.9rem',
+      letterSpacing: '0.5px',
+      padding: '0.4rem 0.75rem',
+      borderRadius: '4px',
+      display: 'inline-block',
+      textTransform: 'uppercase',
+    };
+  };
 
   const statusBadgeStyle = (status) => ({
     background: STATUS_COLORS[status] || '#0f172a',
@@ -213,7 +232,7 @@ function TasksTab({
               <div key={task.id} className="publicacao-card" style={taskCardStyle(task)}>
                 <div className="publicacao-header">
                   <div className="publicacao-meta-group">
-                    <span className="publicacao-tipo" style={urgencyBadgeStyle(task.urgencia)}>
+                    <span className="publicacao-tipo" style={urgencyBadgeStyle(task.urgencia, task.status)}>
                       {task.urgencia_display || task.urgencia}
                     </span>
                     <span
