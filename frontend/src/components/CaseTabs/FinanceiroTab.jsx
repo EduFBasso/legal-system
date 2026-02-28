@@ -144,11 +144,9 @@ function FinanceiroTab({
                     type="text" 
                     inputMode="decimal"
                     className="financeiro-input-compact" 
-                    placeholder="0,00" 
-                    step="0.01"
+                    placeholder="3.000,00" 
                     value={participacaoValorFixo}
                     onChange={(e) => setParticipacaoValorFixo(e.target.value)}
-                    onBlur={(e) => setParticipacaoValorFixo(formatCurrencyInput(e.target.value))}
                     disabled={participacaoTipo !== 'fixed'}
                   />
                 </div>
