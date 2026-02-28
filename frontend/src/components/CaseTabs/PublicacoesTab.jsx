@@ -26,6 +26,14 @@ function PublicacoesTab({
   const [filter, setFilter] = useState('todas'); // 'todas', 'intimacoes', 'despachos', 'outras'
   
   /**
+   * Abre página de detalhes da publicação em nova janela
+   */
+  const handleOpenPublicationDetails = (pub) => {
+    const url = `/publications/${pub.id_api}/details`;
+    window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+  };
+
+  /**
    * Filtra publicações por tipo
    */
   const getFilteredPublicacoes = () => {
@@ -202,10 +210,7 @@ function PublicacoesTab({
                 <div className="publicacao-footer">
                   <button 
                     className="btn-link"
-                    onClick={() => {
-                      // TODO: Abrir PublicationDetailModal
-                      console.log('Ver detalhes:', pub.id);
-                    }}
+                    onClick={() => handleOpenPublicationDetails(pub)}
                   >
                     Ver texto completo →
                   </button>
