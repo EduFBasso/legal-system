@@ -8,7 +8,6 @@ import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../F
  * Exibe e permite edição de dados do case: número, tribunal, partes, datas, etc.
  */
 function InformacaoTab({
-  id,
   formData = {},
   setFormData = () => {},
   isEditing = false,
@@ -20,8 +19,6 @@ function InformacaoTab({
   setActiveSection = () => {},
   onAddPartyClick,
   parties = [],
-  deadlines = [],
-  caseData = null,
   formatCurrency = (value) => {
     if (!value) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import publicationsService from '../services/publicationsService';
@@ -9,7 +9,6 @@ console.log('📦 PublicationsService importado:', publicationsService);
 
 export default function PublicationDetailsPage() {
   const { idApi } = useParams();
-  const navigate = useNavigate();
   const [publication, setPublication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

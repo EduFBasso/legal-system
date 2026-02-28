@@ -16,7 +16,6 @@ export default function NotificationsPage() {
     markAllAsRead,
     requestPermission,
     createTestNotification,
-    clearShownNotifications,
   } = useNotifications();
   
   const [filter, setFilter] = useState('all'); // all, unread, read

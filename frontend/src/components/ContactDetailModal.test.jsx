@@ -86,7 +86,6 @@ describe('ContactDetailModal', () => {
 
   const mockOnClose = vi.fn();
   const mockOnContactUpdated = vi.fn();
-  const mockOnLinkToProcess = vi.fn();
   const mockOnLinkToCase = vi.fn();
 
   beforeEach(() => {

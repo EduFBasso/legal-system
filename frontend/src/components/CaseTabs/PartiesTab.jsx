@@ -6,7 +6,6 @@ import EmptyState from '../common/EmptyState';
  * Exibe lista de partes vinculadas ao case
  */
 function PartiesTab({
-  id,
   parties = [],
   loadingParties = false,
   onAddPartyClick = () => {},

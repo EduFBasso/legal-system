@@ -1,4 +1,4 @@
-import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
+import { generateAllConsultaLinks } from '../utils/consultaLinksHelper';
 import './PublicationCard.css';
 
 export default function PublicationCard({ 

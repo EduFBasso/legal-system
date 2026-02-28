@@ -6,7 +6,7 @@ import Toast from './Toast';
 
 // Mock Modal component
 vi.mock('../Modal', () => ({
-  default: ({ isOpen, children, onClose }) => {
+  default: ({ isOpen, children }) => {
     if (!isOpen) return null;
     return (
       <div data-testid="modal">

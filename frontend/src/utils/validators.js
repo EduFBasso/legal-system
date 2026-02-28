@@ -120,7 +120,7 @@ export function validateCurrency(value, options = {}) {
     }
     
     return { isValid: true, error: null, value: numeric };
-  } catch (error) {
+  } catch {
     return { isValid: false, error: 'Erro ao validar valor', value: null };
   }
 }
@@ -183,7 +183,7 @@ export function validateDate(date, options = {}) {
     }
     
     return { isValid: true, error: null };
-  } catch (error) {
+  } catch {
     return { isValid: false, error: 'Erro ao validar data' };
   }
 }

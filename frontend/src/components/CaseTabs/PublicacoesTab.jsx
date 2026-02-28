@@ -17,7 +17,6 @@ import './PublicacoesTab.css';
  * - [ ] Permitir desvincular publicação?
  */
 function PublicacoesTab({ 
-  caseId,
   publicacoes = [], 
   loading = false,
   onVincularPublicacao = () => {},

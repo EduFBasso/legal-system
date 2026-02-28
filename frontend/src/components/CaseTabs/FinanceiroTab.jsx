@@ -8,7 +8,6 @@ import EmptyState from '../common/EmptyState';
  * Controla valores, custos, recebimentos e despesas
  */
 function FinanceiroTab({
-  id,
   formData = {},
   recebimentos = [],
   despesas = [],

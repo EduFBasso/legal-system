@@ -130,7 +130,7 @@ export default function ContactsPage() {
     }
   };
 
-  const handleLinkSuccess = async (linkData) => {
+  const handleLinkSuccess = async () => {
     // Reload contacts to get updated linked_cases
     await loadContacts();
     displayToast('🔗 Contato vinculado ao processo com sucesso!', 'success');

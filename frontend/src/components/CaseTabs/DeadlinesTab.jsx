@@ -8,12 +8,10 @@ import EmptyState from '../common/EmptyState';
  * Exibe prazos com filtros: todos, vencidos, próximos, futuros
  */
 function DeadlinesTab({ 
-  id,
   deadlines = [],
   deadlineFilter = 'all',
   setDeadlineFilter = () => {},
   loadingDeadlines = false,
-  loadDeadlines = () => {},
   setActiveSection = () => {},
 }) {
   const getFilteredDeadlines = () => {

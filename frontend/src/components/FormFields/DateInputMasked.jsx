@@ -16,17 +16,17 @@ export default function DateInputMasked({
   const inputRef = useRef(null);
   const [displayValue, setDisplayValue] = useState('');
 
-  // Sincronizar displayValue com value prop
-  useEffect(() => {
-    setDisplayValue(formatForDisplay(value));
-  }, [value]);
-
   // Converter YYYY-MM-DD para DD/MM/YYYY para exibição
   const formatForDisplay = (isoDate) => {
     if (!isoDate || isoDate.length !== 10) return '';
     const [year, month, day] = isoDate.split('-');
     return `${day}/${month}/${year}`;
   };
+
+  // Sincronizar displayValue com value prop
+  useEffect(() => {
+    setDisplayValue(formatForDisplay(value));
+  }, [value]);
 
   // Converter DD/MM/YYYY para YYYY-MM-DD para onChange
   const formatForApi = (displayDate) => {
@@ -76,7 +76,7 @@ export default function DateInputMasked({
     }
   };
 
-  const handleBlur = (e) => {
+  const handleBlur = () => {
     const currentDisplay = displayValue;
 
     // Se tem data, tentar converter

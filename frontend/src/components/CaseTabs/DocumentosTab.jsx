@@ -5,7 +5,7 @@ import EmptyState from '../common/EmptyState';
  * DocumentosTab - Aba de Documentos do Processo
  * Exibe documentos anexados: petições, sentenças, contratos, etc.
  */
-function DocumentosTab({ documentos = [], setDocumentos = () => {} }) {
+function DocumentosTab({ documentos = [] }) {
   return (
     <div className="case-section">
       <div className="section-card">

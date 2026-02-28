@@ -21,7 +21,6 @@ function SearchHistoryPage() {
     selectedPublications,
     detailLoading,
     isClearing,
-    loadHistory,
     loadSearchDetail,
     nextPage,
     previousPage,

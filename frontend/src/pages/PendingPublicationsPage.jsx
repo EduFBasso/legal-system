@@ -11,7 +11,7 @@ export default function PendingPublicationsPage() {
   const [error, setError] = useState('');
   const [pendingPublications, setPendingPublications] = useState([]);
   const [toast, setToast] = useState(null);
-  const [integrating, setIntegrating] = useState(null);
+  const [, setIntegrating] = useState(null);
 
   useEffect(() => {
     loadPending();

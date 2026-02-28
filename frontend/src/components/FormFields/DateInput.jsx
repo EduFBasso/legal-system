@@ -1,5 +1,5 @@
 // src/components/FormFields/DateInput.jsx
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import './FormFields.css';
 
 /**
@@ -22,7 +22,6 @@ export default function DateInput({
   className = '',
 }) {
   const inputRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (e) => {
     const newValue = e.target.value;
@@ -36,12 +35,10 @@ export default function DateInput({
 
   const handleFocus = () => {
     console.log('DateInput onFocus');
-    setIsOpen(true);
   };
 
-  const handleBlur = (e) => {
+  const handleBlur = () => {
     console.log('DateInput onBlur:', inputRef.current?.value);
-    setIsOpen(false);
     
     // Garantir que onChange foi chamado com valor atual
     if (inputRef.current?.value && onChange) {

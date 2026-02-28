@@ -4,7 +4,7 @@ import './CaseCard.css';
  * Case Card Component
  * Displays a case summary card
  */
-export default function CaseCard({ caseData, onClick }) {
+export default function CaseCard({ caseData }) {
   /**
    * Handle card click - open in new tab
    */
