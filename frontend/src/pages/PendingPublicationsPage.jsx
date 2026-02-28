@@ -13,6 +13,8 @@ export default function PendingPublicationsPage() {
   const [pendingPublications, setPendingPublications] = useState([]);
   const [toast, setToast] = useState(null);
   const [, setIntegrating] = useState(null);
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [pendingDeletePublication, setPendingDeletePublication] = useState(null);
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
 
@@ -69,9 +71,25 @@ export default function PendingPublicationsPage() {
   };
 
   const handleDelete = async (pub) => {
-    setIntegrating(pub.id_api);
+    const linkedToCase = !!pub.case_id || pub.integration_status === 'INTEGRATED';
+
+    if (linkedToCase) {
+      setDeleteBlockedMessage('Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.');
+      setShowDeleteBlockedDialog(true);
+      return;
+    }
+
+    setPendingDeletePublication(pub);
+    setShowDeleteConfirmDialog(true);
+  };
+
+  const confirmDeletePublication = async () => {
+    if (!pendingDeletePublication) return;
+
+    setShowDeleteConfirmDialog(false);
+    setIntegrating(pendingDeletePublication.id_api);
     try {
-      const result = await publicationsService.deletePublication(pub.id_api);
+      const result = await publicationsService.deletePublication(pendingDeletePublication.id_api);
       if (result.success) {
         const notifMsg = result.notifications_updated > 0
           ? ` (${result.notifications_updated} notificação(ões) atualizadas)`
@@ -92,6 +110,7 @@ export default function PendingPublicationsPage() {
       setShowDeleteBlockedDialog(true);
     } finally {
       setIntegrating(null);
+      setPendingDeletePublication(null);
     }
   };
 
@@ -156,6 +175,22 @@ export default function PendingPublicationsPage() {
           onClose={() => setToast(null)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirmDialog}
+        type="warning"
+        title="⚠️ Confirmar exclusão"
+        message={pendingDeletePublication
+          ? `Deseja excluir a publicação do processo ${pendingDeletePublication.numero_processo || 'sem número'}?`
+          : 'Deseja excluir esta publicação?'}
+        confirmText="🗑️ Excluir publicação"
+        cancelText="Cancelar"
+        onConfirm={confirmDeletePublication}
+        onCancel={() => {
+          setShowDeleteConfirmDialog(false);
+          setPendingDeletePublication(null);
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showDeleteBlockedDialog}

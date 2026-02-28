@@ -617,6 +617,8 @@ def get_pending_publications(request):
                 'texto_resumo': pub.texto_resumo,
                 'texto_completo': pub.texto_completo,
                 'link_oficial': pub.link_oficial,
+                'integration_status': pub.integration_status,
+                'case_id': pub.case_id,
                 'case_suggestion': _build_case_suggestion(pub.numero_processo),
             })
 
