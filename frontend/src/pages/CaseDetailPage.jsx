@@ -318,20 +318,6 @@ function CaseDetailPage() {
   };
 
   /**
-   * Handle linking newly created contact to this process
-   */
-  const handleLinkToProcess = (contact) => {
-    setFormData(prev => ({
-      ...prev,
-      cliente_principal: contact.id
-    }));
-    setShowContactModal(false);
-    showToast(`Cliente "${contact.name}" vinculado ao processo!`, 'success');
-    // Reload contacts to ensure dropdown is up to date
-    loadContacts();
-  };
-
-  /**
    * Load parties for this case
    */
   const loadParties = useCallback(async () => {
@@ -1569,8 +1555,8 @@ function CaseDetailPage() {
           isOpen={showContactModal}
           onClose={() => setShowContactModal(false)}
           onContactUpdated={handleContactCreated}
-          showLinkToProcessButton={activeSection !== 'parties'}
-          onLinkToProcess={activeSection === 'parties' ? handleSelectContactForParty : handleLinkToProcess}
+          showLinkToProcessButton={false}
+          onLinkToProcess={handleSelectContactForParty}
         />
       )}
 
