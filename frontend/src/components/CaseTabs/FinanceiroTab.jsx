@@ -1,5 +1,4 @@
 import { Save, Plus, Trash2 } from 'lucide-react';
-import { useRef, useEffect } from 'react';
 import { formatDate, formatCurrencyValue, parseCurrencyValue } from '../../utils/formatters';
 import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
 import EmptyState from '../common/EmptyState';
@@ -45,16 +44,6 @@ function FinanceiroTab({
     return despesas.reduce((sum, d) => sum + (d.value || 0), 0);
   },
 }) {
-  // Ref para o input de valor fixo
-  const valorFixoInputRef = useRef(null);
-
-  // Auto-focus no input de valor fixo quando a opção é selecionada
-  useEffect(() => {
-    if (participacaoTipo === 'fixed' && valorFixoInputRef.current) {
-      setTimeout(() => valorFixoInputRef.current.focus(), 0);
-    }
-  }, [participacaoTipo]);
-
   return (
     <div className="case-section">
       <div className="section-card">
@@ -147,7 +136,6 @@ function FinanceiroTab({
                     <span>Valor Fixo (R$)</span>
                   </label>
                   <input 
-                    ref={valorFixoInputRef}
                     type="text" 
                     inputMode="decimal"
                     className="financeiro-input-compact" 
