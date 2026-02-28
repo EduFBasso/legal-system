@@ -95,7 +95,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             <div className="setting-info full-width">
               <label className="setting-label">Dias retroativos para notificações</label>
               <p className="setting-description">
-                Ao buscar publicações, apenas as dos últimos <strong>{localSettings.retroactiveDays || 7} dias</strong> 
+                Ao buscar publicações, apenas as dos últimos <strong>{localSettings.retroactiveDays || 7} dias </strong> 
                 geram notificações. Publicações mais antigas aparecem apenas na lista, sem notificação.
               </p>
               <div className="setting-input-group">

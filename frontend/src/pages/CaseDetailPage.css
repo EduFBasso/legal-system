@@ -2974,3 +2974,37 @@
     padding: 1rem;
   }
 }
+
+/* ========================================
+   DESTAQUE PARA CAMPO PRAZO (IMPORTANTE)
+   ======================================== */
+.form-group:has(> label:contains("Prazo")) {
+  position: relative;
+  padding: 1.25rem;
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 4px;
+}
+
+.form-group label:contains("Prazo") {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.form-helper-text {
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+/* Alternativa: usar nth-child para evitar problemas com :contains */
+.modal-body .form-group:nth-last-child(2) {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  padding: 1.25rem;
+  border-radius: 4px;
+}
+
+.modal-body .form-group:nth-last-child(2) label {
+  color: #b45309;
+  font-weight: 600;
+}

@@ -814,6 +814,12 @@ function CaseDetailPage() {
       return;
     }
 
+    // Aviso se prazo não foi preenchido (campo importante)
+    if (!movimentacaoFormData.prazo || movimentacaoFormData.prazo === '') {
+      console.warn('⚠️ Movimentação sendo criada SEM prazo em dias - não aparecerá na aba Prazos');
+      showToast('Dica: Preencha o campo "Prazo (em dias)" para que a movimentação apareça na aba Prazos', 'info');
+    }
+
     setSavingMovimentacao(true);
     try {
       const dataToSave = {
@@ -1676,8 +1682,11 @@ function CaseDetailPage() {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Prazo (em dias)</label>
+              <div className="form-group" style={{ background: '#fffbeb', borderLeft: '4px solid #f59e0b', padding: '1.25rem', borderRadius: '4px' }}>
+                <label style={{ color: '#b45309', fontWeight: '600' }}>
+                  Prazo (em dias)
+                  <span style={{ marginLeft: '0.5rem', color: '#d97706' }}>*</span>
+                </label>
                 <input
                   type="number"
                   value={movimentacaoFormData.prazo}
@@ -1686,7 +1695,7 @@ function CaseDetailPage() {
                   min="0"
                 />
                 <small className="form-helper-text">
-                  Se houver prazo, informe em dias. A data limite será calculada automaticamente.
+                  IMPORTANTE: Preencha com o número de dias para que a movimentação apareça na aba Prazos. A data limite será calculada automaticamente.
                 </small>
               </div>
             </div>
