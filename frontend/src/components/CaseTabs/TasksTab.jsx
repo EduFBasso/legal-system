@@ -38,6 +38,7 @@ function TasksTab({
   onCreateTask = () => {},
   onUpdateTaskStatus = () => {},
   onDeleteTask = () => {},
+  onOpenLinkedMovimentacao = () => {},
 }) {
   const [form, setForm] = useState({
     titulo: '',
@@ -279,13 +280,26 @@ function TasksTab({
                   </p>
                 )}
                 {task.movimentacao_titulo && (
-                  <div style={{
+                  <div
+                    onClick={() => onOpenLinkedMovimentacao(task.movimentacao)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onOpenLinkedMovimentacao(task.movimentacao);
+                      }
+                    }}
+                    title="Abrir movimentação vinculada"
+                    style={{
                     marginTop: '0.75rem',
                     padding: '0.75rem',
                     background: task.status === 'CONCLUIDA' ? '#f3f4f6' : '#f0f9ff',
                     borderLeft: `4px solid ${task.status === 'CONCLUIDA' ? '#9ca3af' : '#3b82f6'}`,
                     borderRadius: '4px',
-                  }}>
+                    cursor: 'pointer',
+                  }}
+                  >
                     <small style={{
                       display: 'block',
                       fontWeight: 700,

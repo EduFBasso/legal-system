@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Plus, FileText, Edit2, Trash2 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
@@ -9,10 +10,20 @@ import EmptyState from '../common/EmptyState';
 function MovimentacoesTab({ 
   id,
   movimentacoes = [],
+  highlightedMovimentacaoId = null,
   onOpenModal = () => {},
   onEdit = () => {},
   onDelete = () => {}
 }) {
+  useEffect(() => {
+    if (!highlightedMovimentacaoId) return;
+
+    const element = document.getElementById(`movimentacao-${highlightedMovimentacaoId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [highlightedMovimentacaoId, movimentacoes]);
+
   return (
     <div className="case-section">
       <div className="section-card">
@@ -38,7 +49,22 @@ function MovimentacoesTab({
         ) : (
           <div className="movimentacoes-timeline">
             {movimentacoes.map(mov => (
-              <div key={mov.id} className="timeline-item">
+              <div
+                key={mov.id}
+                id={`movimentacao-${mov.id}`}
+                className="timeline-item"
+                style={
+                  highlightedMovimentacaoId === mov.id
+                    ? {
+                        background: '#eff6ff',
+                        border: '2px solid #3b82f6',
+                        borderRadius: '8px',
+                        boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.15)',
+                        transition: 'all 0.3s ease',
+                      }
+                    : undefined
+                }
+              >
                 <div className="timeline-marker"></div>
                 <div className="timeline-date">{formatDate(mov.data)}</div>
                 <div className="timeline-content">

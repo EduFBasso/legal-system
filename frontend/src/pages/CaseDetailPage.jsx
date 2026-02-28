@@ -80,6 +80,7 @@ function CaseDetailPage() {
   const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
+  const [highlightedMovimentacaoId, setHighlightedMovimentacaoId] = useState(null);
   const [toast, setToast] = useState(null);
   const [systemSettings, setSystemSettings] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -538,6 +539,17 @@ function CaseDetailPage() {
       console.error('Error deleting task:', error);
       showToast('Erro ao excluir tarefa', 'error');
     }
+  };
+
+  const handleOpenLinkedMovimentacao = (movimentacaoId) => {
+    if (!movimentacaoId) return;
+
+    setActiveSection('movimentacoes');
+    setHighlightedMovimentacaoId(Number(movimentacaoId));
+
+    setTimeout(() => {
+      setHighlightedMovimentacaoId(null);
+    }, 3000);
   };
 
   /**
@@ -1387,6 +1399,7 @@ function CaseDetailPage() {
           <MovimentacoesTab 
             id={id}
             movimentacoes={movimentacoes}
+            highlightedMovimentacaoId={highlightedMovimentacaoId}
             formatDate={formatDate}
             onOpenModal={handleOpenMovimentacaoModal}
             onEdit={handleEditMovimentacao}
@@ -1444,6 +1457,7 @@ function CaseDetailPage() {
             onCreateTask={handleCreateTask}
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onDeleteTask={handleDeleteTask}
+            onOpenLinkedMovimentacao={handleOpenLinkedMovimentacao}
           />
         )}
 
