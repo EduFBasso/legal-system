@@ -279,7 +279,29 @@ function TasksTab({
                   </p>
                 )}
                 {task.movimentacao_titulo && (
-                  <small className="form-helper-text">Movimentação: {task.movimentacao_titulo}</small>
+                  <div style={{
+                    marginTop: '0.75rem',
+                    padding: '0.75rem',
+                    background: task.status === 'CONCLUIDA' ? '#f3f4f6' : '#f0f9ff',
+                    borderLeft: `4px solid ${task.status === 'CONCLUIDA' ? '#9ca3af' : '#3b82f6'}`,
+                    borderRadius: '4px',
+                  }}>
+                    <small style={{
+                      display: 'block',
+                      fontWeight: 700,
+                      color: task.status === 'CONCLUIDA' ? '#6b7280' : '#0c4a6e',
+                      marginBottom: '0.25rem',
+                    }}>
+                      📎 Vinculada à Movimentação
+                    </small>
+                    <small style={{
+                      display: 'block',
+                      color: task.status === 'CONCLUIDA' ? '#6b7280' : '#1e40af',
+                      fontWeight: 500,
+                    }}>
+                      {task.movimentacao_titulo}
+                    </small>
+                  </div>
                 )}
               </div>
             ))}
