@@ -7,7 +7,7 @@
   background: var(--card-bg, white);
   border: 2px solid var(--color-border, #e2e8f0);
   border-radius: var(--card-radius, 12px);
-  transition: all 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
 
@@ -287,6 +287,9 @@
 
 /* Case Links - estilo inline igual CNPJ/CPF */
 .case-link-inline {
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1.2;
   color: #1e293b;
   text-decoration: none;
   font-weight: 500;
