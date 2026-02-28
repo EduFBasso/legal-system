@@ -199,10 +199,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
                 {isPhone ? (
                   <span className="detail-text">TEL: {primary_contact}</span>
                 ) : (
-                  <>
-                    <span className="detail-icon">📧</span>
-                    <span className="detail-value">{primary_contact}</span>
-                  </>
+                  <span className="detail-text">E-mail: {primary_contact}</span>
                 )}
               </>
             )}
