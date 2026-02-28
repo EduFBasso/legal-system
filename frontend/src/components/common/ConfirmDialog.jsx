@@ -22,6 +22,7 @@
  */
 
 import Modal from '../Modal';
+import { useEffect } from 'react';
 import './ConfirmDialog.css';
 
 /**
@@ -55,7 +56,23 @@ export default function ConfirmDialog({
   password = '',
   onPasswordChange,
   passwordError = '',
+  closeOnEnter = false,
+  showCancel = true,
 }) {
+  useEffect(() => {
+    if (!isOpen || !closeOnEnter) return;
+
+    const handleEnter = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        onCancel();
+      }
+    };
+
+    document.addEventListener('keydown', handleEnter);
+    return () => document.removeEventListener('keydown', handleEnter);
+  }, [isOpen, closeOnEnter, onCancel]);
+
   const handleConfirm = () => {
     onConfirm();
   };
@@ -96,12 +113,14 @@ export default function ConfirmDialog({
         )}
         
         <div className="confirm-actions">
-          <button
-            onClick={onCancel}
-            className="btn-cancel"
-          >
-            {cancelText}
-          </button>
+          {showCancel && (
+            <button
+              onClick={onCancel}
+              className="btn-cancel"
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             onClick={handleConfirm}
             className={`btn-confirm btn-confirm-${type}`}

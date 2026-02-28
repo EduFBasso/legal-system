@@ -24,6 +24,8 @@ export default function PublicationsPage() {
   const [showIntegrateConfirm, setShowIntegrateConfirm] = useState(false);
   const [integrateCount, setIntegrateCount] = useState(0);
   const [integrateLoading, setIntegrateLoading] = useState(false);
+  const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
+  const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
   
   // Obter estado e ações do contexto
   const {
@@ -156,25 +158,28 @@ export default function PublicationsPage() {
    * Handler para deletar TODAS as publicações
    */
   const handleDeleteSingle = async (idApi) => {
-    if (!window.confirm('Marcar esta publicação como deletada? Ela será ocultada mas permanecerá no banco para auditoria.')) {
-      return;
-    }
-
     try {
       const result = await publicationsService.deletePublication(idApi);
       
       if (result.success) {
-        const notifMsg = result.notifications_updated > 0 
-          ? `\n${result.notifications_updated} notificação(ões) relacionada(s) marcadas como lidas.` 
+        const notifMsg = result.notifications_updated > 0
+          ? ` (${result.notifications_updated} notificação(ões) atualizadas)`
           : '';
-        alert(`Publicação marcada como deletada!${notifMsg}`);
+        showToast(`✅ Publicação removida da listagem${notifMsg}.`, 'success');
         // Recarregar lista
         await loadLastSearch();
       } else {
-        alert(`Erro ao deletar: ${result.error || 'Erro desconhecido'}`);
+        setDeleteBlockedMessage(result.error || 'Não foi possível excluir a publicação.');
+        setShowDeleteBlockedDialog(true);
       }
     } catch (error) {
-      alert(`Erro ao deletar publicação: ${error.message}`);
+      const message = (error?.message || '').toLowerCase();
+      if (message.includes('não é possível apagar publicação com processo vinculado')) {
+        setDeleteBlockedMessage('Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.');
+      } else {
+        setDeleteBlockedMessage(error.message || 'Não foi possível excluir a publicação.');
+      }
+      setShowDeleteBlockedDialog(true);
     }
   };
 
@@ -391,6 +396,19 @@ export default function PublicationsPage() {
         cancelText="⏸️ Deixar pendente"
         onConfirm={handleConfirmIntegrate}
         onCancel={() => setShowIntegrateConfirm(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteBlockedDialog}
+        type="danger"
+        title="🚫 Exclusão não permitida"
+        message={deleteBlockedMessage || 'Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.'}
+        warningMessage="Para preservar a rastreabilidade jurídica, publicações vinculadas permanecem protegidas."
+        confirmText="Entendi"
+        onConfirm={() => setShowDeleteBlockedDialog(false)}
+        onCancel={() => setShowDeleteBlockedDialog(false)}
+        showCancel={false}
+        closeOnEnter={true}
       />
     </div>
   );

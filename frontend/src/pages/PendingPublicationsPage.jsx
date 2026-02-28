@@ -3,6 +3,7 @@ import { FileText } from 'lucide-react';
 import EmptyState from '../components/common/EmptyState';
 import PublicationCard from '../components/PublicationCard';
 import Toast from '../components/common/Toast';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import publicationsService from '../services/publicationsService';
 import './PendingPublicationsPage.css';
 
@@ -12,6 +13,8 @@ export default function PendingPublicationsPage() {
   const [pendingPublications, setPendingPublications] = useState([]);
   const [toast, setToast] = useState(null);
   const [, setIntegrating] = useState(null);
+  const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
+  const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
 
   useEffect(() => {
     loadPending();
@@ -66,20 +69,27 @@ export default function PendingPublicationsPage() {
   };
 
   const handleDelete = async (pub) => {
-    const confirmed = window.confirm('Tem certeza que deseja apagar esta publicação?');
-    if (!confirmed) return;
-
     setIntegrating(pub.id_api);
     try {
       const result = await publicationsService.deletePublication(pub.id_api);
       if (result.success) {
-        setToast({ message: '✅ Publicação apagada com sucesso!', type: 'success' });
+        const notifMsg = result.notifications_updated > 0
+          ? ` (${result.notifications_updated} notificação(ões) atualizadas)`
+          : '';
+        setToast({ message: `✅ Publicação removida da listagem${notifMsg}.`, type: 'success' });
         setTimeout(() => loadPending(), 500);
       } else {
-        setToast({ message: result.error || '❌ Erro ao apagar publicação', type: 'error' });
+        setDeleteBlockedMessage(result.error || 'Não foi possível excluir a publicação.');
+        setShowDeleteBlockedDialog(true);
       }
     } catch (err) {
-      setToast({ message: err.message || '❌ Erro ao apagar publicação', type: 'error' });
+      const message = (err?.message || '').toLowerCase();
+      if (message.includes('não é possível apagar publicação com processo vinculado')) {
+        setDeleteBlockedMessage('Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.');
+      } else {
+        setDeleteBlockedMessage(err.message || 'Não foi possível excluir a publicação.');
+      }
+      setShowDeleteBlockedDialog(true);
     } finally {
       setIntegrating(null);
     }
@@ -146,6 +156,19 @@ export default function PendingPublicationsPage() {
           onClose={() => setToast(null)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showDeleteBlockedDialog}
+        type="danger"
+        title="🚫 Exclusão não permitida"
+        message={deleteBlockedMessage || 'Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.'}
+        warningMessage="Para preservar a rastreabilidade jurídica, publicações vinculadas permanecem protegidas."
+        confirmText="Entendi"
+        onConfirm={() => setShowDeleteBlockedDialog(false)}
+        onCancel={() => setShowDeleteBlockedDialog(false)}
+        showCancel={false}
+        closeOnEnter={true}
+      />
     </div>
   );
 }
