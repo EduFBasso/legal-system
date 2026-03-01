@@ -1,6 +1,7 @@
 """
 Views para API de Publications.
 """
+import re
 import time
 import unicodedata
 from datetime import datetime
@@ -40,6 +41,34 @@ def normalize_processo_numero(numero_processo):
     if not numero_processo:
         return ''
     return ''.join(char for char in str(numero_processo) if char.isdigit())
+
+
+def _extract_prazo_days(texto_publicacao):
+    """Extrai prazo em dias do texto da publicação (ex: 'prazo de 15 dias')."""
+    if not texto_publicacao:
+        return None
+
+    patterns = [
+        r'prazo\s+de\s+(\d{1,3})\s*\([^\)]*\)\s*dias?',
+        r'prazo\s+de\s+(\d{1,3})\s*dias?',
+        r'no\s+prazo\s+de\s+(\d{1,3})\s*dias?',
+        r'em\s+(\d{1,3})\s*dias?',
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, texto_publicacao, re.IGNORECASE)
+        if not match:
+            continue
+
+        try:
+            prazo = int(match.group(1))
+        except (TypeError, ValueError):
+            continue
+
+        if 1 <= prazo <= 365:
+            return prazo
+
+    return None
 
 
 @api_view(['GET'])
@@ -566,6 +595,7 @@ def _create_movement_from_publication(publication, case):
 
     # Gerar titulo a partir do resumo (evita duplicação de tipo)
     texto_base = publication.texto_resumo or publication.texto_completo or 'Publicação do DJE'
+    prazo_dias = _extract_prazo_days(publication.texto_completo or publication.texto_resumo or '')
     # Pega primeiros ~120 caracteres ou primeira frase
     titulo = texto_base[:120].split('\n')[0]
     if len(texto_base) > 120:
@@ -577,6 +607,7 @@ def _create_movement_from_publication(publication, case):
         tipo=tipo_mov,
         titulo=titulo,
         descricao=publication.texto_resumo or publication.texto_completo or '',
+        prazo=prazo_dias,
         origem='DJE',
         publicacao_id=publication.id_api,  # Armazena id_api para consultar via API
     )
