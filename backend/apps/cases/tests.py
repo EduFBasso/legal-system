@@ -728,6 +728,55 @@ class DeadlineNotificationTest(APITestCase):
         # Second call should create 0 and skip the existing one
         self.assertEqual(created2, 0)
         self.assertGreater(skipped2, 0)
+    
+    def test_deadline_priority_classification(self):
+        """Test that deadlines are classified correctly (15/7/3 pattern)"""
+        from apps.notifications.models import Notification
+        
+        # Create movements with different deadlines
+        # Urgentíssimo: 2 days (0-3)
+        mov_urgentissimo = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='INTIMACAO',
+            titulo='Prazo urgentíssimo',
+            prazo=2,
+            origem='MANUAL',
+        )
+        
+        # Urgente: 5 days (4-7)
+        mov_urgente = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='INTIMACAO',
+            titulo='Prazo urgente',
+            prazo=5,
+            origem='MANUAL',
+        )
+        
+        # Normal: 10 days (8-15)
+        mov_normal = CaseMovement.objects.create(
+            case=self.case,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Prazo normal',
+            prazo=10,
+            origem='MANUAL',
+        )
+        
+        # Trigger notification creation
+        response = self.client.post('/api/notifications/check_deadlines/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['created'], 3)
+        
+        # Verify priorities
+        notif_urgentissimo = Notification.objects.get(metadata__movement_id=mov_urgentissimo.id)
+        notif_urgente = Notification.objects.get(metadata__movement_id=mov_urgente.id)
+        notif_normal = Notification.objects.get(metadata__movement_id=mov_normal.id)
+        
+        self.assertEqual(notif_urgentissimo.priority, 'urgent')
+        self.assertEqual(notif_urgente.priority, 'high')
+        self.assertEqual(notif_normal.priority, 'medium')
 
 
 # Test Summary:
@@ -735,7 +784,7 @@ class DeadlineNotificationTest(APITestCase):
 # - API tests: Partially passing (5/17)
 # - CaseMovement Model tests: 5 tests added
 # - CaseMovement API tests: 7 tests added
-# - Deadline Notification tests: 2 tests added
+# - Deadline Notification tests: 3 tests added (includes 15/7/3 priority classification test)
 #  
 # Known issues with some API tests:
 # - Some tests fail due to authentication or data setup issues

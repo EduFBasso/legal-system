@@ -167,17 +167,17 @@ class NotificationViewSet(viewsets.ModelViewSet):
         """
         Verifica prazos de movimentações e cria notificações automáticas.
         
-        Lógica:
-        - Urgent: Prazo vence HOJE
-        - High: Prazo vence AMANHÃ
-        - Medium: Prazo vence em 2-3 dias
+        Lógica de alertas (padrão jurídico 15/7/3):
+        - Urgentíssimo (urgent): 0-3 dias restantes
+        - Urgente (high): 4-7 dias restantes
+        - Normal (medium): 8-15 dias restantes
         
         Retorna estatísticas de prazos encontrados e notificações criadas.
         """
         from apps.cases.models import CaseMovement
         
         today = timezone.now().date()
-        future_limit = today + timedelta(days=3)
+        future_limit = today + timedelta(days=15)
         
         # Buscar movimentações com prazo dentro da janela de verificação
         movements_with_deadlines = CaseMovement.objects.filter(
@@ -195,13 +195,18 @@ class NotificationViewSet(viewsets.ModelViewSet):
             # Calcular dias até o vencimento
             days_until = (movement.data_limite_prazo - today).days
             
-            # Determinar prioridade
-            if days_until == 0:
+            # Determinar prioridade baseado no padrão 15/7/3
+            if days_until <= 3:
                 priority = 'urgent'
-                priority_text = 'HOJE'
-            elif days_until == 1:
+                if days_until == 0:
+                    priority_text = 'HOJE'
+                elif days_until == 1:
+                    priority_text = 'AMANHÃ'
+                else:
+                    priority_text = f'em {days_until} dias (URGENTÍSSIMO)'
+            elif days_until <= 7:
                 priority = 'high'
-                priority_text = 'AMANHÃ'
+                priority_text = f'em {days_until} dias (URGENTE)'
             else:
                 priority = 'medium'
                 priority_text = f'em {days_until} dias'
