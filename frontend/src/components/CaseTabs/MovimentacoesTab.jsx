@@ -92,60 +92,89 @@ function MovimentacoesTab({
           />
         ) : (
           <div className="movimentacoes-timeline">
-            {filteredMovimentacoes.map(mov => (
-              <div
-                key={mov.id}
-                id={`movimentacao-${mov.id}`}
-                className="timeline-item"
-                style={
-                  highlightedMovimentacaoId === mov.id
-                    ? {
-                        background: '#eff6ff',
-                        border: '2px solid #3b82f6',
-                        borderRadius: '8px',
-                        boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.15)',
-                        transition: 'all 0.3s ease',
-                      }
-                    : undefined
-                }
-              >
-                <div className="timeline-marker"></div>
-                <div className="timeline-date">{formatDate(mov.data)}</div>
-                <div className="timeline-content">
-                  <div className="timeline-tipo">{mov.tipo_display || mov.tipo}</div>
-                  <div className="timeline-titulo">{mov.titulo}</div>
-                  {mov.descricao && (
-                    <div className="timeline-descricao">{mov.descricao}</div>
-                  )}
-                  {mov.prazo && (
-                    <div className="timeline-prazo">
-                      ⏰ Prazo: {mov.prazo} dias (até {formatDate(mov.data_limite_prazo)})
+            {filteredMovimentacoes.map(mov => {
+              const truncateText = (text, maxLength) => {
+                if (!text || text.length <= maxLength) return text;
+                return text.substring(0, maxLength) + '...';
+              };
+
+              return (
+                <div
+                  key={mov.id}
+                  id={`movimentacao-${mov.id}`}
+                  className="timeline-item"
+                  style={
+                    highlightedMovimentacaoId === mov.id
+                      ? {
+                          background: '#eff6ff',
+                          border: '2px solid #3b82f6',
+                          borderRadius: '8px',
+                          boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.15)',
+                          transition: 'all 0.3s ease',
+                        }
+                      : undefined
+                  }
+                >
+                  <div className="timeline-marker"></div>
+                  <div className="timeline-date">{formatDate(mov.data)}</div>
+                  <div className="timeline-content">
+                    <div className="timeline-tipo">{mov.tipo_display || mov.tipo}</div>
+                    <div className="timeline-titulo">
+                      {mov.publicacao_id ? (
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'noopener,noreferrer');
+                          }}
+                          style={{ 
+                            color: '#2563eb', 
+                            textDecoration: 'none',
+                            cursor: 'pointer'
+                          }}
+                          title="Clique para ver publicação completa"
+                        >
+                          {truncateText(mov.titulo, 180)} 🔗
+                        </a>
+                      ) : (
+                        truncateText(mov.titulo, 180)
+                      )}
                     </div>
-                  )}
-                  <div className="timeline-meta">
-                    <span className="timeline-origem">{mov.origem_display}</span>
-                    {mov.origem === 'MANUAL' && (
-                      <div className="timeline-actions">
-                        <button 
-                          className="btn-icon-small" 
-                          onClick={() => onEdit(mov)}
-                          title="Editar"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          className="btn-icon-small btn-danger" 
-                          onClick={() => onDelete(mov.id)}
-                          title="Excluir"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                    {mov.descricao && (
+                      <div className="timeline-descricao">
+                        {truncateText(mov.descricao, 250)}
                       </div>
                     )}
+                    {mov.prazo && (
+                      <div className="timeline-prazo">
+                        ⏰ Prazo: {mov.prazo} dias (até {formatDate(mov.data_limite_prazo)})
+                      </div>
+                    )}
+                    <div className="timeline-meta">
+                      <span className="timeline-origem">{mov.origem_display}</span>
+                      {mov.origem === 'MANUAL' && (
+                        <div className="timeline-actions">
+                          <button 
+                            className="btn-icon-small" 
+                            onClick={() => onEdit(mov)}
+                            title="Editar"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            className="btn-icon-small btn-danger" 
+                            onClick={() => onDelete(mov.id)}
+                            title="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
