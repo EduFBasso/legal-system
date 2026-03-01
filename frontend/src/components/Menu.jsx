@@ -53,7 +53,7 @@ export default function Menu() {
             to="/publications"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            title="Buscar novas publicações do DJE por período e tribunal"
+            data-tooltip="Buscar novas publicações do DJE por período e tribunal"
           >
             <span className="menu-icon">🔍</span>
             <span className="menu-label">Buscar Publicações</span>
@@ -64,7 +64,7 @@ export default function Menu() {
             to="/publications/all"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            title="Visualizar todas as publicações do sistema (integradas e não vinculadas)"
+            data-tooltip="Visualizar todas as publicações do sistema (integradas e não vinculadas)"
           >
             <span className="menu-icon">📚</span>
             <span className="menu-label">Todas Publicações</span>
@@ -75,7 +75,7 @@ export default function Menu() {
             to="/publications/pending"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            title="Publicações não vinculadas a nenhum processo - aguardando integração"
+            data-tooltip="Publicações não vinculadas a nenhum processo - aguardando integração"
           >
             <span className="menu-icon">⏳</span>
             <span className="menu-label">Não Vinculadas</span>
@@ -89,7 +89,7 @@ export default function Menu() {
             to="/search-history"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            title="Histórico de buscas anteriores de publicações"
+            data-tooltip="Histórico de buscas anteriores"
           >
             <span className="menu-icon">📜</span>
             <span className="menu-label">Histórico de Buscas</span>

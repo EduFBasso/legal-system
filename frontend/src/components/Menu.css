@@ -42,12 +42,12 @@
 }
 
 /* Tooltip customizado */
-.menu-item a[title] {
+.menu-item a[data-tooltip] {
   position: relative;
 }
 
-.menu-item a[title]:hover::after {
-  content: attr(title);
+.menu-item a[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
   position: absolute;
   bottom: -40px;
   left: 20px;
