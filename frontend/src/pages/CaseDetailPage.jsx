@@ -261,6 +261,10 @@ function CaseDetailPage() {
             observacoes: alreadyTagged
               ? prev.observacoes
               : (prev.observacoes ? `${prev.observacoes}\n\n${prefillObservacao}` : prefillObservacao),
+            // Dados da origem da publicação (read-only no form)
+            publicacao_origem: publication.id,
+            publicacao_origem_data: publication.data_disponibilizacao,
+            publicacao_origem_tipo: publication.tipo_comunicacao,
           };
         });
       } catch (error) {
