@@ -529,12 +529,19 @@ def retrieve_last_search_publications(request):
 
 
 def _build_case_suggestion(numero_processo):
+    """
+    Busca caso existente pelo número do processo para sugerir vinculação.
+    Ignora casos deletados (soft delete).
+    """
     if not numero_processo:
         return None
     numero_limpo = normalize_processo_numero(numero_processo)
     if not numero_limpo:
         return None
-    case = Case.objects.filter(numero_processo_unformatted=numero_limpo).first()
+    case = Case.objects.filter(
+        numero_processo_unformatted=numero_limpo,
+        deleted=False  # Ignora casos deletados
+    ).first()
     if not case:
         return None
     return {
