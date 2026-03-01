@@ -557,11 +557,18 @@ def _create_movement_from_publication(publication, case):
     tipo_comunicacao = (publication.tipo_comunicacao or '').lower()
     tipo_mov = tipo_map.get(tipo_comunicacao, 'OUTROS')
 
+    # Gerar titulo a partir do resumo (evita duplicação de tipo)
+    texto_base = publication.texto_resumo or publication.texto_completo or 'Publicação do DJE'
+    # Pega primeiros ~120 caracteres ou primeira frase
+    titulo = texto_base[:120].split('\n')[0]
+    if len(texto_base) > 120:
+        titulo += '...'
+
     CaseMovement.objects.create(
         case=case,
         data=publication.data_disponibilizacao,
         tipo=tipo_mov,
-        titulo=publication.tipo_comunicacao or 'Publicacao',
+        titulo=titulo,
         descricao=publication.texto_resumo or publication.texto_completo or '',
         origem='DJE',
         publicacao_id=publication.id,
