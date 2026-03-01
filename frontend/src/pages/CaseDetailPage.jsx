@@ -49,24 +49,6 @@ function CaseDetailPage() {
     return labels[role] || role;
   };
 
-  const buildPublicationObservation = (publication) => {
-    if (!publication) return '';
-
-    const lines = [
-      '[Origem automática: Publicação DJE]',
-      `ID Publicação: ${publication.id_api}`,
-      `Data disponibilização: ${publication.data_disponibilizacao || '-'}`,
-      `Tipo: ${publication.tipo_comunicacao || '-'}`,
-      `Órgão: ${publication.orgao || '-'}`,
-    ];
-
-    if (publication.link_oficial) {
-      lines.push(`Link oficial: ${publication.link_oficial}`);
-    }
-
-    return lines.join('\n');
-  };
-
   // State
   const [caseData, setCaseData] = useState(null);
   const [formData, setFormData] = useState({});
@@ -250,18 +232,12 @@ function CaseDetailPage() {
         setSourcePublication(publication);
 
         setFormData((prev) => {
-          const prefillObservacao = buildPublicationObservation(publication);
-          const alreadyTagged = (prev.observacoes || '').includes('[Origem automática: Publicação DJE]');
-
           return {
             ...prev,
             numero_processo: prev.numero_processo || publication.numero_processo || '',
             tribunal: prev.tribunal || publication.tribunal || '',
             vara: prev.vara || publication.orgao || '',
-            observacoes: alreadyTagged
-              ? prev.observacoes
-              : (prev.observacoes ? `${prev.observacoes}\n\n${prefillObservacao}` : prefillObservacao),
-            // Dados da origem da publicação (read-only no form)
+            // Dados da origem da publicação (read-only no form - não vão para observacoes)
             publicacao_origem: publication.id,
             publicacao_origem_data: publication.data_disponibilizacao,
             publicacao_origem_tipo: publication.tipo_comunicacao,
