@@ -578,7 +578,7 @@ def _create_movement_from_publication(publication, case):
         titulo=titulo,
         descricao=publication.texto_resumo or publication.texto_completo or '',
         origem='DJE',
-        publicacao_id=publication.id,
+        publicacao_id=publication.id_api,  # Armazena id_api para consultar via API
     )
 
 
@@ -933,7 +933,7 @@ def create_movement_from_publication(request, id_api):
         # Verificar se já existe movimentação desta publicação (evitar duplicação)
         existing = CaseMovement.objects.filter(
             case=publication.case,
-            publicacao_id=publication.id
+            publicacao_id=publication.id_api
         ).first()
         
         if existing:
@@ -949,7 +949,7 @@ def create_movement_from_publication(request, id_api):
         # Buscar a movimentação recém-criada para retornar
         movement = CaseMovement.objects.filter(
             case=publication.case,
-            publicacao_id=publication.id
+            publicacao_id=publication.id_api
         ).first()
         
         return Response({
