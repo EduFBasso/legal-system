@@ -252,12 +252,6 @@ export default function AllPublicationsPage() {
                 onDelete={() => handleDelete(pub)}
                 caseSuggestion={pub.case_suggestion}
               />
-              {/* Link do Processo Vinculado */}
-              {pub.case_id && (
-                <a href={`/cases/${pub.case_id}`} className="publication-case-link">
-                  📄 Proc.: {pub.case_numero || `#${pub.case_id}`}
-                </a>
-              )}
             </div>
           ))}
         </div>

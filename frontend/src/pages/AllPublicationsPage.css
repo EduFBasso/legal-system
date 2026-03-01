@@ -130,28 +130,6 @@
   text-align: center;
 }
 
-/* Link para Processo Vinculado */
-.publication-case-link {
-  display: block;
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #f0f9ff;
-  color: #0369a1;
-  text-decoration: none;
-  border-radius: 6px;
-  border: 1px solid #bae6fd;
-  font-size: 13px;
-  font-weight: 500;
-  text-align: center;
-  transition: all 0.2s;
-}
-
-.publication-case-link:hover {
-  background: #e0f2fe;
-  border-color: #7dd3fc;
-  color: #0c4a6e;
-}
-
 /* Error State */
 .all-error {
   padding: 24px;
