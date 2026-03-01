@@ -9,6 +9,7 @@ import MainContent from './components/MainContent';
 import Sidebar from './components/Sidebar';
 import ContactsPage from './pages/ContactsPage';
 import PublicationsPage from './pages/PublicationsPage';
+import AllPublicationsPage from './pages/AllPublicationsPage';
 import CasesPage from './pages/CasesPage';
 import CaseDetailPage from './pages/CaseDetailPage';
 import PublicationDetailsPage from './pages/PublicationDetailsPage';
@@ -47,6 +48,7 @@ function App() {
                       <Route path="/" element={<ContactsPage />} />
                       <Route path="/contacts" element={<ContactsPage />} />
                       <Route path="/publications" element={<PublicationsPage />} />
+                      <Route path="/publications/all" element={<AllPublicationsPage />} />
                       <Route path="/publications/pending" element={<PendingPublicationsPage />} />
                       <Route path="/cases" element={<CasesPage />} />
                       <Route path="/search-history" element={<SearchHistoryPage />} />

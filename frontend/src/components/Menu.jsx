@@ -53,19 +53,21 @@ export default function Menu() {
             to="/publications"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
+            title="Buscar novas publicações do DJE por período e tribunal"
           >
-            <span className="menu-icon">📰</span>
-            <span className="menu-label">Publicações</span>
+            <span className="menu-icon">🔍</span>
+            <span className="menu-label">Buscar Publicações</span>
           </NavLink>
         </li>
         <li className="menu-item">
           <NavLink
-            to="/search-history"
+            to="/publications/all"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
+            title="Visualizar todas as publicações do sistema (integradas e não vinculadas)"
           >
-            <span className="menu-icon">📋</span>
-            <span className="menu-label">Histórico</span>
+            <span className="menu-icon">📚</span>
+            <span className="menu-label">Todas Publicações</span>
           </NavLink>
         </li>
         <li className="menu-item">
@@ -73,12 +75,24 @@ export default function Menu() {
             to="/publications/pending"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
+            title="Publicações não vinculadas a nenhum processo - aguardando integração"
           >
-            <span className="menu-icon">⚠️</span>
-            <span className="menu-label">Pendentes</span>
+            <span className="menu-icon">⏳</span>
+            <span className="menu-label">Não Vinculadas</span>
             {pendingCount > 0 && (
               <span className="notification-badge">{pendingCount}</span>
             )}
+          </NavLink>
+        </li>
+        <li className="menu-item">
+          <NavLink
+            to="/search-history"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+            title="Histórico de buscas anteriores de publicações"
+          >
+            <span className="menu-icon">📜</span>
+            <span className="menu-label">Histórico de Buscas</span>
           </NavLink>
         </li>
 

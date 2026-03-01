@@ -638,6 +638,79 @@ def get_pending_publications(request):
 
 
 @api_view(['GET'])
+def get_all_publications(request):
+    """
+    Lista TODAS as publicações do sistema (integradas e não vinculadas).
+
+    GET /api/publications/all
+    Query params: tribunal, ordering, limit, offset, integration_status
+    """
+    try:
+        tribunal = request.query_params.get('tribunal')
+        ordering = request.query_params.get('ordering', '-data_disponibilizacao')
+        limit = int(request.query_params.get('limit', 50))
+        offset = int(request.query_params.get('offset', 0))
+        integration_status = request.query_params.get('integration_status')
+
+        allowed_ordering = {
+            'data_disponibilizacao',
+            '-data_disponibilizacao',
+            'tribunal',
+            '-tribunal',
+            'created_at',
+            '-created_at',
+        }
+        if ordering not in allowed_ordering:
+            ordering = '-data_disponibilizacao'
+
+        queryset = Publication.objects.filter(deleted=False)
+
+        if tribunal:
+            queryset = queryset.filter(tribunal=tribunal)
+        
+        if integration_status:
+            queryset = queryset.filter(integration_status=integration_status)
+
+        total = queryset.count()
+        queryset = queryset.order_by(ordering)[offset:offset + limit]
+
+        results = []
+        for pub in queryset:
+            results.append({
+                'id': pub.id,
+                'id_api': pub.id_api,
+                'numero_processo': pub.numero_processo,
+                'tribunal': pub.tribunal,
+                'tipo_comunicacao': pub.tipo_comunicacao,
+                'data_disponibilizacao': pub.data_disponibilizacao.isoformat() if pub.data_disponibilizacao else None,
+                'texto_resumo': pub.texto_resumo,
+                'texto_completo': pub.texto_completo,
+                'orgao': pub.orgao,
+                'link_oficial': pub.link_oficial,
+                'integration_status': pub.integration_status,
+                'case_id': pub.case_id,
+                'case_numero': pub.case.numero_processo if pub.case else None,
+                'case_titulo': pub.case.titulo if pub.case else None,
+                'created_at': pub.created_at.isoformat() if pub.created_at else None,
+                'updated_at': pub.updated_at.isoformat() if pub.updated_at else None,
+            })
+
+        return Response({
+            'success': True,
+            'results': results,
+            'total': total,
+            'limit': limit,
+            'offset': offset,
+        })
+
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
 def get_pending_count(request):
     try:
         count = Publication.objects.filter(

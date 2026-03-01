@@ -191,6 +191,24 @@ class PublicationsService {
   }
 
   /**
+   * Busca TODAS as publicações do sistema (integradas e não vinculadas)
+   * @param {Object} options - Opções de filtro, paginação e ordenação
+   * @returns {Promise<Object>} Resultado com lista de todas as publicações
+   */
+  async getAllPublications({ tribunal = '', ordering = '-data_disponibilizacao', integrationStatus = '', limit = 50, offset = 0 } = {}) {
+    const params = new URLSearchParams({
+      ordering,
+      limit: String(limit),
+      offset: String(offset)
+    });
+
+    if (tribunal) params.append('tribunal', tribunal);
+    if (integrationStatus) params.append('integration_status', integrationStatus);
+    
+    return await apiFetch(`/publications/all?${params}`);
+  }
+
+  /**
    * Busca uma publicação específica por id_api
    * @param {number|string} idApi - ID da publicação na API
    * @returns {Promise<Object>} Resultado com publication
