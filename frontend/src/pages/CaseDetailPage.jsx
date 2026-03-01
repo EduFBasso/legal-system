@@ -2042,7 +2042,7 @@ function CaseDetailPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmModal && (
         <div className="modal-overlay" onClick={handleCancelDelete}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content modal-medium" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ borderBottom: '2px solid #ef4444' }}>
               <h2 style={{ color: '#7f1d1d', margin: 0 }}>🗑️ Deletar Processo</h2>
               <button
