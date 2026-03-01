@@ -226,8 +226,13 @@ export default function PublicationCard({
           {isIntegrated ? (
             <button
               className="btn-integrate"
-              disabled
-              title={publication.case_id ? `Já vinculada ao caso #${publication.case_id}` : 'Publicação já integrada'}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (publication.case_id) {
+                  window.location.href = `/cases/${publication.case_id}`;
+                }
+              }}
+              title={publication.case_id ? `Clique para abrir o caso #${publication.case_id}` : 'Publicação já integrada'}
             >
               ✅ Caso já criado/vinculado
             </button>
