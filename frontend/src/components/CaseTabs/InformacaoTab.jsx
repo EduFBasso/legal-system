@@ -79,7 +79,6 @@ function InformacaoTab({
       <div className="publication-buttons-group" style={{
         display: 'flex',
         gap: '0.5rem',
-        marginTop: '0.75rem',
         flexWrap: 'wrap'
       }}>
         {/* Link oficial (ESAJ ou principal) */}
@@ -355,24 +354,28 @@ function InformacaoTab({
               </div>
             </div>
 
-            {/* Origem - Criado a partir de Publicação */}
+            {/* Origem - Criado a partir de Publicação (Versão compacta) */}
             {formData.publicacao_origem && (
-              <div className="details-group">
-                <h3 className="details-group-title">🔗 Origem da Publicação</h3>
-                <div className="details-content">
-                  <div className="detail-item">
-                    <span className="detail-label">Data de Publicação</span>
-                    <span className="detail-value">{formatDate(formData.publicacao_origem_data)}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Tipo de Comunicação</span>
-                    <span className="detail-value">{formData.publicacao_origem_tipo || '-'}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-value-sub" style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>
-                      Este processo foi criado a partir de uma publicação.
-                    </span>
-                  </div>
+              <div className="details-group" style={{
+                background: '#f0f9ff',
+                padding: '0.75rem 1rem',
+                borderRadius: '6px',
+                border: '1px solid #bae6fd',
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <span style={{ 
+                    fontSize: '0.875rem',
+                    color: '#0c4a6e',
+                    fontWeight: 500
+                  }}>
+                    🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
+                  </span>
                   {/* Botões de Consulta */}
                   {renderProcessConsultaButtons()}
                 </div>
@@ -532,70 +535,26 @@ function InformacaoTab({
               placeholder="0,00"
             />
 
-            {/* Origem da Publicação - Read-only no modo edição */}
+            {/* Origem da Publicação - Versão compacta em 1 linha */}
             {formData.publicacao_origem && (
               <div className="info-field full-width" style={{
-                background: '#f9fafb',
-                padding: '1rem',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb'
+                background: '#f0f9ff',
+                padding: '0.75rem 1rem',
+                borderRadius: '6px',
+                border: '1px solid #bae6fd',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem'
               }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.75rem',
-                  fontWeight: 600,
-                  color: '#374151'
-                }}>
-                  🔗 Origem da Publicação
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.875rem', color: '#6b7280', display: 'block', marginBottom: '0.25rem' }}>
-                      Data de Publicação
-                    </label>
-                    <input
-                      type="text"
-                      value={formatDate(formData.publicacao_origem_data) || '-'}
-                      disabled
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                        background: '#f3f4f6',
-                        color: '#6b7280',
-                        cursor: 'not-allowed'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.875rem', color: '#6b7280', display: 'block', marginBottom: '0.25rem' }}>
-                      Tipo de Comunicação
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.publicacao_origem_tipo || '-'}
-                      disabled
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                        background: '#f3f4f6',
-                        color: '#6b7280',
-                        cursor: 'not-allowed'
-                      }}
-                    />
-                  </div>
-                </div>
-                <p style={{
-                  marginTop: '0.75rem',
+                <span style={{ 
                   fontSize: '0.875rem',
-                  color: '#6b7280',
-                  fontStyle: 'italic'
+                  color: '#0c4a6e',
+                  fontWeight: 500
                 }}>
-                  ℹ️ Este processo foi criado a partir de uma publicação.
-                </p>
+                  🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
+                </span>
+                {renderProcessConsultaButtons()}
               </div>
             )}
 
