@@ -125,7 +125,7 @@ function MovimentacoesTab({
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'noopener,noreferrer');
+                            window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
                           }}
                           style={{ 
                             color: '#2563eb', 
