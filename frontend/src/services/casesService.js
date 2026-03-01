@@ -87,12 +87,16 @@ const casesService = {
    * Soft delete case
    * @param {number} id - Case ID
    * @param {string} reason - Deletion reason
+   * @param {boolean} deleteLinkedPublication - Whether to also delete the linked publication
    * @returns {Promise<null>}
    */
-  async delete(id, reason = 'Deleted via UI') {
+  async delete(id, reason = 'Deleted via UI', deleteLinkedPublication = false) {
     return await apiFetch(`/cases/${id}/`, {
       method: 'DELETE',
-      body: JSON.stringify({ deleted_reason: reason }),
+      body: JSON.stringify({ 
+        deleted_reason: reason,
+        delete_linked_publication: deleteLinkedPublication 
+      }),
     });
   },
 

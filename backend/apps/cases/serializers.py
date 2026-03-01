@@ -218,6 +218,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     ultima_movimentacao_resumo = serializers.SerializerMethodField()
     publicacao_origem_data = serializers.DateField(source='publicacao_origem.data_disponibilizacao', read_only=True, allow_null=True)
     publicacao_origem_tipo = serializers.CharField(source='publicacao_origem.tipo_comunicacao', read_only=True, allow_null=True)
+    publicacao_origem_numero_processo = serializers.CharField(source='publicacao_origem.numero_processo', read_only=True, allow_null=True)
     
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
@@ -268,6 +269,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'publicacao_origem',
             'publicacao_origem_data',
             'publicacao_origem_tipo',
+            'publicacao_origem_numero_processo',
             'parties',
             'participation_type',
             'participation_percentage',

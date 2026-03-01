@@ -68,6 +68,8 @@ function CaseDetailPage() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSelectContactModal, setShowSelectContactModal] = useState(false);
   const [sourcePublication, setSourcePublication] = useState(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deletePublicationToo, setDeletePublicationToo] = useState(false);
   
   // Parties state
   const [parties, setParties] = useState([]);
@@ -837,10 +839,14 @@ function CaseDetailPage() {
    * Delete case
    */
   const handleDelete = async () => {
-    if (!confirm('Tem certeza que deseja deletar este processo?')) return;
+    setShowDeleteConfirmModal(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    setShowDeleteConfirmModal(false);
+    
     try {
-      await casesService.delete(id);
+      await casesService.delete(id, 'Deleted via UI', deletePublicationToo);
       showToast('Processo deletado com sucesso!', 'success');
       setTimeout(() => {
         window.close(); // Fecha a aba
@@ -848,7 +854,14 @@ function CaseDetailPage() {
     } catch (error) {
       console.error('Error deleting case:', error);
       showToast('Erro ao deletar processo', 'error');
+    } finally {
+      setDeletePublicationToo(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setDeletePublicationToo(false);
   };
 
   /**
@@ -2020,6 +2033,96 @@ function CaseDetailPage() {
                     {editingMovimentacaoId ? 'Atualizar Movimentação' : 'Salvar Movimentação'}
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmModal && (
+        <div className="modal-overlay" onClick={handleCancelDelete}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '2px solid #ef4444' }}>
+              <h2 style={{ color: '#7f1d1d', margin: 0 }}>🗑️ Deletar Processo</h2>
+              <button
+                className="modal-close"
+                onClick={handleCancelDelete}
+                style={{ color: '#ef4444' }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="modal-body" style={{ padding: '1.5rem' }}>
+              <p style={{ fontSize: '1rem', marginBottom: '1rem', color: '#374151' }}>
+                Tem certeza que deseja deletar este processo <strong>{caseData?.numero_processo}</strong>?
+              </p>
+              
+              {caseData?.publicacao_origem_id && (
+                <div style={{
+                  background: '#fef3c7',
+                  border: '1px solid #fcd34d',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  marginBottom: '1rem'
+                }}>
+                  <p style={{ margin: '0 0 0.75rem 0', fontWeight: 600, color: '#92400e' }}>
+                    ⚠️ Este processo está vinculado a uma publicação:
+                  </p>
+                  <p style={{ margin: 0, color: '#78350f', fontSize: '0.95rem' }}>
+                    <strong>{caseData?.publicacao_origem_numero_processo}</strong> - {caseData?.publicacao_origem_tipo}
+                  </p>
+                </div>
+              )}
+              
+              {caseData?.publicacao_origem_id && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={deletePublicationToo}
+                      onChange={(e) => setDeletePublicationToo(e.target.checked)}
+                      style={{ marginTop: '0.25rem', cursor: 'pointer' }}
+                    />
+                    <span style={{ color: '#374151' }}>
+                      <strong>Deletar também a publicação de origem</strong>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem', color: '#6b7280' }}>
+                        {deletePublicationToo 
+                          ? '✓ A publicação será deletada do sistema e não poderá ser recuperada'
+                          : 'A publicação será desvinculada e retornará à lista "Publicações Não Vinculadas"'
+                        }
+                      </p>
+                    </span>
+                  </label>
+                </div>
+              )}
+              
+              <div style={{
+                background: '#f3f4f6',
+                padding: '0.75rem',
+                borderRadius: '6px',
+                fontSize: '0.9rem',
+                color: '#6b7280',
+                marginTop: '1rem'
+              }}>
+                ℹ️ Esta ação é irreversível. O processo será marcado como deletado por segurança.
+              </div>
+            </div>
+            
+            <div className="modal-footer" style={{ borderTop: '1px solid #e5e7eb' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={handleCancelDelete}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleConfirmDelete}
+                style={{ background: '#ef4444' }}
+              >
+                🗑️ Deletar Processo
               </button>
             </div>
           </div>

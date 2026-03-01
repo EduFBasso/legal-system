@@ -68,7 +68,35 @@ class CaseViewSet(viewsets.ModelViewSet):
         return CaseDetailSerializer
     
     def perform_destroy(self, instance):
-        """Soft delete: mark as deleted instead of removing from database"""
+        """
+        Soft delete: mark as deleted instead of removing from database
+        
+        Query params:
+        - delete_linked_publication: bool (default: False)
+          * True: Also soft-delete the linked publication
+          * False: Unlink publication (reset to PENDING status for reuse)
+        """
+        # Verificar se deve deletar também a publicação vinculada
+        delete_linked_publication = self.request.data.get('delete_linked_publication', False)
+        
+        if instance.publicacao_origem_id:
+            from apps.publications.models import Publication
+            try:
+                pub = Publication.objects.get(id=instance.publicacao_origem_id)
+                if delete_linked_publication:
+                    # Soft delete a publicação também
+                    pub.deleted = True
+                    pub.deleted_at = timezone.now()
+                    pub.save(update_fields=['deleted', 'deleted_at', 'updated_at'])
+                else:
+                    # Apenas desvincula: reseta case_id e volta status para PENDING
+                    pub.case_id = None
+                    pub.integration_status = 'PENDING'
+                    pub.save(update_fields=['case_id', 'integration_status', 'updated_at'])
+            except Publication.DoesNotExist:
+                pass  # Publicação não existe, ignore
+        
+        # Deletar soft o case
         instance.deleted = True
         instance.deleted_at = timezone.now()
         instance.deleted_reason = self.request.data.get('deleted_reason', 'Deleted via API')
