@@ -14,6 +14,7 @@ export default function AllPublicationsPage() {
   const [toast, setToast] = useState(null);
   const [, setIntegrating] = useState(null);
   const [statusFilter, setStatusFilter] = useState(''); // '' = todas, 'PENDING', 'INTEGRATED'
+  const [searchQuery, setSearchQuery] = useState(''); // para filtrar por nome/número
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
   const [pendingDeletePublication, setPendingDeletePublication] = useState(null);
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
@@ -122,23 +123,33 @@ export default function AllPublicationsPage() {
     }
   };
 
-  const getStatusLabel = (status) => {
-    const labels = {
-      'PENDING': '⏳ Não Vinculada',
-      'INTEGRATED': '✅ Vinculada',
-      'IGNORED': '🚫 Ignorada',
-    };
-    return labels[status] || status;
-  };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'PENDING': '#f59e0b',
-      'INTEGRATED': '#10b981',
-      'IGNORED': '#6b7280',
-    };
-    return colors[status] || '#6b7280';
-  };
+
+  // Filtrar publicações por searchQuery (nome, número da publicação)
+  const filteredPublications = allPublications.filter((pub) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+
+    // Buscar por número do processo
+    if (pub.numero_processo && pub.numero_processo.toLowerCase().includes(query)) {
+      return true;
+    }
+
+    // Buscar por órgão/resumo (a partir de 3 caracteres)
+    if (query.length >= 3) {
+      if (pub.orgao && pub.orgao.toLowerCase().includes(query)) {
+        return true;
+      }
+      if (pub.texto_resumo && pub.texto_resumo.toLowerCase().includes(query)) {
+        return true;
+      }
+      if (pub.texto_completo && pub.texto_completo.toLowerCase().includes(query)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
 
   const pendingCount = allPublications.filter(p => p.integration_status === 'PENDING').length;
   const integratedCount = allPublications.filter(p => p.integration_status === 'INTEGRATED').length;
@@ -151,6 +162,26 @@ export default function AllPublicationsPage() {
           <p>Visualize todas as publicações do sistema: integradas e não vinculadas.</p>
         </div>
       </header>
+
+      {/* Search Input */}
+      <div className="all-publications-search">
+        <input
+          type="text"
+          placeholder="🔍 Procure por número do processo ou nome da publicação..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input-all-publications"
+        />
+        {searchQuery && (
+          <button 
+            className="btn-clear-search"
+            onClick={() => setSearchQuery('')}
+            title="Limpar busca"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       {/* Filtros de Status */}
       <div className="all-publications-filters">
@@ -201,9 +232,15 @@ export default function AllPublicationsPage() {
           message={statusFilter === 'PENDING' ? "Nenhuma publicação não vinculada" : "Nenhuma publicação no sistema"}
           hint={statusFilter === 'PENDING' ? "Todas as publicações foram vinculadas a processos" : "Comece pela aba 'Buscar Publicações' para encontrar novas publicações"}
         />
+      ) : filteredPublications.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          message={`Nenhuma publicação encontrada${searchQuery ? ` para "${searchQuery}"` : ''}`}
+          hint={searchQuery ? "Tente uma busca diferente" : ""}
+        />
       ) : (
         <div className="all-publications-grid">
-          {allPublications.map((pub) => (
+          {filteredPublications.map((pub) => (
             <div key={pub.id_api} className="publication-card-wrapper">
               <PublicationCard
                 publication={pub}
@@ -215,13 +252,6 @@ export default function AllPublicationsPage() {
                 onDelete={() => handleDelete(pub)}
                 caseSuggestion={pub.case_suggestion}
               />
-              {/* Badge de Status */}
-              <div 
-                className="publication-status-badge"
-                style={{ backgroundColor: getStatusColor(pub.integration_status) }}
-              >
-                {getStatusLabel(pub.integration_status)}
-              </div>
               {/* Link do Processo Vinculado */}
               {pub.case_id && (
                 <a href={`/cases/${pub.case_id}`} className="publication-case-link">

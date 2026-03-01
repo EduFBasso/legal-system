@@ -34,6 +34,15 @@ export default function PublicationCard({
     return tribunalMap[tribunal] || 'badge-gray';
   };
 
+  const getStatusBadgeInfo = (status) => {
+    const statusMap = {
+      'INTEGRATED': { label: 'VINCULADA', color: '#10b981' },
+      'PENDING': { label: 'NÃO VINCULADA', color: '#f59e0b' },
+      'IGNORED': { label: 'IGNORADA', color: '#6b7280' },
+    };
+    return statusMap[status] || { label: status, color: '#6b7280' };
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString + 'T00:00:00');
@@ -167,9 +176,14 @@ export default function PublicationCard({
             {publication.tipo_comunicacao}
           </span>
           <span className={`badge ${getTribunalBadgeClass(publication.tribunal)}`}>{publication.tribunal}</span>
+          <span 
+            className="badge badge-status"
+            style={{ backgroundColor: getStatusBadgeInfo(publication.integration_status).color }}
+          >
+            {getStatusBadgeInfo(publication.integration_status).label}
+          </span>
         </div>
         <div className="publication-header-right">
-          <span className="publication-date">{formatDate(publication.data_disponibilizacao)}</span>
           {!selectionMode && (
             <button
               className="btn-delete-publication"

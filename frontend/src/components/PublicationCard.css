@@ -126,6 +126,14 @@
   font-weight: 600;
 }
 
+.badge-status {
+  background-color: #6b7280;
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+}
+
 .publication-date {
   font-size: 0.875rem;
   color: #64748b;
