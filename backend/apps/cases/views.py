@@ -97,6 +97,11 @@ class CaseViewSet(viewsets.ModelViewSet):
                 pub.integration_status = 'PENDING'
                 pub.save(update_fields=['case', 'integration_status', 'updated_at'])
         
+        # Renomear numero_processo para liberar constraint UNIQUE
+        # Permite criar novo caso com mesmo número no futuro
+        timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
+        instance.numero_processo = f"{instance.numero_processo}_deleted_{timestamp}"
+        
         # Deletar soft o case
         instance.deleted = True
         instance.deleted_at = timezone.now()
