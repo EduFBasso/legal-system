@@ -140,7 +140,7 @@ function MovimentacoesTab({
                         truncateText(mov.titulo, 180)
                       )}
                     </div>
-                    {mov.descricao && (
+                    {mov.descricao && !mov.publicacao_id && (
                       <div className="timeline-descricao">
                         {truncateText(mov.descricao, 250)}
                       </div>
