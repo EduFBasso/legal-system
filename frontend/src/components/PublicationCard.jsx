@@ -229,7 +229,7 @@ export default function PublicationCard({
               onClick={(e) => {
                 e.stopPropagation();
                 if (publication.case_id) {
-                  window.location.href = `/cases/${publication.case_id}`;
+                  window.open(`/cases/${publication.case_id}`, '_blank', 'noopener,noreferrer');
                 }
               }}
               title={publication.case_id ? `Clique para abrir o caso #${publication.case_id}` : 'Publicação já integrada'}

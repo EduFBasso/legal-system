@@ -42,7 +42,7 @@ export default function PendingPublicationsPage() {
   const handleIntegrate = async (pub) => {
     if (!pub.case_suggestion?.id) {
       // Redirecionar para criar novo caso
-      window.location.href = `/cases/new?pub_id=${pub.id_api}`;
+      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
       return;
     }
 
@@ -67,7 +67,7 @@ export default function PendingPublicationsPage() {
   };
 
   const handleCreateCase = async (pub) => {
-    window.location.href = `/cases/new?pub_id=${pub.id_api}`;
+    window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenPublicationDetails = (pub) => {

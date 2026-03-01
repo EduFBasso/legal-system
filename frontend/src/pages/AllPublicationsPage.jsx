@@ -46,7 +46,7 @@ export default function AllPublicationsPage() {
 
   const handleIntegrate = async (pub) => {
     if (!pub.case_suggestion?.id) {
-      window.location.href = `/cases/new?pub_id=${pub.id_api}`;
+      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
       return;
     }
 
@@ -71,7 +71,7 @@ export default function AllPublicationsPage() {
   };
 
   const handleCreateCase = async (pub) => {
-    window.location.href = `/cases/new?pub_id=${pub.id_api}`;
+    window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenPublicationDetails = (pub) => {

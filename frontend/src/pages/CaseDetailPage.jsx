@@ -831,7 +831,7 @@ function CaseDetailPage() {
         }
 
         setTimeout(() => {
-          window.location.href = `/cases/${created.id}`;
+          window.open(`/cases/${created.id}`, '_blank', 'noopener,noreferrer');
         }, 700);
         return;
       }

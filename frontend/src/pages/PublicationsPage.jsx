@@ -215,7 +215,7 @@ export default function PublicationsPage() {
         'Nenhum caso foi encontrado automaticamente. Deseja deixar pendente para integração posterior?'
       );
       if (!confirmed) {
-        window.location.href = `/cases/new?pub_id=${pub.id_api}`;
+        window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
       } else {
         try {
           const result = await publicationsService.integratePublication(pub.id_api, {
@@ -236,7 +236,7 @@ export default function PublicationsPage() {
    * Handler para criar novo caso a partir de uma publicação
    */
   const handleCreateCaseSingle = async (pub) => {
-    window.location.href = `/cases/new?pub_id=${pub.id_api}`;
+    window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleDeleteAll = async () => {
