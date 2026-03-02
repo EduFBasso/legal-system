@@ -125,21 +125,7 @@ function MovimentacoesTab({
                   <div className="timeline-marker"></div>
                   <div className="timeline-date">{formatDate(mov.data)}</div>
                   <div className="timeline-content">
-                    {/* Tipo como Badge */}
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      <span className="badge" style={{
-                        background: '#3b82f6',
-                        color: '#ffffff',
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: '600'
-                      }}>
-                        {mov.tipo_display || mov.tipo}
-                      </span>
-                    </div>
-
-                    {/* Título como Link Truncado (120 chars) */}
+                    {/* Título como Link Truncado (120 chars) - sem badge duplicado */}
                     <div className="timeline-titulo">
                       {mov.publicacao_id ? (
                         <a
@@ -169,36 +155,15 @@ function MovimentacoesTab({
                     {/* Badges: Prazo + Origem + Indicador */}
                     <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {mov.prazo && (
-                        <span className="badge" style={{
-                          background: '#10b981',
-                          color: '#ffffff',
-                          padding: '0.4rem 0.75rem',
-                          borderRadius: '6px',
-                          fontSize: '0.8rem',
-                          fontWeight: '600'
-                        }}>
+                        <span className="prazo-badge">
                           ⏰ {mov.prazo} dias
                         </span>
                       )}
-                      <span className="badge" style={{
-                        background: mov.origem === 'MANUAL' ? '#f59e0b' : '#6366f1',
-                        color: '#ffffff',
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: '600'
-                      }}>
+                      <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`}>
                         {mov.origem_display}
                       </span>
                       {getDeadlinesByMovement(mov.id).length > 0 && (
-                        <span className="badge" style={{
-                          background: '#ec4899',
-                          color: '#ffffff',
-                          padding: '0.4rem 0.75rem',
-                          borderRadius: '6px',
-                          fontSize: '0.8rem',
-                          fontWeight: '600'
-                        }}>
+                        <span className="prazo-generated-badge">
                           ✓ Prazo criado
                         </span>
                       )}

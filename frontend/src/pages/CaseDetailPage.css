@@ -1691,16 +1691,7 @@
 }
 
 .timeline-marker {
-  position: absolute;
-  left: -0.5625rem;
-  top: 0.375rem;
-  width: 0.75rem;
-  height: 0.75rem;
-  background: #6366f1;
-  border: 2px solid white;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px #e2e8f0;
-  z-index: 1;
+  display: none;
 }
 
 .timeline-date {
@@ -3048,4 +3039,78 @@
 .modal-body .form-group:nth-last-child(2) label {
   color: #b45309;
   font-weight: 600;
+}
+
+/* Badge Styles for Movement Types */
+.process-tipo-badge {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #3b82f6;
+}
+
+.processo-tipo-badge.tipo-criminal {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.processo-tipo-badge.tipo-civil {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.processo-tipo-badge.tipo-trabalhista {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.processo-tipo-badge.tipo-administrativo {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+/* Badge Styles for Origem */
+.origem-badge {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #6366f1;
+}
+
+.origem-badge.origem-manual {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.origem-badge.origem-dje {
+  background: #6366f1;
+  color: #ffffff;
+}
+
+/* Badge Styles for Prazo */
+.prazo-badge {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #10b981;
+}
+
+/* Badge Styles for Generated Prazo */
+.prazo-generated-badge {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #ec4899;
 }
