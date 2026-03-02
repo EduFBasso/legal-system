@@ -617,7 +617,7 @@ class CasePrazo(models.Model):
     
     @property
     def status_urgencia(self):
-        """Retorna status baseado nos dias restantes"""
+        """Retorna status baseado nos dias restantes (padrão jurídico 15/7/3)"""
         if self.completed:
             return 'CONCLUIDO'
         
@@ -628,10 +628,8 @@ class CasePrazo(models.Model):
             return 'URGENTISSIMO'
         elif dias <= 7:
             return 'URGENTE'
-        elif dias <= 15:
-            return 'PROXIMO'
         else:
-            return 'NO_PRAZO'
+            return 'NORMAL'
 
 
 class CaseTask(models.Model):

@@ -6,16 +6,25 @@ import { apiFetch } from '@/utils/apiFetch.js';
 
 /**
  * Get deadlines for a specific case
- * Returns movements with prazo defined, sorted by deadline date
+ * Returns movements with prazos[] aninhados, filtered by those with deadlines
  */
 export const getDeadlinesByCase = async (caseId) => {
   try {
     const data = await apiFetch(`/case-movements/?case_id=${caseId}`);
     
-    // Filter only movements with prazo and sort by deadline
+    // Filter only movements with prazos and sort by first prazo date
     const deadlines = data
-      .filter(mov => mov.prazo && mov.data_limite_prazo)
-      .sort((a, b) => new Date(a.data_limite_prazo) - new Date(b.data_limite_prazo));
+      .filter(mov => mov.prazos && mov.prazos.length > 0)
+      .map(mov => ({
+        ...mov,
+        // Add first prazo date for backwards compatibility
+        data_limite_prazo: mov.prazos[0]?.data_limite,
+      }))
+      .sort((a, b) => {
+        const dateA = a.prazos[0]?.data_limite;
+        const dateB = b.prazos[0]?.data_limite;
+        return new Date(dateA) - new Date(dateB);
+      });
     
     return deadlines;
   } catch (error) {

@@ -1,0 +1,101 @@
+.prazo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.prazo-row:hover {
+  background: #f3f4f6;
+}
+
+.prazo-row.completed {
+  opacity: 0.6;
+  background: #f0fdf4;
+}
+
+.prazo-checkbox-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.prazo-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  margin: 0;
+}
+
+.check-icon {
+  position: absolute;
+  color: #10b981;
+  pointer-events: none;
+}
+
+.prazo-date {
+  font-weight: 500;
+  color: #1f2937;
+  min-width: 90px;
+  font-size: 0.95rem;
+}
+
+.prazo-description {
+  flex: 1;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.prazo-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-label {
+  font-weight: 600;
+}
+
+.status-days {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .prazo-row {
+    flex-wrap: wrap;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .prazo-date {
+    min-width: auto;
+  }
+
+  .prazo-description {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .prazo-status-badge {
+    order: 4;
+    flex-basis: 100%;
+  }
+}

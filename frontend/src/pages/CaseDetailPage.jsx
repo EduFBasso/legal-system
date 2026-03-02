@@ -61,6 +61,7 @@ function CaseDetailPage() {
   const [saving, setSaving] = useState(false);
   const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
   const [highlightedMovimentacaoId, setHighlightedMovimentacaoId] = useState(null);
   const [toast, setToast] = useState(null);
@@ -323,12 +324,15 @@ function CaseDetailPage() {
   const loadMovimentacoes = useCallback(async () => {
     if (!id) return;
     
+    setLoadingMovimentacoes(true);
     try {
       const data = await caseMovementsService.getMovementsByCase(id);
       setMovimentacoes(data);
     } catch (error) {
       console.error('Error loading movimentacoes:', error);
       showToast('Erro ao carregar movimentações', 'error');
+    } finally {
+      setLoadingMovimentacoes(false);
     }
   }, [id, showToast]);
 
@@ -1496,15 +1500,10 @@ function CaseDetailPage() {
         {/* Prazos Section */}
         {activeSection === 'deadlines' && (
           <DeadlinesTab 
-            id={id}
-            deadlines={deadlines}
-            deadlineFilter={deadlineFilter}
-            setDeadlineFilter={setDeadlineFilter}
-            loadingDeadlines={loadingDeadlines}
-            setActiveSection={setActiveSection}
-            formatDate={formatDate}
+            movements={movimentacoes}
+            loadingMovements={loadingMovimentacoes}
+            caseId={id}
             numeroProcesso={caseData?.numero_processo}
-            onUpdateMovement={handleUpdateDeadline}
           />
         )}
 

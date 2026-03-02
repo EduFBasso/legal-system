@@ -4,6 +4,10 @@ export const getTasksByCase = async (caseId) => {
   return await apiFetch(`/case-tasks/?case_id=${caseId}`);
 };
 
+export const getTasksByMovimento = async (movimentacaoId) => {
+  return await apiFetch(`/case-tasks/?movimentacao_id=${movimentacaoId}`);
+};
+
 export const createTask = async (taskData) => {
   return await apiFetch('/case-tasks/', {
     method: 'POST',
@@ -33,6 +37,7 @@ export const deleteTask = async (id) => {
 
 export default {
   getTasksByCase,
+  getTasksByMovimento,
   createTask,
   updateTask,
   patchTask,
