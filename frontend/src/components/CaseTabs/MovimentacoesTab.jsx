@@ -136,25 +136,55 @@ function MovimentacoesTab({
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
                     </span>
-                    {mov.descricao && mov.descricao.includes('Foro') && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        🏛️ <strong>Órgão:</strong> {(() => {
-                          const match = mov.descricao.match(/Foro[^.]*?Vara[^.]*?(?=\s*-|\s*\.|$)/i);
-                          return match ? match[0] : 'Não informado';
-                        })()}
-                      </span>
-                    )}
+                    {(() => {
+                      // Extrair órgão do texto da descrição
+                      const textoCompleto = mov.descricao || mov.titulo || '';
+                      const orgaoMatch = textoCompleto.match(/(?:Órgão:\s*)?Foro\s+de\s+[^-]+\s*-\s*[^-\.]+[ªº]?\s*Vara[^-\.]+/i) ||
+                                        textoCompleto.match(/Foro\s+[^-]+\s*-\s*[^-\.]+Vara[^-\.]+/i);
+                      
+                      if (orgaoMatch) {
+                        let orgao = orgaoMatch[0].replace(/^Órgão:\s*/i, '').trim();
+                        return (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            🏛️ <strong>Órgão:</strong> {orgao}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   <div className="timeline-content">
-                    {/* Texto da publicação truncado */}
+                    {/* Texto da publicação truncado (prioriza descrição completa) */}
                     <div style={{ 
                       fontSize: '0.9375rem',
                       lineHeight: '1.6',
                       color: '#334155',
                       marginBottom: '0.75rem'
                     }}>
-                      {truncateText(mov.titulo || mov.descricao, 280)}
+                      {(() => {
+                        // Priorizar descricao (texto completo) sobre titulo (resumo)
+                        const textoCompleto = mov.descricao || mov.titulo || '';
+                        const minChars = 240;
+                        const maxChars = 360;
+                        
+                        if (textoCompleto.length <= minChars) {
+                          return textoCompleto;
+                        }
+                        
+                        // Truncar entre 240-360 chars tentando terminar em frase
+                        let truncated = textoCompleto.substring(0, maxChars);
+                        const lastPeriod = truncated.lastIndexOf('.');
+                        const lastComma = truncated.lastIndexOf(',');
+                        
+                        if (lastPeriod > minChars) {
+                          truncated = textoCompleto.substring(0, lastPeriod + 1);
+                        } else if (lastComma > minChars) {
+                          truncated = textoCompleto.substring(0, lastComma + 1);
+                        }
+                        
+                        return truncated + '...';
+                      })()}
                     </div>
 
                     {/* Link "Ver publicação completa" */}
