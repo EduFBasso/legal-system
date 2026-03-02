@@ -1453,6 +1453,8 @@ function CaseDetailPage() {
           <MovimentacoesTab 
             id={id}
             movimentacoes={movimentacoes}
+            numeroProcesso={caseData?.numero_processo}
+            deadlines={deadlines}
             highlightedMovimentacaoId={highlightedMovimentacaoId}
             formatDate={formatDate}
             onOpenModal={handleOpenMovimentacaoModal}

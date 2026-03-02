@@ -11,11 +11,17 @@ function MovimentacoesTab({
   id,
   movimentacoes = [],
   highlightedMovimentacaoId = null,
+  numeroProcesso = '',
+  deadlines = [],
   onOpenModal = () => {},
   onEdit = () => {},
   onDelete = () => {},
   onAddPrazo = () => {}
 }) {
+  // Mapeamento de movimentações para prazos criados
+  const getDeadlinesByMovement = (movementId) => {
+    return deadlines.filter(d => d.id === movementId);
+  };
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredMovimentacoes = useMemo(() => {
@@ -54,7 +60,7 @@ function MovimentacoesTab({
       <div className="section-card">
         <div className="section-header">
           <div>
-            <h2 className="section-title">⚖️ Movimentações Processuais</h2>
+            <h2 className="section-title">⚖️ Movimentações Processuais{numeroProcesso && ` - ${numeroProcesso}`}</h2>
             <p className="section-subtitle">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
           </div>
           {id && (
@@ -119,7 +125,21 @@ function MovimentacoesTab({
                   <div className="timeline-marker"></div>
                   <div className="timeline-date">{formatDate(mov.data)}</div>
                   <div className="timeline-content">
-                    <div className="timeline-tipo">{mov.tipo_display || mov.tipo}</div>
+                    {/* Tipo como Badge */}
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <span className="badge" style={{
+                        background: '#3b82f6',
+                        color: '#ffffff',
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600'
+                      }}>
+                        {mov.tipo_display || mov.tipo}
+                      </span>
+                    </div>
+
+                    {/* Título como Link Truncado (120 chars) */}
                     <div className="timeline-titulo">
                       {mov.publicacao_id ? (
                         <a
@@ -131,56 +151,87 @@ function MovimentacoesTab({
                           style={{ 
                             color: '#2563eb', 
                             textDecoration: 'none',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            fontWeight: '600'
                           }}
-                          title="Clique para ver publicação completa"
+                          title={mov.titulo}
                         >
-                          {truncateText(mov.titulo, 180)} 🔗
+                          {truncateText(mov.titulo, 120)} 🔗
                         </a>
                       ) : (
-                        truncateText(mov.titulo, 180)
-                      )}
-                    </div>
-                    {mov.descricao && !mov.publicacao_id && (
-                      <div className="timeline-descricao">
-                        {truncateText(mov.descricao, 250)}
-                      </div>
-                    )}
-                    {mov.prazo && (
-                      <div className="timeline-prazo">
-                        ⏰ Prazo: {mov.prazo} dias (até {formatDate(mov.data_limite_prazo)})
-                      </div>
-                    )}
-                    <div className="timeline-meta">
-                      <span className="timeline-origem">{mov.origem_display}</span>
-                      {mov.origem === 'MANUAL' && (
-                        <div className="timeline-actions">
-                          {!mov.prazo && (
-                            <button 
-                              className="btn-icon-small btn-warning" 
-                              onClick={() => onAddPrazo(mov)}
-                              title="Adicionar prazo a esta movimentação"
-                            >
-                              ⏰ Prazo
-                            </button>
-                          )}
-                          <button 
-                            className="btn-icon-small" 
-                            onClick={() => onEdit(mov)}
-                            title="Editar"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button 
-                            className="btn-icon-small btn-danger" 
-                            onClick={() => onDelete(mov.id)}
-                            title="Excluir"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <div style={{ fontSize: '0.95rem', fontWeight: '600' }}>
+                          {truncateText(mov.titulo, 120)}
                         </div>
                       )}
                     </div>
+
+                    {/* Badges: Prazo + Origem + Indicador */}
+                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {mov.prazo && (
+                        <span className="badge" style={{
+                          background: '#10b981',
+                          color: '#ffffff',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          fontWeight: '600'
+                        }}>
+                          ⏰ {mov.prazo} dias
+                        </span>
+                      )}
+                      <span className="badge" style={{
+                        background: mov.origem === 'MANUAL' ? '#f59e0b' : '#6366f1',
+                        color: '#ffffff',
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600'
+                      }}>
+                        {mov.origem_display}
+                      </span>
+                      {getDeadlinesByMovement(mov.id).length > 0 && (
+                        <span className="badge" style={{
+                          background: '#ec4899',
+                          color: '#ffffff',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          fontWeight: '600'
+                        }}>
+                          ✓ Prazo criado
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Ações */}
+                    {mov.origem === 'MANUAL' && (
+                      <div className="timeline-actions" style={{ marginTop: '0.75rem' }}>
+                        {!mov.prazo && (
+                          <button 
+                            className="btn-icon-small btn-warning" 
+                            onClick={() => onAddPrazo(mov)}
+                            title="Adicionar prazo a esta movimentação"
+                          >
+                            ⏰ Prazo
+                          </button>
+                        )}
+                        <button 
+                          className="btn-icon-small" 
+                          onClick={() => onEdit(mov)}
+                          title="Editar"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          className="btn-icon-small btn-danger" 
+                          onClick={() => onDelete(mov.id)}
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
