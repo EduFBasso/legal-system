@@ -2001,6 +2001,16 @@
   margin-top: 0.5rem;
 }
 
+.deadline-tasks-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+}
+
 /* Summary Deadline (in Info section) */
 .summary-deadline {
   background: #f8fafc;

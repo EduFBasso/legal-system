@@ -122,6 +122,9 @@ function DeadlinesTab({
                     <div className="deadline-meta">
                       <span>📅 Movimentação: {formatDate(deadline.data)}</span>
                       <span>⏱️ Prazo: {deadline.prazo} dias</span>
+                      {deadline.tasks_count > 0 && (
+                        <span className="deadline-tasks-badge">⚡ {deadline.tasks_count} {deadline.tasks_count === 1 ? 'Tarefa' : 'Tarefas'}</span>
+                      )}
                     </div>
                   </div>
                 </div>
