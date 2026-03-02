@@ -13,7 +13,8 @@ function MovimentacoesTab({
   highlightedMovimentacaoId = null,
   onOpenModal = () => {},
   onEdit = () => {},
-  onDelete = () => {}
+  onDelete = () => {},
+  onAddPrazo = () => {}
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -154,6 +155,15 @@ function MovimentacoesTab({
                       <span className="timeline-origem">{mov.origem_display}</span>
                       {mov.origem === 'MANUAL' && (
                         <div className="timeline-actions">
+                          {!mov.prazo && (
+                            <button 
+                              className="btn-icon-small btn-warning" 
+                              onClick={() => onAddPrazo(mov)}
+                              title="Adicionar prazo a esta movimentação"
+                            >
+                              ⏰ Prazo
+                            </button>
+                          )}
                           <button 
                             className="btn-icon-small" 
                             onClick={() => onEdit(mov)}

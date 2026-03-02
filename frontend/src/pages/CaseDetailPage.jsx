@@ -1458,6 +1458,7 @@ function CaseDetailPage() {
             onOpenModal={handleOpenMovimentacaoModal}
             onEdit={handleEditMovimentacao}
             onDelete={handleDeleteMovimentacao}
+            onAddPrazo={(mov) => setActiveSection('deadlines')}
           />
         )}
 

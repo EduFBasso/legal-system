@@ -1799,6 +1799,16 @@
   border-color: #fca5a5;
 }
 
+.btn-icon-small.btn-warning {
+  color: #f59e0b;
+  background: #ffffff;
+}
+
+.btn-icon-small.btn-warning:hover {
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
 /* ========================================
    DOCUMENTOS GRID
    ======================================== */
