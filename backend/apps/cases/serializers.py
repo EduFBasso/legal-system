@@ -55,8 +55,8 @@ class CaseMovementSerializer(serializers.ModelSerializer):
         if obj.publicacao_id:
             try:
                 from publications.models import Publication
-                # publicacao_id é o pk (ID do Django), não id_api
-                publication = Publication.objects.get(pk=obj.publicacao_id)
+                # publicacao_id armazena id_api, não pk
+                publication = Publication.objects.get(id_api=obj.publicacao_id)
                 if publication.orgao:
                     # Normalizar: remover acentos e diacríticos
                     return normalize_text(publication.orgao)
