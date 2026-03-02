@@ -1685,9 +1685,11 @@
 .timeline-item {
   position: relative;
   display: block;
-  padding-left: 2rem;
-  padding-bottom: 1.5rem;
+  padding: 1rem 1rem 1rem 2rem;
   margin-bottom: 1rem;
+  background: #faf5ff;
+  border-radius: 8px;
+  border: 1px solid #e9d5ff;
 }
 
 .timeline-marker {

@@ -139,11 +139,12 @@ function MovimentacoesTab({
                     {(() => {
                       // Extrair órgão do texto da descrição
                       const textoCompleto = mov.descricao || mov.titulo || '';
-                      const orgaoMatch = textoCompleto.match(/(?:Órgão:\s*)?Foro\s+de\s+[^-]+\s*-\s*[^-\.]+[ªº]?\s*Vara[^-\.]+/i) ||
-                                        textoCompleto.match(/Foro\s+[^-]+\s*-\s*[^-\.]+Vara[^-\.]+/i);
+                      // Regex específica: captura "Foro de [Cidade] - [Número]ª Vara [Tipo]"
+                      // Evita capturar número do processo e "Meio digital"
+                      const orgaoMatch = textoCompleto.match(/Foro\s+de\s+([A-Za-zÀ-ÿ\s]+?)\s*-\s*(\d+[ªº])\s*Vara\s+([A-Za-zÀ-ÿ]+)/i);
                       
                       if (orgaoMatch) {
-                        let orgao = orgaoMatch[0].replace(/^Órgão:\s*/i, '').trim();
+                        const orgao = `Foro de ${orgaoMatch[1].trim()} - ${orgaoMatch[2]} Vara ${orgaoMatch[3]}`;
                         return (
                           <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                             🏛️ <strong>Órgão:</strong> {orgao}
