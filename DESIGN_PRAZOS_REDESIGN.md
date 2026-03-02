@@ -1,6 +1,207 @@
-# 📋 REDESIGN - ABA PRAZOS (DEADLINES TAB) - v3 FINAL
+# 📋 REDESIGN - ABA PRAZOS (DEADLINES TAB) - v4 FINAL
 
-## Conceito: Movimentação → Prazos → Tarefas Vinculadas
+## Conceito: Prazos → Tarefas Vinculadas (Automáticas + Manuais)
+
+**Estrutura simplificada:**
+- Exibe apenas **Prazos com referência a Movimentação** (gerados automaticamente ou não)
+- Mostra as **Tarefas vinculadas** a cada prazo (automáticas + manuais)
+- **Tarefas gerais** (sem movimentação) ficam na aba "Tarefas" separada
+
+## Layout Proposto
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  PROCESSO: 0000623-69.2026.8.26.0320                    [🗂 Detalhes]  │
+│                                                                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  📅 PRAZOS                                                              │
+│                                                                         │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │ 📅 18/02/2026  |  🏛️ Foro de Limeira - 2ª Vara Cível          │   │
+│  │                                                                │   │
+│  │ ═══════════════════════════════════════════════════════════   │   │
+│  │                                                                │   │
+│  │ ☑  21/02/2026  │  Manifestação  │  ⏰ URGENTÍSSIMO (2 dias)   │   │
+│  │                                                                │   │
+│  │ 📌 TAREFAS VINCULADAS                                         │   │
+│  │    ☐  Anexar documentos comprobatórios                        │   │
+│  │    ☑  Analisar cálculos apresentados                          │   │
+│  │    ☐  Elaborar impugnação                                     │   │
+│  │    + [Adicionar tarefa]                                        │   │
+│  │                                                                │   │
+│  ├─────────────────────────────────────────────────────────────┤   │
+│  │                                                                │   │
+│  │ ☐  11/03/2026  │  Contrarrazões  │  ✅ NORMAL (37 dias)      │   │
+│  │                                                                │   │
+│  │ 📌 TAREFAS VINCULADAS                                         │   │
+│  │    (nenhuma tarefa criada)                                    │   │
+│  │    + [Adicionar tarefa]                                        │   │
+│  │                                                                │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │ 📅 25/01/2026  |  🏛️ Foro de Limeira - 4ª Vara Cível          │   │
+│  │                                                                │   │
+│  │ ═══════════════════════════════════════════════════════════   │   │
+│  │                                                                │   │
+│  │ ☐  07/03/2026  │  Recurso  │  ✅ NORMAL (33 dias)             │   │
+│  │                                                                │   │
+│  │ 📌 TAREFAS VINCULADAS                                         │   │
+│  │    (nenhuma tarefa criada)                                    │   │
+│  │    + [Adicionar tarefa]                                        │   │
+│  │                                                                │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+## Padrão de Urgência (Jurídico 15/7/3)
+
+```
+0-3 dias:    ⏰ URGENTÍSSIMO   (#fecaca / #991b1b)
+4-7 dias:    🔴 URGENTE        (#fed7aa / #92400e)
+8-15+ dias:  ✅ NORMAL         (#d1fae5 / #065f46)
+Concluído:   ✔️ CONCLUÍDO      (#e0e7ff / #3730a3)
+Vencido:     ❌ VENCIDO        (#f3f4f6 / #6b7280, line-through)
+```
+
+## Estrutura do Banco de Dados
+
+### Modelo CasePrazo
+
+```python
+class CasePrazo(models.Model):
+    movimentacao = ForeignKey(CaseMovement, related_name='prazos')
+    prazo_dias = IntegerField()  # 15, 30, 45, etc
+    data_limite = DateField()  # auto-calculado: data_mov + prazo_dias
+    descricao = CharField(max_length=255)  # "Manifestação", "Recurso", etc
+    completed = BooleanField(default=False)
+    
+    @property
+    def dias_restantes(self):
+        return (self.data_limite - today).days
+    
+    @property
+    def status_urgencia(self):
+        dias = self.dias_restantes
+        if self.completed:
+            return 'CONCLUIDO'
+        elif dias < 0:
+            return 'VENCIDO'
+        elif dias <= 3:
+            return 'URGENTISSIMO'  # 0-3 dias
+        elif dias <= 7:
+            return 'URGENTE'  # 4-7 dias
+        else:
+            return 'NORMAL'  # 8+ dias
+```
+
+## Estrutura de Campos UI
+
+### Header da Movimentação
+| Campo | Fonte | Exemplo |
+|-------|-------|---------|
+| Data | CaseMovement.data | 18/02/2026 |
+| Órgão | Publication.orgao (via FK) | Foro de Limeira - 2ª Vara Cível |
+
+### Card de Prazo
+| Campo | Tipo | Fonte |
+|-------|------|-------|
+| Checkbox | Boolean | CasePrazo.completed |
+| Data Limite | Date | CasePrazo.data_limite |
+| Descrição | String | CasePrazo.descricao |
+| Status Badge | Calculated | CasePrazo.status_urgencia |
+
+### Tarefas Vinculadas
+| Campo | Fonte | Filtro |
+|-------|-------|--------|
+| Checkbox | CaseTask.completed | CaseTask.movimentacao_id = CaseMovement.id |
+| Título | CaseTask.titulo | |
+| Automática | CaseTask.auto_created | boolean |
+
+## Componentes React
+
+```
+DeadlinesTab
+├─ Header (número processo)
+├─ DeadlineCard[] (para cada prazo com tarefas)
+│   ├─ MovementHeader (📅 data | 🏛️ órgão)
+│   ├─ PrazoRow (checkbox + data + descrição + status)
+│   ├─ TasksSection
+│   │   ├─ TaskRow[] (automáticas + manuais)
+│   │   └─ AddTaskButton (+ Adicionar tarefa)
+│   └─ Separator
+└─ (sem container se houver prazos sem tarefas)
+```
+
+## API Endpoints
+
+```
+GET  /api/case-prazos/?case_id=123           # Todos os prazos do processo
+GET  /api/case-prazos/?movimentacao_id=456   # Prazos de uma movimentação
+POST /api/case-prazos/                       # Criar novo prazo
+PATCH /api/case-prazos/{id}/                 # Atualizar prazo (completed)
+
+GET  /api/case-tasks/?movimentacao_id=456    # Tarefas vinculadas
+POST /api/case-tasks/                        # Criar tarefa (manual)
+PATCH /api/case-tasks/{id}/                  # Atualizar tarefa
+```
+
+## Fluxo de Dados Frontend
+
+```jsx
+// 1. Carregar movimentações com prazos aninhados
+const movements = await caseMovementsService.getMovementsByCase(caseId);
+
+// 2. Filtrar apenas que têm prazos
+const movementsWithPrazos = movements.filter(m => m.prazos?.length > 0);
+
+// 3. Para cada prazo, carregar tarefas vinculadas
+const tasks = await caseTasksService.getTasksByCase(caseId);
+const tasksByMovement = groupBy(tasks, 'movimentacao_id');
+
+// 4. Renderizar cards de prazo com tarefas
+movementsWithPrazos.forEach(mov => {
+  mov.prazos.forEach(prazo => {
+    const tasksForPrazo = tasksByMovement[mov.id] || [];
+    // Renderizar <DeadlineCard prazo={prazo} tasks={tasksForPrazo} />
+  });
+});
+```
+
+## Separação de Abas Final
+
+| Aba | Conteúdo | Lógica |
+|-----|----------|--------|
+| **Prazos** | Prazos com tarefas vinculadas | `movements.filter(m => m.prazos.length > 0)` |
+| **Tarefas** | Tarefas gerais do processo | `tasks.filter(t => !t.movimentacao_id)` |
+| **Movimentações** | Todas as movimentações | Sem filtro |
+
+## Lógica de Notificações
+
+- ✅ **Checkbox marcado** → `completed = true` → sai do sistema de notificações
+- 🔔 **Notificação automática** → backend verifica `completed = false` e dias_restantes
+- 📲 **Web Push** → dispara quando dias <= 7 (URGENTE) ou dias <= 3 (URGENTÍSSIMO)
+
+---
+
+## ✅ Status Implementação
+
+**Backend:**
+- ✅ Modelo CasePrazo criado com padrão 15/7/3
+- ✅ Migration 0010_add_caseprazo_model aplicada
+- ✅ CasePrazoSerializer com dias_restantes/status_urgencia
+- ✅ CasePrazoViewSet com filtros
+- ✅ URL `/api/case-prazos/` registrada
+- ✅ CaseMovementSerializer com nested prazos[]
+- ✅ Testes passando (46 passed)
+
+**Frontend:**
+- ⏳ Implementar DeadlineCard com hierarquia movimento → prazos → tarefas
+- ⏳ Criar TasksList component
+- ⏳ Integrar com caseMovementsService e caseTasksService
 
 **Nova estrutura de dados:**
 - Cada **Movimentação** pode ter múltiplos **Prazos** (via model CasePrazo)
