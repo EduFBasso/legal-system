@@ -10,6 +10,7 @@ class CaseMovementSerializer(serializers.ModelSerializer):
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
     origem_display = serializers.CharField(source='get_origem_display', read_only=True)
     tasks_count = serializers.SerializerMethodField()
+    orgao = serializers.SerializerMethodField()
     
     class Meta:
         model = CaseMovement
@@ -27,15 +28,27 @@ class CaseMovementSerializer(serializers.ModelSerializer):
             'origem',
             'origem_display',
             'publicacao_id',
+            'orgao',
             'tasks_count',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at', 'orgao']
     
     def get_tasks_count(self, obj):
         """Retorna a quantidade de tarefas vinculadas a esta movimentação"""
         return obj.tasks.count()
+    
+    def get_orgao(self, obj):
+        """Retorna o órgão da publicação associada, se existir"""
+        if obj.publicacao_id:
+            try:
+                from publications.models import Publication
+                publication = Publication.objects.get(id_api=obj.publicacao_id)
+                return publication.orgao
+            except:
+                return None
+        return None
     
     def validate_data(self, value):
         """Validate that data is not in the future"""
