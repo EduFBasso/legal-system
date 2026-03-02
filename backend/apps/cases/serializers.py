@@ -54,7 +54,7 @@ class CaseMovementSerializer(serializers.ModelSerializer):
         """Retorna o órgão da publicação associada, normalizado (sem acentos)"""
         if obj.publicacao_id:
             try:
-                from publications.models import Publication
+                from apps.publications.models import Publication
                 # publicacao_id armazena id_api, não pk
                 publication = Publication.objects.get(id_api=obj.publicacao_id)
                 if publication.orgao:
