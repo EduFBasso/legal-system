@@ -1480,6 +1480,7 @@ function CaseDetailPage() {
             loadingDeadlines={loadingDeadlines}
             setActiveSection={setActiveSection}
             formatDate={formatDate}
+            numeroProcesso={caseData?.numero_processo}
           />
         )}
 

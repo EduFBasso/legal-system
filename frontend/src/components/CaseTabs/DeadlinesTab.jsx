@@ -13,6 +13,7 @@ function DeadlinesTab({
   setDeadlineFilter = () => {},
   loadingDeadlines = false,
   setActiveSection = () => {},
+  numeroProcesso = '',
 }) {
   const getFilteredDeadlines = () => {
     return deadlines.filter(deadline => {
@@ -46,7 +47,7 @@ function DeadlinesTab({
       <div className="section-card">
         <div className="section-header">
           <div>
-            <h2 className="section-title">⏰ Prazos Processuais</h2>
+            <h2 className="section-title">⏰ Prazos Processuais{numeroProcesso && ` - ${numeroProcesso}`}</h2>
             <p className="section-subtitle">Gestão de prazos e vencimentos</p>
           </div>
           <div className="deadlines-filters">
