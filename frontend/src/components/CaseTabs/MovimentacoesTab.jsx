@@ -129,8 +129,9 @@ function MovimentacoesTab({
                     display: 'flex', 
                     gap: '1rem', 
                     marginBottom: '0.75rem',
-                    fontSize: '0.875rem',
-                    color: '#64748b',
+                    fontSize: '1.03rem',
+                    fontWeight: '500',
+                    color: '#475569',
                     flexWrap: 'wrap'
                   }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
