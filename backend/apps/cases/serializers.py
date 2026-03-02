@@ -1,8 +1,19 @@
 """
 Serializers for Cases app
 """
+import unicodedata
 from rest_framework import serializers
 from .models import Case, CaseParty, CaseMovement, CaseTask, Payment, Expense
+
+
+def normalize_text(text):
+    """Remove acentos e diacríticos do texto para normalizar"""
+    if not text:
+        return text
+    # NFD decomposição (separa base + acentos)
+    nfd = unicodedata.normalize('NFD', text)
+    # Remove marcas diacríticas (categoria Mn = Mark, Nonspacing)
+    return ''.join(char for char in nfd if unicodedata.category(char) != 'Mn')
 
 
 class CaseMovementSerializer(serializers.ModelSerializer):
@@ -40,12 +51,15 @@ class CaseMovementSerializer(serializers.ModelSerializer):
         return obj.tasks.count()
     
     def get_orgao(self, obj):
-        """Retorna o órgão da publicação associada, se existir"""
+        """Retorna o órgão da publicação associada, normalizado (sem acentos)"""
         if obj.publicacao_id:
             try:
                 from publications.models import Publication
                 publication = Publication.objects.get(id_api=obj.publicacao_id)
-                return publication.orgao
+                if publication.orgao:
+                    # Normalizar: remover acentos e diacríticos
+                    return normalize_text(publication.orgao)
+                return None
             except:
                 return None
         return None
