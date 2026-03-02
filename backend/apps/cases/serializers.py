@@ -3,7 +3,7 @@ Serializers for Cases app
 """
 import unicodedata
 from rest_framework import serializers
-from .models import Case, CaseParty, CaseMovement, CaseTask, Payment, Expense
+from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense
 
 
 def normalize_text(text):
@@ -16,12 +16,35 @@ def normalize_text(text):
     return ''.join(char for char in nfd if unicodedata.category(char) != 'Mn')
 
 
+class CasePrazoSerializer(serializers.ModelSerializer):
+    """Serializer for CasePrazo (prazos processuais)"""
+    dias_restantes = serializers.IntegerField(read_only=True)
+    status_urgencia = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = CasePrazo
+        fields = [
+            'id',
+            'movimentacao',
+            'prazo_dias',
+            'data_limite',
+            'descricao',
+            'completed',
+            'dias_restantes',
+            'status_urgencia',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'data_limite', 'dias_restantes', 'status_urgencia', 'created_at', 'updated_at']
+
+
 class CaseMovementSerializer(serializers.ModelSerializer):
     """Serializer for CaseMovement"""
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
     origem_display = serializers.CharField(source='get_origem_display', read_only=True)
     tasks_count = serializers.SerializerMethodField()
     orgao = serializers.SerializerMethodField()
+    prazos = CasePrazoSerializer(many=True, read_only=True)
     
     class Meta:
         model = CaseMovement
@@ -40,11 +63,12 @@ class CaseMovementSerializer(serializers.ModelSerializer):
             'origem_display',
             'publicacao_id',
             'orgao',
+            'prazos',
             'tasks_count',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at', 'orgao']
+        read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at', 'orgao', 'prazos']
     
     def get_tasks_count(self, obj):
         """Retorna a quantidade de tarefas vinculadas a esta movimentação"""

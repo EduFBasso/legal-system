@@ -548,6 +548,92 @@ class CaseMovement(models.Model):
             self.case.save(update_fields=['data_ultima_movimentacao'])
 
 
+class CasePrazo(models.Model):
+    """
+    Prazo processual vinculado a uma movimentação.
+    Permite múltiplos prazos por movimentação (ex: 15 dias + 30 dias + 45 dias).
+    """
+    
+    movimentacao = models.ForeignKey(
+        CaseMovement,
+        on_delete=models.CASCADE,
+        related_name='prazos',
+        help_text='Movimentação que gerou este prazo'
+    )
+    
+    prazo_dias = models.IntegerField(
+        help_text='Número de dias do prazo (ex: 15, 30, 45)'
+    )
+    
+    data_limite = models.DateField(
+        db_index=True,
+        help_text='Data limite calculada (data movimentação + prazo_dias)'
+    )
+    
+    descricao = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='Descrição/motivo do prazo (ex: Manifestação, Recurso, Contrarrazões)'
+    )
+    
+    completed = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Se True, prazo foi concluído e sai do sistema de notificações'
+    )
+    
+    # ========== TIMESTAMPS ==========
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['data_limite']
+        verbose_name = 'Prazo Processual'
+        verbose_name_plural = 'Prazos Processuais'
+        indexes = [
+            models.Index(fields=['movimentacao', 'data_limite']),
+            models.Index(fields=['data_limite', 'completed']),
+        ]
+    
+    def __str__(self):
+        return f"{self.movimentacao.case.numero_processo} - {self.prazo_dias} dias ({self.data_limite})"
+    
+    def save(self, *args, **kwargs):
+        # Calcular data_limite automaticamente se não foi definida
+        if not self.data_limite and self.movimentacao:
+            from datetime import timedelta
+            self.data_limite = self.movimentacao.data + timedelta(days=self.prazo_dias)
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def dias_restantes(self):
+        """Retorna quantidade de dias até o vencimento (negativo se vencido)"""
+        from django.utils import timezone
+        hoje = timezone.now().date()
+        delta = self.data_limite - hoje
+        return delta.days
+    
+    @property
+    def status_urgencia(self):
+        """Retorna status baseado nos dias restantes"""
+        if self.completed:
+            return 'CONCLUIDO'
+        
+        dias = self.dias_restantes
+        if dias < 0:
+            return 'VENCIDO'
+        elif dias <= 3:
+            return 'URGENTISSIMO'
+        elif dias <= 7:
+            return 'URGENTE'
+        elif dias <= 15:
+            return 'PROXIMO'
+        else:
+            return 'NO_PRAZO'
+
+
 class CaseTask(models.Model):
     """
     Tarefas operacionais vinculadas ao processo.

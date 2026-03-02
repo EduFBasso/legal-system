@@ -7,6 +7,7 @@ from .views import (
     CaseViewSet,
     CasePartyViewSet,
     CaseMovementViewSet,
+    CasePrazoViewSet,
     CaseTaskViewSet,
     PaymentViewSet,
     ExpenseViewSet,
@@ -16,6 +17,7 @@ router = DefaultRouter()
 router.register(r'cases', CaseViewSet, basename='case')
 router.register(r'case-parties', CasePartyViewSet, basename='caseparty')
 router.register(r'case-movements', CaseMovementViewSet, basename='casemovement')
+router.register(r'case-prazos', CasePrazoViewSet, basename='caseprazo')
 router.register(r'case-tasks', CaseTaskViewSet, basename='casetask')
 router.register(r'payments', PaymentViewSet, basename='payment')
 router.register(r'expenses', ExpenseViewSet, basename='expense')

@@ -8,12 +8,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count
 
-from .models import Case, CaseParty, CaseMovement, CaseTask, Payment, Expense
+from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense
 from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
     CasePartySerializer,
     CaseMovementSerializer,
+    CasePrazoSerializer,
     CaseTaskSerializer,
     PaymentSerializer,
     ExpenseSerializer,
@@ -202,6 +203,46 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
+        return queryset
+
+
+class CasePrazoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for CasePrazo model (prazos processuais)
+    
+    Provides CRUD operations for deadlines linked to case movements.
+    Each movement can have multiple deadlines (15 days, 30 days, 45 days, etc).
+    """
+    queryset = CasePrazo.objects.all().order_by('data_limite')
+    serializer_class = CasePrazoSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        'movimentacao': ['exact'],
+        'movimentacao__case': ['exact'],
+        'data_limite': ['gte', 'lte', 'exact'],
+        'completed': ['exact'],
+    }
+    search_fields = [
+        'descricao',
+        'movimentacao__titulo',
+        'movimentacao__case__numero_processo',
+    ]
+    ordering_fields = ['data_limite', 'prazo_dias', 'created_at']
+    ordering = ['data_limite']
+    
+    def get_queryset(self):
+        """
+        Optionally filter by movimentacao_id or case_id from URL parameters
+        """
+        queryset = super().get_queryset()
+        movimentacao_id = self.request.query_params.get('movimentacao_id')
+        case_id = self.request.query_params.get('case_id')
+        
+        if movimentacao_id:
+            queryset = queryset.filter(movimentacao_id=movimentacao_id)
+        elif case_id:
+            queryset = queryset.filter(movimentacao__case_id=case_id)
+        
         return queryset
 
 
