@@ -14,6 +14,7 @@ function DeadlinesTab({
   loadingDeadlines = false,
   setActiveSection = () => {},
   numeroProcesso = '',
+  onUpdateMovement = () => {},
 }) {
   const getFilteredDeadlines = () => {
     return deadlines.filter(deadline => {
@@ -40,6 +41,13 @@ function DeadlinesTab({
       default:
         return deadlines.length;
     }
+  };
+
+  const handleToggleCompleted = async (deadline) => {
+    await onUpdateMovement({
+      ...deadline,
+      completed: !deadline.completed,
+    });
   };
 
   return (
@@ -104,9 +112,20 @@ function DeadlinesTab({
               const statusInfo = deadlinesService.getDeadlineStatusInfo(status);
               
               return (
-                <div key={deadline.id} className="deadline-card" style={{ borderLeftColor: statusInfo.color }}>
+                <div 
+                  key={deadline.id} 
+                  className={`deadline-card ${deadline.completed ? 'completed' : ''}`}
+                  style={{ borderLeftColor: deadline.completed ? '#d1d5db' : statusInfo.color }}
+                >
                   <div className="deadline-header">
-                    <span className="deadline-status" style={{ color: statusInfo.color }}>
+                    <input
+                      type="checkbox"
+                      checked={deadline.completed || false}
+                      onChange={() => handleToggleCompleted(deadline)}
+                      className="deadline-checkbox"
+                      title={deadline.completed ? 'Marcar como não resolvido' : 'Marcar como resolvido'}
+                    />
+                    <span className="deadline-status" style={{ color: deadline.completed ? '#9ca3af' : statusInfo.color }}>
                       {statusInfo.label}
                     </span>
                     <span className="deadline-date">

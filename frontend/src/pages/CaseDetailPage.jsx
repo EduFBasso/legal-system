@@ -348,6 +348,26 @@ function CaseDetailPage() {
   }, [activeSection, isEditing]);
 
   /**
+   * Update deadline (prazo) status - mark as completed or not
+   */
+  const handleUpdateDeadline = async (deadline) => {
+    try {
+      await caseMovementsService.updateMovement(deadline.id, {
+        completed: deadline.completed,
+      });
+      // Refresh prazos to reflect change
+      await loadDeadlines();
+      showToast(
+        deadline.completed ? 'Prazo marcado como resolvido' : 'Prazo marcado como não resolvido',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error updating deadline:', error);
+      showToast('Erro ao atualizar prazo', 'error');
+    }
+  };
+
+  /**
    * Load deadlines for this case
    */
   const loadDeadlines = useCallback(async () => {
@@ -1481,6 +1501,7 @@ function CaseDetailPage() {
             setActiveSection={setActiveSection}
             formatDate={formatDate}
             numeroProcesso={caseData?.numero_processo}
+            onUpdateMovement={handleUpdateDeadline}
           />
         )}
 

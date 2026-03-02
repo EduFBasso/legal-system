@@ -476,6 +476,12 @@ class CaseMovement(models.Model):
         help_text='Data limite calculada (data + prazo)'
     )
     
+    completed = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Marca se o prazo foi resolvido/concluído'
+    )
+    
     # ========== ORIGEM ==========
     origem = models.CharField(
         max_length=20,

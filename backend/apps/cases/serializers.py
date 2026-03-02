@@ -23,6 +23,7 @@ class CaseMovementSerializer(serializers.ModelSerializer):
             'descricao',
             'prazo',
             'data_limite_prazo',
+            'completed',
             'origem',
             'origem_display',
             'publicacao_id',
