@@ -123,11 +123,43 @@ function MovimentacoesTab({
                   }
                 >
                   <div className="timeline-marker"></div>
-                  <div className="timeline-date">{formatDate(mov.data)}</div>
+                  
+                  {/* Meta: Data de disponibilização + Órgão */}
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '1rem', 
+                    marginBottom: '0.75rem',
+                    fontSize: '0.875rem',
+                    color: '#64748b',
+                    flexWrap: 'wrap'
+                  }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
+                    </span>
+                    {mov.descricao && mov.descricao.includes('Foro') && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        🏛️ <strong>Órgão:</strong> {(() => {
+                          const match = mov.descricao.match(/Foro[^.]*?Vara[^.]*?(?=\s*-|\s*\.|$)/i);
+                          return match ? match[0] : 'Não informado';
+                        })()}
+                      </span>
+                    )}
+                  </div>
+
                   <div className="timeline-content">
-                    {/* Título como Link Truncado (120 chars) - sem badge duplicado */}
-                    <div className="timeline-titulo">
-                      {mov.publicacao_id ? (
+                    {/* Texto da publicação truncado */}
+                    <div style={{ 
+                      fontSize: '0.9375rem',
+                      lineHeight: '1.6',
+                      color: '#334155',
+                      marginBottom: '0.75rem'
+                    }}>
+                      {truncateText(mov.titulo || mov.descricao, 280)}
+                    </div>
+
+                    {/* Link "Ver publicação completa" */}
+                    {mov.publicacao_id && (
+                      <div style={{ marginBottom: '0.75rem' }}>
                         <a
                           href="#"
                           onClick={(e) => {
@@ -135,36 +167,53 @@ function MovimentacoesTab({
                             window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
                           }}
                           style={{ 
-                            color: '#2563eb', 
+                            color: '#2563eb',
                             textDecoration: 'none',
-                            cursor: 'pointer',
-                            fontSize: '0.95rem',
-                            fontWeight: '600'
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
                           }}
-                          title={mov.titulo}
                         >
-                          {truncateText(mov.titulo, 120)} 🔗
+                          → Ver publicação completa
                         </a>
-                      ) : (
-                        <div style={{ fontSize: '0.95rem', fontWeight: '600' }}>
-                          {truncateText(mov.titulo, 120)}
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
-                    {/* Badges: Prazo + Origem + Indicador */}
+                    {/* Badges: ORIGEM → PRAZOS → INDICADOR */}
                     <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {/* Badge ORIGEM */}
+                      <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`} style={{
+                        textTransform: 'uppercase',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        letterSpacing: '0.5px'
+                      }}>
+                        {mov.origem === 'MANUAL' ? 'MANUAL' : `IMPORTADO ${mov.origem}`}
+                      </span>
+                      
+                      {/* Badge PRAZOS */}
                       {mov.prazo && (
-                        <span className="prazo-badge">
-                          ⏰ {mov.prazo} dias
+                        <span className="prazo-badge" style={{
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          letterSpacing: '0.5px'
+                        }}>
+                          PRAZOS: {mov.prazo} DIAS
                         </span>
                       )}
-                      <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`}>
-                        {mov.origem_display}
-                      </span>
+                      
+                      {/* Badge INDICADOR */}
                       {getDeadlinesByMovement(mov.id).length > 0 && (
-                        <span className="prazo-generated-badge">
-                          ✓ Prazo criado
+                        <span className="prazo-generated-badge" style={{
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          letterSpacing: '0.5px'
+                        }}>
+                          ✓ PRAZO CRIADO
                         </span>
                       )}
                     </div>

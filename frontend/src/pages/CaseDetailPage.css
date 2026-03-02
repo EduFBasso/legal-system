@@ -3078,19 +3078,33 @@
   padding: 0.4rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: #ffffff;
-  background: #6366f1;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .origem-badge.origem-manual {
-  background: #f59e0b;
-  color: #ffffff;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
 }
 
 .origem-badge.origem-dje {
-  background: #6366f1;
-  color: #ffffff;
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #60a5fa;
+}
+
+.origem-badge.origem-esaj {
+  background: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #818cf8;
+}
+
+.origem-badge.origem-pje {
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #38bdf8;
 }
 
 /* Badge Styles for Prazo */
@@ -3099,9 +3113,12 @@
   padding: 0.4rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: #ffffff;
-  background: #10b981;
+  font-weight: 700;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #34d399;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Badge Styles for Generated Prazo */
@@ -3110,7 +3127,10 @@
   padding: 0.4rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: #ffffff;
-  background: #ec4899;
+  font-weight: 700;
+  background: #fce7f3;
+  color: #9f1239;
+  border: 1px solid #f472b6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
