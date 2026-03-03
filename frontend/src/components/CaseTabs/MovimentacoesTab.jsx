@@ -447,7 +447,7 @@ function MovimentacoesTab({
                             background: '#6b21a8',
                             color: 'white',
                             border: 'none',
-                            padding: '0.5rem 1.5rem',
+                            padding: '0.5rem 2rem',
                             borderRadius: '6px',
                             cursor: 'pointer',
                             display: 'inline-flex',
