@@ -57,11 +57,11 @@
 }
 
 .stat-card.stat-urgentissimo .stat-number {
-  color: #b91c1c;
+  color: #dc2626;
 }
 
 .stat-card.stat-urgentissimo .stat-label {
-  color: #b91c1c;
+  color: #dc2626;
 }
 
 /* Urgentíssima card hover - Red (like inactive in CasesPage) */
@@ -79,11 +79,11 @@
 }
 
 .stat-card.stat-urgente .stat-number {
-  color: #c2410c;
+  color: #f97316;
 }
 
 .stat-card.stat-urgente .stat-label {
-  color: #c2410c;
+  color: #f97316;
 }
 
 /* Urgente card hover - Orange */
@@ -101,11 +101,11 @@
 }
 
 .stat-card.stat-normal .stat-number {
-  color: #15803d;
+  color: #16a34a;
 }
 
 .stat-card.stat-normal .stat-label {
-  color: #15803d;
+  color: #16a34a;
 }
 
 /* Normal card hover - Green (like active in CasesPage) */
