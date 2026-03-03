@@ -29,6 +29,24 @@ const getTipoDisplay = (tipo, tipoCustomizado) => {
   return tipoMap[tipo] || tipo;
 };
 
+const HIGHLIGHT_DURATION_MS = 5000;
+
+const escapeRegExp = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const sanitizeManualDescription = (descricao, tipoDisplay, tipoRaw) => {
+  if (!descricao) return '';
+
+  let sanitizedDescription = descricao.trim();
+  const prefixes = [tipoDisplay, tipoRaw].filter(Boolean);
+
+  prefixes.forEach((prefix) => {
+    const prefixRegex = new RegExp(`^(?:tipo\\s*[:\\-–—]\\s*)?${escapeRegExp(prefix)}\\s*[:\\-–—]\\s*`, 'i');
+    sanitizedDescription = sanitizedDescription.replace(prefixRegex, '');
+  });
+
+  return sanitizedDescription;
+};
+
 /**
  * MovimentacoesTab - Aba de Movimentações Processuais
  * Exibe lista de movimentações (publicações DJE, despachos, decisões)
@@ -65,6 +83,8 @@ function MovimentacoesTab({
   
   // Estados para edição inline de movimentação
   const [editingMovimentacaoId, setEditingMovimentacaoId] = useState(null);
+  const [selectedMovimentacaoId, setSelectedMovimentacaoId] = useState(null);
+  const [temporaryHighlightedMovimentacaoId, setTemporaryHighlightedMovimentacaoId] = useState(null);
   const [editMovimentacaoForm, setEditMovimentacaoForm] = useState({
     data: '',
     tipo: '',
@@ -74,21 +94,6 @@ function MovimentacoesTab({
     prazo: '',
   });
   const [savingMovimentacao, setSavingMovimentacao] = useState(false);
-
-  /**
-   * Navega/scroll até a movimentação quando highlightedMovimentacaoId é definido
-   */
-  useEffect(() => {
-    if (highlightedMovimentacaoId) {
-      // Pequeno delay para garantir que o DOM foi atualizado
-      setTimeout(() => {
-        const element = document.getElementById(`movimentacao-${highlightedMovimentacaoId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
-    }
-  }, [highlightedMovimentacaoId]);
 
   // Filtrar tarefas por movimentação
   const getTasksByMovement = (movementId) => {
@@ -298,10 +303,26 @@ function MovimentacoesTab({
   useEffect(() => {
     if (!highlightedMovimentacaoId) return;
 
-    const element = document.getElementById(`movimentacao-${highlightedMovimentacaoId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    setTemporaryHighlightedMovimentacaoId(highlightedMovimentacaoId);
+    setSelectedMovimentacaoId(highlightedMovimentacaoId);
+
+    const scrollTimeout = setTimeout(() => {
+      const element = document.getElementById(`movimentacao-${highlightedMovimentacaoId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 120);
+
+    const clearHighlightTimeout = setTimeout(() => {
+      setTemporaryHighlightedMovimentacaoId((currentId) =>
+        currentId === highlightedMovimentacaoId ? null : currentId
+      );
+    }, HIGHLIGHT_DURATION_MS);
+
+    return () => {
+      clearTimeout(scrollTimeout);
+      clearTimeout(clearHighlightTimeout);
+    };
   }, [highlightedMovimentacaoId, filteredMovimentacoes]);
 
   return (
@@ -376,6 +397,13 @@ function MovimentacoesTab({
         ) : (
           <div className="movimentacoes-timeline">
             {filteredMovimentacoes.map(mov => {
+              const isTemporaryHighlighted = temporaryHighlightedMovimentacaoId === mov.id;
+              const isSelected = selectedMovimentacaoId === mov.id;
+              const tipoDisplay = getTipoDisplay(mov.tipo, mov.tipo_customizado);
+              const manualDescricao = mov.origem === 'MANUAL'
+                ? sanitizeManualDescription(mov.descricao, tipoDisplay, mov.tipo)
+                : mov.descricao;
+
               const truncateText = (text, maxLength) => {
                 if (!text || text.length <= maxLength) return text;
                 return text.substring(0, maxLength) + '...';
@@ -386,17 +414,23 @@ function MovimentacoesTab({
                   key={mov.id}
                   id={`movimentacao-${mov.id}`}
                   className="timeline-item"
-                  style={
-                    highlightedMovimentacaoId === mov.id
+                  onClick={() => setSelectedMovimentacaoId(mov.id)}
+                  style={{
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    ...(isTemporaryHighlighted
                       ? {
                           background: '#eff6ff',
-                          border: '2px solid #3b82f6',
-                          borderRadius: '8px',
-                          boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.15)',
-                          transition: 'all 0.3s ease',
+                          border: '3px solid #3b82f6',
+                          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.2)',
                         }
-                      : undefined
-                  }
+                      : isSelected
+                        ? {
+                            border: '3px solid #6b21a8',
+                          }
+                        : {}),
+                  }}
                 >
                   <div className="timeline-marker"></div>
                   
@@ -637,7 +671,7 @@ function MovimentacoesTab({
                     {/* Grupo direito: Tipo (para movimentações MANUAL) */}
                     {mov.origem === 'MANUAL' && mov.tipo && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        ⚖️ <strong>Tipo:</strong> {getTipoDisplay(mov.tipo, mov.tipo_customizado)}
+                        ⚖️ <strong>Tipo:</strong> {tipoDisplay}
                       </span>
                     )}
                   </div>
@@ -670,7 +704,7 @@ function MovimentacoesTab({
                         )}
                         
                         {/* Descrição */}
-                        {mov.descricao && (
+                        {manualDescricao && (
                           <div>
                             <div style={{ 
                               fontSize: '0.875rem',
@@ -688,7 +722,7 @@ function MovimentacoesTab({
                               color: '#6b21a8',
                               whiteSpace: 'pre-wrap'
                             }}>
-                              {mov.descricao}
+                              {manualDescricao}
                             </div>
                           </div>
                         )}
