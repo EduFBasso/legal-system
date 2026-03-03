@@ -444,7 +444,7 @@ function MovimentacoesTab({
                           onClick={() => onDelete(mov.id)}
                           title="Excluir"
                           style={{
-                            background: '#dc2626',
+                            background: '#6b21a8',
                             color: 'white',
                             border: 'none',
                             padding: '0.5rem 1rem',
@@ -453,8 +453,11 @@ function MovimentacoesTab({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.5rem',
-                            fontWeight: '600'
+                            fontWeight: '600',
+                            transition: 'all 0.2s ease'
                           }}
+                          onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
+                          onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
                         >
                           <Trash2 size={16} /> Excluir
                         </button>
@@ -683,7 +686,7 @@ function MovimentacoesTab({
                                         onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
                                         onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
                                       >
-                                        ✏️ Editar
+                                        Editar
                                       </button>
                                     </div>
                                   </div>
@@ -722,7 +725,6 @@ function MovimentacoesTab({
                                     {task.data_vencimento && (() => {
                                       const urgenciaCalculada = calculateUrgency(task.data_vencimento);
                                       const displayText = urgenciaCalculada === 'URGENTISSIMO' ? 'CRITICO' : urgenciaCalculada;
-                                      const bgColor = urgenciaCalculada === 'URGENTISSIMO' ? '#dc2626' : '#6b21a8';
                                       return (
                                         <span style={{
                                           display: 'inline-flex',
@@ -732,7 +734,7 @@ function MovimentacoesTab({
                                           borderRadius: '8px',
                                           fontSize: '0.8125rem',
                                           fontWeight: '700',
-                                          background: bgColor,
+                                          background: '#6b21a8',
                                           color: '#f8fafc',
                                           textTransform: 'uppercase',
                                           letterSpacing: '0.4px',
