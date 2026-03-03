@@ -696,36 +696,14 @@ function MovimentacoesTab({
                                 </>
                               ) : (
                                 <>
-                                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
-                                    <div style={{
-                                      fontWeight: '600',
-                                      fontSize: '0.9625rem',
-                                      color: '#6b21a8',
-                                      textDecoration: task.status === 'CONCLUIDA' ? 'line-through' : 'none',
-                                      marginBottom: '0.25rem'
-                                    }}>
-                                      {task.titulo}
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
-                                      <button
-                                        onClick={() => handleOpenEditTask(task)}
-                                        title="Editar tarefa"
-                                        style={{
-                                          border: 'none',
-                                          background: '#6b21a8',
-                                          color: 'white',
-                                          borderRadius: '6px',
-                                          padding: '0.25rem 0.5rem',
-                                          fontSize: '0.75rem',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: '0.25rem',
-                                          cursor: 'pointer'
-                                        }}
-                                      >
-                                        <Edit2 size={12} /> Editar
-                                      </button>
-                                    </div>
+                                  <div style={{
+                                    fontWeight: '600',
+                                    fontSize: '0.9625rem',
+                                    color: '#6b21a8',
+                                    textDecoration: task.status === 'CONCLUIDA' ? 'line-through' : 'none',
+                                    marginBottom: '0.25rem'
+                                  }}>
+                                    {task.titulo}
                                   </div>
                                   {task.descricao && (
                                     <div style={{
