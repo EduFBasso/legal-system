@@ -3,6 +3,7 @@ import { Plus, FileText, Trash2, Check, X } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
 import caseTasksService from '../../services/caseTasksService';
+import caseMovementsService from '../../services/caseMovementsService';
 
 /**
  * MovimentacoesTab - Aba de Movimentações Processuais
@@ -36,6 +37,18 @@ function MovimentacoesTab({
     data_vencimento: '',
   });
   const [savingEditedTask, setSavingEditedTask] = useState(false);
+  
+  // Estados para edição inline de movimentação
+  const [editingMovimentacaoId, setEditingMovimentacaoId] = useState(null);
+  const [editMovimentacaoForm, setEditMovimentacaoForm] = useState({
+    data: '',
+    tipo: '',
+    tipo_customizado: '',
+    titulo: '',
+    descricao: '',
+    prazo: '',
+  });
+  const [savingMovimentacao, setSavingMovimentacao] = useState(false);
 
   /**
    * Navega/scroll até a movimentação quando highlightedMovimentacaoId é definido
@@ -157,6 +170,59 @@ function MovimentacoesTab({
       alert('Erro ao editar tarefa');
     } finally {
       setSavingEditedTask(false);
+    }
+  };
+
+  // ========== HANDLERS PARA EDIÇÃO DE MOVIMENTAÇÃO ==========
+  const handleOpenEditMovimentacao = (mov) => {
+    setEditingMovimentacaoId(mov.id);
+    setEditMovimentacaoForm({
+      data: mov.data,
+      tipo: mov.tipo || '',
+      tipo_customizado: mov.tipo_customizado || '',
+      titulo: mov.titulo || '',
+      descricao: mov.descricao || '',
+      prazo: mov.prazo || '',
+    });
+  };
+
+  const handleCancelEditMovimentacao = () => {
+    setEditingMovimentacaoId(null);
+    setEditMovimentacaoForm({
+      data: '',
+      tipo: '',
+      tipo_customizado: '',
+      titulo: '',
+      descricao: '',
+      prazo: '',
+    });
+  };
+
+  const handleSaveMovimentacao = async (movId) => {
+    if (!editMovimentacaoForm.titulo.trim()) {
+      alert('Título é obrigatório');
+      return;
+    }
+
+    setSavingMovimentacao(true);
+    try {
+      await caseMovementsService.updateMovement(movId, {
+        data: editMovimentacaoForm.data,
+        tipo: editMovimentacaoForm.tipo,
+        tipo_customizado: editMovimentacaoForm.tipo_customizado || '',
+        titulo: editMovimentacaoForm.titulo,
+        descricao: editMovimentacaoForm.descricao || '',
+        prazo: editMovimentacaoForm.prazo ? parseInt(editMovimentacaoForm.prazo) : null,
+      });
+      
+      // Chamar callback para atualizar o caso
+      onRefreshTasks();
+      handleCancelEditMovimentacao();
+    } catch (error) {
+      console.error('Error saving movimentacao:', error);
+      alert('Erro ao salvar movimentação');
+    } finally {
+      setSavingMovimentacao(false);
     }
   };
 
@@ -309,6 +375,208 @@ function MovimentacoesTab({
                 >
                   <div className="timeline-marker"></div>
                   
+                  {/* MODO EDIÇÃO - Formulário inline */}
+                  {editingMovimentacaoId === mov.id && (
+                    <div style={{ 
+                      background: '#faf5ff',
+                      padding: '1.5rem',
+                      borderRadius: '8px',
+                      border: '2px solid #6b21a8',
+                      marginBottom: '1rem'
+                    }}>
+                      <h4 style={{ marginBottom: '1rem', color: '#6b21a8', fontWeight: '600' }}>Editar Movimentação</h4>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                        {/* Data */}
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.875rem' }}>
+                            Data *
+                          </label>
+                          <input
+                            type="date"
+                            value={editMovimentacaoForm.data}
+                            onChange={(e) => setEditMovimentacaoForm(prev => ({ ...prev, data: e.target.value }))}
+                            max={new Date().toISOString().split('T')[0]}
+                            style={{
+                              width: '100%',
+                              padding: '0.75rem',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '6px',
+                              fontSize: '0.9375rem',
+                              fontFamily: 'inherit'
+                            }}
+                          />
+                        </div>
+
+                        {/* Tipo */}
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.875rem' }}>
+                            Tipo *
+                          </label>
+                          <select
+                            value={editMovimentacaoForm.tipo}
+                            onChange={(e) => setEditMovimentacaoForm(prev => ({ ...prev, tipo: e.target.value }))}
+                            style={{
+                              width: '100%',
+                              padding: '0.75rem',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '6px',
+                              fontSize: '0.9375rem',
+                              fontFamily: 'inherit'
+                            }}
+                          >
+                            <option value="DESPACHO">Despacho</option>
+                            <option value="DECISAO">Decisão Interlocutória</option>
+                            <option value="SENTENCA">Sentença</option>
+                            <option value="ACORDAO">Acórdão</option>
+                            <option value="AUDIENCIA">Audiência</option>
+                            <option value="JUNTADA">Juntada de Documento</option>
+                            <option value="INTIMACAO">Intimação</option>
+                            <option value="CITACAO">Citação</option>
+                            <option value="CONCLUSAO">Conclusos</option>
+                            <option value="RECURSO">Recurso</option>
+                            <option value="PETICAO">Petição Protocolada</option>
+                            <option value="OUTROS">Outros</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Tipo Customizado (se OUTROS) */}
+                      {editMovimentacaoForm.tipo === 'OUTROS' && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.875rem' }}>
+                            Especifique o tipo *
+                          </label>
+                          <input
+                            type="text"
+                            value={editMovimentacaoForm.tipo_customizado}
+                            onChange={(e) => setEditMovimentacaoForm(prev => ({ ...prev, tipo_customizado: e.target.value }))}
+                            placeholder="Ex: Despacho do juiz"
+                            style={{
+                              width: '100%',
+                              padding: '0.75rem',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '6px',
+                              fontSize: '0.9375rem',
+                              fontFamily: 'inherit'
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Título */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.875rem' }}>
+                          Título/Resumo *
+                        </label>
+                        <input
+                          type="text"
+                          value={editMovimentacaoForm.titulo}
+                          onChange={(e) => setEditMovimentacaoForm(prev => ({ ...prev, titulo: e.target.value }))}
+                          placeholder="Ex: Audiência de conciliação"
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '6px',
+                            fontSize: '0.9375rem',
+                            fontFamily: 'inherit'
+                          }}
+                        />
+                      </div>
+
+                      {/* Descrição */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.875rem' }}>
+                          Descrição Completa
+                        </label>
+                        <textarea
+                          value={editMovimentacaoForm.descricao}
+                          onChange={(e) => setEditMovimentacaoForm(prev => ({ ...prev, descricao: e.target.value }))}
+                          placeholder="Descreva os detalhes..."
+                          rows="3"
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '6px',
+                            fontSize: '0.9375rem',
+                            fontFamily: 'inherit',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+
+                      {/* Prazo */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.875rem' }}>
+                          Prazo (em dias)
+                        </label>
+                        <input
+                          type="number"
+                          value={editMovimentacaoForm.prazo}
+                          onChange={(e) => setEditMovimentacaoForm(prev => ({ ...prev, prazo: e.target.value }))}
+                          min="0"
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '6px',
+                            fontSize: '0.9375rem',
+                            fontFamily: 'inherit'
+                          }}
+                        />
+                      </div>
+
+                      {/* Botões Salvar / Cancelar */}
+                      <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button
+                          onClick={() => handleSaveMovimentacao(mov.id)}
+                          disabled={savingMovimentacao}
+                          style={{
+                            background: '#6b21a8',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '6px',
+                            cursor: savingMovimentacao ? 'not-allowed' : 'pointer',
+                            fontWeight: '600',
+                            fontSize: '0.9375rem',
+                            opacity: savingMovimentacao ? 0.6 : 1,
+                            transition: '0.2s'
+                          }}
+                          onMouseEnter={(e) => { if (!savingMovimentacao) e.target.style.background = '#581c87'; }}
+                          onMouseLeave={(e) => { if (!savingMovimentacao) e.target.style.background = '#6b21a8'; }}
+                        >
+                          {savingMovimentacao ? 'Salvando...' : '✓ Salvar'}
+                        </button>
+                        <button
+                          onClick={handleCancelEditMovimentacao}
+                          disabled={savingMovimentacao}
+                          style={{
+                            background: '#e2e8f0',
+                            color: '#6b21a8',
+                            border: 'none',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '6px',
+                            cursor: savingMovimentacao ? 'not-allowed' : 'pointer',
+                            fontWeight: '600',
+                            fontSize: '0.9375rem',
+                            transition: '0.2s'
+                          }}
+                          onMouseEnter={(e) => { if (!savingMovimentacao) e.target.style.background = '#cbd5e1'; }}
+                          onMouseLeave={(e) => { if (!savingMovimentacao) e.target.style.background = '#e2e8f0'; }}
+                        >
+                          ✕ Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* MODO VISUALIZAÇÃO - Conteúdo normal */}
+                  {editingMovimentacaoId !== mov.id && (
+                    <>
+                  
                   {/* Meta: Data de disponibilização + Órgão */}
                   <div style={{ 
                     display: 'flex', 
@@ -440,30 +708,56 @@ function MovimentacoesTab({
 
                       {/* Ações */}
                       {mov.origem === 'MANUAL' && (
-                        <button 
-                          className="btn-icon-small btn-danger" 
-                          onClick={() => onDelete(mov.id)}
-                          title="Excluir"
-                          style={{
-                            background: '#6b21a8',
-                            color: 'white',
-                            border: 'none',
-                            padding: '0.9rem 2.5rem',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            fontWeight: '600',
-                            transition: '0.2s',
-                            whiteSpace: 'nowrap'
-                          }}
-                          onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
-                          onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
-                        >
-                          <Trash2 size={16} /> Excluir
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <button 
+                            className="btn-icon-small btn-edit" 
+                            onClick={() => handleOpenEditMovimentacao(mov)}
+                            title="Editar movimentação"
+                            style={{
+                              background: '#6b21a8',
+                              color: 'white',
+                              border: 'none',
+                              padding: '0.9rem 2rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.5rem',
+                              fontWeight: '600',
+                              transition: '0.2s',
+                              whiteSpace: 'nowrap'
+                            }}
+                            onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
+                            onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
+                          >
+                            Editar
+                          </button>
+                          <button 
+                            className="btn-icon-small btn-danger" 
+                            onClick={() => onDelete(mov.id)}
+                            title="Excluir"
+                            style={{
+                              background: '#6b21a8',
+                              color: 'white',
+                              border: 'none',
+                              padding: '0.9rem 2.5rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.5rem',
+                              fontWeight: '600',
+                              transition: '0.2s',
+                              whiteSpace: 'nowrap'
+                            }}
+                            onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
+                            onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
+                          >
+                            <Trash2 size={16} /> Excluir
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -885,7 +1179,9 @@ function MovimentacoesTab({
                       </div>
                     )}
 
-                  </div>
+                    </>
+                  )}
+
                 </div>
               );
             })}
