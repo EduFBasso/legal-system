@@ -400,27 +400,12 @@ function MovimentacoesTab({
                       </div>
                     )}
 
-                    {/* Badges: ORIGEM → PRAZOS → INDICADOR */}
-                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      {/* Badge ORIGEM */}
+                    {/* Badges e Ações: ORIGEM → PRAZOS | EXCLUIR */}
+                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {/* Badges Container */}
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {/* Badge ORIGEM */}
       <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`} style={{
-                        textTransform: 'uppercase',
-                        fontSize: '0.75rem',
-                        fontWeight: '700',
-                        letterSpacing: '0.5px',
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '6px',
-                        background: '#6b21a8',
-                        color: 'white',
-                        display: 'inline-block',
-                        border: 'none'
-                      }}>
-                        {mov.origem === 'MANUAL' ? 'MANUAL' : `IMPORTADO ${mov.origem}`}
-                      </span>
-                      
-                      {/* Badge PRAZOS */}
-                      {mov.prazo && (
-                        <span style={{
                           textTransform: 'uppercase',
                           fontSize: '0.75rem',
                           fontWeight: '700',
@@ -429,16 +414,32 @@ function MovimentacoesTab({
                           borderRadius: '6px',
                           background: '#6b21a8',
                           color: 'white',
-                          display: 'inline-block'
+                          display: 'inline-block',
+                          border: 'none'
                         }}>
-                          PRAZOS: {mov.prazo} DIAS
+                          {mov.origem === 'MANUAL' ? 'MANUAL' : `IMPORTADO ${mov.origem}`}
                         </span>
-                      )}
-                    </div>
+                        
+                        {/* Badge PRAZOS */}
+                        {mov.prazo && (
+                          <span style={{
+                            textTransform: 'uppercase',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            letterSpacing: '0.5px',
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '6px',
+                            background: '#6b21a8',
+                            color: 'white',
+                            display: 'inline-block'
+                          }}>
+                            PRAZOS: {mov.prazo} DIAS
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Ações */}
-                    {mov.origem === 'MANUAL' && (
-                      <div className="timeline-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {/* Ações */}
+                      {mov.origem === 'MANUAL' && (
                         <button 
                           className="btn-icon-small btn-danger" 
                           onClick={() => onDelete(mov.id)}
@@ -463,8 +464,8 @@ function MovimentacoesTab({
                         >
                           <Trash2 size={16} /> Excluir
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
                     {/* ========== SEÇÃO DE TAREFAS ========== */}
                     <hr style={{ 
