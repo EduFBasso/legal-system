@@ -103,6 +103,13 @@ export default function DeadlinesPage() {
   };
 
   /**
+   * Gera URL para navegar até a movimentação na página do caso
+   */
+  const getMovementLinkUrl = (caseId, movementId) => {
+    return `/cases/${caseId}?tab=movements&focusMovement=${movementId}`;
+  };
+
+  /**
    * Agrupa e ordena tarefas por urgência
    */
   const groupedAndSortedTasks = () => {
@@ -274,6 +281,13 @@ export default function DeadlinesPage() {
                             {task.case_numero}
                           </a>
                         </div>
+                        {task.movimentacao && (
+                          <div className="task-movement-link">
+                            <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              📋 {task.movimentacao_titulo}
+                            </a>
+                          </div>
+                        )}
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
@@ -309,6 +323,13 @@ export default function DeadlinesPage() {
                             {task.case_numero}
                           </a>
                         </div>
+                        {task.movimentacao && (
+                          <div className="task-movement-link">
+                            <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              📋 {task.movimentacao_titulo}
+                            </a>
+                          </div>
+                        )}
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
@@ -344,6 +365,13 @@ export default function DeadlinesPage() {
                             {task.case_numero}
                           </a>
                         </div>
+                        {task.movimentacao && (
+                          <div className="task-movement-link">
+                            <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              📋 {task.movimentacao_titulo}
+                            </a>
+                          </div>
+                        )}
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
