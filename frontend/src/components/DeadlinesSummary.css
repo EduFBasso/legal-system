@@ -1,0 +1,300 @@
+/* Deadlines Summary - Resumo de Prazos na Sidebar */
+/* Cores convencionais: verde (NORMAL), laranja escuro (URGENTE), vermelho escuro (URGENTÍSSIMO) */
+
+.deadlines-summary {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Header com contador total */
+.deadlines-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deadlines-header:hover {
+  background: #f9fafb;
+  border-radius: 4px;
+  padding: 8px 8px;
+  margin: 0 -8px 12px -8px;
+}
+
+.deadline-count-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.count-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.count-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.view-all-link {
+  font-size: 0.8125rem;
+  color: #6b21a8;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.view-all-link:hover {
+  color: #581c87;
+  text-decoration: underline;
+}
+
+/* Loading state */
+.deadlines-loading {
+  text-align: center;
+  padding: 20px;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* Grupos de prazos por urgência */
+.deadlines-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deadline-group {
+  border-radius: 6px;
+  padding: 8px;
+  background: #f9fafb;
+}
+
+/* Headers dos grupos com ícones e contadores */
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 8px;
+}
+
+.group-icon {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.group-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  flex-grow: 1;
+}
+
+.group-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.08);
+  color: #374151;
+}
+
+/* Cores específicas para cada grupo de urgência */
+
+/* URGENTÍSSIMO - Vermelho escuro */
+.urgentissimo-group {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+}
+
+.urgentissimo-group .group-header {
+  border-bottom-color: #fca5a5;
+}
+
+.urgentissimo-group .group-label {
+  color: #991b1b;
+}
+
+.urgentissimo-group .group-count {
+  background: #dc2626;
+  color: white;
+}
+
+/* URGENTE - Laranja escuro */
+.urgente-group {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.urgente-group .group-header {
+  border-bottom-color: #fdba74;
+}
+
+.urgente-group .group-label {
+  color: #9a3412;
+}
+
+.urgente-group .group-count {
+  background: #ea580c;
+  color: white;
+}
+
+/* NORMAL - Verde */
+.normal-group {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+}
+
+.normal-group .group-header {
+  border-bottom-color: #86efac;
+}
+
+.normal-group .group-label {
+  color: #166534;
+}
+
+.normal-group .group-count {
+  background: #22c55e;
+  color: white;
+}
+
+/* Itens de prazo individuais */
+.deadline-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.deadline-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: white;
+  border: 1px solid transparent;
+}
+
+/* Cores dos itens por urgência */
+.deadline-item.urgentissimo {
+  border-color: #fca5a5;
+}
+
+.deadline-item.urgentissimo:hover {
+  background: #fee2e2;
+  border-color: #dc2626;
+  transform: translateX(2px);
+}
+
+.deadline-item.urgente {
+  border-color: #fdba74;
+}
+
+.deadline-item.urgente:hover {
+  background: #ffedd5;
+  border-color: #ea580c;
+  transform: translateX(2px);
+}
+
+.deadline-item.normal {
+  border-color: #86efac;
+}
+
+.deadline-item.normal:hover {
+  background: #dcfce7;
+  border-color: #22c55e;
+  transform: translateX(2px);
+}
+
+/* Conteúdo do item de prazo */
+.deadline-title {
+  font-size: 0.8125rem;
+  color: #374151;
+  font-weight: 500;
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.deadline-days {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Cores dos dias restantes por urgência */
+.deadline-item.urgentissimo .deadline-days {
+  background: #dc2626;
+  color: white;
+}
+
+.deadline-item.urgente .deadline-days {
+  background: #ea580c;
+  color: white;
+}
+
+.deadline-item.normal .deadline-days {
+  background: #22c55e;
+  color: white;
+}
+
+/* Link "mais prazos" */
+.more-deadlines {
+  text-align: center;
+  padding: 6px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.more-deadlines:hover {
+  background: rgba(107, 33, 168, 0.1);
+  color: #6b21a8;
+  font-weight: 600;
+}
+
+/* Estado vazio */
+.no-deadlines {
+  text-align: center;
+  padding: 24px 12px;
+  color: #9ca3af;
+}
+
+.no-deadlines-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.no-deadlines p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .deadlines-summary {
+    padding: 10px;
+  }
+
+  .deadline-title {
+    max-width: 120px;
+  }
+}
