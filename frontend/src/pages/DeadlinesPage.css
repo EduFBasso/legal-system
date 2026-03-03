@@ -40,156 +40,108 @@
 
 .stat-card {
   background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 20px;
+  padding: 1.5rem;
   text-align: center;
   transition: all 0.2s ease;
-  border: 2px solid #e5e7eb;
 }
 
 .stat-card.stat-clickable {
   cursor: pointer;
 }
 
-/* Base colors for each urgency level */
-.stat-card.stat-urgentissimo {
-  border-color: #7f1d1d;
-  background: #fef2f2;
-}
-
-.stat-card.stat-urgentissimo .stat-number {
-  color: #7f1d1d;
-}
-
-.stat-card.stat-urgentissimo .stat-label {
-  color: #4b5563;
-}
-
-.stat-card.stat-urgente {
-  border-color: #7c2d12;
-  background: #fef3f2;
-}
-
-.stat-card.stat-urgente .stat-number {
-  color: #7c2d12;
-}
-
-.stat-card.stat-urgente .stat-label {
-  color: #4b5563;
-}
-
-.stat-card.stat-normal {
-  border-color: #166534;
-  background: #f0fdf4;
-}
-
-.stat-card.stat-normal .stat-number {
-  color: #166534;
-}
-
-.stat-card.stat-normal .stat-label {
-  color: #4b5563;
-}
-
-/* Urgentíssima card - Red dark */
+/* Urgentíssima card hover - Red (like inactive in CasesPage) */
 .stat-card.stat-urgentissimo.stat-clickable:hover {
-  border-color: #7f1d1d;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+  transform: translateY(-2px);
   background: #fef2f2;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(127, 29, 29, 0.15);
 }
 
-/* Urgente card - Orange dark */
+/* Urgente card hover - Orange */
 .stat-card.stat-urgente.stat-clickable:hover {
-  border-color: #7c2d12;
-  background: #fef3f2;
+  border-color: #f97316;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(124, 45, 18, 0.15);
+  background: #fff7ed;
 }
 
-/* Normal card - Green dark */
+/* Normal card hover - Green (like active in CasesPage) */
 .stat-card.stat-normal.stat-clickable:hover {
-  border-color: #166534;
-  background: #f0fdf4;
+  border-color: #16a34a;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(22, 101, 52, 0.15);
+  background: #f0fdf4;
 }
 
-/* Selected state */
+/* Selected state - shows active filter */
 .stat-card.stat-selected {
   border-width: 3px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
 }
 
-/* Urgentíssima selected */
+/* Urgentíssima - Red when selected */
 .stat-card.stat-urgentissimo.stat-selected {
-  border-color: #7f1d1d;
+  border-color: #dc2626;
   background: #fef2f2;
 }
 
 .stat-card.stat-urgentissimo.stat-selected .stat-number {
-  color: #7f1d1d;
-  font-weight: 800;
+  color: #b91c1c;
 }
 
-.stat-card.stat-urgentissimo.stat-selected .stat-label {
-  color: #7f1d1d;
-  font-weight: 700;
-}
-
+/* Urgentíssima selected + hover */
 .stat-card.stat-urgentissimo.stat-selected:hover {
-  box-shadow: 0 6px 16px rgba(127, 29, 29, 0.2);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
   transform: translateY(-2px);
 }
 
-/* Urgente selected */
+/* Urgente - Orange when selected */
 .stat-card.stat-urgente.stat-selected {
-  border-color: #7c2d12;
-  background: #fef3f2;
+  border-color: #f97316;
+  background: #fff7ed;
 }
 
 .stat-card.stat-urgente.stat-selected .stat-number {
-  color: #7c2d12;
-  font-weight: 800;
+  color: #c2410c;
 }
 
-.stat-card.stat-urgente.stat-selected .stat-label {
-  color: #7c2d12;
-  font-weight: 700;
-}
-
+/* Urgente selected + hover */
 .stat-card.stat-urgente.stat-selected:hover {
-  box-shadow: 0 6px 16px rgba(124, 45, 18, 0.2);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.2);
   transform: translateY(-2px);
 }
 
-/* Normal selected */
+/* Normal - Green when selected */
 .stat-card.stat-normal.stat-selected {
-  border-color: #166534;
+  border-color: #16a34a;
   background: #f0fdf4;
 }
 
 .stat-card.stat-normal.stat-selected .stat-number {
-  color: #166534;
-  font-weight: 800;
+  color: #15803d;
 }
 
-.stat-card.stat-normal.stat-selected .stat-label {
-  color: #166534;
-  font-weight: 700;
+/* Normal selected + hover */
+.stat-card.stat-normal.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.2);
+  transform: translateY(-2px);
 }
+
 .stat-number {
-  font-size: 38px;
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 8px;
-  display: block;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #4b5563;
+  font-size: 1rem;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   font-weight: 600;
 }
 /* Estados de Loading/Error/Empty */
