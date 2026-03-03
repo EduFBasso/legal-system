@@ -15,6 +15,14 @@ export default function DeadlinesPage() {
   const [selectedUrgency, setSelectedUrgency] = useState(null); // Para rastrear qual filtro está ativo
   const [selectedTaskId, setSelectedTaskId] = useState(null); // Para rastrear qual tarefa está selecionada
 
+  const parseLocalDate = (dateValue) => {
+    if (!dateValue) return null;
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      return new Date(`${dateValue}T00:00:00`);
+    }
+    return new Date(dateValue);
+  };
+
   // Buscar todas as tarefas do sistema
   useEffect(() => {
     const fetchTasks = async () => {
@@ -48,7 +56,7 @@ export default function DeadlinesPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const dueDate = new Date(dataVencimento);
+    const dueDate = parseLocalDate(dataVencimento);
     dueDate.setHours(0, 0, 0, 0);
     
     const daysRemaining = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
@@ -67,7 +75,7 @@ export default function DeadlinesPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const dueDate = new Date(dataVencimento);
+    const dueDate = parseLocalDate(dataVencimento);
     dueDate.setHours(0, 0, 0, 0);
     
     const days = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
@@ -84,7 +92,7 @@ export default function DeadlinesPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const dueDate = new Date(dataVencimento);
+    const dueDate = parseLocalDate(dataVencimento);
     dueDate.setHours(0, 0, 0, 0);
 
     return dueDate < today;
@@ -96,7 +104,7 @@ export default function DeadlinesPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const dueDate = new Date(dataVencimento);
+    const dueDate = parseLocalDate(dataVencimento);
     dueDate.setHours(0, 0, 0, 0);
 
     return dueDate.getTime() === today.getTime();
@@ -138,7 +146,7 @@ export default function DeadlinesPage() {
       groupedTasks[urgency].sort((a, b) => {
         if (!a.data_vencimento) return 1;
         if (!b.data_vencimento) return -1;
-        return new Date(a.data_vencimento) - new Date(b.data_vencimento);
+        return parseLocalDate(a.data_vencimento) - parseLocalDate(b.data_vencimento);
       });
     });
 
@@ -175,7 +183,7 @@ export default function DeadlinesPage() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     return date.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' });
   };
 
