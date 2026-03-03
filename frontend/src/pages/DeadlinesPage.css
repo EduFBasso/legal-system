@@ -51,6 +51,46 @@
   cursor: pointer;
 }
 
+/* Base colors for each urgency level */
+.stat-card.stat-urgentissimo {
+  border-color: #7f1d1d;
+  background: #fef2f2;
+}
+
+.stat-card.stat-urgentissimo .stat-number {
+  color: #7f1d1d;
+}
+
+.stat-card.stat-urgentissimo .stat-label {
+  color: #4b5563;
+}
+
+.stat-card.stat-urgente {
+  border-color: #7c2d12;
+  background: #fef3f2;
+}
+
+.stat-card.stat-urgente .stat-number {
+  color: #7c2d12;
+}
+
+.stat-card.stat-urgente .stat-label {
+  color: #4b5563;
+}
+
+.stat-card.stat-normal {
+  border-color: #166534;
+  background: #f0fdf4;
+}
+
+.stat-card.stat-normal .stat-number {
+  color: #166534;
+}
+
+.stat-card.stat-normal .stat-label {
+  color: #4b5563;
+}
+
 /* Urgentíssima card - Red dark */
 .stat-card.stat-urgentissimo.stat-clickable:hover {
   border-color: #7f1d1d;
@@ -89,8 +129,8 @@
 }
 
 .stat-card.stat-urgentissimo.stat-selected .stat-number {
-  background-color: #7f1d1d;
-  color: white;
+  color: #7f1d1d;
+  font-weight: 800;
 }
 
 .stat-card.stat-urgentissimo.stat-selected .stat-label {
@@ -110,8 +150,8 @@
 }
 
 .stat-card.stat-urgente.stat-selected .stat-number {
-  background-color: #7c2d12;
-  color: white;
+  color: #7c2d12;
+  font-weight: 800;
 }
 
 .stat-card.stat-urgente.stat-selected .stat-label {
@@ -131,18 +171,13 @@
 }
 
 .stat-card.stat-normal.stat-selected .stat-number {
-  background-color: #166534;
-  color: white;
+  color: #166534;
+  font-weight: 800;
 }
 
 .stat-card.stat-normal.stat-selected .stat-label {
   color: #166534;
   font-weight: 700;
-}
-
-.stat-card.stat-normal.stat-selected:hover {
-  box-shadow: 0 6px 16px rgba(22, 101, 52, 0.2);
-  transform: translateY(-2px);
 }
 .stat-number {
   font-size: 38px;
