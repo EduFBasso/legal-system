@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import caseTasksService from '../services/caseTasksService';
 import './DeadlinesPage.css';
 
@@ -10,7 +9,6 @@ import './DeadlinesPage.css';
  * Ordenadas por data de vencimento (menores prazos primeiro)
  */
 export default function DeadlinesPage() {
-  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -153,13 +151,6 @@ export default function DeadlinesPage() {
       console.error('Erro ao atualizar tarefa:', err);
       alert('Erro ao atualizar tarefa. Tente novamente.');
     }
-  };
-
-  /**
-   * Navega para o caso de origem
-   */
-  const handleNavigateToCase = (caseId) => {
-    navigate(`/cases/${caseId}`);
   };
 
   const grouped = groupedAndSortedTasks();
