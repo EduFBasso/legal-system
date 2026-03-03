@@ -324,7 +324,38 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #dc2626;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid #dc2626;
+  border-radius: 4px;
+  background: #ffffff;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease;
+}
+
+.checkbox-input::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: transform 0.12s ease-in-out;
+  background-color: #ffffff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.checkbox-input:checked {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.checkbox-input:checked::before {
+  transform: scale(1);
+}
+
+.checkbox-input:focus-visible {
+  outline: 2px solid #fecaca;
+  outline-offset: 1px;
 }
 
 /* Conteúdo principal da tarefa */
@@ -360,7 +391,7 @@
 }
 
 .task-item:not(.completed) .task-description {
-  color: #b91c1c;
+  color: #374151;
 }
 
 .task-meta {
@@ -373,7 +404,7 @@
 }
 
 .task-item:not(.completed) .task-meta {
-  color: #b91c1c;
+  color: #374151;
 }
 
 .task-date,
@@ -391,8 +422,8 @@
 .task-item:not(.completed) .task-date,
 .task-item:not(.completed) .task-remaining,
 .task-item:not(.completed) .task-meta-dot {
-  color: #b91c1c;
-  font-size: 17px;
+  color: #374151;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -439,12 +470,6 @@
   .task-meta {
     width: 100%;
     order: 3;
-  }
-
-  .task-item:not(.completed) .task-date,
-  .task-item:not(.completed) .task-remaining,
-  .task-item:not(.completed) .task-meta-dot {
-    font-size: 15px;
   }
 
   .section-header {
