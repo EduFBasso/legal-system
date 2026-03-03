@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, FileText, Edit2, Trash2, Check, X } from 'lucide-react';
+import { Plus, FileText, Trash2, Check, X } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
 import caseTasksService from '../../services/caseTasksService';
@@ -321,7 +321,7 @@ function MovimentacoesTab({
                     display: 'flex', 
                     gap: '1rem', 
                     marginBottom: '0.75rem',
-                    fontSize: '1.03rem',
+                    fontSize: '1.133rem',
                     fontWeight: '500',
                     color: '#6b21a8',
                     flexWrap: 'wrap'
@@ -408,24 +408,32 @@ function MovimentacoesTab({
                     )}
 
                     {/* Badges: ORIGEM → PRAZOS → INDICADOR */}
-                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
                       {/* Badge ORIGEM */}
                       <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`} style={{
                         textTransform: 'uppercase',
                         fontSize: '0.75rem',
                         fontWeight: '700',
-                        letterSpacing: '0.5px'
+                        letterSpacing: '0.5px',
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '6px',
+                        display: 'inline-block'
                       }}>
                         {mov.origem === 'MANUAL' ? 'MANUAL' : `IMPORTADO ${mov.origem}`}
                       </span>
                       
                       {/* Badge PRAZOS */}
                       {mov.prazo && (
-                        <span className="prazo-badge" style={{
+                        <span style={{
                           textTransform: 'uppercase',
                           fontSize: '0.75rem',
                           fontWeight: '700',
-                          letterSpacing: '0.5px'
+                          letterSpacing: '0.5px',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          background: '#dc2626',
+                          color: 'white',
+                          display: 'inline-block'
                         }}>
                           PRAZOS: {mov.prazo} DIAS
                         </span>
@@ -433,11 +441,16 @@ function MovimentacoesTab({
                       
                       {/* Badge INDICADOR */}
                       {getDeadlinesByMovement(mov.id).length > 0 && (
-                        <span className="prazo-generated-badge" style={{
+                        <span style={{
                           textTransform: 'uppercase',
                           fontSize: '0.75rem',
                           fontWeight: '700',
-                          letterSpacing: '0.5px'
+                          letterSpacing: '0.5px',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          background: '#059669',
+                          color: 'white',
+                          display: 'inline-block'
                         }}>
                           ✓ PRAZO CRIADO
                         </span>
@@ -446,7 +459,7 @@ function MovimentacoesTab({
 
                     {/* Ações */}
                     {mov.origem === 'MANUAL' && (
-                      <div className="timeline-actions" style={{ marginTop: '0.75rem' }}>
+                      <div className="timeline-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {!mov.prazo && (
                           <button 
                             className="btn-icon-small btn-warning" 
@@ -460,22 +473,34 @@ function MovimentacoesTab({
                           className="btn-icon-small"
                           onClick={() => onCreateTaskInDeadlines(mov)}
                           title="Criar tarefa vinculada na aba Prazos"
+                          style={{
+                            fontSize: '1rem',
+                            padding: '0.5rem 1rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                          }}
                         >
                           📝 Tarefa
-                        </button>
-                        <button 
-                          className="btn-icon-small" 
-                          onClick={() => onEdit(mov)}
-                          title="Editar"
-                        >
-                          <Edit2 size={16} />
                         </button>
                         <button 
                           className="btn-icon-small btn-danger" 
                           onClick={() => onDelete(mov.id)}
                           title="Excluir"
+                          style={{
+                            background: '#dc2626',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontWeight: '600'
+                          }}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} /> Excluir
                         </button>
                       </div>
                     )}
@@ -736,6 +761,8 @@ function MovimentacoesTab({
                                     )}
                                     {task.data_vencimento && (() => {
                                       const urgenciaCalculada = calculateUrgency(task.data_vencimento);
+                                      const displayText = urgenciaCalculada === 'URGENTISSIMO' ? 'CRITICO' : urgenciaCalculada;
+                                      const bgColor = urgenciaCalculada === 'URGENTISSIMO' ? '#dc2626' : '#6b21a8';
                                       return (
                                         <span style={{
                                           display: 'inline-flex',
@@ -745,13 +772,13 @@ function MovimentacoesTab({
                                           borderRadius: '8px',
                                           fontSize: '0.8125rem',
                                           fontWeight: '700',
-                                          background: '#6b21a8',
+                                          background: bgColor,
                                           color: '#f8fafc',
                                           textTransform: 'uppercase',
                                           letterSpacing: '0.4px',
                                           lineHeight: 1
                                         }}>
-                                          {urgenciaCalculada}
+                                          {displayText}
                                         </span>
                                       );
                                     })()}
