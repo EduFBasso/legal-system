@@ -38,17 +38,15 @@ function DeadlineCard({
 
       {/* Prazos List */}
       <div className="prazos-list">
-        {prazos.map(prazo => (
+        {prazos.map((prazo) => (
           <div key={prazo.id} className="prazo-group">
             <PrazoRow
               prazo={prazo}
               onToggleCompleted={onTogglePrazoCompleted}
-              movimentacaoData={movimentacao.data}
             />
-            
+
             <TasksSection
               tasks={tasks}
-              prazo={prazo}
               movimentacao={movimentacao}
               onAddTask={onAddTask}
               onDeleteTask={onDeleteTask}

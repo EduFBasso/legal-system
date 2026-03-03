@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Calendar, RefreshCw, Plus } from 'lucide-react';
+import { Calendar, RefreshCw } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import * as caseTasksService from '../../services/caseTasksService';
 import DeadlineCard from './DeadlineCard';
+import TasksSection from './TasksSection';
 import EmptyState from '../common/EmptyState';
 import './DeadlinesTab.css';
 
@@ -16,7 +17,9 @@ function DeadlinesTab({
   loadingMovements = false,
   caseId = null,
   numeroProcesso = '',
-  onUpdateMovement = () => {},
+  highlightedMovimentacaoId = null,
+  autoOpenTaskForMovimentacaoId = null,
+  onClearAutoOpenTask = () => {},
 }) {
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
@@ -42,15 +45,25 @@ function DeadlinesTab({
     loadTasks();
   }, [loadTasks]);
 
-  // Filter movements with prazos
-  const movementsWithPrazos = movements.filter(mov => 
-    mov.prazos && mov.prazos.length > 0
-  ).sort((a, b) => {
-    const dateA = a.prazos[0]?.data_limite;
-    const dateB = b.prazos[0]?.data_limite;
-    if (!dateA || !dateB) return 0;
-    return new Date(dateA) - new Date(dateB);
-  });
+  const movementHasTasks = useCallback((movementId) => {
+    return tasks.some((task) => Number(task.movimentacao) === Number(movementId));
+  }, [tasks]);
+
+  const movementsForDeadlinesTab = movements
+    .filter((mov) => {
+      const hasPrazo = Boolean(mov.prazos && mov.prazos.length > 0);
+      const hasTask = movementHasTasks(mov.id);
+      const isHighlighted = Number(highlightedMovimentacaoId) === Number(mov.id);
+      const isAutoOpen = Number(autoOpenTaskForMovimentacaoId) === Number(mov.id);
+      return hasPrazo || hasTask || isHighlighted || isAutoOpen;
+    })
+    .sort((a, b) => {
+      const firstPrazoA = a.prazos?.[0]?.data_limite;
+      const firstPrazoB = b.prazos?.[0]?.data_limite;
+      const dateA = firstPrazoA || a.data;
+      const dateB = firstPrazoB || b.data;
+      return new Date(dateA) - new Date(dateB);
+    });
 
   const handleTogglePrazoCompleted = async (prazo) => {
     try {
@@ -80,18 +93,21 @@ function DeadlinesTab({
 
   const handleSaveTask = async (movimentacaoId) => {
     if (!newTaskTitle.trim()) return;
-    
+
     try {
       await caseTasksService.createTask({
-        movimentacao_id: movimentacaoId,
-        case_id: caseId,
-        titulo: newTaskTitle,
-        auto_created: false,
+        case: Number(caseId),
+        movimentacao: Number(movimentacaoId),
+        titulo: newTaskTitle.trim(),
+        descricao: '',
+        urgencia: 'NORMAL',
+        status: 'PENDENTE',
       });
-      
+
       setShowAddTaskForm(null);
       setNewTaskTitle('');
       await loadTasks();
+      onClearAutoOpenTask();
     } catch (error) {
       console.error('Error creating task:', error);
     }
@@ -111,13 +127,18 @@ function DeadlinesTab({
   const handleToggleTaskCompleted = async (task) => {
     try {
       await caseTasksService.patchTask(task.id, {
-        completed: !task.completed,
+        status: task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA',
       });
       await loadTasks();
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
+
+  useEffect(() => {
+    if (!autoOpenTaskForMovimentacaoId) return;
+    setShowAddTaskForm(Number(autoOpenTaskForMovimentacaoId));
+  }, [autoOpenTaskForMovimentacaoId]);
 
   return (
     <div className="case-section">
@@ -134,27 +155,57 @@ function DeadlinesTab({
             <RefreshCw className="spinning" size={32} />
             <p>Carregando dados...</p>
           </div>
-        ) : movementsWithPrazos.length === 0 ? (
+        ) : movementsForDeadlinesTab.length === 0 ? (
           <EmptyState
             icon={Calendar}
-            message="Nenhum prazo cadastrado"
-            hint="Adicione prazos às movimentações para acompanhar vencimentos."
+            message="Nenhum prazo ou tarefa vinculada"
+            hint="Adicione prazo nas movimentações ou crie tarefa vinculada à movimentação."
           />
         ) : (
           <div className="deadlines-container">
-            {movementsWithPrazos.map(movement => (
-              <DeadlineCard
-                key={movement.id}
-                movimentacao={movement}
-                tasks={tasks}
-                onTogglePrazoCompleted={handleTogglePrazoCompleted}
-                onAddTask={handleAddTask}
-                onDeleteTask={handleDeleteTask}
-                onToggleTaskCompleted={handleToggleTaskCompleted}
-              />
-            ))}
+            {movementsForDeadlinesTab.map((movement) => {
+              const hasPrazos = Boolean(movement.prazos && movement.prazos.length > 0);
+              const isHighlighted = Number(highlightedMovimentacaoId) === Number(movement.id);
 
-            {/* Add Task Form Modal - Simplified version */}
+              if (hasPrazos) {
+                return (
+                  <div
+                    key={movement.id}
+                    className={isHighlighted ? 'deadline-highlight' : ''}
+                  >
+                    <DeadlineCard
+                      movimentacao={movement}
+                      tasks={tasks}
+                      onTogglePrazoCompleted={handleTogglePrazoCompleted}
+                      onAddTask={handleAddTask}
+                      onDeleteTask={handleDeleteTask}
+                      onToggleTaskCompleted={handleToggleTaskCompleted}
+                    />
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={movement.id}
+                  className={`deadline-card ${isHighlighted ? 'deadline-highlight' : ''}`}
+                >
+                  <div className="movement-header">
+                    <div className="movement-date">📅 {formatDate(movement.data)}</div>
+                    <div className="movement-orgao">🏛️ {movement.orgao || 'Órgão não informado'}</div>
+                  </div>
+                  <div className="no-deadline-message">Sem prazo cadastrado para esta movimentação.</div>
+                  <TasksSection
+                    tasks={tasks}
+                    movimentacao={movement}
+                    onAddTask={handleAddTask}
+                    onDeleteTask={handleDeleteTask}
+                    onToggleTaskCompleted={handleToggleTaskCompleted}
+                  />
+                </div>
+              );
+            })}
+
             {showAddTaskForm && (
               <div className="add-task-modal">
                 <div className="modal-content">
@@ -165,22 +216,25 @@ function DeadlinesTab({
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     placeholder="Descreva a tarefa..."
                     autoFocus
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         handleSaveTask(showAddTaskForm);
                       }
                     }}
                   />
                   <div className="modal-buttons">
-                    <button 
+                    <button
                       className="btn btn-primary"
                       onClick={() => handleSaveTask(showAddTaskForm)}
                     >
                       Salvar
                     </button>
-                    <button 
+                    <button
                       className="btn btn-secondary"
-                      onClick={() => setShowAddTaskForm(null)}
+                      onClick={() => {
+                        setShowAddTaskForm(null);
+                        onClearAutoOpenTask();
+                      }}
                     >
                       Cancelar
                     </button>

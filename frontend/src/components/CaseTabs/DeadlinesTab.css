@@ -4,6 +4,21 @@
   gap: 0;
 }
 
+.deadline-highlight {
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  transition: all 0.3s ease;
+}
+
+.no-deadline-message {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
 .add-task-modal {
   position: fixed;
   top: 0;

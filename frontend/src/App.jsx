@@ -18,6 +18,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
+import DeadlinesSummary from './components/DeadlinesSummary';
 import './App.css';
 import './styles/highlight.css'; // Sistema de destaque reutilizável
 
@@ -67,6 +68,11 @@ function App() {
                 <div className="sidebar-section">
                   <h3><BellRing size={18} style={{ display: 'inline', marginRight: '6px' }} /> Notificações</h3>
                   <NotificationsSummary />
+                </div>
+                
+                <div className="sidebar-section">
+                  <h3>⏰ Prazos Próximos</h3>
+                  <DeadlinesSummary />
                 </div>
               </Sidebar>
             </div>

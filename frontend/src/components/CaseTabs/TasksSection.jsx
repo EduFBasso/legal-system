@@ -13,13 +13,12 @@ function TasksSection({
   onDeleteTask = () => {},
   onToggleTaskCompleted = () => {},
 }) {
-  // Filter tasks for this prazo/movimentacao
-  const tasksForPrazo = tasks.filter(t => 
-    t.movimentacao_id === movimentacao?.id
+  const tasksForMovimentacao = tasks.filter((task) =>
+    Number(task.movimentacao) === Number(movimentacao?.id)
   );
-  
-  const automaticTasks = tasksForPrazo.filter(t => t.auto_created);
-  const manualTasks = tasksForPrazo.filter(t => !t.auto_created);
+
+  const automaticTasks = tasksForMovimentacao.filter((task) => Boolean(task.auto_created));
+  const manualTasks = tasksForMovimentacao.filter((task) => !task.auto_created);
 
   return (
     <div className="tasks-section">
@@ -27,7 +26,7 @@ function TasksSection({
         <span className="tasks-label">📌 TAREFAS VINCULADAS</span>
       </div>
 
-      {tasksForPrazo.length === 0 ? (
+      {tasksForMovimentacao.length === 0 ? (
         <div className="no-tasks">
           <span>(nenhuma tarefa criada)</span>
         </div>
@@ -36,18 +35,18 @@ function TasksSection({
           {automaticTasks.length > 0 && (
             <div className="task-group">
               <div className="task-group-label">Automáticas</div>
-              {automaticTasks.map(task => (
-                <div key={task.id} className={`task-row ${task.completed ? 'completed' : ''}`}>
+              {automaticTasks.map((task) => (
+                <div key={task.id} className={`task-row ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
                   <input
                     type="checkbox"
-                    checked={task.completed || false}
+                    checked={task.status === 'CONCLUIDA'}
                     onChange={() => onToggleTaskCompleted(task)}
                     className="task-checkbox"
                   />
                   <span className="task-title">{task.titulo}</span>
-                  {task.data_conclusao && (
+                  {task.concluida_em && (
                     <span className="task-date">
-                      {formatDate(task.data_conclusao)}
+                      {formatDate(task.concluida_em)}
                     </span>
                   )}
                 </div>
@@ -58,11 +57,11 @@ function TasksSection({
           {manualTasks.length > 0 && (
             <div className="task-group">
               <div className="task-group-label">Manuais</div>
-              {manualTasks.map(task => (
-                <div key={task.id} className={`task-row ${task.completed ? 'completed' : ''}`}>
+              {manualTasks.map((task) => (
+                <div key={task.id} className={`task-row ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
                   <input
                     type="checkbox"
-                    checked={task.completed || false}
+                    checked={task.status === 'CONCLUIDA'}
                     onChange={() => onToggleTaskCompleted(task)}
                     className="task-checkbox"
                   />
