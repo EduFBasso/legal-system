@@ -7,6 +7,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### � Documentação: Features Futuras para Tarefas (2026-03-03)
+
+#### Added
+
+- **Dashboard de Tarefas por Urgência** (seção 5 em MOVIMENTACOES_TAREFAS_FLUXO.md)
+  - Visão consolidada de TODAS as tarefas do escritório
+  - Agrupamento por urgência: URGENTÍSSIMA, URGENTE, NORMAL
+  - Links diretos para movimentação de origem
+  - Filtros rápidos: críticas, esta semana, por caso
+  - Ordenação inteligente: dias restantes, caso, data criação
+  - Fase 2: notificações push, integração com calendário, relatórios
+
+- **Mini-Calendário de Datas Limite** (seção 6 em MOVIMENTACOES_TAREFAS_FLUXO.md)
+  - Widget no sidebar direito (abaixo de "Sumário de Prazos")
+  - Visualização mensal com marcadores de tarefas/prazos
+  - Hover para listar tarefas do dia selecionado
+  - Fase 1: navegação mês anterior/próximo, zoom semanal
+  - Fase 2: integração com calendário do SO, sincronização
+
+- **Sistema de Monitoramento: Detecção de Estagnação** (seção 7 em MOVIMENTACOES_TAREFAS_FLUXO.md)
+  - Alerta automático para processos sem movimento por 90+ dias
+  - Cron job semanal que verifica e notifica advogadas
+  - Fluxo: detecta → alerta → contexto (últimas 5 movimentações) → ação
+  - Opções de resposta: Adicionar movimentação, Criar tarefa, Arquivar, Snooze 30d
+  - Localização: Sidebar "Alertas", Dashboard "Processos Parados", Email semanal
+
+#### Changed
+
+- **MOVIMENTACOES_TAREFAS_FLUXO.md** - Enhancements (phase 20)
+  - Seção "Extração Automática de Prazo": linguagem refinada
+    - Alterado de "data_limite = data + prazo" para "sugerida"
+    - Adicionada explicação de variáveis legais: dias úteis vs corridos, feriados, tribunal-specific
+    - Incluído exemplo real (Caso 9) com 2 prazos distintos
+  - Seção "Cálculo Automático de Urgência": justificativa expandida (180+ linhas)
+    - Novo header: "Por que 3 níveis? → Criar hierarquia visual de importância"
+    - Mockup de dashboard mostrando agrupamento por urgência
+    - 4-point benefits: dashboard filtering, alert strategy, smart ordering, audit trail
+    - Explicação de auditoria: snapshots históricos para análise temporal
+  - Sumário (TOC) atualizado com 3 novas seções
+
+- **Table of Contents** reorganizada para refletir 9 seções principais
+
+#### Documentation
+
+- **Refinamento da precisão**: Data limite agora documentada como "sugerida"
+  - Reflete realidade: cálculo automático (data + prazo) pode não ser exato
+  - Advogada valida e interpreta conforme regras legais tributárias
+  - Exemplo: Caso 9 com múltiplos prazos no mesmo texto
+  
+- **Justificativa de design**: Por qué 3-level urgency system?
+  - Não é apenas classificação, é criação de hierarquia visual
+  - Habilita: dashboard filtering, alerting, smart ordering, auditoria histórica
+  - Campo persiste no DB para análise: "quando/por quê a urgência mudou?"
+
+---
+
+### �📚 Documentação: Movimentações e Tarefas (2026-03-03)
+
+#### Added
+
+**Documentação Atualizada**
+
+- **MOVIMENTACOES_TAREFAS_FLUXO.md** - Documentação completa do fluxo atual
+  - Fluxo Publicação → Movimentação com extração de prazo via regex
+  - Sistema de tarefas vinculadas (inline CRUD)
+  - Decisão de produto: tarefas SEMPRE manuais (não automáticas)
+  - Cálculo automático de urgência (NORMAL/URGENTE/URGENTISSIMO)
+  - Modelos de dados: CaseMovement, CaseTask, CasePrazo
+  - Interface inline na aba Movimentações
+  - Design system: cores vinho escuro (#6b21a8)
+  - Endpoints da API documentados
+  - Exemplos práticos com caso real (Caso 9)
+  - Backlog de próximos passos
+
+- **README.md** (docs/) - Índice navegável da documentação
+  - Separação clara: documentos atuais vs legacy
+  - Busca rápida por tema
+  - Template para novos documentos
+  - Guia de contribuição
+
+#### Changed
+
+- **Estrutura de docs/** reorganizada
+  - Documentos atuais na raiz (`docs/`)
+  - Documentos antigos/desatualizados em `docs/legacy/`
+  - Facilita manutenção e evita confusão com docs obsoletos
+
+#### Documentation
+
+- Decisão confirmada: **Tarefas não são criadas automaticamente**
+  - Motivo: segurança jurídica (interpretação incorreta pode gerar perda de prazo)
+  - Badge de prazo serve apenas como alerta visual
+  - Advogada sempre lê, interpreta e cria tarefas manualmente
+- **Urgência calculada automaticamente** para evitar inconsistências
+  - Regra 15/7/3: 0-3d (Urgentíssimo), 4-7d (Urgente), 8+d (Normal)
+  - Campo não é editável no formulário
+- **CasePrazo vs CaseTask**: modelos com propósitos diferentes
+  - CasePrazo: prazos processuais formais (hierárquicos)
+  - CaseTask: tarefas operacionais internas (flat)
+
 ### 🆕 Fase 2: Refatoração - Componentes Comuns (2025-02-10)
 
 #### Added
