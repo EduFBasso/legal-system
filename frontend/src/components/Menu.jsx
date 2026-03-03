@@ -99,16 +99,15 @@ export default function Menu() {
         <li className="menu-group-spacer" aria-hidden="true" />
 
         <li className="menu-item">
-          <a href="#deadlines">
+          <NavLink
+            to="/deadlines"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+            data-tooltip="Tarefas agrupadas por urgência (Urgentíssimas, Urgentes, Normais)"
+          >
             <span className="menu-icon">⏰</span>
             <span className="menu-label">Prazos</span>
-          </a>
-        </li>
-        <li className="menu-item">
-          <a href="#calendar">
-            <span className="menu-icon">📅</span>
-            <span className="menu-label">Agenda</span>
-          </a>
+          </NavLink>
         </li>
       </ul>
     </nav>
