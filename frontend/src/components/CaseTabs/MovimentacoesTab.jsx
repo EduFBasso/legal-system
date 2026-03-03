@@ -735,15 +735,15 @@ function MovimentacoesTab({
                             Editar
                           </button>
                           <button 
-                            className="btn-icon-small btn-danger" 
                             onClick={() => onDelete(mov.id)}
                             title="Excluir"
                             style={{
                               background: '#6b21a8',
                               color: 'white',
                               border: 'none',
-                              padding: '0.9rem 2.5rem',
+                              padding: '0.5rem 2.5rem',
                               borderRadius: '6px',
+                              fontSize: '0.875rem',
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
