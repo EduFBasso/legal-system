@@ -228,11 +228,6 @@ export default function DeadlinesPage() {
             {/* URGENTÍSSIMAS */}
             {grouped.URGENTISSIMO.length > 0 && (
               <div className="urgency-section urgentissimo-section">
-                <div className="section-header">
-                  <span className="urgency-icon">🔴</span>
-                  <h2 className="urgency-title">Urgentíssimas</h2>
-                  <span className="urgency-count">{grouped.URGENTISSIMO.length}</span>
-                </div>
                 <div className="tasks-list">
                   {grouped.URGENTISSIMO.map(task => (
                     <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
@@ -273,11 +268,6 @@ export default function DeadlinesPage() {
             {/* URGENTES */}
             {grouped.URGENTE.length > 0 && (
               <div className="urgency-section urgente-section">
-                <div className="section-header">
-                  <span className="urgency-icon">🟠</span>
-                  <h2 className="urgency-title">Urgentes</h2>
-                  <span className="urgency-count">{grouped.URGENTE.length}</span>
-                </div>
                 <div className="tasks-list">
                   {grouped.URGENTE.map(task => (
                     <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
@@ -318,11 +308,6 @@ export default function DeadlinesPage() {
             {/* NORMAIS */}
             {grouped.NORMAL.length > 0 && (
               <div className="urgency-section normal-section">
-                <div className="section-header">
-                  <span className="urgency-icon">🟢</span>
-                  <h2 className="urgency-title">Normais</h2>
-                  <span className="urgency-count">{grouped.NORMAL.length}</span>
-                </div>
                 <div className="tasks-list">
                   {grouped.NORMAL.map(task => (
                     <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
