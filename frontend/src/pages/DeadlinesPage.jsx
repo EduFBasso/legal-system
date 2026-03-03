@@ -260,16 +260,6 @@ export default function DeadlinesPage() {
                           <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
-                      
-                      <div className="task-actions">
-                        <button
-                          className="task-link-btn"
-                          onClick={() => handleNavigateToCase(task.case)}
-                          title="Ir para caso"
-                        >
-                          → Caso
-                        </button>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -300,16 +290,6 @@ export default function DeadlinesPage() {
                           <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
-                      
-                      <div className="task-actions">
-                        <button
-                          className="task-link-btn"
-                          onClick={() => handleNavigateToCase(task.case)}
-                          title="Ir para caso"
-                        >
-                          → Caso
-                        </button>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -339,16 +319,6 @@ export default function DeadlinesPage() {
                           <span className="task-meta-dot">•</span>
                           <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
-                      </div>
-                      
-                      <div className="task-actions">
-                        <button
-                          className="task-link-btn"
-                          onClick={() => handleNavigateToCase(task.case)}
-                          title="Ir para caso"
-                        >
-                          → Caso
-                        </button>
                       </div>
                     </div>
                   ))}
