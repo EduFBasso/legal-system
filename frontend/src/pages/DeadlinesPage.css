@@ -314,6 +314,18 @@
   color: #9ca3af;
 }
 
+.task-item.selected {
+  border: 3px solid #dc2626;
+  background: #fef2f2;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+  transform: translateY(-1px);
+}
+
+.task-item.selected:hover {
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
+  transform: translateY(-2px);
+}
+
 /* Checkbox */
 .task-checkbox {
   flex-shrink: 0;

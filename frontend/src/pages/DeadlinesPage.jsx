@@ -15,6 +15,7 @@ export default function DeadlinesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null); // Para rastrear qual filtro está ativo
+  const [selectedTaskId, setSelectedTaskId] = useState(null); // Para rastrear qual tarefa está selecionada
 
   // Buscar todas as tarefas do sistema
   useEffect(() => {
@@ -265,7 +266,7 @@ export default function DeadlinesPage() {
               <div className="urgency-section urgentissimo-section">
                 <div className="tasks-list">
                   {grouped.URGENTISSIMO.map(task => (
-                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
+                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -275,7 +276,7 @@ export default function DeadlinesPage() {
                         />
                       </div>
                       
-                      <div className="task-main" onClick={() => handleNavigateToCase(task.case)}>
+                      <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
                         <div className="task-title-wrapper">
                           <div className="task-title">{task.titulo}</div>
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
@@ -300,7 +301,7 @@ export default function DeadlinesPage() {
               <div className="urgency-section urgente-section">
                 <div className="tasks-list">
                   {grouped.URGENTE.map(task => (
-                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
+                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -310,7 +311,7 @@ export default function DeadlinesPage() {
                         />
                       </div>
                       
-                      <div className="task-main" onClick={() => handleNavigateToCase(task.case)}>
+                      <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
                         <div className="task-title-wrapper">
                           <div className="task-title">{task.titulo}</div>
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
@@ -335,7 +336,7 @@ export default function DeadlinesPage() {
               <div className="urgency-section normal-section">
                 <div className="tasks-list">
                   {grouped.NORMAL.map(task => (
-                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''}`}>
+                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -345,7 +346,7 @@ export default function DeadlinesPage() {
                         />
                       </div>
                       
-                      <div className="task-main" onClick={() => handleNavigateToCase(task.case)}>
+                      <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
                         <div className="task-title-wrapper">
                           <div className="task-title">{task.titulo}</div>
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
