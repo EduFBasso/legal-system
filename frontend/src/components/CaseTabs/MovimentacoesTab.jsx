@@ -375,6 +375,7 @@ function MovimentacoesTab({
                 >
                   <div className="timeline-marker"></div>
                   
+                  <div className="timeline-content">
                   {/* MODO EDIÇÃO - Formulário inline */}
                   {editingMovimentacaoId === mov.id && (
                     <div style={{ 
@@ -603,7 +604,6 @@ function MovimentacoesTab({
                     })()}
                   </div>
 
-                  <div className="timeline-content">
                     {/* Texto da publicação truncado (prioriza descrição completa) */}
                     <div style={{ 
                       fontSize: '0.9375rem',
@@ -1182,6 +1182,7 @@ function MovimentacoesTab({
                       </div>
                     )}
 
+                  </div>
                 </div>
               );
             })}
