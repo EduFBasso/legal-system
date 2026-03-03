@@ -403,14 +403,17 @@ function MovimentacoesTab({
                     {/* Badges: ORIGEM → PRAZOS → INDICADOR */}
                     <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
                       {/* Badge ORIGEM */}
-                      <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`} style={{
+      <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`} style={{
                         textTransform: 'uppercase',
                         fontSize: '0.75rem',
                         fontWeight: '700',
                         letterSpacing: '0.5px',
                         padding: '0.4rem 0.75rem',
                         borderRadius: '6px',
-                        display: 'inline-block'
+                        background: '#6b21a8',
+                        color: 'white',
+                        display: 'inline-block',
+                        border: 'none'
                       }}>
                         {mov.origem === 'MANUAL' ? 'MANUAL' : `IMPORTADO ${mov.origem}`}
                       </span>
@@ -424,7 +427,7 @@ function MovimentacoesTab({
                           letterSpacing: '0.5px',
                           padding: '0.4rem 0.75rem',
                           borderRadius: '6px',
-                          background: '#dc2626',
+                          background: '#6b21a8',
                           color: 'white',
                           display: 'inline-block'
                         }}>
@@ -649,14 +652,40 @@ function MovimentacoesTab({
                                 </>
                               ) : (
                                 <>
-                                  <div style={{
-                                    fontWeight: '600',
-                                    fontSize: '0.9625rem',
-                                    color: '#6b21a8',
-                                    textDecoration: task.status === 'CONCLUIDA' ? 'line-through' : 'none',
-                                    marginBottom: '0.25rem'
-                                  }}>
-                                    {task.titulo}
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                    <div style={{
+                                      fontWeight: '600',
+                                      fontSize: '0.9625rem',
+                                      color: '#6b21a8',
+                                      textDecoration: task.status === 'CONCLUIDA' ? 'line-through' : 'none',
+                                      marginBottom: '0.25rem'
+                                    }}>
+                                      {task.titulo}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
+                                      <button
+                                        onClick={() => handleOpenEditTask(task)}
+                                        title="Editar tarefa"
+                                        style={{
+                                          border: 'none',
+                                          background: '#6b21a8',
+                                          color: 'white',
+                                          borderRadius: '6px',
+                                          padding: '0.25rem 0.5rem',
+                                          fontSize: '0.75rem',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
+                                          cursor: 'pointer',
+                                          fontWeight: '600',
+                                          transition: 'all 0.2s ease'
+                                        }}
+                                        onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
+                                        onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
+                                      >
+                                        ✏️ Editar
+                                      </button>
+                                    </div>
                                   </div>
                                   {task.descricao && (
                                     <div style={{
