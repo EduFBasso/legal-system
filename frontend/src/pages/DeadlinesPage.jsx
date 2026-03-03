@@ -153,6 +153,7 @@ export default function DeadlinesPage() {
   const showUrgentissimo = useMemo(() => selectedUrgency === null || selectedUrgency === 'URGENTISSIMO', [selectedUrgency]);
   const showUrgente = useMemo(() => selectedUrgency === null || selectedUrgency === 'URGENTE', [selectedUrgency]);
   const showNormal = useMemo(() => selectedUrgency === null || selectedUrgency === 'NORMAL', [selectedUrgency]);
+  const showUrgencyContainerBorder = useMemo(() => selectedUrgency === null, [selectedUrgency]);
 
   /**
    * Marca tarefa como concluída
@@ -231,10 +232,10 @@ export default function DeadlinesPage() {
         <div 
           className={`stat-card stat-urgentissimo stat-clickable ${selectedUrgency === 'URGENTISSIMO' ? 'stat-selected' : ''}`}
           onClick={() => setSelectedUrgency(selectedUrgency === 'URGENTISSIMO' ? null : 'URGENTISSIMO')}
-          title="Filtrar apenas urgentíssimas"
+          title="Filtrar apenas críticas"
         >
           <div className="stat-number">{grouped.URGENTISSIMO.length}</div>
-          <div className="stat-label">Urgentíssimas</div>
+          <div className="stat-label">CRITICO</div>
         </div>
         <div 
           className={`stat-card stat-urgente stat-clickable ${selectedUrgency === 'URGENTE' ? 'stat-selected' : ''}`}
@@ -266,7 +267,7 @@ export default function DeadlinesPage() {
           <>
             {/* URGENTÍSSIMAS */}
             {showUrgentissimo && grouped.URGENTISSIMO.length > 0 && (
-              <div className="urgency-section urgentissimo-section">
+              <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgentissimo-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.URGENTISSIMO.map(task => (
                     <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
@@ -309,7 +310,7 @@ export default function DeadlinesPage() {
 
             {/* URGENTES */}
             {showUrgente && grouped.URGENTE.length > 0 && (
-              <div className="urgency-section urgente-section">
+              <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgente-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.URGENTE.map(task => (
                     <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
@@ -352,7 +353,7 @@ export default function DeadlinesPage() {
 
             {/* NORMAIS */}
             {showNormal && grouped.NORMAL.length > 0 && (
-              <div className="urgency-section normal-section">
+              <div className={`urgency-section ${showUrgencyContainerBorder ? 'normal-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.NORMAL.map(task => (
                     <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
