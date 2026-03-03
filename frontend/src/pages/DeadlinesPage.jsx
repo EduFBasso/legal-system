@@ -276,19 +276,20 @@ export default function DeadlinesPage() {
                       
                       <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
                         <div className="task-title">{task.titulo}</div>
-                        <div className="task-process-line">
+                        {task.descricao && <div className="task-description">{task.descricao}</div>}
+                        <div className="task-process-meta">
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
                             {task.case_numero}
                           </a>
+                          {task.movimentacao && (
+                            <>
+                              <span className="task-meta-dot">•</span>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                                📋 {task.movimentacao_titulo}
+                              </a>
+                            </>
+                          )}
                         </div>
-                        {task.movimentacao && (
-                          <div className="task-movement-link">
-                            <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
-                              📋 {task.movimentacao_titulo}
-                            </a>
-                          </div>
-                        )}
-                        {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
                           <span className="task-meta-dot">•</span>
@@ -318,19 +319,20 @@ export default function DeadlinesPage() {
                       
                       <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
                         <div className="task-title">{task.titulo}</div>
-                        <div className="task-process-line">
+                        {task.descricao && <div className="task-description">{task.descricao}</div>}
+                        <div className="task-process-meta">
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
                             {task.case_numero}
                           </a>
+                          {task.movimentacao && (
+                            <>
+                              <span className="task-meta-dot">•</span>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                                📋 {task.movimentacao_titulo}
+                              </a>
+                            </>
+                          )}
                         </div>
-                        {task.movimentacao && (
-                          <div className="task-movement-link">
-                            <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
-                              📋 {task.movimentacao_titulo}
-                            </a>
-                          </div>
-                        )}
-                        {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
                           <span className="task-meta-dot">•</span>
@@ -360,19 +362,20 @@ export default function DeadlinesPage() {
                       
                       <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
                         <div className="task-title">{task.titulo}</div>
-                        <div className="task-process-line">
+                        {task.descricao && <div className="task-description">{task.descricao}</div>}
+                        <div className="task-process-meta">
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
                             {task.case_numero}
                           </a>
+                          {task.movimentacao && (
+                            <>
+                              <span className="task-meta-dot">•</span>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                                📋 {task.movimentacao_titulo}
+                              </a>
+                            </>
+                          )}
                         </div>
-                        {task.movimentacao && (
-                          <div className="task-movement-link">
-                            <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
-                              📋 {task.movimentacao_titulo}
-                            </a>
-                          </div>
-                        )}
-                        {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
                           <span className="task-meta-dot">•</span>

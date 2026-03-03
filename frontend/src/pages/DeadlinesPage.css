@@ -401,6 +401,16 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+.task-process-meta {
+  font-size: 15px;
+  margin: 8px 0 12px 0;
+  padding: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .task-movement-link {
   font-size: 14px;
   margin: 0 0 10px 0;
@@ -409,15 +419,15 @@
 
 .task-movement-link-anchor {
   display: inline-block;
-  color: #059669;
+  color: #1f2937;
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .task-movement-link-anchor:hover {
-  color: #047857;
+  color: #b91c1c;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
