@@ -19,7 +19,8 @@ function MovimentacoesTab({
   onEdit = () => {},
   onDelete = () => {},
   onRefreshTasks = () => {},
-}) {
+    onRefreshMovements = () => {},
+  }) {
   const [searchTerm, setSearchTerm] = useState('');
   
   // Estado para controlar qual movimento está com formulário de tarefa aberto
@@ -215,8 +216,8 @@ function MovimentacoesTab({
         prazo: editMovimentacaoForm.prazo ? parseInt(editMovimentacaoForm.prazo) : null,
       });
       
-      // Chamar callback para atualizar o caso
-      onRefreshTasks();
+        // Chamar callbacks para atualizar tarefas e movimentações
+        await Promise.all([onRefreshTasks(), onRefreshMovements()]);
       handleCancelEditMovimentacao();
     } catch (error) {
       console.error('Error saving movimentacao:', error);

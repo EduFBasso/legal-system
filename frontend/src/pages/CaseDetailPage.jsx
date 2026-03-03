@@ -1420,6 +1420,7 @@ function CaseDetailPage() {
             onEdit={handleEditMovimentacao}
             onDelete={handleDeleteMovimentacao}
             onRefreshTasks={loadTasks}
+              onRefreshMovements={loadCaseData}
           />
         )}
 
