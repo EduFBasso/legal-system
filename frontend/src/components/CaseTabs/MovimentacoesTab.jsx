@@ -452,6 +452,7 @@ function MovimentacoesTab({
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             gap: '0.5rem',
                             fontWeight: '600',
                             transition: 'all 0.2s ease',
