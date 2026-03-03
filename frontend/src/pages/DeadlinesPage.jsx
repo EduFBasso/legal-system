@@ -276,13 +276,16 @@ export default function DeadlinesPage() {
                       </div>
                       
                       <div className="task-main" onClick={() => handleNavigateToCase(task.case)}>
-                        <div className="task-title">{task.titulo}</div>
+                        <div className="task-title-wrapper">
+                          <div className="task-title">{task.titulo}</div>
+                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
+                            {task.case_numero}
+                          </a>
+                        </div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>{task.case}</a>
-                          <span className="task-meta-dot">•</span>
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
-                          <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
+                          <span className="task-meta-dot">•</span>
                           <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
@@ -308,13 +311,16 @@ export default function DeadlinesPage() {
                       </div>
                       
                       <div className="task-main" onClick={() => handleNavigateToCase(task.case)}>
-                        <div className="task-title">{task.titulo}</div>
+                        <div className="task-title-wrapper">
+                          <div className="task-title">{task.titulo}</div>
+                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
+                            {task.case_numero}
+                          </a>
+                        </div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>{task.case}</a>
-                          <span className="task-meta-dot">•</span>
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
-                          <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
+                          <span className="task-meta-dot">•</span>
                           <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
@@ -340,13 +346,16 @@ export default function DeadlinesPage() {
                       </div>
                       
                       <div className="task-main" onClick={() => handleNavigateToCase(task.case)}>
-                        <div className="task-title">{task.titulo}</div>
+                        <div className="task-title-wrapper">
+                          <div className="task-title">{task.titulo}</div>
+                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
+                            {task.case_numero}
+                          </a>
+                        </div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>{task.case}</a>
-                          <span className="task-meta-dot">•</span>
                           <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
-                          <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
+                          <span className="task-meta-dot">•</span>
                           <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
