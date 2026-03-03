@@ -44,6 +44,21 @@ function MovimentacoesTab({
   });
   const [savingEditedTask, setSavingEditedTask] = useState(false);
 
+  /**
+   * Navega/scroll até a movimentação quando highlightedMovimentacaoId é definido
+   */
+  useEffect(() => {
+    if (highlightedMovimentacaoId) {
+      // Pequeno delay para garantir que o DOM foi atualizado
+      setTimeout(() => {
+        const element = document.getElementById(`movimentacao-${highlightedMovimentacaoId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [highlightedMovimentacaoId]);
+
   // Filtrar tarefas por movimentação
   const getTasksByMovement = (movementId) => {
     return tasks.filter(task => Number(task.movimentacao) === Number(movementId));

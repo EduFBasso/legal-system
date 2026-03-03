@@ -223,6 +223,24 @@ function CaseDetailPage() {
     loadCaseData();
   }, [loadCaseData]);
 
+  /**
+   * Detecta query params para navegação automática a seção e movimento
+   * Exemplos: ?tab=movements&focusMovement=123
+   */
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    const focusMovement = params.get('focusMovement');
+
+    if (tab === 'movements') {
+      setActiveSection('movimentacoes');
+    }
+
+    if (focusMovement) {
+      setHighlightedMovimentacaoId(parseInt(focusMovement, 10));
+    }
+  }, [location.search]);
+
   useEffect(() => {
     const loadPublicationPrefill = async () => {
       if (id || !publicationId) return;
