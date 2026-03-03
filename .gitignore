@@ -77,3 +77,5 @@ pub_fetcher/
 *.exe
 *.dll
 tools/sqlite3.exe
+
+docs/legacy/
