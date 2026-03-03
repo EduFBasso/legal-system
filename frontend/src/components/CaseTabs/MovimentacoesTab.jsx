@@ -606,6 +606,8 @@ function MovimentacoesTab({
                   {/* Meta: Data de disponibilização + Tipo (MANUAL) / Órgão */}
                   <div style={{ 
                     display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                     gap: '1rem', 
                     marginBottom: '0.75rem',
                     fontSize: '1.133rem',
@@ -613,28 +615,31 @@ function MovimentacoesTab({
                     color: '#6b21a8',
                     flexWrap: 'wrap'
                   }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
-                    </span>
+                    {/* Grupo esquerdo: Data + Órgão */}
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
+                      </span>
+                      
+                      {(() => {
+                        // Usar órgão da API se disponível, senão usar o que foi extraído do texto
+                        if (mov.orgao) {
+                          return (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                              🏛️ <strong>Órgão:</strong> {mov.orgao}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                     
-                    {/* Exibir Tipo para movimentações MANUAL */}
+                    {/* Grupo direito: Tipo (para movimentações MANUAL) */}
                     {mov.origem === 'MANUAL' && mov.tipo && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         ⚖️ <strong>Tipo:</strong> {getTipoDisplay(mov.tipo, mov.tipo_customizado)}
                       </span>
                     )}
-                    
-                    {(() => {
-                      // Usar órgão da API se disponível, senão usar o que foi extraído do texto
-                      if (mov.orgao) {
-                        return (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            🏛️ <strong>Órgão:</strong> {mov.orgao}
-                          </span>
-                        );
-                      }
-                      return null;
-                    })()}
                   </div>
 
                     {/* Conteúdo diferenciado: MANUAL vs AUTOMÁTICA */}
