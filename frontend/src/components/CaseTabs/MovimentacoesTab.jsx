@@ -896,9 +896,10 @@ function MovimentacoesTab({
 
                     {/* ========== SEÇÃO DE TAREFAS ========== */}
                     <hr style={{ 
-                      margin: '1rem 0', 
+                      margin: '1.5rem 0', 
                       border: 'none', 
-                      borderTop: '1px solid #e2e8f0' 
+                      borderTop: '3px solid #e2e8f0',
+                      background: 'linear-gradient(to right, #e2e8f0, #cbd5e1, #e2e8f0)'
                     }} />
 
                     {/* Header: TAREFAS | + Adicionar Tarefa */}
