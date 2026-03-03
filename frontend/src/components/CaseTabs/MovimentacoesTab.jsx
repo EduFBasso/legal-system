@@ -13,19 +13,13 @@ function MovimentacoesTab({
   movimentacoes = [],
   highlightedMovimentacaoId = null,
   numeroProcesso = '',
-  deadlines = [],
   tasks = [],
   onOpenModal = () => {},
   onEdit = () => {},
   onDelete = () => {},
-  onAddPrazo = () => {},
   onCreateTaskInDeadlines = () => {},
   onRefreshTasks = () => {},
 }) {
-  // Mapeamento de movimentações para prazos criados
-  const getDeadlinesByMovement = (movementId) => {
-    return deadlines.filter(d => d.id === movementId);
-  };
   const [searchTerm, setSearchTerm] = useState('');
   
   // Estado para controlar qual movimento está com formulário de tarefa aberto
@@ -460,19 +454,10 @@ function MovimentacoesTab({
                     {/* Ações */}
                     {mov.origem === 'MANUAL' && (
                       <div className="timeline-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        {!mov.prazo && (
-                          <button 
-                            className="btn-icon-small btn-warning" 
-                            onClick={() => onAddPrazo(mov)}
-                            title="Adicionar prazo a esta movimentação"
-                          >
-                            ⏰ Prazo
-                          </button>
-                        )}
                         <button
                           className="btn-icon-small"
                           onClick={() => onCreateTaskInDeadlines(mov)}
-                          title="Criar tarefa vinculada na aba Prazos"
+                          title="Criar tarefa vinculada na aba Tarefas"
                           style={{
                             fontSize: '1rem',
                             padding: '0.5rem 1rem',

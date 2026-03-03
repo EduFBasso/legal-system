@@ -9,7 +9,6 @@ import publicationsService from '../services/publicationsService';
 import caseMovementsService from '../services/caseMovementsService';
 import caseTasksService from '../services/caseTasksService';
 import financialService from '../services/financialService';
-import * as deadlinesService from '../services/deadlinesService';
 import systemSettingsService from '../services/systemSettingsService';
 import Toast from '../components/common/Toast';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -19,7 +18,6 @@ import {
   PartiesTab, 
   MovimentacoesTab, 
   DocumentosTab, 
-  DeadlinesTab, 
   FinanceiroTab,
   PublicacoesTab,
   TasksTab,
@@ -62,7 +60,7 @@ function CaseDetailPage() {
   const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
-  const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, deadlines
+  const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, tasks
   const [highlightedMovimentacaoId, setHighlightedMovimentacaoId] = useState(null);
   const [autoOpenTaskForMovimentacaoId, setAutoOpenTaskForMovimentacaoId] = useState(null);
   const [toast, setToast] = useState(null);
@@ -109,10 +107,7 @@ function CaseDetailPage() {
   });
   const [savingMovimentacao, setSavingMovimentacao] = useState(false);
 
-  // Prazos state
-  const [deadlines, setDeadlines] = useState([]);
-  const [loadingDeadlines, setLoadingDeadlines] = useState(false);
-  const [deadlineFilter, setDeadlineFilter] = useState('all'); // all, overdue, upcoming, future
+
 
   // Financeiro state
   const [recebimentos, setRecebimentos] = useState([]);
@@ -378,8 +373,6 @@ function CaseDetailPage() {
       await caseMovementsService.updateMovement(deadline.id, {
         completed: deadline.completed,
       });
-      // Refresh prazos to reflect change
-      await loadDeadlines();
       showToast(
         deadline.completed ? 'Prazo marcado como resolvido' : 'Prazo marcado como não resolvido',
         'success'
@@ -389,33 +382,6 @@ function CaseDetailPage() {
       showToast('Erro ao atualizar prazo', 'error');
     }
   };
-
-  /**
-   * Load deadlines for this case
-   */
-  const loadDeadlines = useCallback(async () => {
-    if (!id) return;
-    
-    setLoadingDeadlines(true);
-    try {
-      const data = await deadlinesService.getDeadlinesByCase(id);
-      setDeadlines(data);
-    } catch (error) {
-      console.error('Error loading deadlines:', error);
-      showToast('Erro ao carregar prazos', 'error');
-    } finally {
-      setLoadingDeadlines(false);
-    }
-  }, [id, showToast]);
-
-  useEffect(() => {
-    // Verificar setting antes de carregar
-    const shouldAutoLoad = systemSettings?.AUTO_CHECK_DEADLINES !== false;
-    
-    if (id && shouldAutoLoad) {
-      loadDeadlines();
-    }
-  }, [id, loadDeadlines, systemSettings]);
 
   /**
    * Load publications linked to this case
@@ -1015,9 +981,8 @@ function CaseDetailPage() {
         showToast('Movimentação cadastrada com sucesso!', 'success');
       }
       
-      // Reload movimentacoes, deadlines and case data (to update resumo)
+      // Reload movimentacoes, tasks and case data (to update resumo)
       await loadMovimentacoes();
-      await loadDeadlines();
       await loadTasks();
       await loadCaseData();
       
@@ -1064,9 +1029,8 @@ function CaseDetailPage() {
       await caseMovementsService.deleteMovement(id);
       showToast('Movimentação excluída com sucesso!', 'success');
       
-      // Reload movimentacoes, deadlines and case data (to update resumo)
+      // Reload movimentacoes and case data (to update resumo)
       await loadMovimentacoes();
-      await loadDeadlines();
       await loadCaseData();
     } catch (error) {
       console.error('Error deleting movimentacao:', error);
@@ -1084,9 +1048,8 @@ function CaseDetailPage() {
       if (result.success) {
         showToast('Movimentação criada com sucesso!', 'success');
         
-        // Reload movimentacoes and deadlines
+        // Reload movimentacoes
         await loadMovimentacoes();
-        await loadDeadlines();
       } else {
         showToast(result.error || 'Erro ao criar movimentação', 'error');
       }
@@ -1432,13 +1395,6 @@ function CaseDetailPage() {
               </button>
             )}
             <button
-              className={`nav-tab ${activeSection === 'deadlines' ? 'active' : ''}`}
-              onClick={() => setActiveSection('deadlines')}
-            >
-              ⏰ Prazos
-              {deadlines.length > 0 && <span className="badge">{deadlines.length}</span>}
-            </button>
-            <button
               className={`nav-tab ${activeSection === 'tasks' ? 'active' : ''}`}
               onClick={() => setActiveSection('tasks')}
             >
@@ -1472,7 +1428,6 @@ function CaseDetailPage() {
             onOpenLatestMovimentacao={handleOpenLatestMovimentacao}
             onAddPartyClick={handleOpenContactSelection}
             parties={parties}
-            deadlines={deadlines}
             caseData={caseData}
             formatDate={formatDate}
             formatCurrency={formatCurrency}
@@ -1489,14 +1444,12 @@ function CaseDetailPage() {
             id={id}
             movimentacoes={movimentacoes}
             numeroProcesso={caseData?.numero_processo}
-            deadlines={deadlines}
             tasks={tasks}
             highlightedMovimentacaoId={highlightedMovimentacaoId}
             formatDate={formatDate}
             onOpenModal={handleOpenMovimentacaoModal}
             onEdit={handleEditMovimentacao}
             onDelete={handleDeleteMovimentacao}
-            onAddPrazo={(mov) => setActiveSection('deadlines')}
             onCreateTaskInDeadlines={handleCreateTaskFromMovementInDeadlines}
             onRefreshTasks={loadTasks}
           />
@@ -1528,19 +1481,6 @@ function CaseDetailPage() {
             }}
             onCreateMovement={handleCreateMovementFromPublication}
             onRefresh={loadPublicacoes}
-          />
-        )}
-
-        {/* Prazos Section */}
-        {activeSection === 'deadlines' && (
-          <DeadlinesTab 
-            movements={movimentacoes}
-            loadingMovements={loadingMovimentacoes}
-            caseId={id}
-            numeroProcesso={caseData?.numero_processo}
-            highlightedMovimentacaoId={highlightedMovimentacaoId}
-            autoOpenTaskForMovimentacaoId={autoOpenTaskForMovimentacaoId}
-            onClearAutoOpenTask={() => setAutoOpenTaskForMovimentacaoId(null)}
           />
         )}
 
