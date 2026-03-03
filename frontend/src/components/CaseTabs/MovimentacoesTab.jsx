@@ -432,23 +432,6 @@ function MovimentacoesTab({
                           PRAZOS: {mov.prazo} DIAS
                         </span>
                       )}
-                      
-                      {/* Badge INDICADOR */}
-                      {getDeadlinesByMovement(mov.id).length > 0 && (
-                        <span style={{
-                          textTransform: 'uppercase',
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                          letterSpacing: '0.5px',
-                          padding: '0.4rem 0.75rem',
-                          borderRadius: '6px',
-                          background: '#059669',
-                          color: 'white',
-                          display: 'inline-block'
-                        }}>
-                          ✓ PRAZO CRIADO
-                        </span>
-                      )}
                     </div>
 
                     {/* Ações */}

@@ -437,24 +437,6 @@ function CaseDetailPage() {
   }, [id, loadTasks, systemSettings]);
 
   /**
-   * Check deadlines and create notifications on page load
-   */
-  useEffect(() => {
-    const checkDeadlines = async () => {
-      try {
-        await deadlinesService.checkDeadlinesAndNotify();
-      } catch (error) {
-        console.error('Error checking deadlines:', error);
-        // Silent fail - não mostrar erro para o usuário
-      }
-    };
-    
-    if (id) {
-      checkDeadlines();
-    }
-  }, [id]);
-
-  /**
    * Load parties on mount for summary display
    */
   useEffect(() => {
