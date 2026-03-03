@@ -103,10 +103,10 @@ export default function Menu() {
             to="/deadlines"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            data-tooltip="Tarefas agrupadas por urgência (Urgentíssimas, Urgentes, Normais)"
+            data-tooltip="Resumo das tarefas agendadas não concluídas, agrupadas por urgência"
           >
             <span className="menu-icon">⏰</span>
-            <span className="menu-label">Prazos</span>
+            <span className="menu-label">Tarefas Agendadas</span>
           </NavLink>
         </li>
       </ul>
