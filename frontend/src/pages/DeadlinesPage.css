@@ -51,30 +51,49 @@
   cursor: pointer;
 }
 
+/* Urgentíssima - Red */
+.stat-card.stat-urgentissimo {
+  /* Default state stays white */
+}
+
 /* Urgentíssima card hover - Red (like inactive in CasesPage) */
 .stat-card.stat-urgentissimo.stat-clickable:hover {
   border-color: #dc2626;
+  border-width: 1px;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
   transform: translateY(-2px);
   background: #fef2f2;
 }
 
+/* Urgente - Orange */
+.stat-card.stat-urgente {
+  /* Default state stays white */
+}
+
 /* Urgente card hover - Orange */
 .stat-card.stat-urgente.stat-clickable:hover {
   border-color: #f97316;
+  border-width: 1px;
   box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
   transform: translateY(-2px);
   background: #fff7ed;
 }
 
+/* Normal - Green */
+.stat-card.stat-normal {
+  /* Default state stays white */
+}
+
 /* Normal card hover - Green (like active in CasesPage) */
 .stat-card.stat-normal.stat-clickable:hover {
   border-color: #16a34a;
+  border-width: 1px;
   box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
   transform: translateY(-2px);
   background: #f0fdf4;
 }
 
+/* ========== SELECTED STATE ========== */
 /* Selected state - shows active filter */
 .stat-card.stat-selected {
   border-width: 3px;
@@ -84,11 +103,15 @@
 
 /* Urgentíssima - Red when selected */
 .stat-card.stat-urgentissimo.stat-selected {
-  border-color: #dc2626;
-  background: #fef2f2;
+  border-color: #dc2626 !important;
+  background: #fef2f2 !important;
 }
 
 .stat-card.stat-urgentissimo.stat-selected .stat-number {
+  color: #b91c1c;
+}
+
+.stat-card.stat-urgentissimo.stat-selected .stat-label {
   color: #b91c1c;
 }
 
@@ -100,11 +123,15 @@
 
 /* Urgente - Orange when selected */
 .stat-card.stat-urgente.stat-selected {
-  border-color: #f97316;
-  background: #fff7ed;
+  border-color: #f97316 !important;
+  background: #fff7ed !important;
 }
 
 .stat-card.stat-urgente.stat-selected .stat-number {
+  color: #c2410c;
+}
+
+.stat-card.stat-urgente.stat-selected .stat-label {
   color: #c2410c;
 }
 
@@ -116,11 +143,15 @@
 
 /* Normal - Green when selected */
 .stat-card.stat-normal.stat-selected {
-  border-color: #16a34a;
-  background: #f0fdf4;
+  border-color: #16a34a !important;
+  background: #f0fdf4 !important;
 }
 
 .stat-card.stat-normal.stat-selected .stat-number {
+  color: #15803d;
+}
+
+.stat-card.stat-normal.stat-selected .stat-label {
   color: #15803d;
 }
 

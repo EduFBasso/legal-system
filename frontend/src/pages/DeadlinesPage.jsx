@@ -195,7 +195,7 @@ export default function DeadlinesPage() {
           title="Filtrar apenas urgentíssimas"
         >
           <div className="stat-number">{grouped.URGENTISSIMO.length}</div>
-          <div className="stat-label">🔴 Urgentíssimas</div>
+          <div className="stat-label">Urgentíssimas</div>
         </div>
         <div 
           className={`stat-card stat-urgente stat-clickable ${selectedUrgency === 'URGENTE' ? 'stat-selected' : ''}`}
@@ -203,7 +203,7 @@ export default function DeadlinesPage() {
           title="Filtrar apenas urgentes"
         >
           <div className="stat-number">{grouped.URGENTE.length}</div>
-          <div className="stat-label">🟠 Urgentes</div>
+          <div className="stat-label">Urgentes</div>
         </div>
         <div 
           className={`stat-card stat-normal stat-clickable ${selectedUrgency === 'NORMAL' ? 'stat-selected' : ''}`}
@@ -211,7 +211,7 @@ export default function DeadlinesPage() {
           title="Filtrar apenas normais"
         >
           <div className="stat-number">{grouped.NORMAL.length}</div>
-          <div className="stat-label">🟢 Normais</div>
+          <div className="stat-label">Normais</div>
         </div>
       </div>
 
