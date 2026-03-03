@@ -93,6 +93,11 @@
   color: white;
 }
 
+.stat-card.stat-urgentissimo.stat-selected .stat-label {
+  color: #7f1d1d;
+  font-weight: 700;
+}
+
 .stat-card.stat-urgentissimo.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(127, 29, 29, 0.2);
   transform: translateY(-2px);
@@ -109,6 +114,11 @@
   color: white;
 }
 
+.stat-card.stat-urgente.stat-selected .stat-label {
+  color: #7c2d12;
+  font-weight: 700;
+}
+
 .stat-card.stat-urgente.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(124, 45, 18, 0.2);
   transform: translateY(-2px);
@@ -123,6 +133,11 @@
 .stat-card.stat-normal.stat-selected .stat-number {
   background-color: #166534;
   color: white;
+}
+
+.stat-card.stat-normal.stat-selected .stat-label {
+  color: #166534;
+  font-weight: 700;
 }
 
 .stat-card.stat-normal.stat-selected:hover {
