@@ -140,6 +140,9 @@ export default function DeadlinesPage() {
   const grouped = groupedAndSortedTasks();
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'CONCLUIDA').length;
+  const showUrgentissimo = selectedUrgency === null || selectedUrgency === 'URGENTISSIMO';
+  const showUrgente = selectedUrgency === null || selectedUrgency === 'URGENTE';
+  const showNormal = selectedUrgency === null || selectedUrgency === 'NORMAL';
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
@@ -189,6 +192,14 @@ export default function DeadlinesPage() {
 
       {/* Estatísticas */}
       <div className="deadlines-stats">
+        <div
+          className={`stat-card stat-total stat-clickable ${selectedUrgency === null ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(null)}
+          title="Mostrar todas as tarefas"
+        >
+          <div className="stat-number">{totalTasks}</div>
+          <div className="stat-label">Todas</div>
+        </div>
         <div 
           className={`stat-card stat-urgentissimo stat-clickable ${selectedUrgency === 'URGENTISSIMO' ? 'stat-selected' : ''}`}
           onClick={() => setSelectedUrgency(selectedUrgency === 'URGENTISSIMO' ? null : 'URGENTISSIMO')}
@@ -226,7 +237,7 @@ export default function DeadlinesPage() {
         ) : (
           <>
             {/* URGENTÍSSIMAS */}
-            {grouped.URGENTISSIMO.length > 0 && (
+            {showUrgentissimo && grouped.URGENTISSIMO.length > 0 && (
               <div className="urgency-section urgentissimo-section">
                 <div className="tasks-list">
                   {grouped.URGENTISSIMO.map(task => (
@@ -266,7 +277,7 @@ export default function DeadlinesPage() {
             )}
 
             {/* URGENTES */}
-            {grouped.URGENTE.length > 0 && (
+            {showUrgente && grouped.URGENTE.length > 0 && (
               <div className="urgency-section urgente-section">
                 <div className="tasks-list">
                   {grouped.URGENTE.map(task => (
@@ -306,7 +317,7 @@ export default function DeadlinesPage() {
             )}
 
             {/* NORMAIS */}
-            {grouped.NORMAL.length > 0 && (
+            {showNormal && grouped.NORMAL.length > 0 && (
               <div className="urgency-section normal-section">
                 <div className="tasks-list">
                   {grouped.NORMAL.map(task => (

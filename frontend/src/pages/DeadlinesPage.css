@@ -51,9 +51,21 @@
   cursor: pointer;
 }
 
-/* Urgentíssima - Red */
-.stat-card.stat-urgentissimo {
-  /* Default state stays white */
+/* Total - Slate */
+.stat-card.stat-total .stat-number {
+  color: #475569;
+}
+
+.stat-card.stat-total .stat-label {
+  color: #475569;
+}
+
+.stat-card.stat-total.stat-clickable:hover {
+  border-color: #475569;
+  border-width: 1px;
+  box-shadow: 0 4px 12px rgba(71, 85, 105, 0.15);
+  transform: translateY(-2px);
+  background: #f8fafc;
 }
 
 .stat-card.stat-urgentissimo .stat-number {
@@ -73,11 +85,6 @@
   background: #fef2f2;
 }
 
-/* Urgente - Orange */
-.stat-card.stat-urgente {
-  /* Default state stays white */
-}
-
 .stat-card.stat-urgente .stat-number {
   color: #f97316;
 }
@@ -93,11 +100,6 @@
   box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
   transform: translateY(-2px);
   background: #fff7ed;
-}
-
-/* Normal - Green */
-.stat-card.stat-normal {
-  /* Default state stays white */
 }
 
 .stat-card.stat-normal .stat-number {
@@ -123,6 +125,17 @@
   border-width: 3px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
+}
+
+/* Total - Slate when selected */
+.stat-card.stat-total.stat-selected {
+  border-color: #475569 !important;
+  background: #f8fafc !important;
+}
+
+.stat-card.stat-total.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(71, 85, 105, 0.2);
+  transform: translateY(-2px);
 }
 
 /* Urgentíssima - Red when selected */
