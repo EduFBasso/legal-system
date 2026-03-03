@@ -255,8 +255,8 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className="task-case">Caso {task.case}</span>
-                          <span className="task-date">📅 {formatDate(task.data_vencimento)}</span>
+                          <span className="task-date">{formatDate(task.data_vencimento)}</span>
+                          <span className="task-meta-dot">•</span>
                           <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
@@ -295,8 +295,8 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className="task-case">Caso {task.case}</span>
-                          <span className="task-date">📅 {formatDate(task.data_vencimento)}</span>
+                          <span className="task-date">{formatDate(task.data_vencimento)}</span>
+                          <span className="task-meta-dot">•</span>
                           <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
@@ -335,8 +335,8 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className="task-case">Caso {task.case}</span>
-                          <span className="task-date">📅 {formatDate(task.data_vencimento)}</span>
+                          <span className="task-date">{formatDate(task.data_vencimento)}</span>
+                          <span className="task-meta-dot">•</span>
                           <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>

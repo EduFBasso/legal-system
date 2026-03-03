@@ -324,7 +324,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #1f2937;
+  accent-color: #dc2626;
 }
 
 /* Conteúdo principal da tarefa */
@@ -346,6 +346,11 @@
   word-break: break-word;
 }
 
+.task-item:not(.completed) .task-title {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
 .task-description {
   font-size: 15px;
   color: #4b5563;
@@ -354,20 +359,21 @@
   word-break: break-word;
 }
 
+.task-item:not(.completed) .task-description {
+  color: #b91c1c;
+}
+
 .task-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   font-size: 13px;
   color: #6b7280;
+  align-items: center;
 }
 
-.task-case {
-  background: #ede9fe;
-  color: #6b21a8;
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-weight: 600;
+.task-item:not(.completed) .task-meta {
+  color: #b91c1c;
 }
 
 .task-date,
@@ -375,6 +381,19 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.task-meta-dot {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.task-item:not(.completed) .task-date,
+.task-item:not(.completed) .task-remaining,
+.task-item:not(.completed) .task-meta-dot {
+  color: #b91c1c;
+  font-size: 17px;
+  font-weight: 700;
 }
 
 /* Task actions */
@@ -475,6 +494,12 @@
   .task-meta {
     width: 100%;
     order: 3;
+  }
+
+  .task-item:not(.completed) .task-date,
+  .task-item:not(.completed) .task-remaining,
+  .task-item:not(.completed) .task-meta-dot {
+    font-size: 15px;
   }
 
   .task-actions {
