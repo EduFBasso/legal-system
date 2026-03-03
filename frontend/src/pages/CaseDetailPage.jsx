@@ -62,7 +62,6 @@ function CaseDetailPage() {
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, tasks
   const [highlightedMovimentacaoId, setHighlightedMovimentacaoId] = useState(null);
-  const [autoOpenTaskForMovimentacaoId, setAutoOpenTaskForMovimentacaoId] = useState(null);
   const [toast, setToast] = useState(null);
   const [systemSettings, setSystemSettings] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -534,18 +533,6 @@ function CaseDetailPage() {
     }
 
     setHighlightedMovimentacaoId(Number(latestMov.id));
-
-    setTimeout(() => {
-      setHighlightedMovimentacaoId(null);
-    }, 3000);
-  };
-
-  const handleCreateTaskFromMovementInDeadlines = (movimentacao) => {
-    if (!movimentacao?.id) return;
-
-    setActiveSection('deadlines');
-    setHighlightedMovimentacaoId(Number(movimentacao.id));
-    setAutoOpenTaskForMovimentacaoId(Number(movimentacao.id));
 
     setTimeout(() => {
       setHighlightedMovimentacaoId(null);
@@ -1432,7 +1419,6 @@ function CaseDetailPage() {
             onOpenModal={handleOpenMovimentacaoModal}
             onEdit={handleEditMovimentacao}
             onDelete={handleDeleteMovimentacao}
-            onCreateTaskInDeadlines={handleCreateTaskFromMovementInDeadlines}
             onRefreshTasks={loadTasks}
           />
         )}

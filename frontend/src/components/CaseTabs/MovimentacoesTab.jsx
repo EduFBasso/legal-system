@@ -17,7 +17,6 @@ function MovimentacoesTab({
   onOpenModal = () => {},
   onEdit = () => {},
   onDelete = () => {},
-  onCreateTaskInDeadlines = () => {},
   onRefreshTasks = () => {},
 }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -437,20 +436,6 @@ function MovimentacoesTab({
                     {/* Ações */}
                     {mov.origem === 'MANUAL' && (
                       <div className="timeline-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <button
-                          className="btn-icon-small"
-                          onClick={() => onCreateTaskInDeadlines(mov)}
-                          title="Criar tarefa vinculada na aba Tarefas"
-                          style={{
-                            fontSize: '1rem',
-                            padding: '0.5rem 1rem',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                          }}
-                        >
-                          📝 Tarefa
-                        </button>
                         <button 
                           className="btn-icon-small btn-danger" 
                           onClick={() => onDelete(mov.id)}
