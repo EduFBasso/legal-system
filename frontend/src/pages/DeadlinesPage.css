@@ -427,6 +427,20 @@
   font-weight: 700;
 }
 
+.task-date.overdue-date {
+  color: #b91c1c !important;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.task-remaining.overdue-remaining,
+.task-meta-dot.overdue-meta-dot {
+  color: #b91c1c !important;
+  font-weight: 700;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .deadlines-page {

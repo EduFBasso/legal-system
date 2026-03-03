@@ -79,6 +79,18 @@ export default function DeadlinesPage() {
     return `${days}d`;
   };
 
+  const isOverdue = (dataVencimento) => {
+    if (!dataVencimento) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueDate = new Date(dataVencimento);
+    dueDate.setHours(0, 0, 0, 0);
+
+    return dueDate < today;
+  };
+
   /**
    * Agrupa e ordena tarefas por urgência
    */
@@ -255,9 +267,9 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className="task-date">{formatDate(task.data_vencimento)}</span>
-                          <span className="task-meta-dot">•</span>
-                          <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
+                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
+                          <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
+                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
                     </div>
@@ -285,9 +297,9 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className="task-date">{formatDate(task.data_vencimento)}</span>
-                          <span className="task-meta-dot">•</span>
-                          <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
+                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
+                          <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
+                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
                     </div>
@@ -315,9 +327,9 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className="task-date">{formatDate(task.data_vencimento)}</span>
-                          <span className="task-meta-dot">•</span>
-                          <span className="task-remaining">{formatDaysRemaining(task.data_vencimento)}</span>
+                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
+                          <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
+                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
                     </div>
