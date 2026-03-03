@@ -710,14 +710,13 @@ function MovimentacoesTab({
                       {mov.origem === 'MANUAL' && (
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                           <button 
-                            className="btn-icon-small btn-edit" 
                             onClick={() => handleOpenEditMovimentacao(mov)}
                             title="Editar movimentação"
                             style={{
                               background: '#6b21a8',
                               color: 'white',
                               border: 'none',
-                              padding: '0.5rem 1rem',
+                              padding: '0.5rem 1.25rem',
                               borderRadius: '6px',
                               fontSize: '0.875rem',
                               cursor: 'pointer',
@@ -727,7 +726,8 @@ function MovimentacoesTab({
                               gap: '0.5rem',
                               fontWeight: '600',
                               transition: '0.2s',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              minWidth: 'fit-content'
                             }}
                             onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
                             onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
