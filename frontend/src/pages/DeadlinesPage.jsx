@@ -91,6 +91,18 @@ export default function DeadlinesPage() {
     return dueDate < today;
   };
 
+  const isToday = (dataVencimento) => {
+    if (!dataVencimento) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueDate = new Date(dataVencimento);
+    dueDate.setHours(0, 0, 0, 0);
+
+    return dueDate.getTime() === today.getTime();
+  };
+
   /**
    * Agrupa e ordena tarefas por urgência
    */
@@ -267,9 +279,11 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
+                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>{task.case}</a>
+                          <span className="task-meta-dot">•</span>
+                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
                           <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
-                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
+                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
                     </div>
@@ -297,9 +311,11 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
+                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>{task.case}</a>
+                          <span className="task-meta-dot">•</span>
+                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
                           <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
-                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
+                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
                     </div>
@@ -327,9 +343,11 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-meta">
-                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
+                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>{task.case}</a>
+                          <span className="task-meta-dot">•</span>
+                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
                           <span className={`task-meta-dot ${isOverdue(task.data_vencimento) ? 'overdue-meta-dot' : ''}`}>•</span>
-                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
+                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
                         </div>
                       </div>
                     </div>

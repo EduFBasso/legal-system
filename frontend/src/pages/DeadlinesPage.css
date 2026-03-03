@@ -441,6 +441,32 @@
   font-weight: 700;
 }
 
+.task-date.today-date {
+  color: #b45309 !important;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.task-remaining.today-remaining,
+.task-meta-dot.today-meta-dot {
+  color: #b45309 !important;
+  font-weight: 700;
+}
+
+.task-process-link {
+  color: #0ea5e9;
+  text-decoration: underline;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.task-process-link:hover {
+  color: #0284c7;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .deadlines-page {
