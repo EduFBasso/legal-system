@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import caseTasksService from '../services/caseTasksService';
 import './DeadlinesPage.css';
 
@@ -112,7 +112,10 @@ export default function DeadlinesPage() {
   /**
    * Agrupa e ordena tarefas por urgência
    */
-  const groupedAndSortedTasks = () => {
+  /**
+   * Agrupa tarefas por urgência e ordena (memoizado para evitar re-renderizações desnecessárias)
+   */
+  const grouped = useMemo(() => {
     // Adiciona urgência calculada a cada tarefa
     const tasksWithUrgency = tasks.map(task => ({
       ...task,
@@ -120,27 +123,36 @@ export default function DeadlinesPage() {
     }));
 
     // Agrupa por urgência
-    const grouped = {
+    const groupedTasks = {
       URGENTISSIMO: [],
       URGENTE: [],
       NORMAL: [],
     };
 
     tasksWithUrgency.forEach(task => {
-      grouped[task.calculated_urgency].push(task);
+      groupedTasks[task.calculated_urgency].push(task);
     });
 
     // Ordena cada grupo por data_vencimento (menores prazos primeiro)
-    Object.keys(grouped).forEach(urgency => {
-      grouped[urgency].sort((a, b) => {
+    Object.keys(groupedTasks).forEach(urgency => {
+      groupedTasks[urgency].sort((a, b) => {
         if (!a.data_vencimento) return 1;
         if (!b.data_vencimento) return -1;
         return new Date(a.data_vencimento) - new Date(b.data_vencimento);
       });
     });
 
-    return grouped;
-  };
+    return groupedTasks;
+  }, [tasks]);
+
+  /**
+   * Calcula total de tarefas
+   */
+  const totalTasks = useMemo(() => tasks.length, [tasks]);
+  const completedTasks = useMemo(() => tasks.filter(t => t.status === 'CONCLUIDA').length, [tasks]);
+  const showUrgentissimo = useMemo(() => selectedUrgency === null || selectedUrgency === 'URGENTISSIMO', [selectedUrgency]);
+  const showUrgente = useMemo(() => selectedUrgency === null || selectedUrgency === 'URGENTE', [selectedUrgency]);
+  const showNormal = useMemo(() => selectedUrgency === null || selectedUrgency === 'NORMAL', [selectedUrgency]);
 
   /**
    * Marca tarefa como concluída
@@ -159,13 +171,6 @@ export default function DeadlinesPage() {
       alert('Erro ao atualizar tarefa. Tente novamente.');
     }
   };
-
-  const grouped = groupedAndSortedTasks();
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === 'CONCLUIDA').length;
-  const showUrgentissimo = selectedUrgency === null || selectedUrgency === 'URGENTISSIMO';
-  const showUrgente = selectedUrgency === null || selectedUrgency === 'URGENTE';
-  const showNormal = selectedUrgency === null || selectedUrgency === 'NORMAL';
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
