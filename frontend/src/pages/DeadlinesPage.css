@@ -43,60 +43,105 @@
   border-radius: 8px;
   padding: 20px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border: 2px solid #e5e7eb;
 }
 
-.stat-card:first-child {
+.stat-card.stat-clickable {
+  cursor: pointer;
+}
+
+/* Urgentíssima card - Red dark */
+.stat-card.stat-urgentissimo.stat-clickable:hover {
   border-color: #7f1d1d;
+  background: #fef2f2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(127, 29, 29, 0.15);
 }
 
-.stat-card:nth-child(2) {
+/* Urgente card - Orange dark */
+.stat-card.stat-urgente.stat-clickable:hover {
   border-color: #7c2d12;
+  background: #fef3f2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 45, 18, 0.15);
 }
 
-.stat-card:nth-child(3) {
+/* Normal card - Green dark */
+.stat-card.stat-normal.stat-clickable:hover {
   border-color: #166534;
+  background: #f0fdf4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 101, 52, 0.15);
 }
 
-.stat-card:hover {
-  border-color: currentColor;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Selected state */
+.stat-card.stat-selected {
+  border-width: 3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
+/* Urgentíssima selected */
+.stat-card.stat-urgentissimo.stat-selected {
+  border-color: #7f1d1d;
+  background: #fef2f2;
+}
+
+.stat-card.stat-urgentissimo.stat-selected .stat-number {
+  background-color: #7f1d1d;
+  color: white;
+}
+
+.stat-card.stat-urgentissimo.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(127, 29, 29, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Urgente selected */
+.stat-card.stat-urgente.stat-selected {
+  border-color: #7c2d12;
+  background: #fef3f2;
+}
+
+.stat-card.stat-urgente.stat-selected .stat-number {
+  background-color: #7c2d12;
+  color: white;
+}
+
+.stat-card.stat-urgente.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(124, 45, 18, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Normal selected */
+.stat-card.stat-normal.stat-selected {
+  border-color: #166534;
+  background: #f0fdf4;
+}
+
+.stat-card.stat-normal.stat-selected .stat-number {
+  background-color: #166534;
+  color: white;
+}
+
+.stat-card.stat-normal.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(22, 101, 52, 0.2);
+  transform: translateY(-2px);
+}
 .stat-number {
   font-size: 38px;
   font-weight: 700;
+  color: #1f2937;
   margin-bottom: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-.stat-card:first-child .stat-number {
-  background-color: #7f1d1d;
-  color: white;
-  min-width: 50px;
-}
-
-.stat-card:nth-child(2) .stat-number {
-  background-color: #7c2d12;
-  color: white;
-  min-width: 50px;
-}
-
-.stat-card:nth-child(3) .stat-number {
-  background-color: #166534;
-  color: white;
-  min-width: 50px;
+  display: block;
 }
 
 .stat-label {
   font-size: 14px;
   color: #4b5563;
-  font-weight: 500;
+  font-weight: 600;
 }
-
 /* Estados de Loading/Error/Empty */
 .loading-state,
 .error-state,

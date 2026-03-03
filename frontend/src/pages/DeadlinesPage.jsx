@@ -14,6 +14,7 @@ export default function DeadlinesPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedUrgency, setSelectedUrgency] = useState(null); // Para rastrear qual filtro está ativo
 
   // Buscar todas as tarefas do sistema
   useEffect(() => {
@@ -188,15 +189,27 @@ export default function DeadlinesPage() {
 
       {/* Estatísticas */}
       <div className="deadlines-stats">
-        <div className="stat-card">
+        <div 
+          className={`stat-card stat-urgentissimo stat-clickable ${selectedUrgency === 'URGENTISSIMO' ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(selectedUrgency === 'URGENTISSIMO' ? null : 'URGENTISSIMO')}
+          title="Filtrar apenas urgentíssimas"
+        >
           <div className="stat-number">{grouped.URGENTISSIMO.length}</div>
           <div className="stat-label">🔴 Urgentíssimas</div>
         </div>
-        <div className="stat-card">
+        <div 
+          className={`stat-card stat-urgente stat-clickable ${selectedUrgency === 'URGENTE' ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(selectedUrgency === 'URGENTE' ? null : 'URGENTE')}
+          title="Filtrar apenas urgentes"
+        >
           <div className="stat-number">{grouped.URGENTE.length}</div>
           <div className="stat-label">🟠 Urgentes</div>
         </div>
-        <div className="stat-card">
+        <div 
+          className={`stat-card stat-normal stat-clickable ${selectedUrgency === 'NORMAL' ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(selectedUrgency === 'NORMAL' ? null : 'NORMAL')}
+          title="Filtrar apenas normais"
+        >
           <div className="stat-number">{grouped.NORMAL.length}</div>
           <div className="stat-label">🟢 Normais</div>
         </div>
