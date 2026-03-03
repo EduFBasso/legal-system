@@ -448,7 +448,7 @@ function MovimentacoesTab({
                             background: '#6b21a8',
                             color: 'white',
                             border: 'none',
-                            padding: '0.5rem 2rem',
+                            padding: '0.9rem 2.5rem',
                             borderRadius: '6px',
                             cursor: 'pointer',
                             display: 'inline-flex',
@@ -456,7 +456,7 @@ function MovimentacoesTab({
                             justifyContent: 'center',
                             gap: '0.5rem',
                             fontWeight: '600',
-                            transition: 'all 0.2s ease',
+                            transition: '0.2s',
                             whiteSpace: 'nowrap'
                           }}
                           onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
