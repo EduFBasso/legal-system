@@ -381,19 +381,11 @@
   opacity: 0.8;
 }
 
-.task-title-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
 .task-title {
   font-weight: 700;
   font-size: 17px;
   color: #1f2937;
-  margin: 0;
+  margin: 0 0 8px 0;
   word-break: break-word;
 }
 
@@ -402,10 +394,11 @@
   font-weight: 800;
 }
 
-.task-title-wrapper .task-process-link {
-  display: inline-block;
-  font-size: 16px;
-  white-space: nowrap;
+.task-process-line {
+  font-size: 15px;
+  margin: 0 0 10px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .task-description {
@@ -482,6 +475,7 @@
 }
 
 .task-process-link {
+  display: inline-block;
   color: #1f2937;
   text-decoration: none;
   font-weight: 600;

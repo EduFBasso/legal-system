@@ -268,8 +268,8 @@ export default function DeadlinesPage() {
                       </div>
                       
                       <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
-                        <div className="task-title-wrapper">
-                          <div className="task-title">{task.titulo}</div>
+                        <div className="task-title">{task.titulo}</div>
+                        <div className="task-process-line">
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
                             {task.case_numero}
                           </a>
@@ -303,8 +303,8 @@ export default function DeadlinesPage() {
                       </div>
                       
                       <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
-                        <div className="task-title-wrapper">
-                          <div className="task-title">{task.titulo}</div>
+                        <div className="task-title">{task.titulo}</div>
+                        <div className="task-process-line">
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
                             {task.case_numero}
                           </a>
@@ -338,8 +338,8 @@ export default function DeadlinesPage() {
                       </div>
                       
                       <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
-                        <div className="task-title-wrapper">
-                          <div className="task-title">{task.titulo}</div>
+                        <div className="task-title">{task.titulo}</div>
+                        <div className="task-process-line">
                           <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
                             {task.case_numero}
                           </a>
