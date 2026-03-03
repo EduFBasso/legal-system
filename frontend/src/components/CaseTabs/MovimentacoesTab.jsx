@@ -761,6 +761,9 @@ function MovimentacoesTab({
                       )}
                     </div>
 
+                    </>
+                  )}
+
                     {/* ========== SEÇÃO DE TAREFAS ========== */}
                     <hr style={{ 
                       margin: '1rem 0', 
@@ -1178,9 +1181,6 @@ function MovimentacoesTab({
                         Nenhuma tarefa vinculada. Clique em "Adicionar Tarefa" para criar.
                       </div>
                     )}
-
-                    </>
-                  )}
 
                 </div>
               );
