@@ -741,7 +741,7 @@ function MovimentacoesTab({
                               background: '#6b21a8',
                               color: 'white',
                               border: 'none',
-                              padding: '0.5rem 2.5rem',
+                              padding: '0.5rem 1.25rem',
                               borderRadius: '6px',
                               fontSize: '0.875rem',
                               cursor: 'pointer',
@@ -751,12 +751,13 @@ function MovimentacoesTab({
                               gap: '0.5rem',
                               fontWeight: '600',
                               transition: '0.2s',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              minWidth: 'fit-content'
                             }}
                             onMouseEnter={(e) => { e.target.style.background = '#581c87'; e.target.style.transform = 'scale(1.05)'; }}
                             onMouseLeave={(e) => { e.target.style.background = '#6b21a8'; e.target.style.transform = 'scale(1)'; }}
                           >
-                            <Trash2 size={16} /> Excluir
+                            Excluir
                           </button>
                         </div>
                       )}
