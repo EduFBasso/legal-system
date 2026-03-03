@@ -111,10 +111,6 @@
   color: #b91c1c;
 }
 
-.stat-card.stat-urgentissimo.stat-selected .stat-label {
-  color: #b91c1c;
-}
-
 /* Urgentíssima selected + hover */
 .stat-card.stat-urgentissimo.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
@@ -131,10 +127,6 @@
   color: #c2410c;
 }
 
-.stat-card.stat-urgente.stat-selected .stat-label {
-  color: #c2410c;
-}
-
 /* Urgente selected + hover */
 .stat-card.stat-urgente.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(249, 115, 22, 0.2);
@@ -148,10 +140,6 @@
 }
 
 .stat-card.stat-normal.stat-selected .stat-number {
-  color: #15803d;
-}
-
-.stat-card.stat-normal.stat-selected .stat-label {
   color: #15803d;
 }
 
