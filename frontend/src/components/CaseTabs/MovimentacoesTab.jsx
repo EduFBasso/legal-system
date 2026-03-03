@@ -6,6 +6,30 @@ import caseTasksService from '../../services/caseTasksService';
 import caseMovementsService from '../../services/caseMovementsService';
 
 /**
+ * Mapeamento de tipos de movimentação para exibição legível
+ */
+const getTipoDisplay = (tipo, tipoCustomizado) => {
+  if (!tipo) return '';
+  
+  const tipoMap = {
+    'DESPACHO': 'Despacho',
+    'DECISAO': 'Decisão Interlocutória',
+    'SENTENCA': 'Sentença',
+    'ACORDAO': 'Acórdão',
+    'AUDIENCIA': 'Audiência',
+    'JUNTADA': 'Juntada de Documento',
+    'INTIMACAO': 'Intimação',
+    'CITACAO': 'Citação',
+    'CONCLUSAO': 'Conclusos',
+    'RECURSO': 'Recurso',
+    'PETICAO': 'Petição Protocolada',
+    'OUTROS': tipoCustomizado || 'Outros'
+  };
+  
+  return tipoMap[tipo] || tipo;
+};
+
+/**
  * MovimentacoesTab - Aba de Movimentações Processuais
  * Exibe lista de movimentações (publicações DJE, despachos, decisões)
  */
@@ -579,7 +603,7 @@ function MovimentacoesTab({
                   {editingMovimentacaoId !== mov.id && (
                     <>
                   
-                  {/* Meta: Data de disponibilização + Órgão */}
+                  {/* Meta: Data de disponibilização + Tipo (MANUAL) / Órgão */}
                   <div style={{ 
                     display: 'flex', 
                     gap: '1rem', 
@@ -592,6 +616,14 @@ function MovimentacoesTab({
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
                     </span>
+                    
+                    {/* Exibir Tipo para movimentações MANUAL */}
+                    {mov.origem === 'MANUAL' && mov.tipo && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        ⚖️ <strong>Tipo:</strong> {getTipoDisplay(mov.tipo, mov.tipo_customizado)}
+                      </span>
+                    )}
+                    
                     {(() => {
                       // Usar órgão da API se disponível, senão usar o que foi extraído do texto
                       if (mov.orgao) {
@@ -605,68 +637,124 @@ function MovimentacoesTab({
                     })()}
                   </div>
 
-                    {/* Texto da publicação truncado (prioriza descrição completa) */}
-                    <div style={{ 
-                      fontSize: '0.9375rem',
-                      lineHeight: '1.6',
-                      color: '#6b21a8',
-                      marginBottom: '0.75rem'
-                    }}>
-                      {(() => {
-                        // Priorizar descricao (texto completo) sobre titulo (resumo)
-                        const textoCompleto = mov.descricao || mov.titulo || '';
-                        const minChars = 240;
-                        const maxChars = 360;
-                        
-                        if (textoCompleto.length <= minChars) {
-                          return textoCompleto;
-                        }
-                        
-                        // Truncar entre 240-360 chars tentando terminar em frase
-                        let truncated = textoCompleto.substring(0, maxChars);
-                        const lastPeriod = truncated.lastIndexOf('.');
-                        const lastComma = truncated.lastIndexOf(',');
-                        
-                        if (lastPeriod > minChars) {
-                          truncated = textoCompleto.substring(0, lastPeriod + 1);
-                        } else if (lastComma > minChars) {
-                          truncated = textoCompleto.substring(0, lastComma + 1);
-                        }
-                        
-                        return truncated + '...';
-                      })()}
-                    </div>
-
-                    {/* Link "Ver publicação completa" */}
-                    {mov.publicacao_id && (
+                    {/* Conteúdo diferenciado: MANUAL vs AUTOMÁTICA */}
+                    {mov.origem === 'MANUAL' ? (
+                      // Formato estruturado para movimentações MANUAL
                       <div style={{ marginBottom: '0.75rem' }}>
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }}
-                          style={{ 
-                            color: '#6b21a8',
-                            textDecoration: 'none',
-                            fontSize: '0.875rem',
-                            fontWeight: '600',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            transition: 'transform 0.2s ease',
-                            transformOrigin: 'left center'
-                          }}
-                        >
-                          → Ver publicação completa
-                        </a>
+                        {/* Título */}
+                        {mov.titulo && (
+                          <div style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ 
+                              fontSize: '0.875rem',
+                              fontWeight: '700',
+                              color: '#6b21a8',
+                              marginBottom: '0.375rem',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}>
+                              Título:
+                            </div>
+                            <div style={{ 
+                              fontSize: '0.9375rem',
+                              lineHeight: '1.6',
+                              color: '#6b21a8'
+                            }}>
+                              {mov.titulo}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Descrição */}
+                        {mov.descricao && (
+                          <div>
+                            <div style={{ 
+                              fontSize: '0.875rem',
+                              fontWeight: '700',
+                              color: '#6b21a8',
+                              marginBottom: '0.375rem',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}>
+                              Descrição completa:
+                            </div>
+                            <div style={{ 
+                              fontSize: '0.9375rem',
+                              lineHeight: '1.6',
+                              color: '#6b21a8',
+                              whiteSpace: 'pre-wrap'
+                            }}>
+                              {mov.descricao}
+                            </div>
+                          </div>
+                        )}
                       </div>
+                    ) : (
+                      // Formato original para movimentações AUTOMÁTICAS (importadas)
+                      <>
+                        {/* Texto da publicação truncado (prioriza descrição completa) */}
+                        <div style={{ 
+                          fontSize: '0.9375rem',
+                          lineHeight: '1.6',
+                          color: '#6b21a8',
+                          marginBottom: '0.75rem'
+                        }}>
+                          {(() => {
+                            // Priorizar descricao (texto completo) sobre titulo (resumo)
+                            const textoCompleto = mov.descricao || mov.titulo || '';
+                            const minChars = 240;
+                            const maxChars = 360;
+                            
+                            if (textoCompleto.length <= minChars) {
+                              return textoCompleto;
+                            }
+                            
+                            // Truncar entre 240-360 chars tentando terminar em frase
+                            let truncated = textoCompleto.substring(0, maxChars);
+                            const lastPeriod = truncated.lastIndexOf('.');
+                            const lastComma = truncated.lastIndexOf(',');
+                            
+                            if (lastPeriod > minChars) {
+                              truncated = textoCompleto.substring(0, lastPeriod + 1);
+                            } else if (lastComma > minChars) {
+                              truncated = textoCompleto.substring(0, lastComma + 1);
+                            }
+                            
+                            return truncated + '...';
+                          })()}
+                        </div>
+
+                        {/* Link "Ver publicação completa" */}
+                        {mov.publicacao_id && (
+                          <div style={{ marginBottom: '0.75rem' }}>
+                            <a
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                              }}
+                              style={{ 
+                                color: '#6b21a8',
+                                textDecoration: 'none',
+                                fontSize: '0.875rem',
+                                fontWeight: '600',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                transition: 'transform 0.2s ease',
+                                transformOrigin: 'left center'
+                              }}
+                            >
+                              → Ver publicação completa
+                            </a>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* Badges e Ações: ORIGEM → PRAZOS | EXCLUIR */}
