@@ -56,6 +56,14 @@
   /* Default state stays white */
 }
 
+.stat-card.stat-urgentissimo .stat-number {
+  color: #b91c1c;
+}
+
+.stat-card.stat-urgentissimo .stat-label {
+  color: #b91c1c;
+}
+
 /* Urgentíssima card hover - Red (like inactive in CasesPage) */
 .stat-card.stat-urgentissimo.stat-clickable:hover {
   border-color: #dc2626;
@@ -70,6 +78,14 @@
   /* Default state stays white */
 }
 
+.stat-card.stat-urgente .stat-number {
+  color: #c2410c;
+}
+
+.stat-card.stat-urgente .stat-label {
+  color: #c2410c;
+}
+
 /* Urgente card hover - Orange */
 .stat-card.stat-urgente.stat-clickable:hover {
   border-color: #f97316;
@@ -82,6 +98,14 @@
 /* Normal - Green */
 .stat-card.stat-normal {
   /* Default state stays white */
+}
+
+.stat-card.stat-normal .stat-number {
+  color: #15803d;
+}
+
+.stat-card.stat-normal .stat-label {
+  color: #15803d;
 }
 
 /* Normal card hover - Green (like active in CasesPage) */
@@ -107,14 +131,6 @@
   background: #fef2f2 !important;
 }
 
-.stat-card.stat-urgentissimo.stat-selected .stat-number {
-  color: #b91c1c;
-}
-
-.stat-card.stat-urgentissimo.stat-selected .stat-label {
-  color: #b91c1c;
-}
-
 /* Urgentíssima selected + hover */
 .stat-card.stat-urgentissimo.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
@@ -127,14 +143,6 @@
   background: #fff7ed !important;
 }
 
-.stat-card.stat-urgente.stat-selected .stat-number {
-  color: #c2410c;
-}
-
-.stat-card.stat-urgente.stat-selected .stat-label {
-  color: #c2410c;
-}
-
 /* Urgente selected + hover */
 .stat-card.stat-urgente.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(249, 115, 22, 0.2);
@@ -145,14 +153,6 @@
 .stat-card.stat-normal.stat-selected {
   border-color: #16a34a !important;
   background: #f0fdf4 !important;
-}
-
-.stat-card.stat-normal.stat-selected .stat-number {
-  color: #15803d;
-}
-
-.stat-card.stat-normal.stat-selected .stat-label {
-  color: #15803d;
 }
 
 /* Normal selected + hover */
