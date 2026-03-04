@@ -266,15 +266,15 @@
 }
 
 .urgency-section.urgentissimo-section {
-  border-left: 6px solid #dc2626;
+  border-left: 6px solid #6b21a8;
 }
 
 .urgency-section.urgente-section {
-  border-left: 6px solid #f97316;
+  border-left: 6px solid #6b21a8;
 }
 
 .urgency-section.normal-section {
-  border-left: 6px solid #16a34a;
+  border-left: 6px solid #6b21a8;
 }
 
 /* Header da seção */
@@ -300,16 +300,16 @@
   align-items: flex-start;
   gap: 12px;
   padding: 18px 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ddd6fe;
   border-radius: 8px;
   background: #ffffff;
   transition: all 0.2s ease;
 }
 
 .task-item:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  background: #faf5ff;
+  border-color: #6b21a8;
+  box-shadow: 0 4px 12px rgba(107, 33, 168, 0.12);
   transform: translateY(-1px);
 }
 
@@ -346,25 +346,12 @@
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  border: 2px solid #cbd5e1;
+  border: 2px solid #6b21a8;
   border-radius: 4px;
   background: #ffffff;
   display: grid;
   place-content: center;
   transition: all 0.2s ease;
-}
-
-/* Checkbox colors by urgency */
-.task-item.urgentissimo .checkbox-input {
-  border-color: #dc2626;
-}
-
-.task-item.urgente .checkbox-input {
-  border-color: #f97316;
-}
-
-.task-item.normal .checkbox-input {
-  border-color: #16a34a;
 }
 
 .checkbox-input::before {
@@ -377,37 +364,17 @@
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
-.task-item.urgentissimo .checkbox-input:checked {
-  background: #dc2626;
-  border-color: #dc2626;
-}
-
-.task-item.urgente .checkbox-input:checked {
-  background: #f97316;
-  border-color: #f97316;
-}
-
-.task-item.normal .checkbox-input:checked {
-  background: #16a34a;
-  border-color: #16a34a;
+.checkbox-input:checked {
+  background: #6b21a8;
+  border-color: #6b21a8;
 }
 
 .checkbox-input:checked::before {
   transform: scale(1);
 }
 
-.task-item.urgentissimo .checkbox-input:focus-visible {
-  outline: 2px solid #fecaca;
-  outline-offset: 1px;
-}
-
-.task-item.urgente .checkbox-input:focus-visible {
-  outline: 2px solid #fed7aa;
-  outline-offset: 1px;
-}
-
-.task-item.normal .checkbox-input:focus-visible {
-  outline: 2px solid #bbf7d0;
+.checkbox-input:focus-visible {
+  outline: 2px solid #ddd6fe;
   outline-offset: 1px;
 }
 
