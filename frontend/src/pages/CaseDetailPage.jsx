@@ -20,7 +20,6 @@ import {
   DocumentosTab, 
   FinanceiroTab,
   PublicacoesTab,
-  TasksTab,
 } from '../components/CaseTabs';
 import './CaseDetailPage.css';
 
@@ -1463,17 +1462,20 @@ function CaseDetailPage() {
         )}
 
         {activeSection === 'tasks' && (
-          <TasksTab
-            caseId={id}
-            tasks={tasks}
-            movimentacoes={movimentacoes}
-            loading={loadingTasks}
-            onRefresh={loadTasks}
-            onCreateTask={handleCreateTask}
-            onUpdateTaskStatus={handleUpdateTaskStatus}
-            onDeleteTask={handleDeleteTask}
-            onOpenLinkedMovimentacao={handleOpenLinkedMovimentacao}
-          />
+          <div className="case-section">
+            <div className="section-card">
+              <div className="section-header">
+                <div>
+                  <h2 className="section-title">✅ Tarefas do Processo</h2>
+                  <p className="section-subtitle">Em refatoração - voltando em breve</p>
+                </div>
+              </div>
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                <p>Esta seção está sendo refatorada para seguir padrão consistente com Deadlines e Movimentações.</p>
+                <p style={{ fontSize: '0.9rem', marginTop: '1rem' }}>Aguarde a próxima versão...</p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Financeiro Section */}
