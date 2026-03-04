@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Plus, FileText, Trash2, Check, X } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
+import { subscribeToTaskUpdates, notifyTaskUpdate } from '../../services/taskSyncService';
 import EmptyState from '../common/EmptyState';
 import caseTasksService from '../../services/caseTasksService';
 import caseMovementsService from '../../services/caseMovementsService';
@@ -155,6 +156,16 @@ function MovimentacoesTab({
       const nextStatus = task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA';
       await caseTasksService.patchTask(task.id, { status: nextStatus });
       await onRefreshTasks();
+      
+      // Notificar outros abas da mudança de tarefa
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'status-changed',
+        taskId: task.id,
+        caseId: id,
+        newStatus: nextStatus,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error toggling task status:', error);
       alert('Erro ao atualizar status da tarefa');
@@ -325,6 +336,19 @@ function MovimentacoesTab({
       clearTimeout(clearHighlightTimeout);
     };
   }, [highlightedMovimentacaoId, filteredMovimentacoes]);
+
+  /**
+   * Sincroniza alterações de tarefas entre abas/janelas do navegador
+   * Quando uma tarefa é marcada como concluída em outra aba, recarrega os dados
+   */
+  useEffect(() => {
+    const unsubscribe = subscribeToTaskUpdates((event) => {
+      if (event?.type === 'task-updated' && event?.action === 'status-changed') {
+        Promise.all([onRefreshTasks(), onRefreshMovements()]);
+      }
+    });
+    return unsubscribe;
+  }, [onRefreshTasks, onRefreshMovements]);
 
   return (
     <div className="case-section">

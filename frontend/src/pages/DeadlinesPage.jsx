@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import caseTasksService from '../services/caseTasksService';
+import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
 import './DeadlinesPage.css';
 
 /**
@@ -24,27 +25,47 @@ export default function DeadlinesPage() {
   };
 
   // Buscar todas as tarefas do sistema
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const data = await caseTasksService.getAllTasks();
-        setTasks(Array.isArray(data) ? data : []);
-        setError(null);
-      } catch (err) {
-        console.error('Erro ao buscar tarefas:', err);
-        setError('Erro ao carregar tarefas do sistema.');
-        setTasks([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchAllTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await caseTasksService.getAllTasks();
+      setTasks(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      console.error('Erro ao buscar tarefas:', err);
+      setError('Erro ao carregar tarefas do sistema.');
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    fetchTasks();
+  useEffect(() => {
+    fetchAllTasks();
     // Atualizar a cada 2 minutos
-    const interval = setInterval(fetchTasks, 2 * 60 * 1000);
+    const interval = setInterval(fetchAllTasks, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  /**
+   * Sincroniza atualizações de tarefas entre abas do navegador
+   * Quando uma tarefa é atualizada em outra aba (MovimentacoesTab), recarrega os dados
+   */
+  useEffect(() => {
+    const unsubscribe = subscribeToTaskUpdates((event) => {
+      if (event?.type === 'task-updated') {
+        if (event?.taskId && event?.newStatus) {
+          setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+              task.id === event.taskId ? { ...task, status: event.newStatus } : task
+            )
+          );
+        }
+        fetchAllTasks();
+      }
+    });
+    return unsubscribe;
+  }, [fetchAllTasks]);
 
   /**
    * Calcula urgência baseado em data de vencimento
@@ -172,9 +193,21 @@ export default function DeadlinesPage() {
       await caseTasksService.patchTask(task.id, { status: nextStatus });
       
       // Atualizar estado local
-      setTasks(tasks.map(t => 
-        t.id === task.id ? { ...t, status: nextStatus } : t
-      ));
+      setTasks((prevTasks) =>
+        prevTasks.map((t) =>
+          t.id === task.id ? { ...t, status: nextStatus } : t
+        )
+      );
+
+      // Notificar outros abas da mudança de tarefa
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'status-changed',
+        taskId: task.id,
+        caseId: task.case,
+        newStatus: nextStatus,
+        timestamp: new Date().toISOString()
+      });
     } catch (err) {
       console.error('Erro ao atualizar tarefa:', err);
       alert('Erro ao atualizar tarefa. Tente novamente.');
