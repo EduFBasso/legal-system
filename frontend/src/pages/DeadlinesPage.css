@@ -518,8 +518,21 @@
   transition: color 0.2s ease;
 }
 
-.task-movement-link-anchor:hover {
+.task-item.urgentissimo .task-movement-link-anchor {
   color: #b91c1c;
+}
+
+.task-item.urgente .task-movement-link-anchor {
+  color: #c2410c;
+}
+
+.task-item.normal .task-movement-link-anchor {
+  color: #15803d;
+}
+
+.task-item.urgentissimo .task-movement-link-anchor:hover,
+.task-item.urgente .task-movement-link-anchor:hover,
+.task-item.normal .task-movement-link-anchor:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -606,8 +619,21 @@
   transition: color 0.2s ease;
 }
 
-.task-process-link:hover {
+.task-item.urgentissimo .task-process-link {
   color: #b91c1c;
+}
+
+.task-item.urgente .task-process-link {
+  color: #c2410c;
+}
+
+.task-item.normal .task-process-link {
+  color: #15803d;
+}
+
+.task-item.urgentissimo .task-process-link:hover,
+.task-item.urgente .task-process-link:hover,
+.task-item.normal .task-process-link:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
