@@ -73,7 +73,7 @@ export default function Menu() {
             to="/publications/pending"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            data-tooltip="Publicações não vinculadas a nenhum processo - aguardando integração"
+          >
             <span className="menu-icon">⏳</span>
             <span className="menu-label">Não Vinculadas</span>
             {pendingCount > 0 && (
@@ -86,7 +86,7 @@ export default function Menu() {
             to="/search-history"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            data-tooltip="Histórico de buscas anteriores"
+          >
             <span className="menu-icon">📜</span>
             <span className="menu-label">Histórico de Buscas</span>
           </NavLink>
@@ -99,7 +99,7 @@ export default function Menu() {
             to="/deadlines"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            data-tooltip="Resumo das tarefas agendadas não concluídas, agrupadas por urgência"
+          >
             <span className="menu-icon">⏰</span>
             <span className="menu-label">Tarefas Agendadas</span>
           </NavLink>
