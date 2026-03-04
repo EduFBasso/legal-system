@@ -1,0 +1,297 @@
+/* TasksTab.css - Tarefas do Processo (Tipo 2) */
+
+.tasks-tab {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0;
+}
+
+/* Header */
+.tasks-tab .tab-header {
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-gray-200);
+  padding: 24px 0;
+  margin: 0;
+  border-radius: 0;
+}
+
+.tasks-tab .header-content h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-gray-800);
+}
+
+.tasks-tab .header-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-gray-600);
+  opacity: 1;
+}
+
+/* Estatísticas */
+.tasks-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.tasks-stats .stat-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: var(--transition-default);
+}
+
+.tasks-stats .stat-card.stat-clickable {
+  cursor: pointer;
+}
+
+/* Stat colors - reutiliza variáveis de DeadlinesPage */
+.tasks-stats .stat-card.stat-total .stat-number,
+.tasks-stats .stat-card.stat-total .stat-label {
+  color: var(--color-total);
+}
+
+.tasks-stats .stat-card.stat-total.stat-clickable:hover {
+  border-color: var(--color-total);
+  --color-rgb: var(--color-total-rgb);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-total-light);
+}
+
+.tasks-stats .stat-card.stat-urgentissimo .stat-number,
+.tasks-stats .stat-card.stat-urgentissimo .stat-label {
+  color: var(--color-urgentissimo);
+}
+
+.tasks-stats .stat-card.stat-urgentissimo.stat-clickable:hover {
+  border-color: var(--color-urgentissimo);
+  --color-rgb: var(--color-urgentissimo-rgb);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-urgentissimo-light);
+}
+
+.tasks-stats .stat-card.stat-urgente .stat-number,
+.tasks-stats .stat-card.stat-urgente .stat-label {
+  color: var(--color-urgente);
+}
+
+.tasks-stats .stat-card.stat-urgente.stat-clickable:hover {
+  border-color: var(--color-urgente);
+  --color-rgb: var(--color-urgente-rgb);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-urgente-light);
+}
+
+.tasks-stats .stat-card.stat-normal .stat-number,
+.tasks-stats .stat-card.stat-normal .stat-label {
+  color: var(--color-normal);
+}
+
+.tasks-stats .stat-card.stat-normal.stat-clickable:hover {
+  border-color: var(--color-normal);
+  --color-rgb: var(--color-normal-rgb);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-normal-light);
+}
+
+/* Selected state */
+.tasks-stats .stat-card.stat-selected {
+  border-width: 3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: var(--transform-hover-normal);
+}
+
+.tasks-stats .stat-card.stat-total.stat-selected {
+  border-color: var(--color-total) !important;
+  background: var(--color-total-light) !important;
+}
+
+.tasks-stats .stat-card.stat-total.stat-selected:hover {
+  --color-rgb: var(--color-total-rgb);
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+.tasks-stats .stat-card.stat-urgentissimo.stat-selected {
+  border-color: var(--color-urgentissimo) !important;
+  background: var(--color-urgentissimo-light) !important;
+}
+
+.tasks-stats .stat-card.stat-urgentissimo.stat-selected:hover {
+  --color-rgb: var(--color-urgentissimo-rgb);
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+.tasks-stats .stat-card.stat-urgente.stat-selected {
+  border-color: var(--color-urgente) !important;
+  background: var(--color-urgente-light) !important;
+}
+
+.tasks-stats .stat-card.stat-urgente.stat-selected:hover {
+  --color-rgb: var(--color-urgente-rgb);
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+.tasks-stats .stat-card.stat-normal.stat-selected {
+  border-color: var(--color-normal) !important;
+  background: var(--color-normal-light) !important;
+}
+
+.tasks-stats .stat-card.stat-normal.stat-selected:hover {
+  --color-rgb: var(--color-normal-rgb);
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+.tasks-stats .stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  margin-bottom: 0.25rem;
+}
+
+.tasks-stats .stat-label {
+  font-size: 1rem;
+  color: var(--color-gray-900);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 2.4em;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Estados de Loading/Error/Empty */
+.tasks-tab .loading-state,
+.tasks-tab .error-state,
+.tasks-tab .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--color-gray-100);
+  border-radius: 8px;
+  border: 1px solid var(--color-gray-200);
+}
+
+.tasks-tab .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--color-gray-200);
+  border-top-color: var(--color-gray-800);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.tasks-tab .loading-state p,
+.tasks-tab .error-state p,
+.tasks-tab .empty-state p {
+  color: var(--color-gray-600);
+  margin: 0;
+  font-size: 15px;
+}
+
+.tasks-tab .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.tasks-tab .empty-state h3 {
+  margin: 0 0 8px 0;
+  color: var(--color-gray-800);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tasks-tab .error-state p {
+  color: #7f1d1d;
+  font-weight: 500;
+}
+
+/* Container de tarefas */
+.tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .tasks-tab {
+    gap: 16px;
+  }
+
+  .tasks-tab .tab-header {
+    padding: 16px 0;
+  }
+
+  .tasks-tab .header-content h2 {
+    font-size: 20px;
+  }
+
+  .tasks-stats {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .tasks-stats .stat-card {
+    padding: 14px;
+  }
+
+  .tasks-stats .stat-number {
+    font-size: 32px;
+  }
+
+  .tasks-stats .stat-label {
+    font-size: 12px;
+    min-height: 2.8em;
+  }
+}
+
+@media (max-width: 480px) {
+  .tasks-tab {
+    gap: 12px;
+  }
+
+  .tasks-tab .tab-header {
+    padding: 12px 0;
+  }
+
+  .tasks-tab .header-content h2 {
+    font-size: 16px;
+  }
+
+  .tasks-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .tasks-stats .stat-number {
+    font-size: 28px;
+  }
+}
