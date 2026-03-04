@@ -266,15 +266,15 @@
 }
 
 .urgency-section.urgentissimo-section {
-  border-left: 6px solid #6b21a8;
+  border-left: 6px solid #dc2626;
 }
 
 .urgency-section.urgente-section {
-  border-left: 6px solid #6b21a8;
+  border-left: 6px solid #f97316;
 }
 
 .urgency-section.normal-section {
-  border-left: 6px solid #6b21a8;
+  border-left: 6px solid #16a34a;
 }
 
 /* Header da seção */
