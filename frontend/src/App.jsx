@@ -1,7 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import { BellRing } from 'lucide-react';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { PublicationsProvider } from './contexts/PublicationsContext';
+import { initTaskSync, cleanupTaskSync } from './services/taskSyncService';
+import taskSyncBroadcast from './services/taskSyncBroadcast';
 import Header from './components/Header';
 import Breadcrumb from './components/Breadcrumb';
 import Menu from './components/Menu';
@@ -23,6 +26,12 @@ import './App.css';
 import './styles/highlight.css'; // Sistema de destaque reutilizável
 
 function App() {
+  // Initialize task synchronization across tabs
+  useEffect(() => {
+    initTaskSync(taskSyncBroadcast);
+    return () => cleanupTaskSync();
+  }, []);
+
   return (
     <BrowserRouter>
       <NotificationsProvider>

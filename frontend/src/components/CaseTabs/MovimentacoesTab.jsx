@@ -51,11 +51,16 @@ const sanitizeManualDescription = (descricao, tipoDisplay, tipoRaw) => {
 /**
  * MovimentacoesTab - Aba de Movimentações Processuais
  * Exibe lista de movimentações (publicações DJE, despachos, decisões)
+ * 
+ * 2-Phase Highlight System:
+ * - Fase 1 (0-5s): movimento + tarefa com destaque azul
+ * - Fase 2 (5s+): apenas tarefa mantém destaque permanente
  */
 function MovimentacoesTab({ 
   id,
   movimentacoes = [],
   highlightedMovimentacaoId = null,
+  highlightedTaskId = null,
   numeroProcesso = '',
   tasks = [],
   onOpenModal = () => {},
@@ -86,6 +91,11 @@ function MovimentacoesTab({
   const [editingMovimentacaoId, setEditingMovimentacaoId] = useState(null);
   const [selectedMovimentacaoId, setSelectedMovimentacaoId] = useState(null);
   const [temporaryHighlightedMovimentacaoId, setTemporaryHighlightedMovimentacaoId] = useState(null);
+  
+  // 2-phase highlight para tarefas
+  const [temporaryHighlightedTaskId, setTemporaryHighlightedTaskId] = useState(null); // Fase 1: 0-5s
+  const [permanentHighlightedTaskId, setPermanentHighlightedTaskId] = useState(null);  // Fase 2: 5s+
+  
   const [editMovimentacaoForm, setEditMovimentacaoForm] = useState({
     data: '',
     tipo: '',
@@ -336,6 +346,40 @@ function MovimentacoesTab({
       clearTimeout(clearHighlightTimeout);
     };
   }, [highlightedMovimentacaoId, filteredMovimentacoes]);
+
+  /**
+   * 2-Phase Task Highlight System
+   * Fase 1 (0-5s): temporaryHighlightedTaskId + permanentHighlightedTaskId (ambos azuis)
+   * Fase 2 (5s+): apenas permanentHighlightedTaskId (continua azul)
+   */
+  useEffect(() => {
+    if (!highlightedTaskId) return;
+
+    // Fase 1: ativa ambos os destaques
+    setTemporaryHighlightedTaskId(highlightedTaskId);
+    setPermanentHighlightedTaskId(highlightedTaskId);
+
+    // Scroll até a tarefa
+    const scrollTimeout = setTimeout(() => {
+      const element = document.getElementById(`task-${highlightedTaskId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 120);
+
+    // Fase 2: Remove apenas o destaque temporário após 5s, mantém o permanente
+    const clearTemporaryHighlightTimeout = setTimeout(() => {
+      setTemporaryHighlightedTaskId((currentId) =>
+        currentId === highlightedTaskId ? null : currentId
+      );
+      // permanentHighlightedTaskId continua ativo indefinidamente
+    }, HIGHLIGHT_DURATION_MS);
+
+    return () => {
+      clearTimeout(scrollTimeout);
+      clearTimeout(clearTemporaryHighlightTimeout);
+    };
+  }, [highlightedTaskId]);
 
   /**
    * Sincroniza alterações de tarefas entre abas/janelas do navegador
@@ -984,18 +1028,26 @@ function MovimentacoesTab({
                     {/* Lista de Tarefas Existentes */}
                     {getTasksByMovement(mov.id).length > 0 && (
                       <div style={{ marginBottom: '0.75rem' }}>
-                        {getTasksByMovement(mov.id).map(task => (
+                        {getTasksByMovement(mov.id).map(task => {
+                          const isTemporaryHighlighted = temporaryHighlightedTaskId === task.id;
+                          const isPermanentHighlighted = permanentHighlightedTaskId === task.id;
+                          const isHighlighted = isTemporaryHighlighted || isPermanentHighlighted;
+
+                          return (
                           <div
                             key={task.id}
+                            id={`task-${task.id}`}
                             style={{
                               display: 'flex',
                               gap: '0.75rem',
                               padding: '0.5rem',
-                              background: '#faf5ff',
-                              border: '1px solid #6b21a8',
+                              background: isHighlighted ? '#eff6ff' : '#faf5ff',
+                              border: isHighlighted ? '3px solid #3b82f6' : '1px solid #6b21a8',
                               borderRadius: '6px',
                               marginBottom: '0.5rem',
-                              alignItems: 'flex-start'
+                              alignItems: 'flex-start',
+                              boxShadow: isHighlighted ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none',
+                              transition: 'all 0.3s ease'
                             }}
                           >
                             {/* Checkbox */}
@@ -1205,7 +1257,8 @@ function MovimentacoesTab({
                               )}
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
 

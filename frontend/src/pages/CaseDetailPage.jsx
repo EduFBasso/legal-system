@@ -62,6 +62,7 @@ function CaseDetailPage() {
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, tasks
   const [highlightedMovimentacaoId, setHighlightedMovimentacaoId] = useState(null);
+  const [highlightedTaskId, setHighlightedTaskId] = useState(null);
   const [toast, setToast] = useState(null);
   const [systemSettings, setSystemSettings] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -218,13 +219,16 @@ function CaseDetailPage() {
   }, [loadCaseData]);
 
   /**
-   * Detecta query params para navegação automática a seção e movimento
-   * Exemplos: ?tab=movements&focusMovement=123
+   * Detecta query params para navegação automática a seção, movimento e tarefa
+   * Exemplos: ?tab=movements&focusMovement=123&focusTask=456
+   * Instante A (0-5s): ambos movimento + tarefa com destaque azul
+   * Instante B (5s+): apenas tarefa mantém destaque
    */
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
     const focusMovement = params.get('focusMovement');
+    const focusTask = params.get('focusTask');
 
     if (tab === 'movements') {
       setActiveSection('movimentacoes');
@@ -232,6 +236,10 @@ function CaseDetailPage() {
 
     if (focusMovement) {
       setHighlightedMovimentacaoId(parseInt(focusMovement, 10));
+    }
+
+    if (focusTask) {
+      setHighlightedTaskId(parseInt(focusTask, 10));
     }
   }, [location.search]);
 
@@ -1415,6 +1423,7 @@ function CaseDetailPage() {
             numeroProcesso={caseData?.numero_processo}
             tasks={tasks}
             highlightedMovimentacaoId={highlightedMovimentacaoId}
+            highlightedTaskId={highlightedTaskId}
             formatDate={formatDate}
             onOpenModal={handleOpenMovimentacaoModal}
             onEdit={handleEditMovimentacao}

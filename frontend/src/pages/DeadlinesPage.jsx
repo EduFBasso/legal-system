@@ -132,10 +132,12 @@ export default function DeadlinesPage() {
   };
 
   /**
-   * Gera URL para navegar até a movimentação na página do caso
+   * Gera URL para navegar até a movimentação e destacar tarefa específica
+   * Instante A (0-5s): ambos (movimento + tarefa) com destaque azul
+   * Instante B (5s+): apenas tarefa mantém destaque
    */
-  const getMovementLinkUrl = (caseId, movementId) => {
-    return `/cases/${caseId}?tab=movements&focusMovement=${movementId}`;
+  const getMovementLinkUrl = (caseId, movementId, taskId) => {
+    return `/cases/${caseId}?tab=movements&focusMovement=${movementId}&focusTask=${taskId}`;
   };
 
   /**
@@ -331,7 +333,7 @@ export default function DeadlinesPage() {
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
@@ -374,7 +376,7 @@ export default function DeadlinesPage() {
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
@@ -417,7 +419,7 @@ export default function DeadlinesPage() {
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
