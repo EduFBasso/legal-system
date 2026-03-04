@@ -346,12 +346,25 @@
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  border: 2px solid #6b21a8;
+  border: 2px solid #cbd5e1;
   border-radius: 4px;
   background: #ffffff;
   display: grid;
   place-content: center;
   transition: all 0.2s ease;
+}
+
+/* Checkbox colors by urgency */
+.task-item.urgentissimo .checkbox-input {
+  border-color: #dc2626;
+}
+
+.task-item.urgente .checkbox-input {
+  border-color: #f97316;
+}
+
+.task-item.normal .checkbox-input {
+  border-color: #16a34a;
 }
 
 .checkbox-input::before {
@@ -364,17 +377,37 @@
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
-.checkbox-input:checked {
-  background: #6b21a8;
-  border-color: #6b21a8;
+.task-item.urgentissimo .checkbox-input:checked {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.task-item.urgente .checkbox-input:checked {
+  background: #f97316;
+  border-color: #f97316;
+}
+
+.task-item.normal .checkbox-input:checked {
+  background: #16a34a;
+  border-color: #16a34a;
 }
 
 .checkbox-input:checked::before {
   transform: scale(1);
 }
 
-.checkbox-input:focus-visible {
-  outline: 2px solid #ddd6fe;
+.task-item.urgentissimo .checkbox-input:focus-visible {
+  outline: 2px solid #fecaca;
+  outline-offset: 1px;
+}
+
+.task-item.urgente .checkbox-input:focus-visible {
+  outline: 2px solid #fed7aa;
+  outline-offset: 1px;
+}
+
+.task-item.normal .checkbox-input:focus-visible {
+  outline: 2px solid #bbf7d0;
   outline-offset: 1px;
 }
 

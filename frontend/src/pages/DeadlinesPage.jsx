@@ -278,7 +278,7 @@ export default function DeadlinesPage() {
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgentissimo-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.URGENTISSIMO.map(task => (
-                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
+                    <div key={task.id} className={`task-item urgentissimo ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -321,7 +321,7 @@ export default function DeadlinesPage() {
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgente-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.URGENTE.map(task => (
-                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
+                    <div key={task.id} className={`task-item urgente ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -364,7 +364,7 @@ export default function DeadlinesPage() {
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'normal-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.NORMAL.map(task => (
-                    <div key={task.id} className={`task-item ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
+                    <div key={task.id} className={`task-item normal ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
