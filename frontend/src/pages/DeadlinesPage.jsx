@@ -439,8 +439,7 @@ export default function DeadlinesPage() {
                         </div>
                       </div>
                     </div>
-                    );
-                    })}
+                  ))}
                 </div>
               </div>
             )}
