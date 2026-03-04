@@ -376,6 +376,23 @@
   transform: translateY(-2px);
 }
 
+/* ============================================================================
+   DESTAQUE DE TAREFA CLICADA VIA LINK (localStorage)
+   Mantém o task-item destacado quando navega para CaseDetailPage
+   Estilos iguais a MovimentacoesTab para consistência visual
+   ============================================================================ */
+.task-item.highlighted-from-link {
+  background-color: #eff6ff;
+  border: 3px solid #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  transition: all 0.3s ease;
+}
+
+.task-item.highlighted-from-link:hover {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  transform: none;
+}
+
 /* Checkbox */
 .task-checkbox {
   flex-shrink: 0;

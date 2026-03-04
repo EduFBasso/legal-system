@@ -15,6 +15,7 @@ export default function DeadlinesPage() {
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null); // Para rastrear qual filtro está ativo
   const [selectedTaskId, setSelectedTaskId] = useState(null); // Para rastrear qual tarefa está selecionada
+  const [highlightedTaskIdFromLink, setHighlightedTaskIdFromLink] = useState(null); // Tarefa clicada via link (mantém destaque)
 
   const parseLocalDate = (dateValue) => {
     if (!dateValue) return null;
@@ -66,6 +67,31 @@ export default function DeadlinesPage() {
     });
     return unsubscribe;
   }, [fetchAllTasks]);
+
+  /**
+   * Sincroniza destaque de tarefa clicada via link (localStorage)
+   * Quando navega de volta da CaseDetailPage, mantém a tarefa destacada
+   */
+  useEffect(() => {
+    const highlightedFromStorage = localStorage.getItem('deadlines_highlighted_task_id');
+    if (highlightedFromStorage) {
+      setHighlightedTaskIdFromLink(parseInt(highlightedFromStorage, 10));
+    }
+
+    // Listener para alterações em localStorage (sincronização entre abas)
+    const handleStorageChange = (e) => {
+      if (e.key === 'deadlines_highlighted_task_id') {
+        if (e.newValue) {
+          setHighlightedTaskIdFromLink(parseInt(e.newValue, 10));
+        } else {
+          setHighlightedTaskIdFromLink(null);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   /**
    * Calcula urgência baseado em data de vencimento
@@ -133,11 +159,20 @@ export default function DeadlinesPage() {
 
   /**
    * Gera URL para navegar até a movimentação e destacar tarefa específica
-   * Instante A (0-5s): ambos (movimento + tarefa) com destaque azul
-   * Instante B (5s+): apenas tarefa mantém destaque
+   * Instante A (0-3s): ambos (movimento + tarefa) com destaque azul
+   * Instante B (3s+): apenas tarefa mantém destaque
    */
   const getMovementLinkUrl = (caseId, movementId, taskId) => {
     return `/cases/${caseId}?tab=movements&focusMovement=${movementId}&focusTask=${taskId}`;
+  };
+
+  /**
+   * Handler para clique no link de movimentação
+   * Armazena o ID da tarefa em localStorage para manter destaque
+   */
+  const handleMovementLinkClick = (taskId) => {
+    localStorage.setItem('deadlines_highlighted_task_id', taskId.toString());
+    setHighlightedTaskIdFromLink(taskId);
   };
 
   /**
@@ -312,8 +347,10 @@ export default function DeadlinesPage() {
             {showUrgentissimo && grouped.URGENTISSIMO.length > 0 && (
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgentissimo-section' : ''}`}>
                 <div className="tasks-list">
-                  {grouped.URGENTISSIMO.map(task => (
-                    <div key={task.id} className={`task-item urgentissimo ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
+                  {grouped.URGENTISSIMO.map(task => {
+                    const isHighlightedFromLink = highlightedTaskIdFromLink === task.id;
+                    return (
+                    <div key={task.id} className={`task-item urgentissimo ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''} ${isHighlightedFromLink ? 'highlighted-from-link' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -333,7 +370,7 @@ export default function DeadlinesPage() {
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleMovementLinkClick(task.id); }}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
@@ -346,7 +383,8 @@ export default function DeadlinesPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                    })}
                 </div>
               </div>
             )}
@@ -355,8 +393,10 @@ export default function DeadlinesPage() {
             {showUrgente && grouped.URGENTE.length > 0 && (
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgente-section' : ''}`}>
                 <div className="tasks-list">
-                  {grouped.URGENTE.map(task => (
-                    <div key={task.id} className={`task-item urgente ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
+                  {grouped.URGENTE.map(task => {
+                    const isHighlightedFromLink = highlightedTaskIdFromLink === task.id;
+                    return (
+                    <div key={task.id} className={`task-item urgente ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''} ${isHighlightedFromLink ? 'highlighted-from-link' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -376,7 +416,7 @@ export default function DeadlinesPage() {
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleMovementLinkClick(task.id); }}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
@@ -389,7 +429,8 @@ export default function DeadlinesPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                    })}
                 </div>
               </div>
             )}
@@ -398,8 +439,10 @@ export default function DeadlinesPage() {
             {showNormal && grouped.NORMAL.length > 0 && (
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'normal-section' : ''}`}>
                 <div className="tasks-list">
-                  {grouped.NORMAL.map(task => (
-                    <div key={task.id} className={`task-item normal ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
+                  {grouped.NORMAL.map(task => {
+                    const isHighlightedFromLink = highlightedTaskIdFromLink === task.id;
+                    return (
+                    <div key={task.id} className={`task-item normal ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''} ${isHighlightedFromLink ? 'highlighted-from-link' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -419,7 +462,7 @@ export default function DeadlinesPage() {
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => e.stopPropagation()}>
+                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleMovementLinkClick(task.id); }}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
@@ -432,7 +475,8 @@ export default function DeadlinesPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                    })}
                 </div>
               </div>
             )}
