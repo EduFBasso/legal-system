@@ -11,7 +11,7 @@ import './CasesPage.css';
 export default function CasesPage() {
   const navigate = useNavigate();
   const [cases, setCases] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [stats, setStats] = useState(null);
   const [allTribunals, setAllTribunals] = useState({});
