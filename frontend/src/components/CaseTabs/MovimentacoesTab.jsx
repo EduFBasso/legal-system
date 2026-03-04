@@ -935,7 +935,7 @@ function MovimentacoesTab({
                       marginBottom: '0.75rem'
                     }}>
                       <h4 style={{ 
-                        fontSize: '0.9625rem', 
+                        fontSize: '1.059rem', 
                         fontWeight: '700', 
                         color: '#6b21a8',
                         textTransform: 'uppercase',
