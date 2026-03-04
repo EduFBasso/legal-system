@@ -305,13 +305,11 @@ export default function PublicationsPage() {
       <div className="publications-header">
         <div className="header-info">
           <h2>📰 Publicações Jurídicas</h2>
-          <p className="header-subtitle">
-            {publications.length > 0 ? (
-              `${publications.length} ${publications.length === 1 ? 'publicação encontrada' : 'publicações encontradas'}`
-            ) : (
-              'Selecione os filtros e busque publicações'
-            )}
-          </p>
+          {publications.length > 0 && (
+            <p className="header-subtitle">
+              {publications.length} {publications.length === 1 ? 'publicação encontrada' : 'publicações encontradas'}
+            </p>
+          )}
         </div>
       </div>
 

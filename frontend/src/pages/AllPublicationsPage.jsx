@@ -159,7 +159,6 @@ export default function AllPublicationsPage() {
       <header className="all-page-header">
         <div>
           <h1>📚 Todas as Publicações</h1>
-          <p>Visualize todas as publicações do sistema: integradas e não vinculadas.</p>
         </div>
       </header>
 

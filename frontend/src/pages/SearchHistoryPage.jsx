@@ -250,9 +250,6 @@ function SearchHistoryPage() {
       {/* Cabeçalho */}
       <header className="search-history-header">
         <h1>Histórico de Buscas</h1>
-        <p className="subtitle">
-          Consulte suas buscas anteriores e visualize as publicações encontradas
-        </p>
       </header>
 
       {/* Controles: Busca, Ordenação e Limpeza */}

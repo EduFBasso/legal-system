@@ -124,7 +124,6 @@ export default function PendingPublicationsPage() {
       <header className="pending-page-header">
         <div>
           <h1>📋 Publicações Pendentes</h1>
-          <p>Revise e integre publicações encontradas nas buscas.</p>
         </div>
       </header>
 
