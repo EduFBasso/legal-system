@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import casesService from '../services/casesService';
 import CaseCard from '../components/CaseCard';
@@ -11,6 +11,7 @@ import './CasesPage.css';
  */
 export default function CasesPage() {
   const navigate = useNavigate();
+  const debounceTimerRef = useRef(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
@@ -62,11 +63,36 @@ export default function CasesPage() {
   }, [allTribunals]);
 
   /**
-   * Initial load
+   * Initial load - load stats and cases
    */
   useEffect(() => {
-    loadCases();
     loadStats();
+  }, [allTribunals]);
+
+  /**
+   * Handle filter changes (search has debounce, ordering is immediate)
+   */
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Search: debounce 300ms
+    // Ordering: immediate
+    if (filters.search !== '') {
+      debounceTimerRef.current = setTimeout(() => {
+        loadCases();
+      }, 300);
+    } else {
+      // No search, load immediately
+      loadCases();
+    }
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [filters]);
 
   /**
