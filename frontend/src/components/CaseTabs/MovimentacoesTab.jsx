@@ -141,7 +141,7 @@ function MovimentacoesTab({
 
     setSavingTask(true);
     try {
-      await caseTasksService.createTask({
+      const response = await caseTasksService.createTask({
         case: id,
         movimentacao: movementId,
         titulo: newTaskForm.titulo,
@@ -152,6 +152,17 @@ function MovimentacoesTab({
       
       await onRefreshTasks();
       handleCancelAddTask();
+      
+      // Notify other tabs about new task
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'created',
+        taskId: response?.id,
+        caseId: id,
+        titulo: newTaskForm.titulo,
+        data_vencimento: newTaskForm.data_vencimento,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error saving task:', error);
       alert('Erro ao salvar tarefa');
@@ -216,6 +227,17 @@ function MovimentacoesTab({
       });
       await onRefreshTasks();
       handleCancelEditTask();
+      
+      // Notify other tabs about task update
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'edited',
+        taskId: taskId,
+        caseId: id,
+        titulo: editTaskForm.titulo,
+        data_vencimento: editTaskForm.data_vencimento,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error editing task:', error);
       alert('Erro ao editar tarefa');
