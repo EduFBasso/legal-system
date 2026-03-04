@@ -1026,7 +1026,10 @@ function MovimentacoesTab({
                           <div
                             key={task.id}
                             id={`task-${task.id}`}
-                            onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}
+                            onClick={() => {
+                              setSelectedTaskId(selectedTaskId === task.id ? null : task.id);
+                              setAuxiliarHighlightedTaskId(null); // Remove destaque auxiliar quando usuário clica manualmente
+                            }}
                             style={{
                               display: 'flex',
                               gap: '0.75rem',
