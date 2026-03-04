@@ -92,7 +92,8 @@ function MovimentacoesTab({
   const [selectedMovimentacaoId, setSelectedMovimentacaoId] = useState(null);
   const [temporaryHighlightedMovimentacaoId, setTemporaryHighlightedMovimentacaoId] = useState(null);
   
-  // Destaque auxiliar de tarefa (não bloqueia interação)
+  // Seleção de tarefa (clique do usuário + destaque auxiliar vindo da página anterior)
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [auxiliarHighlightedTaskId, setAuxiliarHighlightedTaskId] = useState(null);
   
   const [editMovimentacaoForm, setEditMovimentacaoForm] = useState({
@@ -1018,23 +1019,24 @@ function MovimentacoesTab({
                     {getTasksByMovement(mov.id).length > 0 && (
                       <div style={{ marginBottom: '0.75rem' }}>
                         {getTasksByMovement(mov.id).map(task => {
-                          const isAuxiliarHighlighted = auxiliarHighlightedTaskId === task.id;
+                          // Destaque: auxiliar (vindo de página anterior) OU seleção do usuário
+                          const isSelected = selectedTaskId === task.id || auxiliarHighlightedTaskId === task.id;
 
                           return (
                           <div
                             key={task.id}
                             id={`task-${task.id}`}
-                            onClick={() => setAuxiliarHighlightedTaskId(null)}
+                            onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}
                             style={{
                               display: 'flex',
                               gap: '0.75rem',
                               padding: '0.5rem',
-                              background: isAuxiliarHighlighted ? '#eff6ff' : '#faf5ff',
-                              border: isAuxiliarHighlighted ? '3px solid #3b82f6' : '1px solid #6b21a8',
+                              background: isSelected ? '#eff6ff' : '#faf5ff',
+                              border: isSelected ? '3px solid #3b82f6' : '1px solid #6b21a8',
                               borderRadius: '6px',
                               marginBottom: '0.5rem',
                               alignItems: 'flex-start',
-                              boxShadow: isAuxiliarHighlighted ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none',
+                              boxShadow: isSelected ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none',
                               transition: 'all 0.3s ease',
                               cursor: 'pointer'
                             }}
