@@ -302,16 +302,75 @@ def perform_destroy(self, instance):
 - **Search:** titulo, descricao, case__numero_processo, movimentacao__titulo
 - **get_queryset customizado:** Filtra por case_id ou movimentacao_id
 
-- **✅ KEY INSIGHT:**
-  - Filtro `movimentacao__isnull` permite buscar:
-    - Tarefas vinculadas (isnull=false)
-    - Tarefas "soltas" do caso (isnull=true)
+- **✅ KEY INSIGHT - 3 Tipos de Tarefas:**
+  - Filtro `movimentacao__isnull` permite distinção entre tipos:
+    1. **Tarefa vinculada a Movimentação** (isnull=false, movimentacao=ID) - ✅ **IMPLEMENTADO**
+    2. **Tarefa vinculada ao Processo** (isnull=true, movimentacao=NULL) - ⏸️ **SERÁ IMPLEMENTAR (Etapa 3.5)**
+    3. **Tarefa de Agenda** (modelo separado, feature/agenda) - ⏸️ **FUTURA**
 
 #### 6. **PaymentViewSet** (Linhas 288-316)
 - Simples: filtro por case e date
 
 #### 7. **ExpenseViewSet** (Linhas 317-344)
 - Simples: filtro por case e date
+
+---
+
+## Clarificações e Design Decisions (Feedback do Usuário)
+
+### 1. ManyToMany Relationships (CaseParty)
+- **Aprendizado:** Relacionamento complexo mas necessário para flexibilidade
+- **Implementação:** CaseParty funciona como bridge table entre Case e Contact
+- **Valor:** Permite múltiplos roles (CLIENTE/AUTOR/REU/TESTEMUNHA/PERITO/TERCEIRO) por contato
+- **Status:** ✅ **BEM IMPLEMENTADO** - unique_together garante integridade
+
+### 2. Backend-First Architecture
+- **Rationale:** Máxima lógica concentrada no backend permite:
+  - Portabilidade para múltiplos clientes (web, mobile Swift, etc)
+  - Consistência de validações entre plataformas
+  - Facilita manutenção e evolução futura
+- **Exemplo:** Campos `_display` no serializer vêm direto do backend
+  - Reduz dependências do frontend
+  - Se precisar portar para Swift (iOS), terá dados pré-formatados
+- **Status:** ✅ **POR DESIGN** - mantém assim para flexibilidade
+
+### 3. Integridade Referencial em Contacts
+- **Problema:** CPF, CNPJ, TEL não devem ser duplicados
+- **Status:** ⏸️ **REQUER UX FLOW IMPLEMENTATION**
+- **Sugestão:** Quando cliente tenta criar contact duplicado:
+  - Mostrar dialog: "Contato com este CPF/CNPJ já existe"
+  - Oferecer opção: "Gostaria de editar o existente?"
+- **Timing:** Implementar em próxima fase (Contact Management refactor)
+
+### 4. Soft Delete - Deferred Decision
+- **Status:** ✅ **ADIADO PARA PHASE 4** (Estudo Integrado)
+- **Contexto:**
+  - Sistema começará em **modo LOCAL**
+  - Pode migrar para ONLINE conforme cliente decida
+  - Backup e performance devem ser estudados juntos
+- **Plano:** Realizar estudo integrado de:
+  - Retenção de dados (quanto tempo manter deleted records?)
+  - Fadiga do sistema (crescimento do banco)
+  - Estratégia de cleanup (arquivar vs deletar permanentemente)
+- **Timeline:** Final do projeto (após refatorações core)
+
+### 5. Três Tipos de Tarefas (CaseTask Model)
+- **Status:** ✅ **ARQUITETURA JÁ SUPORTA**
+- **Clarificação:** "Tarefas soltas" foi nomenclatura de brainstorm - correto é "Tarefas vinculadas ao Processo"
+
+**Matriz de Implementação:**
+
+| Tipo | movimentacao FK | Status | Localização | Branch |
+|------|-----------------|--------|-------------|--------|
+| 1. Tarefa Vinculada a Movimentação | = ID | ✅ **IMPLEMENTADO** | MovimentacoesTab, DeadlinesPage | main |
+| 2. Tarefa Vinculada ao Processo | = NULL | ⏸️ **SERÁ IMPLEMENTAR** (Etapa 3.5) | TasksTab (refactor) | main |
+| 3. Tarefa de Agenda | Outro modelo (CaseAgendaTask) | ⏸️ **FUTURA** | feature/agenda | nova |
+
+- **Etapa 3.5 (TasksTab Rebuild):** Implementará tipo 2 com:
+  - Task criada diretamente no caso (sem movimento específico)
+  - Deadlines independentes de movimentações
+  - Classificação própria de urgência
+  - Ainda integrada ao sistema de notificações
 
 ---
 
@@ -354,14 +413,15 @@ def perform_destroy(self, instance):
    - Campos frequentemente filtrados têm db_index=True
    - Composite indexes para queries comuns (case+data, tipo+data)
 
-### ⚠️ Pontos de Melhoria (Para Fase 3)
+### ⚠️ Pontos de Melhoria (Para Fase 3 / Phase 4)
 
 #### 1. **Nomenclatura: URGENTISSIMO → CRITICAL**
 - **Localização:**
   - `CasePrazo.status_urgencia` (linha 632)
   - `CaseTask.urgencia` choices (linha 671)
-- **Impacto:** ALTO (breaking change)
-- **Ação:** Deferred para Phase 4 (após refatoração core)
+- **Impacto:** ALTO (breaking change em API)
+- **Timing:** ✅ **DEFERRED para Phase 4** (após refatoração core)
+- **Justificativa:** Padrão internacional, melhor compatibilidade com código futuro
 
 #### 2. **Redundância: CaseMovement.prazo vs CasePrazo**
 - **Problema:** Dois modelos controlam prazos
@@ -369,25 +429,35 @@ def perform_destroy(self, instance):
   - CasePrazo: prazo_dias + data_limite (múltiplos prazos por movimentação)
 - **Análise:**
   - CaseMovement.prazo é usado em ~90% dos casos (1 prazo por movimentação)
-  - CasePrazo permite múltiplos prazos (15, 30, 45 dias) - mais flexível mas menos usado
-- **Ação:** Avaliar uso real no banco (query para contar CasePrazo records)
+  - CasePrazo permite múltiplos prazos (15, 30, 45 dias) - mais flexível
+- **Ação:** Phase 3 - Executar query para contar CasePrazo records no banco
+  - Se < 5% dos casos usam múltiplos prazos, considerar consolidação
+  - Se > 5%, mantém separação por flexibilidade
 
-#### 3. **Serializers: Campos _display desnecessários**
-- **Problema:** `urgencia_display`, `status_display`, `tipo_display` aumentam payload
-- **Solução:** Frontend pode calcular usando dicionário de choices
-- **Benefício:** Reduz tamanho de resposta API em ~15%
-- **Ação:** Phase 3 (criar utils no frontend para get_display)
+#### 3. **Serializers: Campos _display**
+- **Observação:** `urgencia_display`, `status_display`, `tipo_display` aumentam payload
+- **Status:** ✅ **POR DESIGN** - mantém para compatibilidade multi-cliente
+- **Justificativa:** Backend-first architecture (compatibilidade com múltiplos clientes/linguagens)
+- **Otimização futura:** Frontend pode calcular localmente se necessário reduzir bandwidth
 
 #### 4. **Soft delete apenas em Case**
-- **Problema:** Outros modelos (CaseMovement, CaseTask) não têm soft delete
-- **Risco:** Dados deletados permanentemente sem auditoria
-- **Ação:** Avaliar se é necessário (pode ser overkill para modelos relacionados)
+- **Status:** ✅ **DEFERRED para Phase 4** (Estudo Integrado de Backup)
+- **Contexto:** Projeto local-first, estudará backup com soft-delete performance
+- **Nota:** Outros modelos podem usar cascade delete se auditoria via FK suficiente
 
-#### 5. **CaseTask: Settings como defaults**
-- **Problema:** `_get_urgency_days()` lê settings em todo save()
-- **Otimização:** Cache settings no __init__ da classe
+#### 5. **Contact Integrity Flow (UX)**
+- **Status:** ⏸️ **REQUER IMPLEMENTAÇÃO em próxima iteração**
+- **Problema:** CPF, CNPJ, TEL duplicados sem validação UX
+- **Solução:** Dialog quando duplicate é detectado
+  - "Contato com este CPF já existe. Gostaria de editar?"
+- **Timing:** Contact Management refactor (não está no escopo atual)
+- **Impacto:** Reduz duplicação no banco + melhoria UX
+
+#### 6. **CaseTask: Settings como defaults**
+- **Status:** ✅ **LOW PRIORITY** (micro-otimização)
+- **Otimização possível:** Cache settings em class variable em vez de ler em todo save()
 - **Benefício:** Reduz leitura de configuração repetida
-- **Ação:** Low priority (micro-otimização)
+- **Nota:** Não é gargalo em modo local - deixar como está
 
 ---
 
@@ -410,16 +480,28 @@ def perform_destroy(self, instance):
 ```
 Case (Processo)
  ├── 1:N → CaseMovement (Movimentações)
- │         ├── 1:N → CasePrazo (Múltiplos prazos)
- │         └── 1:N → CaseTask (Tarefas vinculadas)
- ├── 1:N → CaseTask (Tarefas soltas, movimentacao=NULL)
- ├── 1:N → CaseParty (Partes/Contatos)
- ├── 1:N → Payment (Recebimentos)
- └── 1:N → Expense (Despesas)
+ │         ├── 1:N → CasePrazo (Múltiplos prazos por movimentação)
+ │         └── 1:N → CaseTask (Tarefas vinculadas a esta movimentação)
+ ├── 1:N → CaseTask (Tarefas do Processo | movimentacao=NULL)
+ ├── 1:N → CaseParty (Partes/Contatos do processo)
+ ├── 1:N → Payment (Recebimentos de honorários)
+ └── 1:N → Expense (Despesas/custos)
 
-CaseTask pode ter:
- - movimentacao = NULL → Tarefa vinculada apenas ao Case
- - movimentacao = ID → Tarefa vinculada a CaseMovement específico
+CaseTask - 3 Tipos Suportados:
+┌─ Tipo 1: Tarefa vinculada a Movimentação (movimentacao=ID) ✅ IMPLEMENTADO
+│  Localização: MovimentacoesTab, DeadlinesPage
+│  Criação: Ao criar/editar movimentação
+│  Exemplo: "Preparar contestação" (prazo de 15 dias)
+│
+├─ Tipo 2: Tarefa Vinculada ao Processo (movimentacao=NULL) ⏸️ SERÁ IMPLEMENTAR (Etapa 3.5)
+│  Localização: TasksTab (refactor)
+│  Criação: Diretamente no caso, sem vinculação a movimento específico
+│  Exemplo: "Acompanhar comunicado do tribunal"
+│
+└─ Tipo 3: Tarefa de Agenda (modelo CaseAgendaTask) ⏸️ FUTURA
+   Branch: feature/agenda (novo escopo)
+   Criação: Por agenda do escritório
+   Exemplo: "Reunião com cliente sobre caso"
 ```
 
 ---
@@ -428,15 +510,16 @@ CaseTask pode ter:
 
 ✅ **Fase 1 Concluída:** Backend auditado e documentado
 
-**Próximo:**
-- [ ] **Fase 2:** Auditoria Frontend (DeadlinesPage duplication, CSS consolidation)
-- [ ] **Fase 3:** Refactor (modularize TaskCard, consolidate CSS, rebuild TasksTab)
-- [ ] **Fase 4:** Future scope (URGENTISSIMO→CRITICAL, Google Calendar)
+**Roadmap Completo:**
+- ✅ **Fase 1:** Auditoria Backend (modelos, serializers, views)
+- ⏳ **Fase 2:** Auditoria Frontend (DeadlinesPage, CaseDetailPage, CSS)
+- ⏳ **Fase 3:** Refactor Execution (modularize TaskCard, consolidate CSS, rebuild TasksTab)
+- ⏳ **Phase 4:** Future Scope (URGENTISSIMO→CRITICAL, Google Calendar, Contact UX)
 
-**Testes Automatizados:**
-- Verificar se existem testes em `backend/apps/cases/tests.py`
-- Avaliar cobertura de testes
-- Criar testes para casos críticos identificados
+**Validação de Testes:**
+- ✅ Existe test suite em `backend/apps/cases/tests.py` (793 linhas)
+- ✅ Cobertura: Models, APIs, soft delete
+- ✅ 20+ test methods covering critical functionality
 
 ---
 
