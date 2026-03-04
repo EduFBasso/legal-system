@@ -15,7 +15,6 @@ export default function DeadlinesPage() {
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null); // Para rastrear qual filtro está ativo
   const [selectedTaskId, setSelectedTaskId] = useState(null); // Para rastrear qual tarefa está selecionada
-  const [highlightedTaskIdFromLink, setHighlightedTaskIdFromLink] = useState(null); // Tarefa clicada via link (mantém destaque)
 
   const parseLocalDate = (dateValue) => {
     if (!dateValue) return null;
@@ -67,36 +66,6 @@ export default function DeadlinesPage() {
     });
     return unsubscribe;
   }, [fetchAllTasks]);
-
-  /**
-   * Sincroniza destaque de tarefa clicada via link (localStorage)
-   * Quando navega de volta da CaseDetailPage, mantém a tarefa destacada
-   */
-  useEffect(() => {
-    const highlightedFromStorage = localStorage.getItem('deadlines_highlighted_task_id');
-    if (highlightedFromStorage) {
-      const taskId = parseInt(highlightedFromStorage, 10);
-      setHighlightedTaskIdFromLink(taskId);
-      console.log('[DeadlinesPage] Loaded highlighted task from localStorage:', taskId);
-    }
-
-    // Listener para alterações em localStorage (sincronização entre abas)
-    const handleStorageChange = (e) => {
-      if (e.key === 'deadlines_highlighted_task_id') {
-        if (e.newValue) {
-          const taskId = parseInt(e.newValue, 10);
-          setHighlightedTaskIdFromLink(taskId);
-          console.log('[DeadlinesPage] Synced highlighted task from another tab:', taskId);
-        } else {
-          setHighlightedTaskIdFromLink(null);
-          console.log('[DeadlinesPage] Cleared highlighted task');
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   /**
    * Calcula urgência baseado em data de vencimento
@@ -164,8 +133,7 @@ export default function DeadlinesPage() {
 
   /**
    * Gera URL para navegar até a movimentação e destacar tarefa específica
-   * Instante A (0-3s): ambos (movimento + tarefa) com destaque azul
-   * Instante B (3s+): apenas tarefa mantém destaque
+   * Destaque azul auxiliar em MovimentacoesTab para facilitar localização
    */
   const getMovementLinkUrl = (caseId, movementId, taskId) => {
     return `/cases/${caseId}?tab=movements&focusMovement=${movementId}&focusTask=${taskId}`;
@@ -173,14 +141,10 @@ export default function DeadlinesPage() {
 
   /**
    * Handler para clique no link de movimentação
-   * Armazena o ID da tarefa em localStorage para manter destaque
-   * Nota: A classe 'highlighted-from-link' será aplicada ao VOLTAR desta página
+   * Seleciona o cartão com cor de urgência padrão (não bloqueia interação)
    */
   const handleMovementLinkClick = (taskId) => {
-    localStorage.setItem('deadlines_highlighted_task_id', taskId.toString());
-    console.log('[DeadlinesPage] Stored highlighted task ID in localStorage:', taskId);
-    // Não atualizamos o estado aqui porque a página vai navegar
-    // O destaque será aplicado quando voltar a esta página
+    setSelectedTaskId(taskId);
   };
 
   /**
@@ -355,10 +319,8 @@ export default function DeadlinesPage() {
             {showUrgentissimo && grouped.URGENTISSIMO.length > 0 && (
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgentissimo-section' : ''}`}>
                 <div className="tasks-list">
-                  {grouped.URGENTISSIMO.map(task => {
-                    const isHighlightedFromLink = highlightedTaskIdFromLink === task.id;
-                    return (
-                    <div key={task.id} className={`task-item urgentissimo ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''} ${isHighlightedFromLink ? 'highlighted-from-link' : ''}`}>
+                  {grouped.URGENTISSIMO.map(task => (
+                    <div key={task.id} className={`task-item urgentissimo ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -391,8 +353,7 @@ export default function DeadlinesPage() {
                         </div>
                       </div>
                     </div>
-                    );
-                    })}
+                  ))}
                 </div>
               </div>
             )}
@@ -401,10 +362,8 @@ export default function DeadlinesPage() {
             {showUrgente && grouped.URGENTE.length > 0 && (
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgente-section' : ''}`}>
                 <div className="tasks-list">
-                  {grouped.URGENTE.map(task => {
-                    const isHighlightedFromLink = highlightedTaskIdFromLink === task.id;
-                    return (
-                    <div key={task.id} className={`task-item urgente ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''} ${isHighlightedFromLink ? 'highlighted-from-link' : ''}`}>
+                  {grouped.URGENTE.map(task => (
+                    <div key={task.id} className={`task-item urgente ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"
@@ -437,8 +396,7 @@ export default function DeadlinesPage() {
                         </div>
                       </div>
                     </div>
-                    );
-                    })}
+                  ))}
                 </div>
               </div>
             )}
@@ -447,10 +405,8 @@ export default function DeadlinesPage() {
             {showNormal && grouped.NORMAL.length > 0 && (
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'normal-section' : ''}`}>
                 <div className="tasks-list">
-                  {grouped.NORMAL.map(task => {
-                    const isHighlightedFromLink = highlightedTaskIdFromLink === task.id;
-                    return (
-                    <div key={task.id} className={`task-item normal ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''} ${isHighlightedFromLink ? 'highlighted-from-link' : ''}`}>
+                  {grouped.NORMAL.map(task => (
+                    <div key={task.id} className={`task-item normal ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
                       <div className="task-checkbox">
                         <input
                           type="checkbox"

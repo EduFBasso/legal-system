@@ -92,9 +92,8 @@ function MovimentacoesTab({
   const [selectedMovimentacaoId, setSelectedMovimentacaoId] = useState(null);
   const [temporaryHighlightedMovimentacaoId, setTemporaryHighlightedMovimentacaoId] = useState(null);
   
-  // 2-phase highlight para tarefas
-  const [temporaryHighlightedTaskId, setTemporaryHighlightedTaskId] = useState(null); // Fase 1: 0-5s
-  const [permanentHighlightedTaskId, setPermanentHighlightedTaskId] = useState(null);  // Fase 2: 5s+
+  // Destaque auxiliar de tarefa (não bloqueia interação)
+  const [auxiliarHighlightedTaskId, setAuxiliarHighlightedTaskId] = useState(null);
   
   const [editMovimentacaoForm, setEditMovimentacaoForm] = useState({
     data: '',
@@ -348,40 +347,26 @@ function MovimentacoesTab({
   }, [highlightedMovimentacaoId, filteredMovimentacoes]);
 
   /**
-   * 2-Phase Task Highlight System
-   * Fase 1 (0-3s): temporaryHighlightedTaskId + permanentHighlightedTaskId (ambos azuis)
-   * Fase 2 (3s+): apenas permanentHighlightedTaskId (continua azul)
+   * Destaque Auxiliar de Tarefa (não bloqueia interação)
+   * Mostra destaque azul inicial para facilitar localização
+   * Remove ao clicar em outro cartão (comportamento padrão prevalece)
    */
   useEffect(() => {
     if (!highlightedTaskId) return;
 
-    console.log('[MovimentacoesTab] Starting 2-phase highlight for task:', highlightedTaskId);
-
-    // Fase 1: ativa ambos os destaques
-    setTemporaryHighlightedTaskId(highlightedTaskId);
-    setPermanentHighlightedTaskId(highlightedTaskId);
+    // Ativa destaque auxiliar
+    setAuxiliarHighlightedTaskId(highlightedTaskId);
 
     // Scroll até a tarefa
     const scrollTimeout = setTimeout(() => {
       const element = document.getElementById(`task-${highlightedTaskId}`);
       if (element) {
-        console.log('[MovimentacoesTab] Scrolling to task:', highlightedTaskId);
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 120);
 
-    // Fase 2: Remove apenas o destaque temporário após 3s, mantém o permanente
-    const clearTemporaryHighlightTimeout = setTimeout(() => {
-      console.log('[MovimentacoesTab] Moving to Phase 2 - removing temporary highlight, keeping permanent');
-      setTemporaryHighlightedTaskId((currentId) =>
-        currentId === highlightedTaskId ? null : currentId
-      );
-      // permanentHighlightedTaskId continua ativo indefinidamente
-    }, HIGHLIGHT_DURATION_MS);
-
     return () => {
       clearTimeout(scrollTimeout);
-      clearTimeout(clearTemporaryHighlightTimeout);
     };
   }, [highlightedTaskId]);
 
@@ -1033,25 +1018,25 @@ function MovimentacoesTab({
                     {getTasksByMovement(mov.id).length > 0 && (
                       <div style={{ marginBottom: '0.75rem' }}>
                         {getTasksByMovement(mov.id).map(task => {
-                          const isTemporaryHighlighted = temporaryHighlightedTaskId === task.id;
-                          const isPermanentHighlighted = permanentHighlightedTaskId === task.id;
-                          const isHighlighted = isTemporaryHighlighted || isPermanentHighlighted;
+                          const isAuxiliarHighlighted = auxiliarHighlightedTaskId === task.id;
 
                           return (
                           <div
                             key={task.id}
                             id={`task-${task.id}`}
+                            onClick={() => setAuxiliarHighlightedTaskId(null)}
                             style={{
                               display: 'flex',
                               gap: '0.75rem',
                               padding: '0.5rem',
-                              background: isHighlighted ? '#eff6ff' : '#faf5ff',
-                              border: isHighlighted ? '3px solid #3b82f6' : '1px solid #6b21a8',
+                              background: isAuxiliarHighlighted ? '#eff6ff' : '#faf5ff',
+                              border: isAuxiliarHighlighted ? '3px solid #3b82f6' : '1px solid #6b21a8',
                               borderRadius: '6px',
                               marginBottom: '0.5rem',
                               alignItems: 'flex-start',
-                              boxShadow: isHighlighted ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none',
-                              transition: 'all 0.3s ease'
+                              boxShadow: isAuxiliarHighlighted ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none',
+                              transition: 'all 0.3s ease',
+                              cursor: 'pointer'
                             }}
                           >
                             {/* Checkbox */}

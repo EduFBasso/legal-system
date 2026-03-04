@@ -376,24 +376,6 @@
   transform: translateY(-2px);
 }
 
-/* ============================================================================
-   DESTAQUE DE TAREFA CLICADA VIA LINK (localStorage)
-   Mantém o task-item destacado quando navega para CaseDetailPage
-   Estilos iguais a MovimentacoesTab para consistência visual
-   IMPORTANTE: Usar !important para sobrescrever classes de urgência
-   ============================================================================ */
-.task-item.highlighted-from-link {
-  background-color: #eff6ff !important;
-  border: 3px solid #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
-  transition: all 0.3s ease;
-}
-
-.task-item.highlighted-from-link:hover {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
-  transform: none;
-}
-
 /* Checkbox */
 .task-checkbox {
   flex-shrink: 0;
