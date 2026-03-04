@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import caseTasksService from '../services/caseTasksService';
 import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
 import TaskCard from '../components/TaskCard';
+import UrgencySection from '../components/UrgencySection';
 import './DeadlinesPage.css';
 
 /**
@@ -208,9 +209,26 @@ export default function DeadlinesPage() {
    */
   const totalTasks = useMemo(() => tasks.length, [tasks]);
   const completedTasks = useMemo(() => tasks.filter(t => t.status === 'CONCLUIDA').length, [tasks]);
-  const showUrgentissimo = useMemo(() => selectedUrgency === null || selectedUrgency === 'URGENTISSIMO', [selectedUrgency]);
-  const showUrgente = useMemo(() => selectedUrgency === null || selectedUrgency === 'URGENTE', [selectedUrgency]);
-  const showNormal = useMemo(() => selectedUrgency === null || selectedUrgency === 'NORMAL', [selectedUrgency]);
+
+  /**
+   * Configuração de urgências para renderização em loop
+   * Cada urgência tem um className específico para aplicar border ao container
+   */
+  const URGENCIES = useMemo(() => ['URGENTISSIMO', 'URGENTE', 'NORMAL'], []);
+  
+  const urgencyConfig = useMemo(() => ({
+    URGENTISSIMO: { className: 'urgentissimo-section' },
+    URGENTE: { className: 'urgente-section' },
+    NORMAL: { className: 'normal-section' },
+  }), []);
+
+  /**
+   * Determina se cada urgência deve ser mostrada baseado no filtro
+   */
+  const shouldShowUrgency = useMemo(() => (urgency) => 
+    selectedUrgency === null || selectedUrgency === urgency
+  , [selectedUrgency]);
+
   const showUrgencyContainerBorder = useMemo(() => selectedUrgency === null, [selectedUrgency]);
 
   /**
@@ -335,77 +353,27 @@ export default function DeadlinesPage() {
           </div>
         ) : (
           <>
-            {/* URGENTÍSSIMAS */}
-            {showUrgentissimo && grouped.URGENTISSIMO.length > 0 && (
-              <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgentissimo-section' : ''}`}>
-                <div className="tasks-list">
-                  {grouped.URGENTISSIMO.map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      urgency="urgentissimo"
-                      selectedTaskId={selectedTaskId}
-                      onSelectTask={setSelectedTaskId}
-                      onToggleStatus={handleToggleTaskStatus}
-                      onOpenCase={handleOpenCase}
-                      onOpenMovement={handleOpenMovement}
-                      isOverdue={isOverdue}
-                      isToday={isToday}
-                      formatDate={formatDate}
-                      formatDaysRemaining={formatDaysRemaining}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* URGENTES */}
-            {showUrgente && grouped.URGENTE.length > 0 && (
-              <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgente-section' : ''}`}>
-                <div className="tasks-list">
-                  {grouped.URGENTE.map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      urgency="urgente"
-                      selectedTaskId={selectedTaskId}
-                      onSelectTask={setSelectedTaskId}
-                      onToggleStatus={handleToggleTaskStatus}
-                      onOpenCase={handleOpenCase}
-                      onOpenMovement={handleOpenMovement}
-                      isOverdue={isOverdue}
-                      isToday={isToday}
-                      formatDate={formatDate}
-                      formatDaysRemaining={formatDaysRemaining}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* NORMAIS */}
-            {showNormal && grouped.NORMAL.length > 0 && (
-              <div className={`urgency-section ${showUrgencyContainerBorder ? 'normal-section' : ''}`}>
-                <div className="tasks-list">
-                  {grouped.NORMAL.map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      urgency="normal"
-                      selectedTaskId={selectedTaskId}
-                      onSelectTask={setSelectedTaskId}
-                      onToggleStatus={handleToggleTaskStatus}
-                      onOpenCase={handleOpenCase}
-                      onOpenMovement={handleOpenMovement}
-                      isOverdue={isOverdue}
-                      isToday={isToday}
-                      formatDate={formatDate}
-                      formatDaysRemaining={formatDaysRemaining}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Renderiza cada urgência em loop */}
+            {URGENCIES.map(urgency => (
+              (shouldShowUrgency(urgency) && grouped[urgency].length > 0) && (
+                <UrgencySection
+                  key={urgency}
+                  urgency={urgency}
+                  tasks={grouped[urgency]}
+                  sectionClassName={urgencyConfig[urgency].className}
+                  selectedTaskId={selectedTaskId}
+                  onSelectTask={setSelectedTaskId}
+                  onToggleStatus={handleToggleTaskStatus}
+                  onOpenCase={handleOpenCase}
+                  onOpenMovement={handleOpenMovement}
+                  isOverdue={isOverdue}
+                  isToday={isToday}
+                  formatDate={formatDate}
+                  formatDaysRemaining={formatDaysRemaining}
+                  showBorder={showUrgencyContainerBorder}
+                />
+              )
+            ))}
           </>
         )}
       </div>
