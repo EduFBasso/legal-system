@@ -148,7 +148,17 @@ MovimentacoesTab
   - Consolidar estilos de urgência
   - _Commit_: `refactor: consolidate CSS selectors`
 
-- [ ] **Etapa 3.5**: Documentar arquitetura
+- [ ] **Etapa 3.5**: Refatorar TasksTab (nova aba de tarefas)
+  - Adicionar seleção clicável (selectedTaskId)
+  - Ajustar estilos visuais (borda 3px, box-shadow)
+  - Trazer handleOpenMovement (links em nova janela)
+  - Consolidar CSS (remover `.publicacao-card`)
+  - _Commits_:
+    - `refactor: add task selection to TasksTab`
+    - `refactor: standardize TasksTab styling with DeadlinesPage pattern`
+    - `refactor: update TasksTab movement links to window.open`
+
+- [ ] **Etapa 3.6**: Documentar arquitetura
   - README de Cases
   - Fluxo: Case → Movement → Task
   - _Commit_: `docs: document Cases architecture`
