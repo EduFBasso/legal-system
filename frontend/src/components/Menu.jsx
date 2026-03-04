@@ -53,7 +53,6 @@ export default function Menu() {
             to="/publications"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            data-tooltip="Buscar novas publicações do DJE por período e tribunal"
           >
             <span className="menu-icon">🔍</span>
             <span className="menu-label">Buscar Publicações</span>
@@ -64,7 +63,6 @@ export default function Menu() {
             to="/publications/all"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
-            data-tooltip="Visualizar todas as publicações do sistema (integradas e não vinculadas)"
           >
             <span className="menu-icon">📚</span>
             <span className="menu-label">Todas Publicações</span>
@@ -76,7 +74,6 @@ export default function Menu() {
             end
             className={({ isActive }) => isActive ? 'active' : ''}
             data-tooltip="Publicações não vinculadas a nenhum processo - aguardando integração"
-          >
             <span className="menu-icon">⏳</span>
             <span className="menu-label">Não Vinculadas</span>
             {pendingCount > 0 && (
@@ -90,7 +87,6 @@ export default function Menu() {
             end
             className={({ isActive }) => isActive ? 'active' : ''}
             data-tooltip="Histórico de buscas anteriores"
-          >
             <span className="menu-icon">📜</span>
             <span className="menu-label">Histórico de Buscas</span>
           </NavLink>
@@ -104,7 +100,6 @@ export default function Menu() {
             end
             className={({ isActive }) => isActive ? 'active' : ''}
             data-tooltip="Resumo das tarefas agendadas não concluídas, agrupadas por urgência"
-          >
             <span className="menu-icon">⏰</span>
             <span className="menu-label">Tarefas Agendadas</span>
           </NavLink>
