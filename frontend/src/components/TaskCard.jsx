@@ -30,6 +30,9 @@ export default function TaskCard({
 }) {
   const isSelected = selectedTaskId === task.id;
   const isCompleted = task.status === 'CONCLUIDA';
+  
+  // Normaliza urgency para lowercase (CSS classes são minúsculas)
+  const urgencyClass = urgency.toLowerCase();
 
   const handleSelectClick = () => {
     onSelectTask(isSelected ? null : task.id);
@@ -52,7 +55,7 @@ export default function TaskCard({
   return (
     <div
       key={task.id}
-      className={`task-item ${urgency} ${isCompleted ? 'completed' : ''} ${isSelected ? 'selected' : ''}`}
+      className={`task-item ${urgencyClass} ${isCompleted ? 'completed' : ''} ${isSelected ? 'selected' : ''}`}
     >
       <div className="task-checkbox">
         <input
