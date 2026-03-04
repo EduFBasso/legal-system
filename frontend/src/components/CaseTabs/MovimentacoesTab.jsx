@@ -327,6 +327,7 @@ function MovimentacoesTab({
 
     setTemporaryHighlightedMovimentacaoId(highlightedMovimentacaoId);
     setSelectedMovimentacaoId(highlightedMovimentacaoId);
+    setSelectedTaskId(null); // Clear task selection when movement changes
 
     const scrollTimeout = setTimeout(() => {
       const element = document.getElementById(`movimentacao-${highlightedMovimentacaoId}`);
@@ -473,7 +474,10 @@ function MovimentacoesTab({
                   key={mov.id}
                   id={`movimentacao-${mov.id}`}
                   className="timeline-item"
-                  onClick={() => setSelectedMovimentacaoId(mov.id)}
+                  onClick={() => {
+                    setSelectedMovimentacaoId(mov.id);
+                    setSelectedTaskId(null); // Clear task selection when switching movement
+                  }}
                   style={{
                     cursor: 'pointer',
                     borderRadius: '8px',
