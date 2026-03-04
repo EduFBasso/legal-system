@@ -373,6 +373,15 @@ function MovimentacoesTab({
   }, [highlightedTaskId]);
 
   /**
+   * Limpa seleção de tarefa quando movimento muda
+   * Permite que usuário selecione naturalmente tasks na movimentação atual
+   * Apenas reseta quando movimento MUDA, não a cada clique
+   */
+  useEffect(() => {
+    setSelectedTaskId(null);
+  }, [selectedMovimentacaoId]);
+
+  /**
    * Sincroniza alterações de tarefas entre abas/janelas do navegador
    * Quando uma tarefa é marcada como concluída em outra aba, recarrega os dados
    */
@@ -474,10 +483,7 @@ function MovimentacoesTab({
                   key={mov.id}
                   id={`movimentacao-${mov.id}`}
                   className="timeline-item"
-                  onClick={() => {
-                    setSelectedMovimentacaoId(mov.id);
-                    setSelectedTaskId(null); // Clear task selection when switching movement
-                  }}
+                  onClick={() => setSelectedMovimentacaoId(mov.id)}
                   style={{
                     cursor: 'pointer',
                     borderRadius: '8px',
