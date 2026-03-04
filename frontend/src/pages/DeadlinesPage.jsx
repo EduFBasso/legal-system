@@ -148,6 +148,25 @@ export default function DeadlinesPage() {
   };
 
   /**
+   * Abre processo/case em nova janela
+   * Permite visualizar DeadlinesPage + CaseDetailPage lado a lado
+   */
+  const handleOpenCase = (caseId) => {
+    window.open(`/cases/${caseId}`, '_blank');
+  };
+
+  /**
+   * Abre movimentação em nova janela com destaque auxiliar
+   * Seleciona a tarefa antes de abrir (feedback visual em A)
+   * Destaca em MovimentacoesTab ao abrir (feedback visual em B)
+   */
+  const handleOpenMovement = (caseId, movementId, taskId) => {
+    setSelectedTaskId(taskId); // Seleciona em DeadlinesPage
+    const url = getMovementLinkUrl(caseId, movementId, taskId);
+    window.open(url, '_blank');
+  };
+
+  /**
    * Agrupa e ordena tarefas por urgência
    */
   /**
@@ -334,13 +353,13 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-process-meta">
-                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
+                          <a className="task-process-link" onClick={(e) => { e.stopPropagation(); handleOpenCase(task.case); }} style={{cursor: 'pointer'}}>
                             {task.case_numero}
                           </a>
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleMovementLinkClick(task.id); }}>
+                              <a className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleOpenMovement(task.case, task.movimentacao, task.id); }} style={{cursor: 'pointer'}}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
@@ -377,13 +396,13 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-process-meta">
-                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
+                          <a className="task-process-link" onClick={(e) => { e.stopPropagation(); handleOpenCase(task.case); }} style={{cursor: 'pointer'}}>
                             {task.case_numero}
                           </a>
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleMovementLinkClick(task.id); }}>
+                              <a className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleOpenMovement(task.case, task.movimentacao, task.id); }} style={{cursor: 'pointer'}}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
@@ -420,13 +439,13 @@ export default function DeadlinesPage() {
                         <div className="task-title">{task.titulo}</div>
                         {task.descricao && <div className="task-description">{task.descricao}</div>}
                         <div className="task-process-meta">
-                          <a href={`/cases/${task.case}`} className="task-process-link" onClick={(e) => e.stopPropagation()}>
+                          <a className="task-process-link" onClick={(e) => { e.stopPropagation(); handleOpenCase(task.case); }} style={{cursor: 'pointer'}}>
                             {task.case_numero}
                           </a>
                           {task.movimentacao && (
                             <>
                               <span className="task-meta-dot">•</span>
-                              <a href={getMovementLinkUrl(task.case, task.movimentacao, task.id)} className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleMovementLinkClick(task.id); }}>
+                              <a className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleOpenMovement(task.case, task.movimentacao, task.id); }} style={{cursor: 'pointer'}}>
                                 📋 {task.movimentacao_titulo}
                               </a>
                             </>
