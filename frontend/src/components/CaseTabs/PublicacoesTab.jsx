@@ -259,10 +259,12 @@ function PublicacoesTab({
                   
                   {/* Links de consulta ao tribunal */}
                   {(() => {
+                    if (!pub.numero_processo) return null;
+                    
                     const consultaLinks = generateAllConsultaLinks(pub);
                     
-                    // Se não tem número ou links, não renderiza
-                    if (!pub.numero_processo || (!consultaLinks.linkOficial && consultaLinks.linksAlternativos.length === 0)) {
+                    // Renderiza se tem link oficial OU links alternativos
+                    if (!consultaLinks.linkOficial && consultaLinks.linksAlternativos.length === 0) {
                       return null;
                     }
                     
@@ -280,16 +282,18 @@ function PublicacoesTab({
                         )}
                         
                         {/* Botões alternativos */}
-                        {consultaLinks.linksAlternativos.map((system, index) => (
-                          <button 
-                            key={index}
-                            className="btn-consulta-alternativa"
-                            onClick={(e) => handleConsultarProcesso(e, system.url, pub.numero_processo)}
-                            title={system.description}
-                          >
-                            {system.icon} {system.shortName}
-                          </button>
-                        ))}
+                        {consultaLinks.linksAlternativos.length > 0 && (
+                          consultaLinks.linksAlternativos.map((system, index) => (
+                            <button 
+                              key={index}
+                              className="btn-consulta-alternativa"
+                              onClick={(e) => handleConsultarProcesso(e, system.url, pub.numero_processo)}
+                              title={system.description}
+                            >
+                              {system.icon} {system.shortName}
+                            </button>
+                          ))
+                        )}
                       </div>
                     );
                   })()}
