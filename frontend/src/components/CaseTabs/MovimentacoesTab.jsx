@@ -237,6 +237,7 @@ function MovimentacoesTab({
     setSavingMovimentacao(true);
     try {
       await caseMovementsService.updateMovement(movId, {
+        case: parseInt(id),
         data: editMovimentacaoForm.data,
         tipo: editMovimentacaoForm.tipo,
         tipo_customizado: editMovimentacaoForm.tipo_customizado || '',
