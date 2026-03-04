@@ -807,7 +807,7 @@ function CaseDetailPage() {
         }
 
         setTimeout(() => {
-          window.open(`/cases/${created.id}`, '_blank', 'noopener,noreferrer');
+          window.open(`/cases/${created.id}`, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
         }, 700);
         return;
       }

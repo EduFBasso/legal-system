@@ -14,8 +14,8 @@ export default function CaseCard({ caseData }) {
       return;
     }
     
-    // Abre em nova aba
-    window.open(`/cases/${caseData.id}`, '_blank');
+    // Abre em nova janela
+    window.open(`/cases/${caseData.id}`, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
   };
 
   /**

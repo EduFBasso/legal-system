@@ -152,7 +152,7 @@ export default function DeadlinesPage() {
    * Permite visualizar DeadlinesPage + CaseDetailPage lado a lado
    */
   const handleOpenCase = (caseId) => {
-    window.open(`/cases/${caseId}`, '_blank');
+    window.open(`/cases/${caseId}`, '_blank', 'width=1400,height=900,left=100,top=100');
   };
 
   /**
@@ -163,7 +163,7 @@ export default function DeadlinesPage() {
   const handleOpenMovement = (caseId, movementId, taskId) => {
     setSelectedTaskId(taskId); // Seleciona em DeadlinesPage
     const url = getMovementLinkUrl(caseId, movementId, taskId);
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'width=1400,height=900,left=100,top=100');
   };
 
   /**

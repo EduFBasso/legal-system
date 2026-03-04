@@ -838,7 +838,7 @@ function MovimentacoesTab({
                               href="#"
                               onClick={(e) => {
                                 e.preventDefault();
-                                window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+                                window.open(`/publications/${mov.publicacao_id}/details`, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'scale(1.1)';

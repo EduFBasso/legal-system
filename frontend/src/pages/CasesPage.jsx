@@ -155,8 +155,8 @@ export default function CasesPage() {
       // Navigate to existing case detail page
       navigate(`/cases/${caseItem.id}`);
     } else {
-      // Open new case page in new tab
-      window.open('/cases/new', '_blank');
+      // Open new case page in new window
+      window.open('/cases/new', '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
     }
   };
 
