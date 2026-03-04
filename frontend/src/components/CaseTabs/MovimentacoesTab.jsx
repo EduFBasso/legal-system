@@ -349,11 +349,13 @@ function MovimentacoesTab({
 
   /**
    * 2-Phase Task Highlight System
-   * Fase 1 (0-5s): temporaryHighlightedTaskId + permanentHighlightedTaskId (ambos azuis)
-   * Fase 2 (5s+): apenas permanentHighlightedTaskId (continua azul)
+   * Fase 1 (0-3s): temporaryHighlightedTaskId + permanentHighlightedTaskId (ambos azuis)
+   * Fase 2 (3s+): apenas permanentHighlightedTaskId (continua azul)
    */
   useEffect(() => {
     if (!highlightedTaskId) return;
+
+    console.log('[MovimentacoesTab] Starting 2-phase highlight for task:', highlightedTaskId);
 
     // Fase 1: ativa ambos os destaques
     setTemporaryHighlightedTaskId(highlightedTaskId);
@@ -363,12 +365,14 @@ function MovimentacoesTab({
     const scrollTimeout = setTimeout(() => {
       const element = document.getElementById(`task-${highlightedTaskId}`);
       if (element) {
+        console.log('[MovimentacoesTab] Scrolling to task:', highlightedTaskId);
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 120);
 
-    // Fase 2: Remove apenas o destaque temporário após 5s, mantém o permanente
+    // Fase 2: Remove apenas o destaque temporário após 3s, mantém o permanente
     const clearTemporaryHighlightTimeout = setTimeout(() => {
+      console.log('[MovimentacoesTab] Moving to Phase 2 - removing temporary highlight, keeping permanent');
       setTemporaryHighlightedTaskId((currentId) =>
         currentId === highlightedTaskId ? null : currentId
       );

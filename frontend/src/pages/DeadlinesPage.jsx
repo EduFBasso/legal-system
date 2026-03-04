@@ -75,16 +75,21 @@ export default function DeadlinesPage() {
   useEffect(() => {
     const highlightedFromStorage = localStorage.getItem('deadlines_highlighted_task_id');
     if (highlightedFromStorage) {
-      setHighlightedTaskIdFromLink(parseInt(highlightedFromStorage, 10));
+      const taskId = parseInt(highlightedFromStorage, 10);
+      setHighlightedTaskIdFromLink(taskId);
+      console.log('[DeadlinesPage] Loaded highlighted task from localStorage:', taskId);
     }
 
     // Listener para alterações em localStorage (sincronização entre abas)
     const handleStorageChange = (e) => {
       if (e.key === 'deadlines_highlighted_task_id') {
         if (e.newValue) {
-          setHighlightedTaskIdFromLink(parseInt(e.newValue, 10));
+          const taskId = parseInt(e.newValue, 10);
+          setHighlightedTaskIdFromLink(taskId);
+          console.log('[DeadlinesPage] Synced highlighted task from another tab:', taskId);
         } else {
           setHighlightedTaskIdFromLink(null);
+          console.log('[DeadlinesPage] Cleared highlighted task');
         }
       }
     };
@@ -169,10 +174,13 @@ export default function DeadlinesPage() {
   /**
    * Handler para clique no link de movimentação
    * Armazena o ID da tarefa em localStorage para manter destaque
+   * Nota: A classe 'highlighted-from-link' será aplicada ao VOLTAR desta página
    */
   const handleMovementLinkClick = (taskId) => {
     localStorage.setItem('deadlines_highlighted_task_id', taskId.toString());
-    setHighlightedTaskIdFromLink(taskId);
+    console.log('[DeadlinesPage] Stored highlighted task ID in localStorage:', taskId);
+    // Não atualizamos o estado aqui porque a página vai navegar
+    // O destaque será aplicado quando voltar a esta página
   };
 
   /**
