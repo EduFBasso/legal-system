@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import caseTasksService from '../services/caseTasksService';
 import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
+import TaskCard from '../components/TaskCard';
 import './DeadlinesPage.css';
 
 /**
@@ -339,39 +340,20 @@ export default function DeadlinesPage() {
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgentissimo-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.URGENTISSIMO.map(task => (
-                    <div key={task.id} className={`task-item urgentissimo ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
-                      <div className="task-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={task.status === 'CONCLUIDA'}
-                          onChange={() => handleToggleTaskStatus(task)}
-                          className="checkbox-input"
-                        />
-                      </div>
-                      
-                      <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
-                        <div className="task-title">{task.titulo}</div>
-                        {task.descricao && <div className="task-description">{task.descricao}</div>}
-                        <div className="task-process-meta">
-                          <a className="task-process-link" onClick={(e) => { e.stopPropagation(); handleOpenCase(task.case); }} style={{cursor: 'pointer'}}>
-                            {task.case_numero}
-                          </a>
-                          {task.movimentacao && (
-                            <>
-                              <span className="task-meta-dot">•</span>
-                              <a className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleOpenMovement(task.case, task.movimentacao, task.id); }} style={{cursor: 'pointer'}}>
-                                📋 {task.movimentacao_titulo}
-                              </a>
-                            </>
-                          )}
-                        </div>
-                        <div className="task-meta">
-                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
-                          <span className="task-meta-dot">•</span>
-                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      urgency="urgentissimo"
+                      selectedTaskId={selectedTaskId}
+                      onSelectTask={setSelectedTaskId}
+                      onToggleStatus={handleToggleTaskStatus}
+                      onOpenCase={handleOpenCase}
+                      onOpenMovement={handleOpenMovement}
+                      isOverdue={isOverdue}
+                      isToday={isToday}
+                      formatDate={formatDate}
+                      formatDaysRemaining={formatDaysRemaining}
+                    />
                   ))}
                 </div>
               </div>
@@ -382,39 +364,20 @@ export default function DeadlinesPage() {
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'urgente-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.URGENTE.map(task => (
-                    <div key={task.id} className={`task-item urgente ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
-                      <div className="task-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={task.status === 'CONCLUIDA'}
-                          onChange={() => handleToggleTaskStatus(task)}
-                          className="checkbox-input"
-                        />
-                      </div>
-                      
-                      <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
-                        <div className="task-title">{task.titulo}</div>
-                        {task.descricao && <div className="task-description">{task.descricao}</div>}
-                        <div className="task-process-meta">
-                          <a className="task-process-link" onClick={(e) => { e.stopPropagation(); handleOpenCase(task.case); }} style={{cursor: 'pointer'}}>
-                            {task.case_numero}
-                          </a>
-                          {task.movimentacao && (
-                            <>
-                              <span className="task-meta-dot">•</span>
-                              <a className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleOpenMovement(task.case, task.movimentacao, task.id); }} style={{cursor: 'pointer'}}>
-                                📋 {task.movimentacao_titulo}
-                              </a>
-                            </>
-                          )}
-                        </div>
-                        <div className="task-meta">
-                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
-                          <span className="task-meta-dot">•</span>
-                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      urgency="urgente"
+                      selectedTaskId={selectedTaskId}
+                      onSelectTask={setSelectedTaskId}
+                      onToggleStatus={handleToggleTaskStatus}
+                      onOpenCase={handleOpenCase}
+                      onOpenMovement={handleOpenMovement}
+                      isOverdue={isOverdue}
+                      isToday={isToday}
+                      formatDate={formatDate}
+                      formatDaysRemaining={formatDaysRemaining}
+                    />
                   ))}
                 </div>
               </div>
@@ -425,39 +388,20 @@ export default function DeadlinesPage() {
               <div className={`urgency-section ${showUrgencyContainerBorder ? 'normal-section' : ''}`}>
                 <div className="tasks-list">
                   {grouped.NORMAL.map(task => (
-                    <div key={task.id} className={`task-item normal ${task.status === 'CONCLUIDA' ? 'completed' : ''} ${selectedTaskId === task.id ? 'selected' : ''}`}>
-                      <div className="task-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={task.status === 'CONCLUIDA'}
-                          onChange={() => handleToggleTaskStatus(task)}
-                          className="checkbox-input"
-                        />
-                      </div>
-                      
-                      <div className="task-main" onClick={() => setSelectedTaskId(selectedTaskId === task.id ? null : task.id)}>
-                        <div className="task-title">{task.titulo}</div>
-                        {task.descricao && <div className="task-description">{task.descricao}</div>}
-                        <div className="task-process-meta">
-                          <a className="task-process-link" onClick={(e) => { e.stopPropagation(); handleOpenCase(task.case); }} style={{cursor: 'pointer'}}>
-                            {task.case_numero}
-                          </a>
-                          {task.movimentacao && (
-                            <>
-                              <span className="task-meta-dot">•</span>
-                              <a className="task-movement-link-anchor" onClick={(e) => { e.stopPropagation(); handleOpenMovement(task.case, task.movimentacao, task.id); }} style={{cursor: 'pointer'}}>
-                                📋 {task.movimentacao_titulo}
-                              </a>
-                            </>
-                          )}
-                        </div>
-                        <div className="task-meta">
-                          <span className={`task-date ${isOverdue(task.data_vencimento) ? 'overdue-date' : ''} ${isToday(task.data_vencimento) ? 'today-date' : ''}`}>{formatDate(task.data_vencimento)}</span>
-                          <span className="task-meta-dot">•</span>
-                          <span className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${isToday(task.data_vencimento) ? 'today-remaining' : ''}`}>{formatDaysRemaining(task.data_vencimento)}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      urgency="normal"
+                      selectedTaskId={selectedTaskId}
+                      onSelectTask={setSelectedTaskId}
+                      onToggleStatus={handleToggleTaskStatus}
+                      onOpenCase={handleOpenCase}
+                      onOpenMovement={handleOpenMovement}
+                      isOverdue={isOverdue}
+                      isToday={isToday}
+                      formatDate={formatDate}
+                      formatDaysRemaining={formatDaysRemaining}
+                    />
                   ))}
                 </div>
               </div>
