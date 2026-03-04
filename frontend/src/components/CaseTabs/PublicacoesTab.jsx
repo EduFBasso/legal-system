@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link2, FileText, Calendar, Building2, ExternalLink, PlusCircle } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
 import { formatDate } from '../../utils/formatters';
+import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import './PublicacoesTab.css';
 
 /**
@@ -26,6 +27,46 @@ function PublicacoesTab({
   onRefresh = () => {},
 }) {
   const [filter, setFilter] = useState('todas'); // 'todas', 'intimacoes', 'despachos', 'outras'
+  
+  /**
+   * Copia número do processo e abre link de consulta no tribunal
+   */
+  const handleConsultarProcesso = (e, url, numeroProcesso) => {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    
+    // Copiar automaticamente o número do processo
+    if (numeroProcesso) {
+      navigator.clipboard.writeText(numeroProcesso).then(() => {
+        // Verificar se o elemento ainda existe no DOM
+        if (btn && document.contains(btn)) {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '✅ Copiado! Abrindo...';
+          
+          // Restaurar texto original
+          setTimeout(() => {
+            if (btn && document.contains(btn)) {
+              btn.innerHTML = originalHTML;
+            }
+          }, 2000);
+        }
+        
+        // Abrir link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
+        // Mesmo com erro, abre o link
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      });
+    } else if (url) {
+      // Se não tem número, só abre o link
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
   
   /**
    * Abre página de detalhes da publicação em nova janela
@@ -183,17 +224,6 @@ function PublicacoesTab({
                         <PlusCircle size={16} />
                       </button>
                     )}
-                    {pub.link_oficial && (
-                      <a
-                        href={pub.link_oficial}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-icon-small"
-                        title="Ver no site oficial"
-                      >
-                        <ExternalLink size={16} />
-                      </a>
-                    )}
                     <button
                       className="btn-icon-small btn-danger-ghost"
                       onClick={() => onDesvincularPublicacao(pub.id)}
@@ -218,7 +248,7 @@ function PublicacoesTab({
                   </p>
                 </div>
 
-                {/* Footer: Ver mais */}
+                {/* Footer: Ver mais + Links de Consulta */}
                 <div className="publicacao-footer">
                   <button 
                     className="btn-link"
@@ -226,6 +256,43 @@ function PublicacoesTab({
                   >
                     Ver texto completo →
                   </button>
+                  
+                  {/* Links de consulta ao tribunal */}
+                  {(() => {
+                    const consultaLinks = generateAllConsultaLinks(pub);
+                    
+                    // Se não tem número ou links, não renderiza
+                    if (!pub.numero_processo || (!consultaLinks.linkOficial && consultaLinks.linksAlternativos.length === 0)) {
+                      return null;
+                    }
+                    
+                    return (
+                      <div className="consulta-buttons-group">
+                        {/* Botão oficial (ESAJ) */}
+                        {consultaLinks.linkOficial && (
+                          <button 
+                            className="btn-consulta-oficial"
+                            onClick={(e) => handleConsultarProcesso(e, consultaLinks.linkOficial, pub.numero_processo)}
+                            title="Copia o número e abre o portal do tribunal"
+                          >
+                            🔍 Consultar ({pub.tribunal})
+                          </button>
+                        )}
+                        
+                        {/* Botões alternativos */}
+                        {consultaLinks.linksAlternativos.map((system, index) => (
+                          <button 
+                            key={index}
+                            className="btn-consulta-alternativa"
+                            onClick={(e) => handleConsultarProcesso(e, system.url, pub.numero_processo)}
+                            title={system.description}
+                          >
+                            {system.icon} {system.shortName}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

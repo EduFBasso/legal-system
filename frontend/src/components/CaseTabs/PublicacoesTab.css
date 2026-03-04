@@ -219,6 +219,53 @@
 }
 
 /* ==========================================
+   BOTÕES DE CONSULTA
+   ========================================== */
+
+.consulta-buttons-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-consulta-oficial,
+.btn-consulta-alternativa {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-consulta-oficial {
+  background-color: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+}
+
+.btn-consulta-oficial:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.btn-consulta-alternativa {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-consulta-alternativa:hover {
+  background-color: #e5e7eb;
+  border-color: #d1d5db;
+  color: #1f2937;
+}
+
+/* ==========================================
    RESPONSIVE
    ========================================== */
 
