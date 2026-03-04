@@ -662,26 +662,33 @@ function MovimentacoesTab({
                   {editingMovimentacaoId !== mov.id && (
                     <>
                   
-                  {/* Meta: Data de disponibilização + Tipo (MANUAL) / Órgão */}
+                  {/* Data de disponibilização no topo */}
+                  <div style={{ 
+                    marginBottom: '1rem',
+                    fontSize: '1.36rem',
+                    fontWeight: '500',
+                    color: '#6b21a8'
+                  }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
+                    </span>
+                  </div>
+
+                  {/* Órgão e Tipo (lado a lado) */}
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
                     gap: '1rem', 
-                    marginBottom: '0.75rem',
-                    fontSize: '1.133rem',
+                    marginBottom: '1rem',
+                    fontSize: '1.36rem',
                     fontWeight: '500',
                     color: '#6b21a8',
                     flexWrap: 'wrap'
                   }}>
-                    {/* Grupo esquerdo: Data + Órgão */}
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
-                      </span>
-                      
+                    {/* Órgão */}
+                    <div>
                       {(() => {
-                        // Usar órgão da API se disponível, senão usar o que foi extraído do texto
                         if (mov.orgao) {
                           return (
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -693,7 +700,7 @@ function MovimentacoesTab({
                       })()}
                     </div>
                     
-                    {/* Grupo direito: Tipo (para movimentações MANUAL) */}
+                    {/* Tipo (para movimentações MANUAL) */}
                     {mov.origem === 'MANUAL' && mov.tipo && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         ⚖️ <strong>Tipo:</strong> {tipoDisplay}
@@ -705,11 +712,11 @@ function MovimentacoesTab({
                     {mov.origem === 'MANUAL' ? (
                       // Formato estruturado para movimentações MANUAL
                       <div style={{ marginBottom: '0.75rem' }}>
-                        {/* Título */}
+                        {/* Título com label */}
                         {mov.titulo && (
-                          <div style={{ marginBottom: '0.75rem' }}>
+                          <div style={{ marginBottom: '1rem' }}>
                             <div style={{ 
-                              fontSize: '0.875rem',
+                              fontSize: '1.05rem',
                               fontWeight: '700',
                               color: '#6b21a8',
                               marginBottom: '0.375rem',
@@ -719,20 +726,20 @@ function MovimentacoesTab({
                               Título:
                             </div>
                             <div style={{ 
-                              fontSize: '0.9375rem',
+                              fontSize: '1.25rem',
                               lineHeight: '1.6',
-                              color: '#6b21a8'
+                              color: '#6b21a8',
+                              fontWeight: '600'
                             }}>
                               {mov.titulo}
                             </div>
                           </div>
                         )}
-                        
-                        {/* Descrição */}
+                        {/* Descrição Completa */}
                         {manualDescricao && (
                           <div>
                             <div style={{ 
-                              fontSize: '0.875rem',
+                              fontSize: '1.05rem',
                               fontWeight: '700',
                               color: '#6b21a8',
                               marginBottom: '0.375rem',
@@ -742,7 +749,7 @@ function MovimentacoesTab({
                               Descrição completa:
                             </div>
                             <div style={{ 
-                              fontSize: '0.9375rem',
+                              fontSize: '1.125rem',
                               lineHeight: '1.6',
                               color: '#6b21a8',
                               whiteSpace: 'pre-wrap'
@@ -757,7 +764,7 @@ function MovimentacoesTab({
                       <>
                         {/* Texto da publicação truncado (prioriza descrição completa) */}
                         <div style={{ 
-                          fontSize: '0.9375rem',
+                          fontSize: '1.125rem',
                           lineHeight: '1.6',
                           color: '#6b21a8',
                           marginBottom: '0.75rem'
@@ -805,7 +812,7 @@ function MovimentacoesTab({
                               style={{ 
                                 color: '#6b21a8',
                                 textDecoration: 'none',
-                                fontSize: '0.875rem',
+                                fontSize: '1.05rem',
                                 fontWeight: '600',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -828,7 +835,7 @@ function MovimentacoesTab({
                         {/* Badge ORIGEM */}
       <span className={`origem-badge origem-${mov.origem?.toLowerCase() || 'dje'}`} style={{
                           textTransform: 'uppercase',
-                          fontSize: '0.75rem',
+                          fontSize: '0.9rem',
                           fontWeight: '700',
                           letterSpacing: '0.5px',
                           padding: '0.4rem 0.75rem',
@@ -845,7 +852,7 @@ function MovimentacoesTab({
                         {mov.prazo && (
                           <span style={{
                             textTransform: 'uppercase',
-                            fontSize: '0.75rem',
+                            fontSize: '0.9rem',
                             fontWeight: '700',
                             letterSpacing: '0.5px',
                             padding: '0.4rem 0.75rem',
