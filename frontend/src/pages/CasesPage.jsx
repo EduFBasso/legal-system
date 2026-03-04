@@ -73,7 +73,7 @@ export default function CasesPage() {
   useEffect(() => {
     loadCases();
     loadStats();
-  }, [loadCases, loadStats]);
+  }, [filters]);
 
   /**
    * Handle filter changes
