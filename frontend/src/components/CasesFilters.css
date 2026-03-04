@@ -1,0 +1,142 @@
+/* CasesFilters.css */
+.cases-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Campo de busca - primeira linha, largura total */
+.search-box {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  font-size: 1.2rem;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 3rem;
+  font-size: 0.95rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  color: #333;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #007bff;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.clear-search-btn:hover {
+  color: #333;
+}
+
+/* Controles à direita - segunda linha */
+.controls-right {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.results-info {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* Toggle de ordenação */
+.ordering-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background-color: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.ordering-toggle:hover {
+  background-color: #e9ecef;
+  border-color: #007bff;
+}
+
+.ordering-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.ordering-label {
+  font-size: 0.95rem;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .cases-filters {
+    padding: 1rem;
+  }
+
+  .controls-right {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .results-info {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+
+  .ordering-toggle {
+    flex: 1;
+    min-width: 140px;
+    justify-content: center;
+  }
+
+  .search-input {
+    font-size: 16px; /* Previne zoom no iOS */
+  }
+}
