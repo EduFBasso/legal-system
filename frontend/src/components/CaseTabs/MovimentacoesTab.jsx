@@ -662,51 +662,44 @@ function MovimentacoesTab({
                   {editingMovimentacaoId !== mov.id && (
                     <>
                   
-                  {/* Data de disponibilização no topo */}
+                  {/* Data de disponibilização + Tipo (MANUAL) - mesma linha */}
                   <div style={{ 
-                    marginBottom: '1rem',
-                    fontSize: '1.36rem',
-                    fontWeight: '500',
-                    color: '#6b21a8'
-                  }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
-                    </span>
-                  </div>
-
-                  {/* Órgão e Tipo (lado a lado) */}
-                  <div style={{ 
-                    display: 'flex', 
+                    display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: '1rem', 
+                    alignItems: 'center',
                     marginBottom: '1rem',
                     fontSize: '1.36rem',
                     fontWeight: '500',
                     color: '#6b21a8',
+                    gap: '1rem',
                     flexWrap: 'wrap'
                   }}>
-                    {/* Órgão */}
-                    <div>
-                      {(() => {
-                        if (mov.orgao) {
-                          return (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                              🏛️ <strong>Órgão:</strong> {mov.orgao}
-                            </span>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
+                    {/* Lado esquerdo: Data */}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      📅 <strong>Disponibilização:</strong> {formatDate(mov.data)}
+                    </span>
                     
-                    {/* Tipo (para movimentações MANUAL) */}
+                    {/* Lado direito: Tipo (para movimentações MANUAL) */}
                     {mov.origem === 'MANUAL' && mov.tipo && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         ⚖️ <strong>Tipo:</strong> {tipoDisplay}
                       </span>
                     )}
                   </div>
+
+                  {/* Órgão (linha separada) */}
+                  {mov.orgao && (
+                    <div style={{ 
+                      marginBottom: '1rem',
+                      fontSize: '1.36rem',
+                      fontWeight: '500',
+                      color: '#6b21a8'
+                    }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        🏛️ <strong>Órgão:</strong> {mov.orgao}
+                      </span>
+                    </div>
+                  )}
 
                     {/* Conteúdo diferenciado: MANUAL vs AUTOMÁTICA */}
                     {mov.origem === 'MANUAL' ? (
