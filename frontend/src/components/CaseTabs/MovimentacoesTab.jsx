@@ -667,7 +667,7 @@ function MovimentacoesTab({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '1rem',
+                    marginBottom: '1.5rem',
                     fontSize: '1.36rem',
                     fontWeight: '500',
                     color: '#6b21a8',
@@ -690,7 +690,7 @@ function MovimentacoesTab({
                   {/* Órgão (linha separada) */}
                   {mov.orgao && (
                     <div style={{ 
-                      marginBottom: '1rem',
+                      marginBottom: '1.5rem',
                       fontSize: '1.36rem',
                       fontWeight: '500',
                       color: '#6b21a8'
