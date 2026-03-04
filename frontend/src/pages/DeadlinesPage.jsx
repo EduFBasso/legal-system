@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import caseTasksService from '../services/caseTasksService';
 import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
+import { useUrgencyVisibility } from '../hooks/useUrgencyVisibility';
 import TaskCard from '../components/TaskCard';
 import UrgencySection from '../components/UrgencySection';
 import './DeadlinesPage.css';
@@ -211,23 +212,10 @@ export default function DeadlinesPage() {
   const completedTasks = useMemo(() => tasks.filter(t => t.status === 'CONCLUIDA').length, [tasks]);
 
   /**
-   * Configuração de urgências para renderização em loop
-   * Cada urgência tem um className específico para aplicar border ao container
+   * Hook para centralizar lógica de visibilidade e configuração de urgências
+   * Retorna: URGENCIES, urgencyConfig, shouldShowUrgency
    */
-  const URGENCIES = useMemo(() => ['URGENTISSIMO', 'URGENTE', 'NORMAL'], []);
-  
-  const urgencyConfig = useMemo(() => ({
-    URGENTISSIMO: { className: 'urgentissimo-section' },
-    URGENTE: { className: 'urgente-section' },
-    NORMAL: { className: 'normal-section' },
-  }), []);
-
-  /**
-   * Determina se cada urgência deve ser mostrada baseado no filtro
-   */
-  const shouldShowUrgency = useMemo(() => (urgency) => 
-    selectedUrgency === null || selectedUrgency === urgency
-  , [selectedUrgency]);
+  const { URGENCIES, urgencyConfig, shouldShowUrgency } = useUrgencyVisibility(selectedUrgency);
 
   const showUrgencyContainerBorder = useMemo(() => selectedUrgency === null, [selectedUrgency]);
 
