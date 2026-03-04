@@ -30,7 +30,7 @@ const getTipoDisplay = (tipo, tipoCustomizado) => {
   return tipoMap[tipo] || tipo;
 };
 
-const HIGHLIGHT_DURATION_MS = 5000;
+const HIGHLIGHT_DURATION_MS = 3000;
 
 const escapeRegExp = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
