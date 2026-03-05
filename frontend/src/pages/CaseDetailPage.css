@@ -112,7 +112,7 @@
   border: none;
   background: none;
   outline: none;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #1e293b;
   flex: 1;
   min-width: 0;
@@ -137,7 +137,7 @@
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   border: none;
   cursor: pointer;
