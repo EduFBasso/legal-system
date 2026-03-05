@@ -159,6 +159,22 @@ export default function NotificationsPage() {
     return colors[priority] || colors.medium;
   };
 
+  const getNotificationCardClass = (notification) => {
+    // Se for publicação, usar classe publication-card com cores indigo
+    if (notification.type === 'publication') {
+      return 'publication-card';
+    }
+    // Se for processo com alerta 90+ dias, usar classe stale-alert-card com cores amber
+    if (
+      notification.type === 'process' &&
+      notification.metadata?.alert_type === 'stale_90_days'
+    ) {
+      return 'stale-alert-card';
+    }
+    // Fallback para cartão padrão
+    return '';
+  };
+
   const getTypeIcon = (type) => {
     const icons = {
       publication: '📰',
@@ -322,8 +338,7 @@ export default function NotificationsPage() {
           filteredNotifications.map((notification) => (
             <div
               key={notification.id}
-              className={`notification-card ${notification.read ? 'read' : 'unread'}`}
-              style={{ borderLeftColor: getPriorityColor(notification.priority) }}
+              className={`notification-card ${notification.read ? 'read' : 'unread'} ${getNotificationCardClass(notification)}`}
             >
               
               <div className="notification-icon">
