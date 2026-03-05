@@ -22,6 +22,10 @@
   height: 24px;
 }
 
+.menu-group-spacer-lg {
+  height: 36px;
+}
+
 .menu-item a {
   display: flex;
   align-items: center;

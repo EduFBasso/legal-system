@@ -91,6 +91,9 @@ export default function Menu() {
             )}
           </NavLink>
         </li>
+
+        <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
+
         <li className="menu-item">
           <NavLink
             to="/deadlines"
