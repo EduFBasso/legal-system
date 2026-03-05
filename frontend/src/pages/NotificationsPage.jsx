@@ -106,8 +106,10 @@ export default function NotificationsPage() {
 
   // Função para buscar publicação e abrir modal apropriado
   const handleViewDetails = async (notification) => {
-    // Mark as read when viewing details
-    await markAsRead(notification.id);
+    // Mark as read when viewing details (only if not already read)
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
     
     // Se for alerta de processo 90+ dias, navegar para página de processos
     if (

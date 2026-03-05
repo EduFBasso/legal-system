@@ -165,6 +165,8 @@ export function NotificationsProvider({ children }) {
   };
 
   // Marcar notificação como lida
+  // ATENÇÃO: Este endpoint faz TOGGLE (alterna entre lida/não lida)
+  // Por isso, só deve ser chamado se a notificação ainda não estiver lida
   const markAsRead = async (notificationId) => {
     try {
       const response = await fetch(
