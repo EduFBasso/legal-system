@@ -8,7 +8,6 @@ import './Header.css';
 export default function Header() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { unreadCount } = useNotifications();
-  const greeting = getGreeting();
 
   return (
     <>
@@ -34,10 +33,7 @@ export default function Header() {
           >
             ⚙️
           </button>
-          <span className="user-name">{greeting}, Dra Vitoria</span>
-          <button className="btn-logout" title="Sair">
-            🚪
-          </button>
+          <span className="user-name">Olá, Dra Vitoria</span>
         </div>
       </header>
 
@@ -47,11 +43,4 @@ export default function Header() {
       />
     </>
   );
-}
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Bom dia';
-  if (hour < 18) return 'Boa tarde';
-  return 'Boa noite';
 }
