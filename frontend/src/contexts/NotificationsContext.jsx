@@ -220,9 +220,13 @@ export function NotificationsProvider({ children }) {
   };
 
   // Criar notificação de teste
-  const createTestNotification = async () => {
+  const createTestNotification = async (mode = 'default') => {
     try {
-      const response = await fetch(`${API_BASE_URL}/notifications/test/`, {
+      const endpoint = mode && mode !== 'default'
+        ? `${API_BASE_URL}/notifications/test/?mode=${encodeURIComponent(mode)}`
+        : `${API_BASE_URL}/notifications/test/`;
+
+      const response = await fetch(endpoint, {
         method: 'POST'
       });
       

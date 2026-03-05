@@ -93,6 +93,34 @@ export default function NotificationsSummary() {
     return caseItem.numero_processo_formatted || caseItem.numero_processo || `Processo #${caseItem.id}`;
   };
 
+  const staleNotifications = notifications
+    .filter((notification) => !notification.read && notification.metadata?.alert_type === 'stale_90_days')
+    .slice(0, 3)
+    .map((notification) => ({
+      key: `notification-${notification.id}`,
+      number: notification.metadata?.case_number || 'TESTE-90D-0001',
+      days: notification.metadata?.days_without_activity || 90,
+      link: notification.link || '/cases',
+      notificationId: notification.id,
+    }));
+
+  const staleCaseItems = staleCases.map((caseItem) => ({
+    key: `case-${caseItem.id}`,
+    number: getCaseNumber(caseItem),
+    days: caseItem.dias_sem_movimentacao || 90,
+    link: `/cases/${caseItem.id}`,
+    notificationId: null,
+  }));
+
+  const staleAlertItems = [...staleCaseItems, ...staleNotifications].slice(0, 3);
+
+  const handleStaleAlertClick = async (item) => {
+    if (item.notificationId) {
+      await markAsRead(item.notificationId);
+    }
+    navigate(item.link || '/cases');
+  };
+
   const formatTimeAgo = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -162,20 +190,20 @@ export default function NotificationsSummary() {
       )}
 
       {/* Container condicional: somente aparece se existir processo sem publicacao/movimentacao ha 90+ dias */}
-      {staleCases.length > 0 && (
+      {staleAlertItems.length > 0 && (
         <div className="stale-cases-summary">
           <div className="stale-cases-title">🟨 Alerta 90+ dias sem publicação</div>
           <div className="stale-cases-list">
-            {staleCases.map((caseItem) => (
+            {staleAlertItems.map((item) => (
               <button
-                key={caseItem.id}
+                key={item.key}
                 type="button"
                 className="stale-case-item"
-                onClick={() => navigate(`/cases/${caseItem.id}`)}
+                onClick={() => handleStaleAlertClick(item)}
                 title="Abrir processo"
               >
-                <div className="stale-case-number">{getCaseNumber(caseItem)}</div>
-                <div className="stale-case-days">{caseItem.dias_sem_movimentacao || 90} dias</div>
+                <div className="stale-case-number">{item.number}</div>
+                <div className="stale-case-days">{item.days} dias</div>
               </button>
             ))}
           </div>

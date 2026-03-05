@@ -60,6 +60,16 @@ export default function Menu() {
         </li>
         <li className="menu-item">
           <NavLink
+            to="/search-history"
+            end
+            className={({ isActive }) => isActive ? 'active' : ''}
+          >
+            <span className="menu-icon">📜</span>
+            <span className="menu-label">Histórico de Buscas</span>
+          </NavLink>
+        </li>
+        <li className="menu-item">
+          <NavLink
             to="/publications/all"
             end
             className={({ isActive }) => isActive ? 'active' : ''}
@@ -81,19 +91,6 @@ export default function Menu() {
             )}
           </NavLink>
         </li>
-        <li className="menu-item">
-          <NavLink
-            to="/search-history"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">📜</span>
-            <span className="menu-label">Histórico de Buscas</span>
-          </NavLink>
-        </li>
-
-        <li className="menu-group-spacer" aria-hidden="true" />
-
         <li className="menu-item">
           <NavLink
             to="/deadlines"

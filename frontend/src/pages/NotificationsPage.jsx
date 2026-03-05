@@ -14,6 +14,8 @@ export default function NotificationsPage() {
     fetchAllNotifications,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    deleteAllNotifications,
     requestPermission,
     createTestNotification,
   } = useNotifications();
@@ -58,9 +60,38 @@ export default function NotificationsPage() {
   };
 
   const handleCreateTest = async () => {
-    const success = await createTestNotification();
+    const success = await createTestNotification('default');
     if (success) {
       alert('Notificação de teste criada!');
+    }
+  };
+
+  const handleCreateTestStale90Days = async () => {
+    const success = await createTestNotification('stale_90_days');
+    if (success) {
+      alert('Notificação de teste 90+ dias criada!');
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    const confirmAction = window.confirm('Deseja apagar esta notificação?');
+    if (!confirmAction) return;
+
+    const success = await deleteNotification(notificationId);
+    if (!success) {
+      alert('Não foi possível apagar a notificação.');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (notifications.length === 0) return;
+
+    const confirmAction = window.confirm('Deseja apagar TODAS as notificações? Esta ação não pode ser desfeita.');
+    if (!confirmAction) return;
+
+    const result = await deleteAllNotifications();
+    if (!result?.success) {
+      alert(result?.message || 'Não foi possível apagar todas as notificações.');
     }
   };
 
@@ -172,6 +203,15 @@ export default function NotificationsPage() {
           )}
         </div>
         <div className="header-actions">
+          {notifications.length > 0 && (
+            <button
+              className="btn-danger"
+              onClick={handleDeleteAll}
+              disabled={loading}
+            >
+              🗑 Apagar todas
+            </button>
+          )}
           {unreadCount > 0 && (
             <button 
               className="btn-secondary" 
@@ -187,6 +227,14 @@ export default function NotificationsPage() {
             disabled={loading}
           >
             🧪 Criar Teste
+          </button>
+          <button
+            className="btn-warning"
+            onClick={handleCreateTestStale90Days}
+            disabled={loading}
+            title="Criar notificação de teste de processo sem publicação há mais de 90 dias"
+          >
+            🧪 Teste 90+ dias
           </button>
         </div>
       </div>
@@ -313,6 +361,14 @@ export default function NotificationsPage() {
                         🔗 Consultar Processo
                       </a>
                     )}
+
+                    <button
+                      className="btn-delete-notification"
+                      onClick={() => handleDeleteNotification(notification.id)}
+                      title="Apagar notificação"
+                    >
+                      🗑 Apagar
+                    </button>
                   </div>
 
               </div>

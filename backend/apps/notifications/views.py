@@ -265,15 +265,48 @@ def create_test_notification(request):
     Endpoint para criar notificação de teste.
     Útil para desenvolvimento e troubleshooting.
     """
-    # Usar timezone.localtime() para converter para timezone configurado
-    now_local = timezone.localtime(timezone.now())
-    notification = Notification.objects.create(
-        type='system',
-        priority='medium',
-        title='Notificação de Teste',
-        message='Esta é uma notificação de teste criada em ' + now_local.strftime('%d/%m/%Y às %H:%M'),
-        link='/notifications'
-    )
+    mode = request.data.get('mode') if hasattr(request, 'data') else None
+    if not mode:
+        mode = request.query_params.get('mode') if hasattr(request, 'query_params') else None
+
+    # Cenário de teste para alerta de 90+ dias (processo fictício)
+    if mode == 'stale_90_days':
+        now = timezone.now()
+        old_date = now - timedelta(days=95)
+        now_local = timezone.localtime(now)
+
+        notification = Notification.objects.create(
+            type='process',
+            priority='high',
+            title='⚠ Processo sem publicação há 95 dias',
+            message='Processo fictício TESTE-90D sem publicação/movimentação há mais de 90 dias.',
+            link='/cases',
+            metadata={
+                'alert_type': 'stale_90_days',
+                'case_id': None,
+                'case_number': 'TESTE-90D-0001',
+                'days_without_activity': 95,
+                'is_test': True,
+                'created_at_label': now_local.strftime('%d/%m/%Y às %H:%M')
+            }
+        )
+
+        # Backdate para aparecer como alerta antigo em listagens por data.
+        Notification.objects.filter(id=notification.id).update(
+            created_at=old_date,
+            updated_at=old_date
+        )
+        notification.refresh_from_db()
+    else:
+        # Usar timezone.localtime() para converter para timezone configurado
+        now_local = timezone.localtime(timezone.now())
+        notification = Notification.objects.create(
+            type='system',
+            priority='medium',
+            title='Notificação de Teste',
+            message='Esta é uma notificação de teste criada em ' + now_local.strftime('%d/%m/%Y às %H:%M'),
+            link='/notifications'
+        )
     
     serializer = NotificationSerializer(notification)
     return Response({
