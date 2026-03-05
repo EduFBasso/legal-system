@@ -133,6 +133,7 @@
 .detail-label {
   font-weight: 600;
   color: #64748b;
+  font-size: 1rem;
   min-width: 180px;
   flex-shrink: 0;
 }
@@ -370,7 +371,7 @@
 
   .detail-label {
     min-width: auto;
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 
   .modal-footer {
