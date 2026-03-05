@@ -756,7 +756,7 @@
 
 .btn-sm {
   padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .info-field label {
@@ -1908,7 +1908,7 @@
   border: 1px solid #e2e8f0;
   background: #ffffff;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
   color: #64748b;
