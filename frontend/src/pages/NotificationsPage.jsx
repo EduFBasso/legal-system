@@ -22,6 +22,7 @@ export default function NotificationsPage() {
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [selectedPublication, setSelectedPublication] = useState(null);
+  const [sourceNotification, setSourceNotification] = useState(null); // Track which notification opened this publication
   const [loadingPublication, setLoadingPublication] = useState(false);
 
   useEffect(() => {
@@ -65,6 +66,9 @@ export default function NotificationsPage() {
 
   // Função para buscar publicação e abrir modal apropriado
   const handleViewDetails = async (notification) => {
+    // Mark as read when viewing details
+    await markAsRead(notification.id);
+    
     // Se for notificação de publicação, buscar dados da publicação
     if (notification.type === 'publication' && notification.metadata?.id_api) {
       setLoadingPublication(true);
@@ -75,6 +79,7 @@ export default function NotificationsPage() {
         const data = await response.json();
         
         if (data.success && data.publication) {
+          setSourceNotification(notification); // Store source notification
           setSelectedPublication(data.publication);
         } else {
           // Se não encontrar publicação, mostrar modal de notificação normal
@@ -329,7 +334,10 @@ export default function NotificationsPage() {
       {selectedPublication && (
         <PublicationDetailModal
           publication={selectedPublication}
-          onClose={() => setSelectedPublication(null)}
+          onClose={() => {
+            setSelectedPublication(null);
+            setSourceNotification(null);
+          }}
         />
       )}
 

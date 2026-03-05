@@ -871,6 +871,12 @@ def integrate_publication(request, id_api):
 
     POST /api/publications/<id_api>/integrate
     Body: { case_id, create_movement, notes }
+    
+    Behavior:
+    - Integrates publication to case
+    - Optionally creates movement from publication
+    - Automatically marks corresponding notification as read
+      (User clicked "Criar Caso" or interacted with notification - so they read it)
     """
     try:
         case_id = request.data.get('case_id')
@@ -903,6 +909,19 @@ def integrate_publication(request, id_api):
             'integration_notes',
             'updated_at'
         ])
+
+        # Mark corresponding notification as read (user interacted with publication)
+        try:
+            notification = Notification.objects.filter(
+                type='publication',
+                metadata__id_api=id_api,
+                read=False
+            ).first()
+            if notification:
+                notification.mark_as_read()
+        except Exception as notif_error:
+            # Log but don't fail if notification marking fails
+            print(f"[Warn] Could not mark notification as read for publication {id_api}: {notif_error}")
 
         movement_created = False
         if create_movement:
