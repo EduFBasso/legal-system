@@ -4,13 +4,15 @@
 
 ### 1. Layout do Bloco único ✅
 
-- [x] Um único bloco com título "Notificações"
+- [x] Bloco com notificações (título em Sidebar mãe)
 - [x] Remover título "Publicações Recentes" (removido)
+- [x] Remover título "🔔 Notificações" (removido - já existe no Sidebar)
 - [x] Unificar cartões de publicação e alertas 90+ em um único container
 
-### 2. Cartões de Publicação (Azul/Violeta) ✅
+### 2. Cartões de Publicação (Paleta Publicações) ✅
 
-- [x] Cor alterada de vermelho para azul/violeta (#7c3aed)
+- [x] Cor alterada para **azul indigo #3b82f6** (padrão de Publicações)
+- [x] Background: `linear-gradient(135deg, var(--publication-light, #e0e7ff) 0%, var(--publication-lighter, #eef2ff) 100%)`
 - [x] Badge "Publicação" em header
 - [x] Informações: Título + tribunal abreviado + tempo
 - [x] Clicável: marca como lido ao clicar
@@ -18,20 +20,21 @@
 
 ### 3. Cartões de Alerta 90+ Dias (Dourado) ✅
 
-- [x] Fundo dourado (linear gradient #fef3c7 → #fcd34d)
+- [x] Fundo **dourado** (linear gradient #fef3c7 → #fcd34d, não branco)
 - [x] Badge "Alerta" em header (cor dourada)
-- [x] Primeira linha: "Processo inativo há mais de 90 dias"
-- [x] Segunda linha: Número do processo
-- [x] Clicável: navega para /cases
-- [x] Marca como lido ao clicar
+- [x] Primeira linha: **"Processo inativo há mais de 90 dias"**
+- [x] Segunda linha: **Número do processo**
+- [x] Clicável: marca como lido + navega para /cases
 
-### 4. Estilo e Interatividade ✅
+### 4. Padrão de Cores ✅
 
-- [x] Cartões com hover effects (translateX, shadow)
-- [x] Animação pulse ao destacar
-- [x] Badges informativos com background colorido
-- [x] Contador dinâmico de notificações não lidas
-- [x] "Tudo em dia" quando não há notificações
+- [x] Usar variáveis CSS com fallbacks: `var(--publication-light, #e0e7ff)`
+- [x] Cor principal: #3b82f6 (azul indigo vibrante)
+- [x] Tom claro background: #e0e7ff (indigo-100)
+- [x] Tom mais claro: #eef2ff (indigo-50)
+- [x] Borders escuros: #c7d2fe
+- [x] Hover state: #a5b4fc
+- [x] Deep state: #1d4ed8
 
 ## Arquivos Modificados
 
@@ -42,12 +45,13 @@
    - Logo único: 🔔 Notificações
 
 2. **frontend/src/components/NotificationsSummary.css**
-   - Novo padrão de cores: violeta/azul (#6d28d9, #7c3aed, #5b21b6)
-   - Background do bloco: gradiente de violeta (#f5f3ff → #f3e8ff)
-   - Cartões de publicação: fundo branco + borda azul
-   - Cartões de alerta: fundo dourado (linear gradient)
+   - Paleta: Azul indigo #3b82f6 (mesmo padrão de Publicações)
+   - Background do bloco: Gradiente de indigo com variáveis CSS
+   - Cartões de publicação: Fundo gradiente light + borda azul
+   - Cartões de alerta: Fundo dourado (linear gradient)
    - Classes: `.notification-card`, `.publication-card`, `.stale-alert-card`
-   - Animações: `pulse-card` (unificada para ambos tipos)
+   - Variáveis com fallback: `var(--publication-light, #e0e7ff)`
+   - Animações: `pulse-card` sincronizada com rgba(59, 130, 246, ...)
 
 ## Dados de Teste Criados
 
@@ -68,13 +72,17 @@ Notificações de exemplo para visualização:
 | Sem notificações      | Mostra "Tudo em dia!"             | ✅     |
 | Mais de 3 publicações | Mostra "+X publicações"           | ✅     |
 
-## Checksum Visual
+## Checksum Visual (Paleta Publicações)
 
-- Bloco background: Violeta leve (#f5f3ff)
-- Título: 🔔 Notificações (cor #6d28d9)
-- Cartão publicação: Azul violeta (#7c3aed) borda esquerda
-- Cartão alerta: Fundo dourado (#fef3c7->#fcd34d), borda #d97706
-- Contador: Grande e destaque (1.75rem, #6d28d9)
+- **Bloco background**: Gradiente indigo claro (#e0e7ff → #eef2ff)
+- **Título**: Em Sidebar mãe (não duplicado)
+- **Cartão publicação**: Borda esquerda azul (#3b82f6), fundo indigo light
+- **Cartão alerta**: Fundo dourado (#fef3c7->#fcd34d), borda #d97706
+- **Contador**: Grande e destaque (1.75rem, #3b82f6)
+- **Link "Ver todas"**: #3b82f6 → #1d4ed8 on hover
+- **Variáveis CSS**: `--publication-light` (#e0e7ff) com fallback
+- **Border principal**: #c7d2fe (indigo border)
+- **Border hover**: #a5b4fc (indigo lighter)
 
 ## Scripts Auxiliares Criados
 
@@ -85,4 +93,9 @@ Notificações de exemplo para visualização:
 
 **Última atualização**: 2024-03-05
 **Branch**: feature/cases
-**Commit**: ab46d75 (scripts de teste)
+**Commits**:
+
+- 311005f (redesign estrutura)
+- ab46d75 (scripts teste)
+- 4647988 (validação inicial)
+- 5f89211 (refinar paleta Publicações)
