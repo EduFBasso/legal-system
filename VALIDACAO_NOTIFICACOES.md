@@ -74,8 +74,8 @@ Notificações de exemplo para visualização:
 
 ## Checksum Visual (Paleta Refinada)
 
-- **Bloco background**: Gradiente violeta muito claro (#faf5ff → #f5f3ff) para contraste com cartões
-- **Borda bloco**: #e9d5ff (violeta claro)
+- **Bloco background**: Gradiente slate gray (#f8fafc → #f1f5f9) - tom neutro para contraste com cartões
+- **Borda bloco**: #e2e8f0 (slate-200)
 - **Título**: Em Sidebar mãe (não duplicado)
 - **Cartão publicação**: Fundo indigo (#e0e7ff → #eef2ff), borda esquerda #6366f1, hover #4f46e5, border-radius 8px
 - **Cartão alerta**: Borda esquerda âmbar escuro (#d97706 - amber-600), fundo âmbar claro (#fffbeb → #fef3c7), border-radius 8px
@@ -112,3 +112,5 @@ Notificações de exemplo para visualização:
 - 2eb5da7 (restaurar border-radius: remover border-image incompatível)
 - d9cfe08 (validação border-radius)
 - ddc908c (remover link 'Ver processos inativos' + clarear fundo bloco)
+- c7701c5 (validação fundo claro e remoção link)
+- 60d3b8f (aplicar fundo slate gray)
