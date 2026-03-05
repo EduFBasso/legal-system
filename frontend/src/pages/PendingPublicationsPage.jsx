@@ -5,6 +5,7 @@ import PublicationCard from '../components/PublicationCard';
 import Toast from '../components/common/Toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import publicationsService from '../services/publicationsService';
+import { subscribePublicationSync } from '../services/publicationSync';
 import './PendingPublicationsPage.css';
 
 export default function PendingPublicationsPage() {
@@ -20,6 +21,16 @@ export default function PendingPublicationsPage() {
 
   useEffect(() => {
     loadPending();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (event?.type === 'PUBLICATION_INTEGRATED') {
+        loadPending();
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   const loadPending = async () => {

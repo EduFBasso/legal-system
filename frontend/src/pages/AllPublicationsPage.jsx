@@ -5,6 +5,7 @@ import PublicationCard from '../components/PublicationCard';
 import Toast from '../components/common/Toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import publicationsService from '../services/publicationsService';
+import { subscribePublicationSync } from '../services/publicationSync';
 import './AllPublicationsPage.css';
 
 export default function AllPublicationsPage() {
@@ -42,6 +43,16 @@ export default function AllPublicationsPage() {
 
   useEffect(() => {
     loadAllPublications();
+  }, [loadAllPublications]);
+
+  useEffect(() => {
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (event?.type === 'PUBLICATION_INTEGRATED') {
+        loadAllPublications();
+      }
+    });
+
+    return unsubscribe;
   }, [loadAllPublications]);
 
   const handleIntegrate = async (pub) => {

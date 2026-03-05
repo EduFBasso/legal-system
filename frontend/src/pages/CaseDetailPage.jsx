@@ -6,6 +6,7 @@ import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
 import publicationsService from '../services/publicationsService';
+import { notifyPublicationSync } from '../services/publicationSync';
 import caseMovementsService from '../services/caseMovementsService';
 import caseTasksService from '../services/caseTasksService';
 import financialService from '../services/financialService';
@@ -789,6 +790,11 @@ function CaseDetailPage() {
             await publicationsService.integratePublication(pubId, {
               caseId: created.id,
               createMovement: systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION || false,
+            });
+            notifyPublicationSync({
+              type: 'PUBLICATION_INTEGRATED',
+              idApi: Number(pubId),
+              caseId: created.id,
             });
           } catch (integrationError) {
             console.error('Error integrating source publication:', integrationError);

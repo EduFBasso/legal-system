@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { usePublicationsContext } from '../contexts/PublicationsContext';
 import { useSettings } from '../contexts/SettingsContext';
 import publicationsService from '../services/publicationsService';
+import { subscribePublicationSync } from '../services/publicationSync';
 import PublicationsSearchForm from  '../components/PublicationsSearchForm';
 import PublicationsList from '../components/PublicationsList';
 import PublicationsStats from '../components/PublicationsStats';
@@ -297,6 +298,16 @@ export default function PublicationsPage() {
     return () => {
       window.removeEventListener('reloadPublicationsFromSidebar', handleReloadFromSidebar);
     };
+  }, [loadLastSearch]);
+
+  useEffect(() => {
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (event?.type === 'PUBLICATION_INTEGRATED') {
+        loadLastSearch();
+      }
+    });
+
+    return unsubscribe;
   }, [loadLastSearch]);
 
   return (
