@@ -1240,12 +1240,21 @@
   background: white;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .party-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 3px solid #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.party-card.selected {
+  border: 3px solid #2563eb !important;
+  background: #eff6ff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
 }
 
 .party-info {
