@@ -240,6 +240,113 @@ export function truncateText(text, maxLength) {
   return text.substring(0, maxLength - 3) + '...';
 }
 
+/**
+ * Format CPF with mask (000.000.000-00)
+ * 
+ * @param {string} value - CPF string with only digits or already formatted
+ * @returns {string} Formatted CPF or original value if invalid
+ * 
+ * @example
+ * formatCPF('12345678900') // "123.456.789-00"
+ */
+export function formatCPF(value) {
+  if (!value) return '-';
+  
+  try {
+    // Remove non-digits
+    const digits = String(value).replace(/\D/g, '');
+    
+    // Check if it's a valid CPF length
+    if (digits.length !== 11) return value;
+    
+    // Apply mask: XXX.XXX.XXX-XX
+    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  } catch (error) {
+    console.warn(`Failed to format CPF: ${value}`, error);
+    return value;
+  }
+}
+
+/**
+ * Format CNPJ with mask (00.000.000/0000-00)
+ * 
+ * @param {string} value - CNPJ string with only digits or already formatted
+ * @returns {string} Formatted CNPJ or original value if invalid
+ * 
+ * @example
+ * formatCNPJ('12345678000191') // "12.345.678/0001-91"
+ */
+export function formatCNPJ(value) {
+  if (!value) return '-';
+  
+  try {
+    // Remove non-digits
+    const digits = String(value).replace(/\D/g, '');
+    
+    // Check if it's a valid CNPJ length
+    if (digits.length !== 14) return value;
+    
+    // Apply mask: XX.XXX.XXX/XXXX-XX
+    return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  } catch (error) {
+    console.warn(`Failed to format CNPJ: ${value}`, error);
+    return value;
+  }
+}
+
+/**
+ * Format phone number with mask ((XX) XXXXX-XXXX)
+ * 
+ * @param {string} value - Phone string with only digits or already formatted
+ * @returns {string} Formatted phone or original value if invalid
+ * 
+ * @example
+ * formatPhone('11987654321') // "(11) 98765-4321"
+ * formatPhone('1133334444') // "(11) 3333-4444"
+ */
+export function formatPhone(value) {
+  if (!value) return '-';
+  
+  try {
+    // Remove non-digits
+    const digits = String(value).replace(/\D/g, '');
+    
+    // Check if it's a valid phone length (10 or 11 digits)
+    if (digits.length === 11) {
+      // Mobile: (XX) XXXXX-XXXX
+      return digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (digits.length === 10) {
+      // Landline: (XX) XXXX-XXXX
+      return digits.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    }
+    
+    return value;
+  } catch (error) {
+    console.warn(`Failed to format phone: ${value}`, error);
+    return value;
+  }
+}
+
+/**
+ * Format document (CPF or CNPJ based on length)
+ * 
+ * @param {string} value - Document string
+ * @param {string} personType - 'PF' for CPF or 'PJ' for CNPJ
+ * @returns {string} Formatted document
+ * 
+ * @example
+ * formatDocument('12345678900', 'PF') // "123.456.789-00"
+ * formatDocument('12345678000191', 'PJ') // "12.345.678/0001-91"
+ */
+export function formatDocument(value, personType) {
+  if (!value) return '-';
+  
+  if (personType === 'PJ') {
+    return formatCNPJ(value);
+  }
+  return formatCPF(value);
+}
+
 export default {
   formatDate,
   formatDateTime,
@@ -250,4 +357,8 @@ export default {
   formatCurrency,
   formatCurrencyValue,
   truncateText,
+  formatCPF,
+  formatCNPJ,
+  formatPhone,
+  formatDocument,
 };

@@ -1,9 +1,10 @@
 import { Users, UserPlus, Trash2, Edit2 } from 'lucide-react';
+import { formatCPF, formatCNPJ, formatPhone } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
 
 /**
  * PartiesTab - Aba de Partes do Processo
- * Exibe lista de partes vinculadas ao case
+ * Exibe lista de partes vinculadas ao case com formatação de documentos
  */
 function PartiesTab({
   parties = [],
@@ -12,6 +13,14 @@ function PartiesTab({
   onRemoveParty = () => {},
   onEditParty = () => {},
 }) {
+  // Helper to format document based on person type
+  const formatDocument = (doc, personType) => {
+    if (!doc) return '-';
+    if (personType === 'PJ') {
+      return formatCNPJ(doc);
+    }
+    return formatCPF(doc);
+  };
   return (
     <div className="case-section">
       <div className="section-card">
@@ -46,26 +55,28 @@ function PartiesTab({
                     <span className="party-icon">
                       {party.contact_person_type === 'PF' ? '👤' : '🏢'}
                     </span>
-                    <div className="party-details">
+                  <div className="party-details">
                       <h3 className="party-name">{party.contact_name}</h3>
-                      <span className={`party-role-badge role-${party.role.toLowerCase()}`}>
-                        {party.role_display}
-                      </span>
-                      {party.is_client && (
-                        <span className="client-badge">✅ Cliente</span>
-                      )}
+                      <div className="party-badges">
+                        <span className={`party-role-badge role-${party.role.toLowerCase()}`}>
+                          {party.role_display}
+                        </span>
+                        {party.is_client && (
+                          <span className="client-badge">✅ CLIENTE</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="party-contact-info">
                     {party.contact_document && (
                       <span className="party-detail">
-                        📄 {party.contact_document}
+                        📄 {formatDocument(party.contact_document, party.contact_person_type)}
                       </span>
                     )}
                     {party.contact_phone && (
                       <span className="party-detail">
-                        📱 {party.contact_phone}
+                        📱 {formatPhone(party.contact_phone)}
                       </span>
                     )}
                     {party.contact_email && (

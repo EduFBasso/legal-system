@@ -1270,12 +1270,19 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.party-badges {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .party-name {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #1e293b;
   margin: 0;
 }
@@ -1375,7 +1382,9 @@
   color: #065f46;
   border-radius: 6px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   align-self: flex-start;
   width: fit-content;
 }
@@ -1387,8 +1396,9 @@
 }
 
 .party-detail {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #64748b;
+  font-weight: 500;
 }
 
 .party-notes {
