@@ -386,22 +386,6 @@ export default function NotificationsPage() {
                       {loadingPublication ? 'Carregando...' : 'Ver detalhes →'}
                     </button>
 
-                    {notification.link && notification.link.startsWith('http') && (
-                      <a 
-                        href={notification.link} 
-                        className="notification-link"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => {
-                          if (!notification.read) {
-                            handleMarkAsRead(notification.id);
-                          }
-                        }}
-                      >
-                        🔗 Consultar Processo
-                      </a>
-                    )}
-
                     <button
                       className="btn-delete-notification"
                       onClick={() => handleDeleteNotification(notification.id)}
