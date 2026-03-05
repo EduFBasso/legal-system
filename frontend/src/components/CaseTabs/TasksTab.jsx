@@ -4,6 +4,7 @@ import caseTasksService from '../../services/caseTasksService';
 import { notifyTaskUpdate, subscribeToTaskUpdates } from '../../services/taskSyncService';
 import TaskCard from '../TaskCard';
 import UrgencySection from '../UrgencySection';
+import CreateTaskModal from '../CreateTaskModal';
 import './TasksTab.css';
 
 /**
@@ -29,6 +30,8 @@ export default function TasksTab({
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [creatingTask, setCreatingTask] = useState(false);
 
   // Hook para visibilidade de urgências
   const { URGENCIES, urgencyConfig, shouldShowUrgency } = useUrgencyVisibility(selectedUrgency);
@@ -196,6 +199,33 @@ export default function TasksTab({
     }
   };
 
+  // Criar nova tarefa do processo
+  const handleCreateTask = async (taskData) => {
+    setCreatingTask(true);
+    try {
+      const newTask = await caseTasksService.createTask(taskData);
+      
+      setTasks(prevTasks => [...prevTasks, newTask]);
+      
+      // Notificar outros abas
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'created',
+        taskId: newTask.id,
+        caseId: caseId,
+        titulo: newTask.titulo,
+        data_vencimento: newTask.data_vencimento,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('Erro ao criar tarefa:', err);
+      alert('Erro ao criar tarefa. Tente novamente.');
+      throw err;
+    } finally {
+      setCreatingTask(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="tasks-tab">
@@ -234,6 +264,14 @@ export default function TasksTab({
             {completedTasks > 0 && ` • ${completedTasks} concluída(s)`}
           </p>
         </div>
+        <button 
+          className="btn-add-task"
+          onClick={() => setIsCreateTaskModalOpen(true)}
+          disabled={creatingTask}
+          title="Criar nova tarefa do processo"
+        >
+          + Adicionar Tarefa
+        </button>
       </div>
 
       {/* Estatísticas */}
@@ -306,6 +344,14 @@ export default function TasksTab({
           </>
         )}
       </div>
+
+      {/* Modal de Criação de Tarefa */}
+      <CreateTaskModal 
+        isOpen={isCreateTaskModalOpen}
+        caseId={caseId}
+        onClose={() => setIsCreateTaskModalOpen(false)}
+        onCreateTask={handleCreateTask}
+      />
     </div>
   );
 }
