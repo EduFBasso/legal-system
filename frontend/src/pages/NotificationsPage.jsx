@@ -137,6 +137,11 @@ export default function NotificationsPage() {
     return true;
   });
 
+  const readCount = Math.max(0, notifications.length - unreadCount);
+  const badgeLabel = unreadCount > 0
+    ? `${unreadCount} não lida${unreadCount !== 1 ? 's' : ''}`
+    : `${readCount} lida${readCount !== 1 ? 's' : ''}`;
+
   const getPriorityColor = (priority) => {
     const colors = {
       urgent: '#dc2626',
@@ -196,12 +201,16 @@ export default function NotificationsPage() {
   return (
     <div className="notifications-page">
       <div className="page-header">
-        <div>
-          <h1>🔔 Notificações</h1>
-          {unreadCount > 0 && (
-            <span className="unread-count">{unreadCount} não lida{unreadCount !== 1 ? 's' : ''}</span>
-          )}
+        <div className="header-top-row">
+          <div className="header-title-wrap">
+            <span className="header-title-icon">🔔</span>
+            <h1>Notificações</h1>
+          </div>
+          <span className={`unread-count ${unreadCount > 0 ? 'badge-unread' : 'badge-read'}`}>
+            {badgeLabel}
+          </span>
         </div>
+
         <div className="header-actions">
           {notifications.length > 0 && (
             <button
