@@ -616,7 +616,9 @@ function CaseDetailPage() {
 
       showToast('Parte adicionada com sucesso!', 'success');
       handleCloseAddPartyModal();
+      // Reload both parties and contacts to ensure linked_cases is updated
       loadParties();
+      loadContacts();
     } catch (error) {
       console.error('Error saving party:', error);
       showToast('Erro ao adicionar parte', 'error');
@@ -651,7 +653,9 @@ function CaseDetailPage() {
 
       await casePartiesService.deleteParty(partyId);
       showToast('Parte removida do processo', 'success');
+      // Reload both parties and contacts to sync linked_cases
       loadParties();
+      loadContacts();
     } catch (error) {
       console.error('Error removing party:', error);
       showToast('Erro ao remover parte', 'error');
@@ -718,7 +722,9 @@ function CaseDetailPage() {
       await casePartiesService.updateParty(editingParty.id, editingPartyFormData);
       showToast('Papel da parte atualizado com sucesso!', 'success');
       setEditingParty(null);
+      // Reload both parties and contacts to sync linked_cases
       loadParties();
+      loadContacts();
     } catch (error) {
       console.error('Error updating party:', error);
       showToast('Erro ao atualizar papel da parte', 'error');
