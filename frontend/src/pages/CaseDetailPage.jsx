@@ -812,9 +812,7 @@ function CaseDetailPage() {
           showToast('Processo criado com sucesso!', 'success');
         }
 
-        setTimeout(() => {
-          window.open(`/cases/${created.id}`, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
-        }, 700);
+        // Mantém a aba atual após criar processo (não abre nova aba)
         return;
       }
 

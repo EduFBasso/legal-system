@@ -1389,6 +1389,8 @@ def get_search_history_detail(request, search_id):
                 'texto_completo': pub.texto_completo,
                 'link_oficial': pub.link_oficial,
                 'hash': pub.hash_pub,
+                'integration_status': pub.integration_status,
+                'case_id': pub.case_id,
             })
         
         # Montar resposta com todos os dados da busca

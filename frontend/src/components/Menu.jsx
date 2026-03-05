@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import publicationsService from '../services/publicationsService';
+import { subscribePublicationSync } from '../services/publicationSync';
 import SettingsModal from './SettingsModal';
 import './Menu.css';
 
@@ -22,6 +23,17 @@ export default function Menu() {
     };
 
     loadPendingCount();
+
+    // Escutar eventos de integração para atualizar contador
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (event.type === 'PUBLICATION_INTEGRATED') {
+        loadPendingCount();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
   
   return (
