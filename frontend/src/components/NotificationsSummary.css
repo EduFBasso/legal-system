@@ -98,14 +98,15 @@
 /* Cartão de publicação (azul indigo - mesmo padrão de Publicações) */
 .notification-card.publication-card {
   background: linear-gradient(135deg, var(--publication-light, #e0e7ff) 0%, var(--publication-lighter, #eef2ff) 100%);
-  border-left: 3px solid;
-  border-image: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) 1;
+  border-left: 3px solid #6366f1;
+  border-radius: 8px;
 }
 
 .notification-card.publication-card:hover {
   transform: translateX(4px);
   box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
   background: var(--publication-lighter, #eef2ff);
+  border-left-color: #4f46e5;
 }
 
 /* Cartão de alerta 90+ (dourado) */
@@ -113,6 +114,7 @@
   background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
   border: 1px solid #fcd34d;
   border-left: 3px solid #d97706 !important;
+  border-radius: 8px;
   padding: 0.75rem;
 }
 
