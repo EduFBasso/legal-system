@@ -307,7 +307,10 @@ def create_test_notification(request):
             message='Esta é uma notificação de teste criada em ' + now_local.strftime('%d/%m/%Y às %H:%M'),
             link='/notifications',
             metadata={
+                'id_api': 999999999,  # ID fictício para teste - abrirá página de detalhes
                 'tribunal': 'Tribunal de Teste',
+                'numero_processo': '0000000-00.0000.0.00.0000',
+                'tipo_comunicacao': 'Teste',
                 'is_test': True,
             }
         )

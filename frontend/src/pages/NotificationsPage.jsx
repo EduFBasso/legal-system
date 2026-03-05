@@ -124,9 +124,16 @@ export default function NotificationsPage() {
       return;
     }
     
-    // Se for notificação de publicação, navegar para aba Todas Publicações
+    // Se for notificação de publicação, abrir em nova janela com tamanho padronizado
     if (notification.type === 'publication') {
-      navigate('/publications');
+      // Se tiver id_api no metadata, abrir página de detalhes
+      if (notification.metadata?.id_api) {
+        const url = `/publications/${notification.metadata.id_api}/details`;
+        window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+      } else {
+        // Fallback: navegar para página de publicações
+        navigate('/publications');
+      }
       return;
     }
     
