@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { useHighlight } from '../hooks/useHighlight';
+import casesService from '../services/casesService';
 import './NotificationsSummary.css';
 
 /**
@@ -11,6 +12,7 @@ import './NotificationsSummary.css';
 export default function NotificationsSummary() {
   const navigate = useNavigate();
   const { notifications, unreadCount, fetchUnreadNotifications, markAsRead } = useNotifications();
+  const [staleCases, setStaleCases] = useState([]);
   
   // Sistema de destaque unificado - usando hook customizado
   const highlight = useHighlight({ 
@@ -22,6 +24,40 @@ export default function NotificationsSummary() {
   useEffect(() => {
     fetchUnreadNotifications();
   }, [fetchUnreadNotifications]);
+
+  // Buscar processos sem movimentacao/publicacao ha 90+ dias
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchStaleCases = async () => {
+      try {
+        const response = await casesService.getAll({
+          status: 'INATIVO',
+          ordering: '-data_ultima_movimentacao'
+        });
+
+        const caseList = Array.isArray(response) ? response : (response.results || []);
+        const stale = caseList
+          .filter((caseItem) => (caseItem.dias_sem_movimentacao || 0) >= 90)
+          .slice(0, 3);
+
+        if (isMounted) {
+          setStaleCases(stale);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar processos inativos:', error);
+        if (isMounted) {
+          setStaleCases([]);
+        }
+      }
+    };
+
+    fetchStaleCases();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Pegar apenas as 3 notificações não lidas mais recentes
   const recentUnread = notifications
@@ -51,6 +87,10 @@ export default function NotificationsSummary() {
 
   const getPriorityClass = (priority) => {
     return priority === 'urgent' || priority === 'high' ? 'high-priority' : '';
+  };
+
+  const getCaseNumber = (caseItem) => {
+    return caseItem.numero_processo_formatted || caseItem.numero_processo || `Processo #${caseItem.id}`;
   };
 
   const formatTimeAgo = (dateString) => {
@@ -118,6 +158,34 @@ export default function NotificationsSummary() {
         <div className="no-notifications">
           <span className="no-notifications-icon">✅</span>
           <p>Tudo em dia!</p>
+        </div>
+      )}
+
+      {/* Container condicional: somente aparece se existir processo sem publicacao/movimentacao ha 90+ dias */}
+      {staleCases.length > 0 && (
+        <div className="stale-cases-summary">
+          <div className="stale-cases-title">🟨 Alerta 90+ dias sem publicação</div>
+          <div className="stale-cases-list">
+            {staleCases.map((caseItem) => (
+              <button
+                key={caseItem.id}
+                type="button"
+                className="stale-case-item"
+                onClick={() => navigate(`/cases/${caseItem.id}`)}
+                title="Abrir processo"
+              >
+                <div className="stale-case-number">{getCaseNumber(caseItem)}</div>
+                <div className="stale-case-days">{caseItem.dias_sem_movimentacao || 90} dias</div>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="stale-cases-view-all"
+            onClick={() => navigate('/cases')}
+          >
+            Ver todos os inativos →
+          </button>
         </div>
       )}
     </div>
