@@ -74,16 +74,17 @@ Notificações de exemplo para visualização:
 
 ## Checksum Visual (Paleta Refinada)
 
-- **Bloco background**: Gradiente indigo claro (#e0e7ff → #eef2ff)
+- **Bloco background**: Gradiente violeta muito claro (#faf5ff → #f5f3ff) para contraste com cartões
+- **Borda bloco**: #e9d5ff (violeta claro)
 - **Título**: Em Sidebar mãe (não duplicado)
-- **Cartão publicação**: Borda esquerda #6366f1 (sólida), hover #4f46e5, border-radius 8px
+- **Cartão publicação**: Fundo indigo (#e0e7ff → #eef2ff), borda esquerda #6366f1, hover #4f46e5, border-radius 8px
 - **Cartão alerta**: Borda esquerda âmbar escuro (#d97706 - amber-600), fundo âmbar claro (#fffbeb → #fef3c7), border-radius 8px
 - **Texto alerta**: Âmbar escuro (#92400e - amber-800) para contraste
 - **Badge alerta**: Fundo rgba(217, 119, 6, 0.15), cor #b45309 (amber-700)
 - **Contador**: Grande e destaque (1.75rem, #3b82f6)
 - **Link "Ver todas"**: #3b82f6 → #1d4ed8 on hover
-- **Variáveis CSS**: `--publication-light` (#e0e7ff) com fallback
-- **Border principal**: #c7d2fe (indigo border)
+- **Variáveis CSS**: `--publication-light` (#e0e7ff) com fallback em cartões
+- **Border principal header**: #c7d2fe (indigo border)
 - **Border alerta**: #fcd34d (amber-300)
 - **Animação pulse**: rgba(99, 102, 241, ...) para cartões publicação
 - **Border-radius**: 8px consistente em todos os cartões
@@ -109,3 +110,5 @@ Notificações de exemplo para visualização:
 - 523defd (corrigir conflito borda + escurecer dourado p/ contraste)
 - 6968920 (validação cores escurecidas)
 - 2eb5da7 (restaurar border-radius: remover border-image incompatível)
+- d9cfe08 (validação border-radius)
+- ddc908c (remover link 'Ver processos inativos' + clarear fundo bloco)
