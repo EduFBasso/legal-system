@@ -107,11 +107,6 @@ export default function NotificationsSummary() {
 
   return (
     <div className="notifications-summary">
-      {/* Título único do container */}
-      <div className="notifications-container-title">
-        🔔 Notificações
-      </div>
-
       {/* Header com contador */}
       <div className="notifications-header" onClick={handleViewAll}>
         <div className="notification-count-badge">
