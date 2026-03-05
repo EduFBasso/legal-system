@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import NotificationDetailModal from '../components/NotificationDetailModal';
 import PublicationDetailModal from '../components/PublicationDetailModal';
 import './NotificationsPage.css';
 
 export default function NotificationsPage() {
+  const navigate = useNavigate();
   const {
     notifications,
     unreadCount,
@@ -107,33 +109,29 @@ export default function NotificationsPage() {
     // Mark as read when viewing details
     await markAsRead(notification.id);
     
-    // Se for notificação de publicação, buscar dados da publicação
-    if (notification.type === 'publication' && notification.metadata?.id_api) {
-      setLoadingPublication(true);
-      try {
-        const response = await fetch(
-          `http://localhost:8000/api/publications/${notification.metadata.id_api}`
-        );
-        const data = await response.json();
-        
-        if (data.success && data.publication) {
-          setSourceNotification(notification); // Store source notification
-          setSelectedPublication(data.publication);
-        } else {
-          // Se não encontrar publicação, mostrar modal de notificação normal
-          setSelectedNotification(notification);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar publicação:', error);
-        // Em caso de erro, mostrar modal de notificação normal
-        setSelectedNotification(notification);
-      } finally {
-        setLoadingPublication(false);
+    // Se for alerta de processo 90+ dias, navegar para página de processos
+    if (
+      notification.type === 'process' &&
+      notification.metadata?.alert_type === 'stale_90_days'
+    ) {
+      // Se houver case_id no metadata, abrir processo específico
+      if (notification.metadata?.case_id) {
+        navigate(`/cases/${notification.metadata.case_id}`);
+      } else {
+        // Senão, ir para lista de processos
+        navigate('/cases');
       }
-    } else {
-      // Para outros tipos de notificação, mostrar modal normal
-      setSelectedNotification(notification);
+      return;
     }
+    
+    // Se for notificação de publicação, navegar para aba Todas Publicações
+    if (notification.type === 'publication') {
+      navigate('/publications');
+      return;
+    }
+    
+    // Para outros tipos de notificação, mostrar modal normal
+    setSelectedNotification(notification);
   };
 
 
