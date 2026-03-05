@@ -71,16 +71,16 @@ function App() {
                 <h2>Controles</h2>
                 
                 <div className="sidebar-section">
+                  <h3>📰 Publicações</h3>
+                  <PublicationsSummary />
+                </div>
+
+                <div className="sidebar-section">
                   <h3 className="sidebar-section-title">
                     <BellRing size={18} className="sidebar-section-title-icon" />
                     <span>Notificações</span>
                   </h3>
                   <NotificationsSummary />
-                </div>
-
-                <div className="sidebar-section">
-                  <h3>📰 Publicações</h3>
-                  <PublicationsSummary />
                 </div>
               </Sidebar>
             </div>
