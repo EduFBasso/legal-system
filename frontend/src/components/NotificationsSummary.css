@@ -8,6 +8,21 @@
   transition: all 0.2s ease;
 }
 
+/* Título do container */
+.notifications-container-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #15803d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #86efac;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Header com contador */
 .notifications-header {
   display: flex;

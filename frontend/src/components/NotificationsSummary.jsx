@@ -69,6 +69,11 @@ export default function NotificationsSummary() {
 
   return (
     <div className="notifications-summary">
+      {/* Título do container */}
+      <div className="notifications-container-title">
+        📰 Publicações Recentes
+      </div>
+
       {/* Header com contador */}
       <div className="notifications-header" onClick={handleViewAll}>
         <div className="notification-count-badge">
