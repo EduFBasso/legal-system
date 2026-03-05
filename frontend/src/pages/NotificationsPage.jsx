@@ -111,14 +111,14 @@ export default function NotificationsPage() {
       await markAsRead(notification.id);
     }
     
-    // Se for alerta de processo 90+ dias, navegar para página de processos
+    // Se for alerta de processo 90+ dias, abrir detalhe do processo na aba Informações
     if (
       notification.type === 'process' &&
       notification.metadata?.alert_type === 'stale_90_days'
     ) {
-      // Se houver case_id no metadata, abrir processo específico
+      // Se houver case_id no metadata, abrir processo específico na aba de Informações
       if (notification.metadata?.case_id) {
-        navigate(`/cases/${notification.metadata.case_id}`);
+        navigate(`/cases/${notification.metadata.case_id}?tab=info`);
       } else {
         // Senão, ir para lista de processos
         navigate('/cases');
@@ -126,16 +126,9 @@ export default function NotificationsPage() {
       return;
     }
     
-    // Se for notificação de publicação, abrir em nova janela com tamanho padronizado
+    // Se for notificação de publicação, abrir a página Todas Publicações no layout principal
     if (notification.type === 'publication') {
-      // Se tiver id_api no metadata, abrir página de detalhes
-      if (notification.metadata?.id_api) {
-        const url = `/publications/${notification.metadata.id_api}/details`;
-        window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
-      } else {
-        // Fallback: navegar para página de publicações
-        navigate('/publications');
-      }
+      navigate('/publications/all');
       return;
     }
     
