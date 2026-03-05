@@ -111,14 +111,14 @@
 /* Cartão de alerta 90+ (dourado) */
 .notification-card.stale-alert-card {
   background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1px solid #fed7aa;
-  border-left: 3px solid #fbbf24;
+  border: 1px solid #fcd34d;
+  border-left: 3px solid #d97706 !important;
   padding: 0.75rem;
 }
 
 .notification-card.stale-alert-card:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 8px rgba(251, 191, 36, 0.2);
+  box-shadow: 0 4px 8px rgba(217, 119, 6, 0.3);
   background: linear-gradient(135deg, #fef3c7 0%, #fde047 100%);
 }
 
@@ -143,8 +143,8 @@
 }
 
 .card-type.alert-type {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
+  background: rgba(217, 119, 6, 0.15);
+  color: #b45309;
 }
 
 /* Conteúdo do cartão */
@@ -158,7 +158,7 @@
 .alert-status {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #fbbf24;
+  color: #92400e;
   text-transform: uppercase;
   letter-spacing: 0.2px;
   margin-bottom: 0.2rem;
