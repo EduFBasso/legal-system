@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { useHighlight } from '../hooks/useHighlight';
-import casesService from '../services/casesService';
 import './NotificationsSummary.css';
 
 /**
@@ -11,8 +10,8 @@ import './NotificationsSummary.css';
  */
 export default function NotificationsSummary() {
   const navigate = useNavigate();
-  const { notifications, unreadCount, fetchUnreadNotifications, markAsRead } = useNotifications();
-  const [staleCases, setStaleCases] = useState([]);
+  const { notifications, fetchUnreadNotifications, markAsRead } = useNotifications();
+  const [staleNotifications, setStaleNotifications] = useState([]);
   
   // Sistema de destaque unificado - usando hook customizado
   const highlight = useHighlight({ 
@@ -25,44 +24,34 @@ export default function NotificationsSummary() {
     fetchUnreadNotifications();
   }, [fetchUnreadNotifications]);
 
-  // Buscar processos sem movimentacao/publicacao ha 90+ dias
+  // Buscar apenas notificacoes de processo 90+ dias (bloco dourado condicional)
   useEffect(() => {
-    let isMounted = true;
+    const stale = notifications
+      .filter((notification) =>
+        !notification.read &&
+        notification.type === 'process' &&
+        notification.metadata?.alert_type === 'stale_90_days'
+      )
+      .slice(0, 3)
+      .map((notification) => ({
+        key: `notification-${notification.id}`,
+        number: notification.metadata?.case_number || 'TESTE-90D-0001',
+        days: notification.metadata?.days_without_activity || 90,
+        link: notification.link || '/cases',
+        notificationId: notification.id,
+      }));
 
-    const fetchStaleCases = async () => {
-      try {
-        const response = await casesService.getAll({
-          status: 'INATIVO',
-          ordering: '-data_ultima_movimentacao'
-        });
+    setStaleNotifications(stale);
+  }, [notifications]);
 
-        const caseList = Array.isArray(response) ? response : (response.results || []);
-        const stale = caseList
-          .filter((caseItem) => (caseItem.dias_sem_movimentacao || 0) >= 90)
-          .slice(0, 3);
-
-        if (isMounted) {
-          setStaleCases(stale);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar processos inativos:', error);
-        if (isMounted) {
-          setStaleCases([]);
-        }
-      }
-    };
-
-    fetchStaleCases();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Pegar apenas as 3 notificações não lidas mais recentes
+  // Pegar apenas as 3 publicacoes nao lidas mais recentes
   const recentUnread = notifications
-    .filter(n => !n.read)
+    .filter(n => !n.read && n.type === 'publication')
     .slice(0, 3);
+
+  const publicationUnreadCount = notifications.filter(
+    (notification) => !notification.read && notification.type === 'publication'
+  ).length;
 
   const handleViewAll = () => {
     navigate('/notifications');
@@ -89,30 +78,7 @@ export default function NotificationsSummary() {
     return priority === 'urgent' || priority === 'high' ? 'high-priority' : '';
   };
 
-  const getCaseNumber = (caseItem) => {
-    return caseItem.numero_processo_formatted || caseItem.numero_processo || `Processo #${caseItem.id}`;
-  };
-
-  const staleNotifications = notifications
-    .filter((notification) => !notification.read && notification.metadata?.alert_type === 'stale_90_days')
-    .slice(0, 3)
-    .map((notification) => ({
-      key: `notification-${notification.id}`,
-      number: notification.metadata?.case_number || 'TESTE-90D-0001',
-      days: notification.metadata?.days_without_activity || 90,
-      link: notification.link || '/cases',
-      notificationId: notification.id,
-    }));
-
-  const staleCaseItems = staleCases.map((caseItem) => ({
-    key: `case-${caseItem.id}`,
-    number: getCaseNumber(caseItem),
-    days: caseItem.dias_sem_movimentacao || 90,
-    link: `/cases/${caseItem.id}`,
-    notificationId: null,
-  }));
-
-  const staleAlertItems = [...staleCaseItems, ...staleNotifications].slice(0, 3);
+  const staleAlertItems = staleNotifications;
 
   const handleStaleAlertClick = async (item) => {
     if (item.notificationId) {
@@ -145,10 +111,10 @@ export default function NotificationsSummary() {
       {/* Header com contador */}
       <div className="notifications-header" onClick={handleViewAll}>
         <div className="notification-count-badge">
-          {unreadCount > 0 ? (
+          {publicationUnreadCount > 0 ? (
             <>
-              <span className="count-number">{unreadCount}</span>
-              <span className="count-label">não {unreadCount === 1 ? 'lida' : 'lidas'}</span>
+              <span className="count-number">{publicationUnreadCount}</span>
+              <span className="count-label">não {publicationUnreadCount === 1 ? 'lida' : 'lidas'}</span>
             </>
           ) : (
             <span className="count-label">Nenhuma nova</span>
@@ -176,9 +142,9 @@ export default function NotificationsSummary() {
             </div>
           ))}
           
-          {unreadCount > 3 && (
+          {publicationUnreadCount > 3 && (
             <div className="more-notifications" onClick={handleViewAll}>
-              +{unreadCount - 3} mais
+              +{publicationUnreadCount - 3} mais
             </div>
           )}
         </div>
