@@ -76,8 +76,8 @@ Notificações de exemplo para visualização:
 
 - **Bloco background**: Gradiente indigo claro (#e0e7ff → #eef2ff)
 - **Título**: Em Sidebar mãe (não duplicado)
-- **Cartão publicação**: Borda esquerda gradiente indigo vibrante (#6366f1 → #4f46e5), fundo claro
-- **Cartão alerta**: Borda esquerda âmbar escuro (#d97706 - amber-600), fundo âmbar claro (#fffbeb → #fef3c7)
+- **Cartão publicação**: Borda esquerda #6366f1 (sólida), hover #4f46e5, border-radius 8px
+- **Cartão alerta**: Borda esquerda âmbar escuro (#d97706 - amber-600), fundo âmbar claro (#fffbeb → #fef3c7), border-radius 8px
 - **Texto alerta**: Âmbar escuro (#92400e - amber-800) para contraste
 - **Badge alerta**: Fundo rgba(217, 119, 6, 0.15), cor #b45309 (amber-700)
 - **Contador**: Grande e destaque (1.75rem, #3b82f6)
@@ -86,6 +86,7 @@ Notificações de exemplo para visualização:
 - **Border principal**: #c7d2fe (indigo border)
 - **Border alerta**: #fcd34d (amber-300)
 - **Animação pulse**: rgba(99, 102, 241, ...) para cartões publicação
+- **Border-radius**: 8px consistente em todos os cartões
 
 ## Scripts Auxiliares Criados
 
@@ -106,3 +107,5 @@ Notificações de exemplo para visualização:
 - 6c396cf (aprimorar cores: gradiente + dourado claro)
 - 7a52d6b (validação cores aprimoradas)
 - 523defd (corrigir conflito borda + escurecer dourado p/ contraste)
+- 6968920 (validação cores escurecidas)
+- 2eb5da7 (restaurar border-radius: remover border-image incompatível)
