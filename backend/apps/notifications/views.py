@@ -301,11 +301,15 @@ def create_test_notification(request):
         # Usar timezone.localtime() para converter para timezone configurado
         now_local = timezone.localtime(timezone.now())
         notification = Notification.objects.create(
-            type='system',
+            type='publication',
             priority='medium',
-            title='Notificação de Teste',
+            title='Notificação de Teste - Publicação',
             message='Esta é uma notificação de teste criada em ' + now_local.strftime('%d/%m/%Y às %H:%M'),
-            link='/notifications'
+            link='/notifications',
+            metadata={
+                'tribunal': 'Tribunal de Teste',
+                'is_test': True,
+            }
         )
     
     serializer = NotificationSerializer(notification)
