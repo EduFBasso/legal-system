@@ -13,7 +13,6 @@ export default function NotificationsPage() {
     permission,
     fetchAllNotifications,
     markAsRead,
-    markAllAsRead,
     deleteNotification,
     deleteAllNotifications,
     requestPermission,
@@ -43,10 +42,18 @@ export default function NotificationsPage() {
     await markAsRead(notificationId);
   };
 
-  const handleMarkAllAsRead = async () => {
-    const confirmAction = window.confirm('Marcar todas as notificações como lidas?');
-    if (confirmAction) {
-      await markAllAsRead();
+  const handleMarkAllAsUnread = async () => {
+    const readNotifications = notifications.filter((notification) => notification.read);
+    if (readNotifications.length === 0) return;
+
+    const confirmAction = window.confirm('Marcar todas as notificações como não lidas?');
+    if (!confirmAction) return;
+
+    try {
+      await Promise.all(readNotifications.map((notification) => markAsRead(notification.id)));
+    } catch (error) {
+      console.error('Erro ao marcar notificações como não lidas:', error);
+      alert('Não foi possível marcar todas como não lidas.');
     }
   };
 
@@ -212,6 +219,16 @@ export default function NotificationsPage() {
         </div>
 
         <div className="header-actions">
+          {readCount > 0 && (
+            <button 
+              className="btn-secondary" 
+              onClick={handleMarkAllAsUnread}
+              disabled={loading}
+            >
+              ✓ Marcar todas como não lidas
+            </button>
+          )}
+
           {notifications.length > 0 && (
             <button
               className="btn-danger"
@@ -221,15 +238,7 @@ export default function NotificationsPage() {
               🗑 Apagar todas
             </button>
           )}
-          {unreadCount > 0 && (
-            <button 
-              className="btn-secondary" 
-              onClick={handleMarkAllAsRead}
-              disabled={loading}
-            >
-              ✓ Marcar todas como lidas
-            </button>
-          )}
+
           <button 
             className="btn-primary" 
             onClick={handleCreateTest}
