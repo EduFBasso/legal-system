@@ -140,7 +140,7 @@ function InformacaoTab({
             {isEditing ? '✏️ Editando Informações' : '📋 Detalhes do Processo'}
           </h2>
           <div className="section-header-actions">
-            {!isEditing ? (
+            {!isEditing && (
               <>
                 <button className="btn case-btn-edit" onClick={() => {
                   setActiveSection('info');
@@ -155,17 +155,6 @@ function InformacaoTab({
                 }}>
                   <Trash2 size={18} />
                   Apagar
-                </button>
-              </>
-            ) : (
-              <>
-                <button className="btn btn-success" onClick={onSave} disabled={saving}>
-                  <Save size={18} />
-                  {saving ? 'Salvando...' : 'Salvar'}
-                </button>
-                <button className="btn btn-secondary" onClick={onCancel}>
-                  <X size={18} />
-                  Cancelar
                 </button>
               </>
             )}
@@ -567,6 +556,25 @@ function InformacaoTab({
               placeholder="Observações sobre o processo..."
               className="full-width"
             />
+
+            {/* Botões de Ação - Final do Formulário */}
+            <div className="form-actions" style={{
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'flex-end',
+              marginTop: '2rem',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid #e5e7eb'
+            }}>
+              <button className="btn btn-secondary" onClick={onCancel}>
+                <X size={18} />
+                Cancelar
+              </button>
+              <button className="btn btn-success" onClick={onSave} disabled={saving}>
+                <Save size={18} />
+                {saving ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
           </div>
         )}
       </div>
