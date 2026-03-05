@@ -316,7 +316,7 @@
 .process-tipo-badge {
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
   white-space: nowrap;
   text-transform: uppercase;
@@ -371,7 +371,7 @@
 .info-badge {
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
   display: inline-block;
   white-space: nowrap;
