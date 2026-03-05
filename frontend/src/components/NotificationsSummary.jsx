@@ -171,12 +171,6 @@ export default function NotificationsSummary() {
               </div>
             </button>
           ))}
-
-          {staleAlertItems.length > 0 && staleAlertItems.length < 3 && staleAlertItems.length > 0 && (
-            <div className="more-notifications stale" onClick={() => navigate('/cases')}>
-              Ver processos inativos →
-            </div>
-          )}
         </div>
       ) : (
         <div className="no-notifications">
