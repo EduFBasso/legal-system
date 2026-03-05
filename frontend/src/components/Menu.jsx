@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import publicationsService from '../services/publicationsService';
+import SettingsModal from './SettingsModal';
 import './Menu.css';
 
 export default function Menu() {
   const [pendingCount, setPendingCount] = useState(0);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     const loadPendingCount = async () => {
@@ -23,8 +25,9 @@ export default function Menu() {
   }, []);
   
   return (
-    <nav className="app-menu">
-      <ul className="menu-list">
+    <>
+      <nav className="app-menu">
+        <ul className="menu-list">
         <li className="menu-item">
           <NavLink
             to="/"
@@ -94,17 +97,37 @@ export default function Menu() {
 
         <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
 
-        <li className="menu-item">
-          <NavLink
-            to="/deadlines"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">⏰</span>
-            <span className="menu-label">Tarefas Agendadas</span>
-          </NavLink>
-        </li>
-      </ul>
-    </nav>
+          <li className="menu-item">
+            <NavLink
+              to="/deadlines"
+              end
+              className={({ isActive }) => isActive ? 'active' : ''}
+            >
+              <span className="menu-icon">⏰</span>
+              <span className="menu-label">Tarefas Agendadas</span>
+            </NavLink>
+          </li>
+
+          <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
+
+          <li className="menu-item">
+            <button
+              type="button"
+              className="menu-action-button"
+              onClick={() => setIsSettingsOpen(true)}
+              title="Configurações"
+            >
+              <span className="menu-icon">⚙️</span>
+              <span className="menu-label">Configurações</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+    </>
   );
 }
