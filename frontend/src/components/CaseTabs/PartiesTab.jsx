@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Users, UserPlus, Trash2, Edit2 } from 'lucide-react';
 import { formatCPF, formatCNPJ, formatPhone } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
@@ -13,6 +14,8 @@ function PartiesTab({
   onRemoveParty = () => {},
   onEditParty = () => {},
 }) {
+  const [selectedPartyId, setSelectedPartyId] = useState(null);
+
   // Helper to format document based on person type
   const formatDocument = (doc, personType) => {
     if (!doc) return '-';
@@ -20,6 +23,10 @@ function PartiesTab({
       return formatCNPJ(doc);
     }
     return formatCPF(doc);
+  };
+
+  const handleSelectParty = (partyId) => {
+    setSelectedPartyId(selectedPartyId === partyId ? null : partyId);
   };
   return (
     <div className="case-section">
@@ -49,7 +56,11 @@ function PartiesTab({
         ) : (
           <div className="parties-list">
             {parties.map(party => (
-              <div key={party.id} className="party-card">
+              <div 
+                key={party.id} 
+                className={`party-card${selectedPartyId === party.id ? ' selected' : ''}`}
+                onClick={() => handleSelectParty(party.id)}
+              >
                 <div className="party-info">
                   <div className="party-header">
                     <span className="party-icon">
@@ -96,14 +107,20 @@ function PartiesTab({
                 <div className="party-actions">
                   <button 
                     className="btn-edit-party"
-                    onClick={() => onEditParty(party)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditParty(party);
+                    }}
                     title="Editar papel da parte no processo"
                   >
                     <Edit2 size={18} />
                   </button>
                   <button 
                     className="btn-remove-party"
-                    onClick={() => onRemoveParty(party.id, party.contact_name)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveParty(party.id, party.contact_name);
+                    }}
                     title="Remover do processo"
                   >
                     <Trash2 size={18} />
