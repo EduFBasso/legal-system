@@ -598,7 +598,7 @@
 }
 
 .process-number-detail-label {
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -665,7 +665,7 @@
 }
 
 .detail-field-label {
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
