@@ -9,6 +9,7 @@ export default function LinkContactToCaseModal({
   onClose, 
   contactId, 
   contactName,
+  linkedCaseIds = [],
   onSuccess 
 }) {
   const [cases, setCases] = useState([]);
@@ -79,12 +80,19 @@ export default function LinkContactToCaseModal({
 
   // Filter cases based on search term
   const filteredCases = cases.filter(c => {
+    // Exclude cases where contact is already linked
+    if (linkedCaseIds.includes(c.id)) {
+      return false;
+    }
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     const numero = (c.numero_processo || '').toLowerCase();
     const assunto = (c.assunto || '').toLowerCase();
     return numero.includes(search) || assunto.includes(search);
   });
+
+  // Get already linked cases for display
+  const linkedCases = cases.filter(c => linkedCaseIds.includes(c.id));
 
   if (!isOpen) return null;
 
@@ -129,8 +137,8 @@ export default function LinkContactToCaseModal({
               >
                 <option value="" disabled>
                   {filteredCases.length === 0 
-                    ? 'Nenhum processo encontrado'
-                    : `${filteredCases.length} processo(s) encontrado(s)`
+                    ? (linkedCases.length > 0 ? 'Contato já vinculado em todos os processos' : 'Nenhum processo encontrado')
+                    : `${filteredCases.length} processo(s) disponível(is)`
                   }
                 </option>
                 {filteredCases.map(c => (
@@ -139,6 +147,18 @@ export default function LinkContactToCaseModal({
                   </option>
                 ))}
               </select>
+              
+              {/* Show already linked cases info */}
+              {linkedCases.length > 0 && (
+                <div className="linked-cases-info">
+                  <p className="linked-cases-label">✅ Contato já vinculado em:</p>
+                  {linkedCases.map(c => (
+                    <span key={c.id} className="linked-case-badge">
+                      {c.numero_processo}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Tipo de Vínculo */}

@@ -266,3 +266,31 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.linked-cases-info {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.linked-cases-label {
+  margin: 0 0 8px 0;
+  color: #166534;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.linked-case-badge {
+  display: inline-block;
+  background: #dcfce7;
+  color: #166534;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}

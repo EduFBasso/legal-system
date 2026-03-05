@@ -228,6 +228,7 @@ export default function ContactsPage() {
         onClose={() => setIsLinkModalOpen(false)}
         contactId={contactToLink?.id}
         contactName={contactToLink?.name}
+        linkedCaseIds={contactToLink?.linked_cases?.map(lc => lc.case_id) || []}
         onSuccess={handleLinkSuccess}
       />
       
