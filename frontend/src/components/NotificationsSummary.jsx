@@ -101,50 +101,85 @@ export default function NotificationsSummary() {
     return `${diffDays}d`;
   };
 
+  // Contar total de notificações não lidas (publicações + alertas 90+)
+  const totalUnreadCount = publicationUnreadCount + staleAlertItems.length;
+  const hasNotifications = recentUnread.length > 0 || staleAlertItems.length > 0;
+
   return (
     <div className="notifications-summary">
-      {/* Título do container */}
+      {/* Título único do container */}
       <div className="notifications-container-title">
-        📰 Publicações Recentes
+        🔔 Notificações
       </div>
 
       {/* Header com contador */}
       <div className="notifications-header" onClick={handleViewAll}>
         <div className="notification-count-badge">
-          {publicationUnreadCount > 0 ? (
+          {totalUnreadCount > 0 ? (
             <>
-              <span className="count-number">{publicationUnreadCount}</span>
-              <span className="count-label">não {publicationUnreadCount === 1 ? 'lida' : 'lidas'}</span>
+              <span className="count-number">{totalUnreadCount}</span>
+              <span className="count-label">não {totalUnreadCount === 1 ? 'lida' : 'lidas'}</span>
             </>
           ) : (
-            <span className="count-label">Nenhuma nova</span>
+            <span className="count-label">Tudo em dia</span>
           )}
         </div>
         <span className="view-all-link">Ver todas →</span>
       </div>
 
-      {/* Mini-cartões de notificações */}
-      {recentUnread.length > 0 ? (
-        <div className="notifications-mini-cards">
+      {/* Mini-cartões unificados de notificações e alertas */}
+      {hasNotifications ? (
+        <div className="notifications-cards-container">
+          {/* Cartões de publicações */}
           {recentUnread.map((notification) => (
             <div
               key={notification.id}
-              className={`notification-mini-card ${getPriorityClass(notification.priority)} ${highlight.className}`}
+              className={`notification-card publication-card ${highlight.className}`}
               onClick={() => handleNotificationClick(notification.id)}
             >
-              <div className="mini-card-icon">
-                {getTypeIcon(notification.type)}
+              <div className="card-header">
+                <span className="card-type">Publicação</span>
               </div>
-              <div className="mini-card-content">
-                <div className="mini-card-title">{notification.title}</div>
-                <div className="mini-card-time">{formatTimeAgo(notification.created_at)}</div>
+              <div className="card-content">
+                <div className="card-title">{notification.title}</div>
+                <div className="card-meta">
+                  {notification.metadata?.tribunal && (
+                    <span className="card-tribunal">{abbreviateCourt(notification.metadata.tribunal)}</span>
+                  )}
+                  <span className="card-time">{formatTimeAgo(notification.created_at)}</span>
+                </div>
               </div>
             </div>
           ))}
-          
+
           {publicationUnreadCount > 3 && (
             <div className="more-notifications" onClick={handleViewAll}>
-              +{publicationUnreadCount - 3} mais
+              +{publicationUnreadCount - 3} publicações
+            </div>
+          )}
+
+          {/* Cartões de alertas 90+ dias */}
+          {staleAlertItems.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="notification-card stale-alert-card"
+              onClick={() => handleStaleAlertClick(item)}
+              title="Abrir processo"
+            >
+              <div className="card-header">
+                <span className="card-type alert-type">Alerta</span>
+              </div>
+              <div className="card-content">
+                <div className="alert-status">Processo inativo há mais de 90 dias</div>
+                <div className="card-title">{item.number}</div>
+              </div>
+            </button>
+          ))}
+
+          {staleAlertItems.length > 0 && staleAlertItems.length < 3 && staleAlertItems.length > 0 && (
+            <div className="more-notifications stale" onClick={() => navigate('/cases')}>
+              Ver processos inativos →
             </div>
           )}
         </div>
@@ -154,34 +189,21 @@ export default function NotificationsSummary() {
           <p>Tudo em dia!</p>
         </div>
       )}
-
-      {/* Container condicional: somente aparece se existir processo sem publicacao/movimentacao ha 90+ dias */}
-      {staleAlertItems.length > 0 && (
-        <div className="stale-cases-summary">
-          <div className="stale-cases-title">🟨 Alerta 90+ dias sem publicação</div>
-          <div className="stale-cases-list">
-            {staleAlertItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className="stale-case-item"
-                onClick={() => handleStaleAlertClick(item)}
-                title="Abrir processo"
-              >
-                <div className="stale-case-number">{item.number}</div>
-                <div className="stale-case-days">{item.days} dias</div>
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="stale-cases-view-all"
-            onClick={() => navigate('/cases')}
-          >
-            Ver todos os inativos →
-          </button>
-        </div>
-      )}
     </div>
   );
+}
+
+/**
+ * Abreviar nome do tribunal/source para exibição
+ */
+function abbreviateCourt(court) {
+  if (!court) return '';
+  // Se for uma URL ou algo com /, pega o último segmento
+  if (court.includes('/')) {
+    court = court.split('/').pop();
+  }
+  // Remove "tribunal" se houver
+  court = court.replace(/tribunal|court/gi, '').trim();
+  // Limita a 10 caracteres
+  return court.substring(0, 10) + (court.length > 10 ? '...' : '');
 }

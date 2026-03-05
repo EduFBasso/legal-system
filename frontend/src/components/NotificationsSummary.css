@@ -1,10 +1,10 @@
 /* Notifications Summary - Sidebar Component */
 .notifications-summary {
-  position: relative; /* ESTUDO: Para posicionar botão de teste */
+  position: relative;
   padding: 1rem;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  background: linear-gradient(135deg, #f5f3ff 0%, #f3e8ff 100%);
   border-radius: 12px;
-  border: 1px solid #bbf7d0;
+  border: 1px solid #e9d5ff;
   transition: all 0.2s ease;
 }
 
@@ -12,12 +12,12 @@
 .notifications-container-title {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #15803d;
+  color: #6d28d9;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #86efac;
+  border-bottom: 1px solid #ddd6fe;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -32,13 +32,13 @@
   gap: 0.5rem;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid #86efac;
+  border-bottom: 2px solid #ddd6fe;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .notifications-header:hover {
-  border-bottom-color: #4ade80;
+  border-bottom-color: #c4b5fd;
 }
 
 .notification-count-badge {
@@ -50,13 +50,13 @@
 .count-number {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #16a34a;
+  color: #6d28d9;
   line-height: 1;
 }
 
 .count-label {
   font-size: 0.75rem;
-  color: #15803d;
+  color: #6d28d9;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -64,105 +64,151 @@
 
 .view-all-link {
   font-size: 0.875rem;
-  color: #16a34a;
+  color: #6d28d9;
   font-weight: 600;
   transition: all 0.2s;
   white-space: nowrap;
 }
 
 .notifications-header:hover .view-all-link {
-  color: #15803d;
+  color: #5b21b6;
   transform: translateX(2px);
 }
 
-/* Mini-cartões de notificações */
-.notifications-mini-cards {
+/* Container de cartões unificado */
+.notifications-cards-container {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.notification-mini-card {
+/* Cartão genérico */
+.notification-card {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.75rem;
-  background: white;
   border-radius: 8px;
-  border-left: 3px solid #4ade80;
+  border-left: 3px solid;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  /* ESTUDO: Animação removida - agora controlada por classe .pulse-active */
+  text-align: left;
+  background: white;
 }
 
-/* ESTUDO: Classe para ativar brilho quando necessário */
-.notification-mini-card.pulse-active {
-  animation: pulse-green-mini 2s ease-in-out infinite;
+.notification-card.pulse-active {
+  animation: pulse-card 2s ease-in-out infinite;
 }
 
-@keyframes pulse-green-mini {
+@keyframes pulse-card {
   0%, 100% {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 8px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 8px rgba(109, 40, 217, 0.2);
   }
   50% {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 15px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 15px rgba(109, 40, 217, 0.4);
   }
 }
 
-.notification-mini-card:hover {
+/* Cartão de publicação (azul/violeta) */
+.notification-card.publication-card {
+  border-left-color: #7c3aed;
+  background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%);
+  border-left: 3px solid #7c3aed;
+}
+
+.notification-card.publication-card:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 8px rgba(74, 222, 128, 0.2);
-  border-left-color: #22c55e;
-  background: #f9fafb;
+  box-shadow: 0 4px 8px rgba(124, 58, 237, 0.2);
+  background: #f3e8ff;
 }
 
-.notification-mini-card.high-priority {
-  border-left-color: #ef4444;
-  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+/* Cartão de alerta 90+ (dourado) */
+.notification-card.stale-alert-card {
+  border-left-color: #d97706;
+  background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+  border: 1px solid #fcd34d;
+  border-left: 3px solid #d97706;
+  padding: 0.75rem;
 }
 
-.notification-mini-card.high-priority:hover {
-  border-left-color: #dc2626;
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+.notification-card.stale-alert-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 8px rgba(217, 119, 6, 0.2);
+  background: linear-gradient(135deg, #fde047 0%, #fcd34d 100%);
 }
 
-.mini-card-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+/* Header do cartão - tipo */
+.card-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #f0fdf4;
-  border-radius: 8px;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
 }
 
-.notification-mini-card.high-priority .mini-card-icon {
-  background: #fef2f2;
+.card-type {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: rgba(124, 58, 237, 0.15);
+  color: #6d28d9;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  width: fit-content;
 }
 
-.mini-card-content {
-  flex: 1;
-  min-width: 0;
+.card-type.alert-type {
+  background: rgba(217, 119, 6, 0.2);
+  color: #b45309;
 }
 
-.mini-card-title {
+/* Conteúdo do cartão */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Status de alerta */
+.alert-status {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #b45309;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  margin-bottom: 0.2rem;
+}
+
+/* Título do cartão */
+.card-title {
   font-size: 0.875rem;
   font-weight: 600;
   color: #1e293b;
   line-height: 1.3;
-  margin-bottom: 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
 }
 
-.mini-card-time {
+/* Meta informações (tribunal, tempo) */
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.card-tribunal {
+  font-size: 0.75rem;
+  color: #6d28d9;
+  font-weight: 500;
+  background: rgba(124, 58, 237, 0.08);
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+}
+
+.card-time {
   font-size: 0.75rem;
   color: #64748b;
   font-weight: 500;
@@ -175,17 +221,27 @@
   background: white;
   border-radius: 8px;
   font-size: 0.813rem;
-  color: #16a34a;
+  color: #6d28d9;
   font-weight: 600;
-  border: 1px dashed #86efac;
+  border: 1px dashed #ddd6fe;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .more-notifications:hover {
-  background: #f0fdf4;
-  border-color: #4ade80;
+  background: #f5f3ff;
+  border-color: #c4b5fd;
   transform: scale(1.02);
+}
+
+.more-notifications.stale {
+  color: #b45309;
+  border-color: #fcd34d;
+}
+
+.more-notifications.stale:hover {
+  background: #fffbeb;
+  border-color: #fbbf24;
 }
 
 /* Estado vazio */
@@ -203,84 +259,8 @@
 .no-notifications p {
   margin: 0;
   font-size: 0.875rem;
-  color: #15803d;
+  color: #6d28d9;
   font-weight: 500;
-}
-
-/* Container dourado: processos sem publicacao/movimentacao ha 90+ dias */
-.stale-cases-summary {
-  margin-top: 1rem;
-  padding: 0.875rem;
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1px solid #fcd34d;
-  border-radius: 10px;
-}
-
-.stale-cases-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #92400e;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #fbbf24;
-}
-
-.stale-cases-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.stale-case-item {
-  width: 100%;
-  border: 1px solid #fde68a;
-  border-left: 3px solid #f59e0b;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 0.625rem 0.75rem;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.stale-case-item:hover {
-  background: #fffbeb;
-  border-color: #fbbf24;
-  transform: translateX(3px);
-}
-
-.stale-case-number {
-  font-size: 0.813rem;
-  font-weight: 600;
-  color: #78350f;
-  line-height: 1.25;
-  margin-bottom: 0.2rem;
-}
-
-.stale-case-days {
-  font-size: 0.75rem;
-  color: #92400e;
-  font-weight: 500;
-}
-
-.stale-cases-view-all {
-  margin-top: 0.625rem;
-  width: 100%;
-  border: 1px dashed #fbbf24;
-  border-radius: 8px;
-  background: transparent;
-  color: #92400e;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.45rem 0.6rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.stale-cases-view-all:hover {
-  background: rgba(251, 191, 36, 0.12);
 }
 
 /* Animações */
@@ -295,7 +275,7 @@
   }
 }
 
-.notification-mini-card {
+.notification-card {
   animation: slideIn 0.3s ease-out;
 }
 
