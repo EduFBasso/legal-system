@@ -71,7 +71,10 @@ function App() {
                 <h2>Controles</h2>
                 
                 <div className="sidebar-section">
-                  <h3><BellRing size={18} style={{ display: 'inline', marginRight: '6px' }} /> Notificações</h3>
+                  <h3 className="sidebar-section-title">
+                    <BellRing size={18} className="sidebar-section-title-icon" />
+                    <span>Notificações</span>
+                  </h3>
                   <NotificationsSummary />
                 </div>
 
