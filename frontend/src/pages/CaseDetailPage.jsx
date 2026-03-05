@@ -1545,6 +1545,7 @@ function CaseDetailPage() {
           onClose={() => setShowSelectContactModal(false)}
           onSelectContact={handleSelectContactForParty}
           onCreateNew={handleCreateNewContactForParty}
+          existingPartyContactIds={parties.map(p => p.contact)}
         />
       )}
 

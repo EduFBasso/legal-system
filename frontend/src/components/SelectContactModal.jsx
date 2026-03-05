@@ -4,7 +4,13 @@ import ContactCard from './ContactCard';
 import { getAllContacts } from '@/services/contactsService';
 import './SelectContactModal.css';
 
-export default function SelectContactModal({ isOpen, onClose, onSelectContact, onCreateNew }) {
+export default function SelectContactModal({ 
+  isOpen, 
+  onClose, 
+  onSelectContact, 
+  onCreateNew,
+  existingPartyContactIds = [] // Array of contact IDs already linked to this case
+}) {
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -38,6 +44,10 @@ export default function SelectContactModal({ isOpen, onClose, onSelectContact, o
   }, [searchTerm, isOpen, loadContacts]);
 
   const handleSelectContact = (contactId) => {
+    // Check if contact is already linked to this case
+    if (existingPartyContactIds.includes(contactId)) {
+      return; // Prevent selection
+    }
     // Just highlight the card
     setSelectedContactId(contactId);
   };
@@ -103,16 +113,29 @@ export default function SelectContactModal({ isOpen, onClose, onSelectContact, o
                 <p>Tente buscar por outro termo ou crie um novo contato.</p>
               </div>
             ) : (
-              contacts.map(contact => (
-                <ContactCard 
-                  key={contact.id} 
-                  contact={contact}
-                  isSelected={selectedContactId === contact.id}
-                  onSelect={() => handleSelectContact(contact.id)}
-                  onView={null} // Hide view button in selection mode
-                  onLinkToCase={null} // Hide link button
-                />
-              ))
+              contacts.map(contact => {
+                const isAlreadyLinked = existingPartyContactIds.includes(contact.id);
+                return (
+                  <div
+                    key={contact.id}
+                    className={isAlreadyLinked ? 'contact-card-disabled-wrapper' : ''}
+                    title={isAlreadyLinked ? 'Este contato já está vinculado a este processo. Edite o papel acima.' : undefined}
+                  >
+                    <ContactCard 
+                      contact={contact}
+                      isSelected={selectedContactId === contact.id && !isAlreadyLinked}
+                      onSelect={() => handleSelectContact(contact.id)}
+                      onView={null} // Hide view button in selection mode
+                      onLinkToCase={null} // Hide link button
+                    />
+                    {isAlreadyLinked && (
+                      <div className="already-linked-badge">
+                        ⚠️ Já vinculado - Edite o papel
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
