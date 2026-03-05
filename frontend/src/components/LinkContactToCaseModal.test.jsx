@@ -109,7 +109,7 @@ describe('LinkContactToCaseModal', () => {
 
     // Wait for cases to load
     await waitFor(() => {
-      expect(screen.getByText(/0000001/)).toBeInTheDocument();
+      expect(screen.getByText(/processo\(s\) encontrado\(s\)/i)).toBeInTheDocument();
     });
 
     // Type in search
@@ -134,7 +134,7 @@ describe('LinkContactToCaseModal', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/0000001/)).toBeInTheDocument();
+      expect(screen.getByText(/processo\(s\) encontrado\(s\)/i)).toBeInTheDocument();
     });
 
     const searchInput = screen.getByPlaceholderText(/Buscar por número ou assunto/i);

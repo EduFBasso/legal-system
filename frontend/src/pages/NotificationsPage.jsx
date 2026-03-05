@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import NotificationDetailModal from '../components/NotificationDetailModal';
-import PublicationDetailModal from '../components/PublicationDetailModal';
 import './NotificationsPage.css';
 
 export default function NotificationsPage() {
@@ -24,9 +23,6 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
-  const [selectedPublication, setSelectedPublication] = useState(null);
-  const [sourceNotification, setSourceNotification] = useState(null); // Track which notification opened this publication
-  const [loadingPublication, setLoadingPublication] = useState(false);
 
   useEffect(() => {
     fetchAllNotifications();
@@ -374,9 +370,8 @@ export default function NotificationsPage() {
                     <button
                       className="notification-link"
                       onClick={() => handleViewDetails(notification)}
-                      disabled={loadingPublication}
                     >
-                      {loadingPublication ? 'Carregando...' : 'Ver detalhes →'}
+                      Ver detalhes →
                     </button>
 
                     <button
@@ -402,18 +397,6 @@ export default function NotificationsPage() {
           onMarkAsRead={handleMarkAsRead}
         />
       )}
-
-      {/* Modal de Publicação */}
-      {selectedPublication && (
-        <PublicationDetailModal
-          publication={selectedPublication}
-          onClose={() => {
-            setSelectedPublication(null);
-            setSourceNotification(null);
-          }}
-        />
-      )}
-
       {error && (
         <div className="error-message">
           ⚠️ {error}
