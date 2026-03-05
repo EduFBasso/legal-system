@@ -64,6 +64,7 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  padding: 0 8px;
 }
 
 .selection-count {
