@@ -72,17 +72,18 @@ Notificações de exemplo para visualização:
 | Sem notificações      | Mostra "Tudo em dia!"             | ✅     |
 | Mais de 3 publicações | Mostra "+X publicações"           | ✅     |
 
-## Checksum Visual (Paleta Publicações)
+## Checksum Visual (Paleta Refinada)
 
 - **Bloco background**: Gradiente indigo claro (#e0e7ff → #eef2ff)
 - **Título**: Em Sidebar mãe (não duplicado)
-- **Cartão publicação**: Borda esquerda azul (#3b82f6), fundo indigo light
-- **Cartão alerta**: Fundo dourado (#fef3c7->#fcd34d), borda #d97706
+- **Cartão publicação**: Borda esquerda gradiente indigo vibrante (#6366f1 → #4f46e5), fundo claro
+- **Cartão alerta**: Borda esquerda âmbar (#fbbf24), fundo âmbar claro (#fffbeb → #fef3c7)
 - **Contador**: Grande e destaque (1.75rem, #3b82f6)
 - **Link "Ver todas"**: #3b82f6 → #1d4ed8 on hover
 - **Variáveis CSS**: `--publication-light` (#e0e7ff) com fallback
 - **Border principal**: #c7d2fe (indigo border)
-- **Border hover**: #a5b4fc (indigo lighter)
+- **Border alerta**: #fed7aa (âmbar-200)
+- **Animação pulse**: rgba(99, 102, 241, ...) para cartões publicação
 
 ## Scripts Auxiliares Criados
 
@@ -99,3 +100,5 @@ Notificações de exemplo para visualização:
 - ab46d75 (scripts teste)
 - 4647988 (validação inicial)
 - 5f89211 (refinar paleta Publicações)
+- 87d92ae (documentação variáveis CSS)
+- 6c396cf (aprimorar cores: gradiente + dourado claro)
