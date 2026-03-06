@@ -130,10 +130,8 @@ export default function ContactsPage() {
     }
   };
 
-  const handleLinkSuccess = async () => {
-    // Reload contacts to get updated linked_cases
-    await loadContacts();
-    displayToast('🔗 Contato vinculado ao processo com sucesso!', 'success');
+  const handleLinkSuccess = () => {
+    displayToast('📂 Processo aberto em nova aba para concluir o vínculo na aba Partes.', 'info');
   };
 
   return (

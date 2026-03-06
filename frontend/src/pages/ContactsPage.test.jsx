@@ -607,7 +607,7 @@ describe('ContactsPage', () => {
       });
     });
 
-    it('shows success toast after linking contact to case', async () => {
+    it('shows info toast after opening process to link contact', async () => {
       const user = userEvent.setup();
       
       renderWithRouter(<ContactsPage />);
@@ -629,7 +629,7 @@ describe('ContactsPage', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('toast')).toBeInTheDocument();
-        expect(screen.getByText(/Contato vinculado ao processo/i)).toBeInTheDocument();
+        expect(screen.getByText(/Processo aberto em nova aba/i)).toBeInTheDocument();
       });
     });
 
@@ -662,7 +662,7 @@ describe('ContactsPage', () => {
   });
 
   describe('Link Success Handler', () => {
-    it('reloads contacts after successful link', async () => {
+    it('does not reload contacts after opening process for linking', async () => {
       const user = userEvent.setup();
       
       renderWithRouter(<ContactsPage />);
@@ -676,14 +676,11 @@ describe('ContactsPage', () => {
       const linkButton = card1.querySelectorAll('button')[2];
       await user.click(linkButton);
 
-      // Simulate successful link
-      mockGetAll.mockResolvedValueOnce(mockContacts);
-
       const successButton = screen.getByRole('button', { name: /Success Link/i });
       await user.click(successButton);
 
       await waitFor(() => {
-        expect(mockGetAll).toHaveBeenCalledTimes(2); // Initial load + reload after link
+        expect(mockGetAll).toHaveBeenCalledTimes(1); // Only initial load
       });
     });
   });

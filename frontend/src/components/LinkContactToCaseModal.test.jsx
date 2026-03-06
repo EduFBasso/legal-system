@@ -4,10 +4,9 @@
  * Coverage:
  * - Modal opens and closes
  * - Search filter works
- * - Form submission
- * - Role selection
+ * - Opens case detail in new tab with contactId
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LinkContactToCaseModal from './LinkContactToCaseModal';
@@ -43,10 +42,17 @@ vi.mock('../services/api', () => ({
 describe('LinkContactToCaseModal', () => {
   const mockOnClose = vi.fn();
   const mockOnSuccess = vi.fn();
+  const windowOpenMock = vi.fn();
 
   beforeEach(() => {
     mockOnClose.mockClear();
     mockOnSuccess.mockClear();
+    windowOpenMock.mockClear();
+    vi.spyOn(window, 'open').mockImplementation(windowOpenMock);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('renders modal when open', () => {
@@ -147,7 +153,9 @@ describe('LinkContactToCaseModal', () => {
     expect(searchInput).toHaveValue('');
   });
 
-  it('renders role radio buttons', async () => {
+  it('opens case detail in new tab with contactId on submit', async () => {
+    const user = userEvent.setup();
+
     render(
       <LinkContactToCaseModal
         isOpen={true}
@@ -159,10 +167,20 @@ describe('LinkContactToCaseModal', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/Autor \(Cliente\)/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Réu \(Cliente\)/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Testemunha \(Não-cliente\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/processo\(s\) disponível\(is\)/i)).toBeInTheDocument();
     });
+
+    const caseSelect = screen.getByRole('listbox');
+    await user.selectOptions(caseSelect, '2');
+    await user.click(screen.getByRole('button', { name: /Abrir processo/i }));
+
+    expect(windowOpenMock).toHaveBeenCalledWith(
+      '/cases/2?tab=parties&action=link&contactId=1',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    expect(mockOnSuccess).toHaveBeenCalledWith({ caseId: 2, contactId: 1 });
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   it('closes modal when cancel is clicked', async () => {

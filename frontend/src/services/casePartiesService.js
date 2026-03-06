@@ -31,14 +31,14 @@ export async function createParty(data) {
 }
 
 /**
- * Update a case party
+ * Update a case party (partial update)
  * @param {number} id - Party ID
  * @param {Object} data - Updated data
  * @returns {Promise<Object>} Updated party
  */
 export async function updateParty(id, data) {
   return await apiFetch(`/case-parties/${id}/`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify(data),
   });
 }

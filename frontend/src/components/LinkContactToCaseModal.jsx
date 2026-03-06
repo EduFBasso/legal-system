@@ -1,7 +1,6 @@
 // src/components/LinkContactToCaseModal.jsx
 import { useState, useEffect } from 'react';
 import casesService from '../services/casesService';
-import { createParty } from '../services/casePartiesService';
 import './LinkContactToCaseModal.css';
 
 export default function LinkContactToCaseModal({ 
@@ -15,9 +14,6 @@ export default function LinkContactToCaseModal({
   const [cases, setCases] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCaseId, setSelectedCaseId] = useState('');
-  const [role, setRole] = useState('AUTOR');
-  const [isClient, setIsClient] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Load available cases
@@ -48,33 +44,18 @@ export default function LinkContactToCaseModal({
       setError('Selecione um processo');
       return;
     }
-
-    setLoading(true);
     setError(null);
 
     try {
-      const data = await createParty({
-        case: selectedCaseId,
-        contact: contactId,
-        role: role,
-        is_client: isClient,
-      });
-
-      onSuccess && onSuccess(data);
+      const targetUrl = `/cases/${selectedCaseId}?tab=parties&action=link&contactId=${contactId}`;
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      onSuccess && onSuccess({ caseId: Number(selectedCaseId), contactId });
       onClose();
+      setSelectedCaseId('');
+      setSearchTerm('');
     } catch (err) {
-      console.error('[LinkContactToCaseModal] Error linking contact:', err);
-      setError(err.message || 'Erro ao vincular contato ao processo');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRoleChange = (newRole) => {
-    setRole(newRole);
-    // Se escolher TESTEMUNHA, não pode ser cliente
-    if (newRole === 'TESTEMUNHA') {
-      setIsClient(false);
+      console.error('[LinkContactToCaseModal] Error opening case detail:', err);
+      setError(err.message || 'Erro ao abrir processo para vinculação');
     }
   };
 
@@ -161,59 +142,6 @@ export default function LinkContactToCaseModal({
               )}
             </div>
 
-            {/* Tipo de Vínculo */}
-            <div className="form-group">
-              <label>
-                Tipo de Vínculo <span className="required">*</span>
-              </label>
-              <div className="role-options">
-                <label className="role-option">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="AUTOR"
-                    checked={role === 'AUTOR'}
-                    onChange={(e) => handleRoleChange(e.target.value)}
-                  />
-                  <span>Autor (Cliente)</span>
-                </label>
-                <label className="role-option">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="REU"
-                    checked={role === 'REU'}
-                    onChange={(e) => handleRoleChange(e.target.value)}
-                  />
-                  <span>Réu (Cliente)</span>
-                </label>
-                <label className="role-option">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="TESTEMUNHA"
-                    checked={role === 'TESTEMUNHA'}
-                    onChange={(e) => handleRoleChange(e.target.value)}
-                  />
-                  <span>Testemunha (Não-cliente)</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Cliente checkbox (desabilitado se TESTEMUNHA) */}
-            {role !== 'TESTEMUNHA' && (
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={isClient}
-                    onChange={(e) => setIsClient(e.target.checked)}
-                  />
-                  <span>Este contato é cliente neste processo</span>
-                </label>
-              </div>
-            )}
-
             {error && (
               <div className="error-message">
                 ⚠️ {error}
@@ -225,16 +153,15 @@ export default function LinkContactToCaseModal({
                 type="button"
                 className="btn-cancel"
                 onClick={onClose}
-                disabled={loading}
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 className="btn-submit"
-                disabled={loading || !selectedCaseId}
+                disabled={!selectedCaseId}
               >
-                {loading ? '⏳ Vinculando...' : '✅ Vincular'}
+                Abrir processo
               </button>
             </div>
           </form>

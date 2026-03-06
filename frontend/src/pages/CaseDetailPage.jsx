@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Save, X, UserPlus, RefreshCw } from 'lucide-react';
 import { formatDate, parseCurrencyValue, formatCurrency } from '../utils/formatters';
 import casesService from '../services/casesService';
@@ -34,7 +34,10 @@ import './CaseDetailPage.css';
 function CaseDetailPage() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const publicationId = new URLSearchParams(location.search).get('pub_id');
+  const linkAction = new URLSearchParams(location.search).get('action');
+  const linkContactId = parseInt(new URLSearchParams(location.search).get('contactId') || '', 10);
 
   const getRoleDisplay = (role) => {
     const labels = {
@@ -168,9 +171,9 @@ function CaseDetailPage() {
   /**
    * Show toast message
    */
-  const showToast = useCallback((message, type = 'info') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+  const showToast = useCallback((message, type = 'info', duration = 3000) => {
+    setToast({ message, type, duration });
+    setTimeout(() => setToast(null), duration);
   }, []);
 
   /**
@@ -233,6 +236,10 @@ function CaseDetailPage() {
 
     if (tab === 'movements') {
       setActiveSection('movimentacoes');
+    } else if (tab === 'parties') {
+      setActiveSection('parties');
+    } else if (tab === 'info') {
+      setActiveSection('info');
     }
 
     if (focusMovement) {
@@ -243,6 +250,16 @@ function CaseDetailPage() {
       setHighlightedTaskId(parseInt(focusTask, 10));
     }
   }, [location.search]);
+
+  const clearLinkQueryParams = useCallback(() => {
+    const params = new URLSearchParams(location.search);
+    params.delete('action');
+    params.delete('contactId');
+
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `${location.pathname}?${nextQuery}` : location.pathname;
+    navigate(nextUrl, { replace: true });
+  }, [location.pathname, location.search, navigate]);
 
   useEffect(() => {
     const loadPublicationPrefill = async () => {
@@ -307,6 +324,50 @@ function CaseDetailPage() {
       loadContacts();
     }
   }, [isEditing, contacts.length, loadContacts]);
+
+  useEffect(() => {
+    if (!id || linkAction !== 'link' || !Number.isInteger(linkContactId) || linkContactId <= 0) {
+      return;
+    }
+
+    if (activeSection !== 'parties') {
+      setActiveSection('parties');
+      return;
+    }
+
+    if (contacts.length === 0) {
+      loadContacts();
+      return;
+    }
+
+    const alreadyLinked = parties.some((party) => party.contact === linkContactId);
+    if (alreadyLinked) {
+      showToast('Contato já está vinculado a este processo.', 'warning');
+      clearLinkQueryParams();
+      return;
+    }
+
+    const contact = contacts.find((item) => item.id === linkContactId);
+    if (!contact) {
+      showToast('Contato não encontrado para vinculação.', 'error');
+      clearLinkQueryParams();
+      return;
+    }
+
+    setSelectedContact(contact);
+    setShowAddPartyModal(true);
+    clearLinkQueryParams();
+  }, [
+    id,
+    linkAction,
+    linkContactId,
+    activeSection,
+    contacts,
+    parties,
+    loadContacts,
+    showToast,
+    clearLinkQueryParams,
+  ]);
 
   /**
    * Handle contact created - reload contacts and select the new one
@@ -621,7 +682,30 @@ function CaseDetailPage() {
       loadContacts();
     } catch (error) {
       console.error('Error saving party:', error);
-      showToast('Erro ao adicionar parte', 'error');
+      
+      // Trata erro específico de cliente duplicado
+      if (error.message && error.message.includes('is_client')) {
+        // Extrair a mensagem após "is_client: "
+        const message = error.message.replace('is_client: ', '');
+        try {
+          showToast(message, 'error', 7000);
+        } catch (toastError) {
+          console.error('Error calling showToast:', toastError);
+          alert(message);
+        }
+        // Desmarcar o checkbox de cliente para deixar claro por que falhou
+        setPartyFormData(prev => ({
+          ...prev,
+          is_client: false
+        }));
+      } else {
+        try {
+          showToast('Erro ao adicionar parte', 'error', 7000);
+        } catch (toastError) {
+          console.error('Error calling showToast:', toastError);
+          alert('Erro ao adicionar parte');
+        }
+      }
     }
   };
 
@@ -719,7 +803,15 @@ function CaseDetailPage() {
         return;
       }
 
-      await casePartiesService.updateParty(editingParty.id, editingPartyFormData);
+      const payload = {
+        case: editingParty.case,
+        contact: editingParty.contact,
+        role: editingPartyFormData.role,
+        is_client: editingPartyFormData.is_client,
+        observacoes: editingPartyFormData.observacoes,
+      };
+
+      await casePartiesService.updateParty(editingParty.id, payload);
       showToast('Papel da parte atualizado com sucesso!', 'success');
       setEditingParty(null);
       // Reload both parties and contacts to sync linked_cases
@@ -727,7 +819,30 @@ function CaseDetailPage() {
       loadContacts();
     } catch (error) {
       console.error('Error updating party:', error);
-      showToast('Erro ao atualizar papel da parte', 'error');
+      
+      // Trata erro específico de cliente duplicado
+      if (error.message && error.message.includes('is_client')) {
+        // Extrair a mensagem após "is_client: "
+        const message = error.message.replace('is_client: ', '');
+        try {
+          showToast(message, 'error', 7000);
+        } catch (toastError) {
+          console.error('Error calling showToast:', toastError);
+          alert(message);
+        }
+        // Desmarcar o checkbox de cliente para evitar confusão
+        setEditingPartyFormData(prev => ({
+          ...prev,
+          is_client: false
+        }));
+      } else {
+        try {
+          showToast('Erro ao atualizar papel da parte', 'error', 7000);
+        } catch (toastError) {
+          console.error('Error calling showToast:', toastError);
+          alert('Erro ao atualizar papel da parte');
+        }
+      }
     }
   };
 
@@ -1534,16 +1649,6 @@ function CaseDetailPage() {
         )}
       </main>
 
-      {/* Toast */}
-      {toast && (
-        <Toast
-          isOpen={true}
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
       {/* Modal de Seleção de Contato */}
       {showSelectContactModal && (
         <SelectContactModal
@@ -2114,6 +2219,17 @@ function CaseDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast - Renderizado por último para ficar visualmente acima de todos os modais */}
+      {toast && (
+        <Toast
+          isOpen={true}
+          message={toast.message}
+          type={toast.type}
+          autoCloseMs={toast.duration || 3000}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

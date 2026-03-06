@@ -177,6 +177,32 @@ class CasePartySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at']
 
+    def validate(self, data):
+        """
+        Validação de negócio: um processo só pode ter um cliente.
+        Bloqueia tentativas de marcar múltiplos contatos como cliente no mesmo processo.
+        """
+        if data.get('is_client'):
+            # Determinar o caso (pode vir em data ou estar sendo editado)
+            case = data.get('case') or (self.instance.case if self.instance else None)
+            
+            # Verificar se já existe outro cliente para este processo
+            existing_client_query = CaseParty.objects.filter(
+                case=case,
+                is_client=True
+            )
+            
+            # Se está editando, excluir o registro atual da verificação
+            if self.instance:
+                existing_client_query = existing_client_query.exclude(id=self.instance.id)
+            
+            if existing_client_query.exists():
+                raise serializers.ValidationError({
+                    'is_client': 'Já existe um cliente cadastrado para este processo. Um processo só pode ter um cliente.'
+                })
+        
+        return data
+
 
 class PaymentSerializer(serializers.ModelSerializer):
     """Serializer for Payment (Recebimentos)"""
