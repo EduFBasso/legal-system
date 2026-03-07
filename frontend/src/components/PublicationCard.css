@@ -1,3 +1,24 @@
+/* ========== CSS VARIABLES ========== */
+:root {
+  /* Colors - Status Scale (Padrão do Sistema) */
+  --color-urgentissimo: #dc2626;
+  --color-urgentissimo-light: #fef2f2;
+  --color-urgente: #f97316;
+  --color-urgente-light: #fff7ed;
+  --color-normal: #16a34a;
+  --color-normal-light: #f0fdf4;
+  --color-total: #475569;
+  --color-total-light: #f8fafc;
+  
+  /* Colors - Additional (Tribunals) */
+  --color-blue: #0369a1;
+  --color-blue-light: #dbeafe;
+  --color-purple: #6b21a8;
+  --color-purple-light: #e9d5ff;
+  --color-indigo: #4338ca;
+  --color-indigo-light: #c7d2fe;
+}
+
 .publication-card {
   background: white;
   border: 1px solid #e2e8f0;
@@ -76,59 +97,58 @@
 }
 
 .badge-red {
-  background: #dc3545;
-  color: white;
+  background: var(--color-urgentissimo-light);
+  color: var(--color-urgentissimo);
   font-weight: 700;
 }
 
 .badge-green {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--color-normal-light);
+  color: var(--color-normal);
 }
 
 .badge-orange {
-  background: #fed7aa;
-  color: #9a3412;
+  background: var(--color-urgente-light);
+  color: var(--color-urgente);
 }
 
 .badge-purple {
-  background: #e9d5ff;
-  color: #6b21a8;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
 }
 
 .badge-gray {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--color-total-light);
+  color: var(--color-total);
 }
 
-/* Tribunal badges - matching SearchHistory pattern */
+/* Tribunal badges - padrão claro com variáveis de sistema (background claro + fonte escura) */
 .badge-tribunal-tjsp {
-  background-color: #1976d2;
-  color: white;
+  background-color: var(--color-blue-light);
+  color: var(--color-blue);
   font-weight: 600;
 }
 
 .badge-tribunal-trf3 {
-  background-color: #7b1fa2;
-  color: white;
+  background-color: var(--color-purple-light);
+  color: var(--color-purple);
   font-weight: 600;
 }
 
 .badge-tribunal-trt2 {
-  background-color: #f57c00;
-  color: white;
+  background: var(--color-urgente-light);
+  color: var(--color-urgente);
   font-weight: 600;
 }
 
 .badge-tribunal-trt15 {
-  background-color: #4f46e5;
-  color: white;
+  background-color: var(--color-indigo-light);
+  color: var(--color-indigo);
   font-weight: 600;
 }
 
 .badge-status {
-  background-color: #6b7280;
-  color: white;
+  /* Cores aplicadas via inline style no componente */
   font-weight: 600;
   font-size: 0.75rem;
   padding: 0.35rem 0.6rem;

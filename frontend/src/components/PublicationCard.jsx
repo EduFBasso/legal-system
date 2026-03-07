@@ -36,11 +36,27 @@ export default function PublicationCard({
 
   const getStatusBadgeInfo = (status) => {
     const statusMap = {
-      'INTEGRATED': { label: 'VINCULADA', color: '#10b981' },
-      'PENDING': { label: 'NÃO VINCULADA', color: '#f59e0b' },
-      'IGNORED': { label: 'IGNORADA', color: '#6b7280' },
+      'INTEGRATED': { 
+        label: 'VINCULADA', 
+        backgroundColor: 'var(--color-normal-light)',
+        color: 'var(--color-normal)' 
+      },
+      'PENDING': { 
+        label: 'NÃO VINCULADA', 
+        backgroundColor: 'var(--color-urgente-light)',
+        color: 'var(--color-urgente)' 
+      },
+      'IGNORED': { 
+        label: 'IGNORADA', 
+        backgroundColor: 'var(--color-total-light)',
+        color: 'var(--color-total)' 
+      },
     };
-    return statusMap[status] || { label: status, color: '#6b7280' };
+    return statusMap[status] || { 
+      label: status, 
+      backgroundColor: 'var(--color-total-light)',
+      color: 'var(--color-total)' 
+    };
   };
 
   const formatDate = (dateString) => {
@@ -178,7 +194,10 @@ export default function PublicationCard({
           <span className={`badge ${getTribunalBadgeClass(publication.tribunal)}`}>{publication.tribunal}</span>
           <span 
             className="badge badge-status"
-            style={{ backgroundColor: getStatusBadgeInfo(publication.integration_status).color }}
+            style={{ 
+              backgroundColor: getStatusBadgeInfo(publication.integration_status).backgroundColor,
+              color: getStatusBadgeInfo(publication.integration_status).color
+            }}
           >
             {getStatusBadgeInfo(publication.integration_status).label}
           </span>

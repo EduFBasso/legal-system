@@ -385,7 +385,7 @@ function InformacaoTab({
           </div>
         ) : (
           /* MODO EDIÇÃO - Formulário Vertical */
-          <div className="info-form-vertical">
+          <div className="info-form-vertical process-registration-form">
             {/* Título */}
             <div className="info-field full-width">
               <label>Título do Processo</label>
@@ -566,11 +566,11 @@ function InformacaoTab({
               paddingTop: '1.5rem',
               borderTop: '1px solid #e5e7eb'
             }}>
-              <button className="btn btn-secondary" onClick={onCancel}>
+              <button className="btn btn-secondary process-form-btn-cancel" onClick={onCancel}>
                 <X size={18} />
                 Cancelar
               </button>
-              <button className="btn btn-success" onClick={onSave} disabled={saving}>
+              <button className="btn btn-success process-form-btn-save" onClick={onSave} disabled={saving}>
                 <Save size={18} />
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>

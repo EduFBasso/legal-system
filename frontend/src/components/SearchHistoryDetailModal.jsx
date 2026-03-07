@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import PublicationCard from './PublicationCard';
 import PublicationDetailModal from './PublicationDetailModal';
+import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
 import './SearchHistoryDetailModal.css';
 
 function SearchHistoryDetailModal({
@@ -17,11 +18,13 @@ function SearchHistoryDetailModal({
   formatDateTime,
   highlightProcessNumber = null
 }) {
+  const markPublicationNotificationAsRead = usePublicationNotificationRead();
   // Estado para controlar publicação selecionada (modal dentro de modal)
   const [selectedPublication, setSelectedPublication] = useState(null);
   
   // Handler para abrir detalhes da publicação
   const handlePublicationClick = (publication) => {
+    markPublicationNotificationAsRead(publication.id_api);
     setSelectedPublication(publication);
   };
   

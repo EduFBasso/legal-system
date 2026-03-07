@@ -990,6 +990,129 @@
   font-family: inherit;
 }
 
+/* ========================================
+   PROCESS REGISTRATION FORM (SIMPLIFIED)
+   ======================================== */
+
+.process-registration-form {
+  gap: 1rem;
+}
+
+.process-registration-form .info-field {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  gap: 0.45rem;
+}
+
+.process-registration-form .info-field:hover {
+  background: transparent;
+  border: none;
+}
+
+.process-registration-form .info-field label,
+.process-registration-form .form-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-bottom: 0;
+}
+
+.process-registration-form .info-field input,
+.process-registration-form .info-field select,
+.process-registration-form .info-field textarea,
+.process-registration-form .form-input,
+.process-registration-form .currency-input-wrapper {
+  font-size: 1rem;
+  color: #0f172a;
+  background: #ffffff;
+  border: 2px solid #334155;
+  border-radius: 8px;
+}
+
+.process-registration-form .info-field input,
+.process-registration-form .info-field select,
+.process-registration-form .form-input {
+  min-height: 44px;
+}
+
+.process-registration-form .info-field textarea,
+.process-registration-form .textarea-input {
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.process-registration-form .info-field input::placeholder,
+.process-registration-form .info-field textarea::placeholder,
+.process-registration-form .form-input::placeholder {
+  color: #475569;
+  opacity: 1;
+}
+
+.process-registration-form .info-field input:hover,
+.process-registration-form .info-field select:hover,
+.process-registration-form .info-field textarea:hover,
+.process-registration-form .form-input:hover,
+.process-registration-form .currency-input-wrapper:hover {
+  border-color: #0f172a;
+}
+
+.process-registration-form .info-field input:focus,
+.process-registration-form .info-field select:focus,
+.process-registration-form .info-field textarea:focus,
+.process-registration-form .form-input:focus,
+.process-registration-form .currency-input-wrapper:focus-within {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.16);
+}
+
+.process-registration-form .info-value {
+  font-size: 1rem;
+  color: #0f172a;
+  border: 2px solid #334155;
+}
+
+.process-registration-form .field-hint {
+  font-size: 0.95rem;
+  color: #334155;
+  font-style: normal;
+}
+
+.process-registration-form .process-form-btn-save {
+  background: #166534;
+  border: 2px solid #166534;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.process-registration-form .process-form-btn-save:hover:not(:disabled),
+.process-registration-form .process-form-btn-save:focus-visible {
+  background: #15803d;
+  border-color: #15803d;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(22, 101, 52, 0.3);
+}
+
+.process-registration-form .process-form-btn-cancel {
+  background: #334155;
+  border: 2px solid #334155;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.process-registration-form .process-form-btn-cancel:hover:not(:disabled),
+.process-registration-form .process-form-btn-cancel:focus-visible {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.3);
+}
+
 /* Status Badge */
 .status-badge {
   display: inline-block;

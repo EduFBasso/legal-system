@@ -128,26 +128,6 @@ class Publication(models.Model):
         auto_now=True
     )
     
-    # Soft Delete
-    deleted = models.BooleanField(
-        default=False,
-        db_index=True,
-        help_text='Se True, publicação foi excluída (soft delete)'
-    )
-    
-    deleted_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text='Data/hora da exclusão'
-    )
-    
-    deleted_reason = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        help_text='Motivo da exclusão (ex: Exclusão manual pela advogada)'
-    )
-    
     class Meta:
         ordering = ['-data_disponibilizacao', '-created_at']
         verbose_name = 'Publicação'
@@ -156,7 +136,7 @@ class Publication(models.Model):
             models.Index(fields=['tribunal', '-data_disponibilizacao']),
             models.Index(fields=['numero_processo']),
             models.Index(fields=['-created_at']),
-            models.Index(fields=['integration_status', 'deleted']),
+            models.Index(fields=['integration_status']),
         ]
     
     def __str__(self):

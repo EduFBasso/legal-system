@@ -2,6 +2,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePublicationsContext } from '../contexts/PublicationsContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
 import publicationsService from '../services/publicationsService';
 import { subscribePublicationSync } from '../services/publicationSync';
 import PublicationsSearchForm from  '../components/PublicationsSearchForm';
@@ -9,6 +10,11 @@ import PublicationsList from '../components/PublicationsList';
 import PublicationsStats from '../components/PublicationsStats';
 import Toast from '../components/common/Toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import PublicationDeleteDialogs from '../components/publications/PublicationDeleteDialogs';
+import {
+  getPublicationDeleteBlockedMessage,
+  getPublicationDeleteSuccessMessage,
+} from '../utils/publicationDeleteFeedback';
 import './PublicationsPage.css';
 
 /**
@@ -18,6 +24,7 @@ import './PublicationsPage.css';
 export default function PublicationsPage() {
   const { settings } = useSettings();
   const location = useLocation();
+  const markPublicationNotificationAsRead = usePublicationNotificationRead();
   
   // Estado de seleção para exclusão
   const [selectionMode, setSelectionMode] = useState(false);
@@ -27,6 +34,8 @@ export default function PublicationsPage() {
   const [integrateLoading, setIntegrateLoading] = useState(false);
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [pendingDeletePublication, setPendingDeletePublication] = useState(null);
   
   // Obter estado e ações do contexto
   const {
@@ -125,62 +134,88 @@ export default function PublicationsPage() {
     setSelectedIds(new Set());
   };
 
-  /**
-   * Handler para deletar publicações selecionadas
-   */
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = () => {
     if (selectedIds.size === 0) return;
-    
-    const confirmMsg = `Apagar ${selectedIds.size} publicação(ões) selecionada(s)? Esta ação não pode ser desfeita.`;
-    if (!window.confirm(confirmMsg)) return;
-    
+    setPendingDeletePublication({ count: selectedIds.size });
+    setShowDeleteConfirmDialog(true);
+  };
+
+  const confirmDeleteSelected = async () => {
+    setShowDeleteConfirmDialog(false);
     try {
       const result = await publicationsService.deleteMultiplePublications(Array.from(selectedIds));
-      
+
       if (result.success) {
-        const msg = `${result.deleted} publicação(ões) marcada(s) como deletadas!`;
-        const notifMsg = result.notifications_updated > 0 
-          ? `\n${result.notifications_updated} notificação(ões) relacionada(s) marcadas como lidas.` 
-          : '';
-        alert(msg + notifMsg);
+        showToast(getPublicationDeleteSuccessMessage({
+          deleted: result.deleted,
+          notificationsDeleted: result.notifications_deleted || 0,
+        }), 'success');
         setSelectedIds(new Set());
         setSelectionMode(false);
-        // Recarregar lista
         await loadLastSearch();
       } else {
-        alert(`Erro ao deletar: ${result.message || 'Erro desconhecido'}`);
+        setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+          result.error,
+          'Não foi possível excluir as publicações selecionadas.'
+        ));
+        setShowDeleteBlockedDialog(true);
       }
     } catch (error) {
-      alert(`Erro ao deletar publicações: ${error.message}`);
+      setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+        error.message,
+        'Erro ao excluir publicações selecionadas.'
+      ));
+      setShowDeleteBlockedDialog(true);
+    } finally {
+      setPendingDeletePublication(null);
     }
   };
 
   /**
-   * Handler para deletar TODAS as publicações
+   * Handler para deletar uma publicação individual
    */
   const handleDeleteSingle = async (idApi) => {
+    const pub = publications.find(p => p.id_api === idApi);
+    const linkedToCase = !!pub?.case_id || pub?.integration_status === 'INTEGRATED';
+
+    if (linkedToCase) {
+      setDeleteBlockedMessage('Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.');
+      setShowDeleteBlockedDialog(true);
+      return;
+    }
+
+    setPendingDeletePublication(pub);
+    setShowDeleteConfirmDialog(true);
+  };
+
+  const confirmDeleteSingle = async () => {
+    if (!pendingDeletePublication || !pendingDeletePublication.id_api) return;
+    
+    setShowDeleteConfirmDialog(false);
     try {
-      const result = await publicationsService.deletePublication(idApi);
+      const result = await publicationsService.deletePublication(pendingDeletePublication.id_api);
       
       if (result.success) {
-        const notifMsg = result.notifications_updated > 0
-          ? ` (${result.notifications_updated} notificação(ões) atualizadas)`
-          : '';
-        showToast(`✅ Publicação removida da listagem${notifMsg}.`, 'success');
-        // Recarregar lista
+        showToast(getPublicationDeleteSuccessMessage({
+          single: true,
+          notificationsDeleted: result.notifications_deleted || 0,
+        }), 'success');
         await loadLastSearch();
       } else {
-        setDeleteBlockedMessage(result.error || 'Não foi possível excluir a publicação.');
+        setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+          result.error,
+          'Não foi possível excluir a publicação.'
+        ));
         setShowDeleteBlockedDialog(true);
       }
     } catch (error) {
-      const message = (error?.message || '').toLowerCase();
-      if (message.includes('não é possível apagar publicação com processo vinculado')) {
-        setDeleteBlockedMessage('Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.');
-      } else {
-        setDeleteBlockedMessage(error.message || 'Não foi possível excluir a publicação.');
-      }
+      setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+        error.message,
+        'Não foi possível excluir a publicação.'
+      ));
       setShowDeleteBlockedDialog(true);
+    } finally {
+      setPendingDeletePublication(null);
     }
   };
 
@@ -243,32 +278,41 @@ export default function PublicationsPage() {
   const handleDeleteAll = async () => {
     const totalCount = publications.length;
     if (totalCount === 0) return;
-    
-    const confirmMsg = `Marcar TODAS as ${totalCount} publicações como deletadas?\n\nAs publicações serão ocultadas mas permanecerão no banco para auditoria.\nO histórico de buscas será removido.\nNotificações relacionadas serão marcadas como lidas.`;
-    
-    if (!window.confirm(confirmMsg)) return;
-    
+
+    setPendingDeletePublication({ count: totalCount, isDeleteAll: true });
+    setShowDeleteConfirmDialog(true);
+  };
+
+  const confirmDeleteAll = async () => {
+    setShowDeleteConfirmDialog(false);
+
     try {
       const result = await publicationsService.deleteAllPublications();
-      
+
       if (result.success) {
-        const msg = `Todas as ${result.deleted} publicações foram marcadas como deletadas!`;
-        const notifMsg = result.notifications_updated > 0
-          ? `\n${result.notifications_updated} notificação(ões) relacionada(s) marcadas como lidas.`
-          : '';
-        const historyMsg = result.history_deleted > 0
-          ? `\n${result.history_deleted} registro(s) de histórico removidos.`
-          : '';
-        alert(msg + notifMsg + historyMsg);
+        showToast(getPublicationDeleteSuccessMessage({
+          deleted: result.deleted,
+          notificationsDeleted: result.notifications_deleted || 0,
+          historyDeleted: result.history_deleted || 0,
+        }), 'success');
         setSelectedIds(new Set());
         setSelectionMode(false);
-        // Recarregar lista
         await loadLastSearch();
       } else {
-        alert(`Erro ao deletar: ${result.message || 'Erro desconhecido'}`);
+        setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+          result.error,
+          'Não foi possível excluir todas as publicações.'
+        ));
+        setShowDeleteBlockedDialog(true);
       }
     } catch (error) {
-      alert(`Erro ao deletar todas publicações: ${error.message}`);
+      setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+        error.message,
+        'Erro ao excluir todas as publicações.'
+      ));
+      setShowDeleteBlockedDialog(true);
+    } finally {
+      setPendingDeletePublication(null);
     }
   };
 
@@ -376,7 +420,10 @@ export default function PublicationsPage() {
         publications={publications}
         loading={loading}
         searchParams={searchParams}
-        onCardClick={openModal}
+        onCardClick={(pub) => {
+          markPublicationNotificationAsRead(pub.id_api);
+          openModal(pub);
+        }}
         selectionMode={selectionMode}
         selectedIds={selectedIds}
         onToggleSelect={toggleSelectPublication}
@@ -407,17 +454,25 @@ export default function PublicationsPage() {
         onCancel={() => setShowIntegrateConfirm(false)}
       />
 
-      <ConfirmDialog
-        isOpen={showDeleteBlockedDialog}
-        type="danger"
-        title="🚫 Exclusão não permitida"
-        message={deleteBlockedMessage || 'Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.'}
-        warningMessage="Para preservar a rastreabilidade jurídica, publicações vinculadas permanecem protegidas."
-        confirmText="Entendi"
-        onConfirm={() => setShowDeleteBlockedDialog(false)}
-        onCancel={() => setShowDeleteBlockedDialog(false)}
-        showCancel={false}
-        closeOnEnter={true}
+      <PublicationDeleteDialogs
+        showConfirm={showDeleteConfirmDialog}
+        pendingDeletePublication={pendingDeletePublication}
+        onConfirm={() => {
+          if (pendingDeletePublication?.count && pendingDeletePublication.isDeleteAll) {
+            confirmDeleteAll();
+          } else if (pendingDeletePublication?.count) {
+            confirmDeleteSelected();
+          } else {
+            confirmDeleteSingle();
+          }
+        }}
+        onCancelConfirm={() => {
+          setShowDeleteConfirmDialog(false);
+          setPendingDeletePublication(null);
+        }}
+        showBlocked={showDeleteBlockedDialog}
+        blockedMessage={deleteBlockedMessage}
+        onCloseBlocked={() => setShowDeleteBlockedDialog(false)}
       />
     </div>
   );

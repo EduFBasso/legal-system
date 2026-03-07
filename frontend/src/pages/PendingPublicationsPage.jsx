@@ -3,12 +3,18 @@ import { FileText } from 'lucide-react';
 import EmptyState from '../components/common/EmptyState';
 import PublicationCard from '../components/PublicationCard';
 import Toast from '../components/common/Toast';
-import ConfirmDialog from '../components/common/ConfirmDialog';
+import PublicationDeleteDialogs from '../components/publications/PublicationDeleteDialogs';
+import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
 import publicationsService from '../services/publicationsService';
 import { subscribePublicationSync } from '../services/publicationSync';
+import {
+  getPublicationDeleteBlockedMessage,
+  getPublicationDeleteSuccessMessage,
+} from '../utils/publicationDeleteFeedback';
 import './PendingPublicationsPage.css';
 
 export default function PendingPublicationsPage() {
+  const markPublicationNotificationAsRead = usePublicationNotificationRead();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pendingPublications, setPendingPublications] = useState([]);
@@ -107,22 +113,26 @@ export default function PendingPublicationsPage() {
     try {
       const result = await publicationsService.deletePublication(pendingDeletePublication.id_api);
       if (result.success) {
-        const notifMsg = result.notifications_updated > 0
-          ? ` (${result.notifications_updated} notificação(ões) atualizadas)`
-          : '';
-        setToast({ message: `✅ Publicação removida da listagem${notifMsg}.`, type: 'success' });
+        setToast({
+          message: getPublicationDeleteSuccessMessage({
+            single: true,
+            notificationsDeleted: result.notifications_deleted || 0,
+          }),
+          type: 'success'
+        });
         setTimeout(() => loadPending(), 500);
       } else {
-        setDeleteBlockedMessage(result.error || 'Não foi possível excluir a publicação.');
+        setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+          result.error,
+          'Não foi possível excluir a publicação.'
+        ));
         setShowDeleteBlockedDialog(true);
       }
     } catch (err) {
-      const message = (err?.message || '').toLowerCase();
-      if (message.includes('não é possível apagar publicação com processo vinculado')) {
-        setDeleteBlockedMessage('Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.');
-      } else {
-        setDeleteBlockedMessage(err.message || 'Não foi possível excluir a publicação.');
-      }
+      setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+        err.message,
+        'Não foi possível excluir a publicação.'
+      ));
       setShowDeleteBlockedDialog(true);
     } finally {
       setIntegrating(null);
@@ -171,7 +181,10 @@ export default function PendingPublicationsPage() {
             <PublicationCard
               key={pub.id_api}
               publication={pub}
-              onClick={() => handleOpenPublicationDetails(pub)}
+              onClick={() => {
+                markPublicationNotificationAsRead(pub.id_api);
+                handleOpenPublicationDetails(pub);
+              }}
               highlighted={false}
               showActionButtons={true}
               onIntegrate={() => handleIntegrate(pub)}
@@ -191,33 +204,17 @@ export default function PendingPublicationsPage() {
         />
       )}
 
-      <ConfirmDialog
-        isOpen={showDeleteConfirmDialog}
-        type="warning"
-        title="⚠️ Confirmar exclusão"
-        message={pendingDeletePublication
-          ? `Deseja excluir a publicação do processo ${pendingDeletePublication.numero_processo || 'sem número'}?`
-          : 'Deseja excluir esta publicação?'}
-        confirmText="🗑️ Excluir publicação"
-        cancelText="Cancelar"
+      <PublicationDeleteDialogs
+        showConfirm={showDeleteConfirmDialog}
+        pendingDeletePublication={pendingDeletePublication}
         onConfirm={confirmDeletePublication}
-        onCancel={() => {
+        onCancelConfirm={() => {
           setShowDeleteConfirmDialog(false);
           setPendingDeletePublication(null);
         }}
-      />
-
-      <ConfirmDialog
-        isOpen={showDeleteBlockedDialog}
-        type="danger"
-        title="🚫 Exclusão não permitida"
-        message={deleteBlockedMessage || 'Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.'}
-        warningMessage="Para preservar a rastreabilidade jurídica, publicações vinculadas permanecem protegidas."
-        confirmText="Entendi"
-        onConfirm={() => setShowDeleteBlockedDialog(false)}
-        onCancel={() => setShowDeleteBlockedDialog(false)}
-        showCancel={false}
-        closeOnEnter={true}
+        showBlocked={showDeleteBlockedDialog}
+        blockedMessage={deleteBlockedMessage}
+        onCloseBlocked={() => setShowDeleteBlockedDialog(false)}
       />
     </div>
   );

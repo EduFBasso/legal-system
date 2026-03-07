@@ -121,6 +121,9 @@ def fetch_today_publications(request):
             # Salvar cada publicação (deduplicação automática via id_api unique)
             total_novas = _save_publications_to_db(publicacoes)
             
+            # Enriquecer publicações com dados do banco (integration_status, case_id, etc)
+            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes)
+            
             # Criar notificações para novas publicações (7 dias retroativos)
             _create_publication_notifications(publicacoes, retroactive_days=7)
         
@@ -213,6 +216,9 @@ def search_publications(request):
             
             # Salvar cada publicação (deduplicação automática via id_api unique)
             total_novas = _save_publications_to_db(publicacoes)
+            
+            # Enriquecer publicações com dados do banco (integration_status, case_id, etc)
+            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes)
             
             # Criar notificações para novas publicações
             _create_publication_notifications(
@@ -401,6 +407,46 @@ def _save_publications_to_db(publicacoes):
     return total_novas
 
 
+def _enrich_publications_with_db_data(publicacoes):
+    """
+    Enriquece a lista de publicações com dados do banco de dados.
+    Adiciona campos: integration_status, case_id, id (pk do banco).
+    
+    Args:
+        publicacoes: Lista de dicts com publicações da API externa
+        
+    Returns:
+        Lista de dicts enriquecida com dados do banco
+    """
+    if not publicacoes:
+        return []
+    
+    # Buscar todas as publicações do banco por id_api
+    id_apis = [pub.get('id_api') for pub in publicacoes if pub.get('id_api')]
+    db_pubs = Publication.objects.filter(
+        id_api__in=id_apis
+    ).values('id', 'id_api', 'integration_status', 'case_id')
+    
+    # Criar mapa id_api -> dados do banco
+    db_map = {pub['id_api']: pub for pub in db_pubs}
+    
+    # Enriquecer cada publicação
+    enriched = []
+    for pub in publicacoes:
+        id_api = pub.get('id_api')
+        db_data = db_map.get(id_api, {})
+        
+        # Criar cópia com dados do banco
+        enriched_pub = {**pub}
+        enriched_pub['integration_status'] = db_data.get('integration_status', 'PENDING')
+        enriched_pub['case_id'] = db_data.get('case_id')
+        enriched_pub['id'] = db_data.get('id')
+        
+        enriched.append(enriched_pub)
+    
+    return enriched
+
+
 @api_view(['GET'])
 def get_last_search(request):
     """
@@ -435,7 +481,6 @@ def get_last_search(request):
         
         # VALIDAÇÃO: Contar quantas publicações ainda existem no banco para esse período
         current_pubs_count = Publication.objects.filter(
-            deleted=False,
             tribunal__in=last_search.tribunais,
             data_disponibilizacao__gte=last_search.data_inicio,
             data_disponibilizacao__lte=last_search.data_fim
@@ -506,9 +551,8 @@ def retrieve_last_search_publications(request):
                 'error': 'Nenhuma busca anterior encontrada'
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Filtrar publicações do banco de dados (apenas não deletadas)
+        # Filtrar publicações do banco de dados
         publicacoes_db = Publication.objects.filter(
-            deleted=False,
             tribunal__in=last_search.tribunais,
             data_disponibilizacao__gte=last_search.data_inicio,
             data_disponibilizacao__lte=last_search.data_fim
@@ -560,7 +604,6 @@ def retrieve_last_search_publications(request):
 def _build_case_suggestion(numero_processo):
     """
     Busca caso existente pelo número do processo para sugerir vinculação.
-    Ignora casos deletados (soft delete).
     """
     if not numero_processo:
         return None
@@ -568,8 +611,7 @@ def _build_case_suggestion(numero_processo):
     if not numero_limpo:
         return None
     case = Case.objects.filter(
-        numero_processo_unformatted=numero_limpo,
-        deleted=False  # Ignora casos deletados
+        numero_processo_unformatted=numero_limpo
     ).first()
     if not case:
         return None
@@ -639,7 +681,6 @@ def get_pending_publications(request):
             ordering = '-data_disponibilizacao'
 
         queryset = Publication.objects.filter(
-            deleted=False,
             integration_status='PENDING'
         )
 
@@ -708,7 +749,7 @@ def get_all_publications(request):
         if ordering not in allowed_ordering:
             ordering = '-data_disponibilizacao'
 
-        queryset = Publication.objects.filter(deleted=False)
+        queryset = Publication.objects.all()
 
         if tribunal:
             queryset = queryset.filter(tribunal=tribunal)
@@ -759,7 +800,6 @@ def get_all_publications(request):
 def get_pending_count(request):
     try:
         count = Publication.objects.filter(
-            deleted=False,
             integration_status='PENDING'
         ).count()
         return Response({
@@ -822,10 +862,9 @@ def get_publications_by_case(request, case_id):
         if ordering not in allowed_ordering:
             ordering = '-data_disponibilizacao'
         
-        # Buscar publicações do caso (incluindo deletadas soft-delete false)
+        # Buscar publicações do caso
         queryset = Publication.objects.filter(
-            case_id=case_id,
-            deleted=False
+            case_id=case_id
         )
         
         total = queryset.count()
@@ -889,7 +928,7 @@ def integrate_publication(request, id_api):
                 'error': 'case_id é obrigatório'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        publication = Publication.objects.get(id_api=id_api, deleted=False)
+        publication = Publication.objects.get(id_api=id_api)
         case = Case.objects.get(id=case_id)
 
         # Rastreabilidade: se o caso ainda não possui origem, registrar esta publicação
@@ -972,7 +1011,7 @@ def create_movement_from_publication(request, id_api):
     permite criar movimentação manualmente de cada publicação.
     """
     try:
-        publication = Publication.objects.get(id_api=id_api, deleted=False)
+        publication = Publication.objects.get(id_api=id_api)
         
         if not publication.case:
             return Response({
@@ -1061,7 +1100,6 @@ def batch_integrate_publications(request):
             }, status=status.HTTP_404_NOT_FOUND)
 
         queryset = Publication.objects.filter(
-            deleted=False,
             tribunal__in=search.tribunais,
             data_disponibilizacao__gte=search.data_inicio,
             data_disponibilizacao__lte=search.data_fim
@@ -1213,14 +1251,13 @@ def get_search_history(request):
                 # Busca por número de processo
                 # Tenta tanto com query original quanto só com dígitos
                 publications = Publication.objects.filter(
-                    deleted=False,
                     numero_processo__icontains=query
                 )
                 
                 # Se não encontrou, tentar buscar removendo formatação
                 if not publications.exists() and query_digits and len(query_digits) >= 7:
                     # Buscar publicações cujo número (sem formatação) contém os dígitos
-                    all_publications = Publication.objects.filter(deleted=False).exclude(numero_processo__isnull=True)
+                    all_publications = Publication.objects.exclude(numero_processo__isnull=True)
                     matching_pubs = []
                     
                     for pub in all_publications:
@@ -1234,8 +1271,8 @@ def get_search_history(request):
                 # Normalizar query para busca sem acentos
                 query_normalized = normalize_string(query)
                 
-                # Buscar em todas as publicações (apenas não deletadas) e filtrar com normalização
-                all_publications = Publication.objects.filter(deleted=False)
+                # Buscar em todas as publicações e filtrar com normalização
+                all_publications = Publication.objects.all()
                 matching_pubs = []
                 
                 for pub in all_publications:
@@ -1366,9 +1403,8 @@ def get_search_history_detail(request, search_id):
                 'error': f'Busca com ID {search_id} não encontrada'
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Buscar publicações relacionadas a esta pesquisa (apenas não deletadas)
+        # Buscar publicações relacionadas a esta pesquisa
         publicacoes_db = Publication.objects.filter(
-            deleted=False,
             tribunal__in=search.tribunais,
             data_disponibilizacao__gte=search.data_inicio,
             data_disponibilizacao__lte=search.data_fim
@@ -1505,26 +1541,26 @@ def get_publication_by_id(request, id_api):
 @api_view(['DELETE'])
 def delete_publication(request, id_api):
     """
-    SOFT DELETE: Marca publicação como deletada ao invés de remover do banco.
-    Mantém integridade de dados e permite auditoria/recuperação.
+    HARD DELETE: Remove a publicação do banco de dados.
+    CASCADE: Deleta notificações não lidas relacionadas.
     
     DELETE /api/publications/<id_api>/delete
     
     Response:
     {
         "success": true,
-        "message": "Publicação marcada como deletada",
+        "message": "Publicação removida com sucesso",
         "notifications_deleted": 2
     }
     """
     try:
-        publication = Publication.objects.get(id_api=id_api, deleted=False)
+        publication = Publication.objects.get(id_api=id_api)
 
         has_linked_case = False
         if publication.case_id:
-            has_linked_case = Case.objects.filter(id=publication.case_id, deleted=False).exists()
+            has_linked_case = Case.objects.filter(id=publication.case_id).exists()
 
-        created_cases_count = publication.casos_criados.filter(deleted=False).count()
+        created_cases_count = publication.casos_criados.count()
 
         if has_linked_case or created_cases_count > 0:
             return Response({
@@ -1534,30 +1570,26 @@ def delete_publication(request, id_api):
                 'created_cases_count': created_cases_count,
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # SOFT DELETE: Marcar como deletada
-        publication.deleted = True
-        publication.deleted_at = timezone.now()
-        publication.deleted_reason = 'Exclusão manual pela advogada'
-        publication.integration_status = 'IGNORED'
-        publication.save()
-        
-        # CASCADE: Marcar notificações relacionadas como lidas (não deletar)
-        notifications_updated = Notification.objects.filter(
+        # HARD DELETE: Deletar notificações não lidas primeiro
+        notifications_deleted = Notification.objects.filter(
             type='publication',
             metadata__id_api=id_api,
             read=False
-        ).update(read=True)
+        ).delete()[0]
+        
+        # Agora deletar a publicação (CASCADE delete applied)
+        publication.delete()
         
         return Response({
             'success': True,
-            'message': 'Publicação marcada como deletada',
-            'notifications_updated': notifications_updated
+            'message': 'Publicação removida com sucesso',
+            'notifications_deleted': notifications_deleted
         })
         
     except Publication.DoesNotExist:
         return Response({
             'success': False,
-            'error': 'Publicação não encontrada ou já deletada'
+            'error': 'Publicação não encontrada'
         }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({
@@ -1569,7 +1601,8 @@ def delete_publication(request, id_api):
 @api_view(['POST'])
 def delete_multiple_publications(request):
     """
-    Deleta múltiplas publicações + notificações relacionadas (cascade).
+    Deleta múltiplas publicações + notificações relacionadas.
+    HARD DELETE com validação de publicações vinculadas a casos.
     
     POST /api/publications/delete-multiple
     Body: {
@@ -1580,8 +1613,8 @@ def delete_multiple_publications(request):
     {
         "success": true,
         "deleted": 3,
-        "notifications_updated": 5,
-        "message": "3 publicação(ões) marcada(s) como deletadas"
+        "notifications_deleted": 5,
+        "message": "3 publicação(ões) removida(s)"
     }
     """
     try:
@@ -1593,10 +1626,7 @@ def delete_multiple_publications(request):
                 'message': 'Nenhuma publicação especificada'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        queryset = Publication.objects.filter(
-            id_api__in=publication_ids,
-            deleted=False
-        )
+        queryset = Publication.objects.filter(id_api__in=publication_ids)
 
         protected_ids = []
         deletable_ids = []
@@ -1604,42 +1634,36 @@ def delete_multiple_publications(request):
         for publication in queryset:
             has_linked_case = False
             if publication.case_id:
-                has_linked_case = Case.objects.filter(id=publication.case_id, deleted=False).exists()
+                has_linked_case = Case.objects.filter(id=publication.case_id).exists()
 
-            has_created_case = publication.casos_criados.filter(deleted=False).exists()
+            has_created_case = publication.casos_criados.exists()
 
             if has_linked_case or has_created_case:
                 protected_ids.append(publication.id_api)
             else:
                 deletable_ids.append(publication.id_api)
 
-        # SOFT DELETE: Marcar apenas publicações permitidas
-        deleted_count = Publication.objects.filter(
-            id_api__in=deletable_ids,
-            deleted=False
-        ).update(
-            deleted=True,
-            deleted_at=timezone.now(),
-            deleted_reason='Exclusão múltipla pela advogada',
-            integration_status='IGNORED'
-        )
-        
-        # Marcar notificações relacionadas como lidas
-        notifications_updated = 0
-        for pub_id in publication_ids:
-            notifications_updated += Notification.objects.filter(
+        # HARD DELETE: Deletar notificações não lidas primeiro
+        notifications_deleted = 0
+        for pub_id in deletable_ids:
+            notifications_deleted += Notification.objects.filter(
                 type='publication',
                 metadata__id_api=pub_id,
                 read=False
-            ).update(read=True)
+            ).delete()[0]
+        
+        # Agora deletar as publicações
+        deleted_count = Publication.objects.filter(
+            id_api__in=deletable_ids
+        ).delete()[0]
         
         return Response({
             'success': True,
             'deleted': deleted_count,
             'protected': len(protected_ids),
             'protected_ids': protected_ids,
-            'notifications_updated': notifications_updated,
-            'message': f'{deleted_count} publicação(ões) marcada(s) como deletadas'
+            'notifications_deleted': notifications_deleted,
+            'message': f'{deleted_count} publicação(ões) removida(s)'
         })
         
     except Exception as e:
@@ -1652,11 +1676,8 @@ def delete_multiple_publications(request):
 @api_view(['POST'])
 def delete_all_publications(request):
     """
-    SOFT DELETE: Marca TODAS as publicações como deletadas + limpa histórico.
-    Mantém publicações no banco para auditoria, mas limpa histórico de buscas.
-    
-    Lógica: Quando "limpa tudo", faz sentido limpar histórico também.
-    Publicações ficam marcadas como deletadas (recuperáveis se necessário).
+    HARD DELETE: Remove TODAS as publicações + limpa histórico.
+    Valida publicações vinculadas a casos (protegidas).
     
     POST /api/publications/delete-all
     
@@ -1664,35 +1685,35 @@ def delete_all_publications(request):
     {
         "success": true,
         "deleted": 150,
-        "notifications_updated": 120,
+        "protected": 5,
+        "notifications_deleted": 120,
         "history_deleted": 15,
-        "message": "Todas as publicações foram marcadas como deletadas"
+        "message": "150 publicação(ões) removida(s)"
     }
     """
     try:
         linked_case_pub_ids = set(
-            Publication.objects.filter(deleted=False, case__deleted=False)
+            Publication.objects.filter(case__isnull=False)
             .values_list('id', flat=True)
         )
         linked_origin_pub_ids = set(
-            Publication.objects.filter(deleted=False, casos_criados__deleted=False)
+            Publication.objects.filter(casos_criados__isnull=False)
             .values_list('id', flat=True)
         )
         protected_pub_ids = linked_case_pub_ids | linked_origin_pub_ids
 
-        # SOFT DELETE: Marcar apenas publicações não protegidas
-        deleted_count = Publication.objects.filter(deleted=False).exclude(id__in=protected_pub_ids).update(
-            deleted=True,
-            deleted_at=timezone.now(),
-            deleted_reason='Limpeza geral pelo usuário',
-            integration_status='IGNORED'
-        )
+        # HARD DELETE: Deletar notificações não lidas de publicações não protegidas
+        deletable_pubs = Publication.objects.exclude(id__in=protected_pub_ids)
+        notifications_deleted = 0
+        for pub in deletable_pubs:
+            notifications_deleted += Notification.objects.filter(
+                type='publication',
+                metadata__id_api=pub.id_api,
+                read=False
+            ).delete()[0]
         
-        # Marcar TODAS notificações de publicação como lidas
-        notifications_updated = Notification.objects.filter(
-            type='publication',
-            read=False
-        ).update(read=True)
+        # Agora deletar as publicações
+        deleted_count = Publication.objects.exclude(id__in=protected_pub_ids).delete()[0]
         
         # HARD DELETE: Limpar histórico (sem publicações visíveis, histórico não faz sentido)
         history_deleted = SearchHistory.objects.all().delete()[0]
@@ -1701,9 +1722,9 @@ def delete_all_publications(request):
             'success': True,
             'deleted': deleted_count,
             'protected': len(protected_pub_ids),
-            'notifications_updated': notifications_updated,
+            'notifications_deleted': notifications_deleted,
             'history_deleted': history_deleted,
-            'message': f'Todas as {deleted_count} publicações foram marcadas como deletadas, {notifications_updated} notificações marcadas como lidas e {history_deleted} históricos removidos'
+            'message': f'{deleted_count} publicação(ões) removida(s), {notifications_deleted} notificações deletadas e {history_deleted} históricos removidos'
         })
         
     except Exception as e:

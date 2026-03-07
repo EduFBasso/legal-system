@@ -82,16 +82,20 @@ class CaseViewSet(viewsets.ModelViewSet):
         
         # Desvincular TODAS as publicações relacionadas a este case
         from apps.publications.models import Publication
+        from apps.notifications.models import Notification
         
         # Buscar todas as publicações vinculadas (não apenas publicacao_origem)
-        related_pubs = Publication.objects.filter(case_id=instance.id, deleted=False)
+        related_pubs = Publication.objects.filter(case_id=instance.id)
         
         for pub in related_pubs:
             if delete_linked_publication:
-                # Soft delete a publicação também
-                pub.deleted = True
-                pub.deleted_at = timezone.now()
-                pub.save(update_fields=['deleted', 'deleted_at', 'updated_at'])
+                # HARD DELETE a publicação também e suas notificações
+                Notification.objects.filter(
+                    type='publication',
+                    metadata__id_api=pub.id_api,
+                    read=False
+                ).delete()
+                pub.delete()
             else:
                 # Apenas desvincula: reseta case e volta status para PENDING
                 pub.case = None

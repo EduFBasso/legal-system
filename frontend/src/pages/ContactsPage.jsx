@@ -49,6 +49,19 @@ export default function ContactsPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Auto-reload contacts when user returns from linking in another tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // User came back to this tab, reload contacts to get updated linked_cases
+        loadContacts();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // Auto-open modal if "open" query param is present
   useEffect(() => {
     const contactIdToOpen = searchParams.get('open');
