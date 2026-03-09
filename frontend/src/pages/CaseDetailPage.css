@@ -1123,6 +1123,22 @@
   transform: translateY(-1px);
 }
 
+/* Cancelar (InformacaoTab): classe dedicada para evitar conflitos globais de .btn-secondary */
+.case-section .form-actions .case-info-btn-cancel {
+  background: #475569;
+  border: 2px solid #475569;
+  color: #ffffff;
+}
+
+.case-section .form-actions .case-info-btn-cancel:hover:not(:disabled),
+.case-section .form-actions .case-info-btn-cancel:focus-visible {
+  background: #334155;
+  border-color: #334155;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(52, 65, 85, 0.3);
+  transform: translateY(-1px);
+}
+
 /* Status Badge */
 .status-badge {
   display: inline-block;

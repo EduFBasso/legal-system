@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Save, X, UserPlus, RefreshCw } from 'lucide-react';
 import { formatDate, parseCurrencyValue, formatCurrency } from '../utils/formatters';
@@ -131,6 +131,8 @@ function CaseDetailPage() {
     descricao: '',
     valor: ''
   });
+  const [autoSavingFinancialObs, setAutoSavingFinancialObs] = useState(false);
+  const autoSaveTimerRef = useRef(null);
 
   // Tribunal options
   const tribunalOptions = [
@@ -1345,6 +1347,46 @@ function CaseDetailPage() {
   }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho]);
 
   /**
+   * Auto-save financial observations with 800ms debounce
+   * Saves observations_financial_block_a and observations_financial_block_b automatically
+   */
+  useEffect(() => {
+    if (!id || !formData.observations_financial_block_a && !formData.observations_financial_block_b) return;
+
+    // Limpa timer anterior se existe
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Inicia novo timer com 800ms de debounce
+    setAutoSavingFinancialObs(true);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const observationsData = {
+          observations_financial_block_a: formData.observations_financial_block_a || '',
+          observations_financial_block_b: formData.observations_financial_block_b || '',
+        };
+
+        await casesService.update(id, observationsData);
+        setAutoSavingFinancialObs(false);
+        // Não mostra toast para não poluir a UI, mas você pode descomentar se quiser feedback visual
+        // showToast('Observações salvas automaticamente', 'success');
+      } catch (error) {
+        console.error('Error auto-saving financial observations:', error);
+        setAutoSavingFinancialObs(false);
+        // Silencioso para não incomodar... caso queira feedback: showToast('Erro ao salvar observações', 'error');
+      }
+    }, 800);
+
+    // Cleanup: cancela timer se componente desmontar
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [id, formData.observations_financial_block_a, formData.observations_financial_block_b]);
+
+  /**
    * Handle save financial data
    */
   const handleSaveFinancialData = async () => {
@@ -1676,6 +1718,7 @@ function CaseDetailPage() {
             onRemoveDespesa={handleRemoverDespesa}
             onSaveFinancial={handleSaveFinancialData}
             saving={saving}
+            autoSavingObservations={autoSavingFinancialObs}
             formatDate={formatDate}
             parseCurrencyValue={parseCurrencyValue}
             formatCurrencyInput={formatCurrencyInput}

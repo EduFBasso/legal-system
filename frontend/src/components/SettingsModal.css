@@ -113,7 +113,7 @@
 .btn-cancel,
 .btn-save {
   padding: 12px 24px;
-  font-size: 15px;
+  font-size: 1rem;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;

@@ -549,7 +549,7 @@ function InformacaoTab({
             paddingTop: '1.5rem',
             borderTop: '1px solid #e5e7eb'
           }}>
-            <CancelButton onClick={onCancel} disabled={saving} />
+            <CancelButton className="case-info-btn-cancel" onClick={onCancel} disabled={saving} />
             <SaveButton onClick={onSave} disabled={saving}>
               {saving ? '⏳ Salvando...' : '💾 Salvar'}
             </SaveButton>

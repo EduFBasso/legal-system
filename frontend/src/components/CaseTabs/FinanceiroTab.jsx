@@ -30,6 +30,7 @@ function FinanceiroTab({
   onRemoveDespesa = () => {},
   onSaveFinancial = () => {},
   saving = false,
+   autoSavingObservations = false,
   calcularParticipacao = () => {
     const valorCausa = parseCurrencyValue(formData.valor_causa);
     if (participacaoTipo === 'percentage') {
@@ -50,7 +51,14 @@ function FinanceiroTab({
         <div className="section-header">
           <div>
             <h2 className="section-title">💰 Gestão Financeira</h2>
-            <p className="section-subtitle">Controle de valores e custos do processo</p>
+             {autoSavingObservations && (
+               <p className="section-subtitle" style={{ color: '#10b981', fontSize: '0.875rem', marginTop: '4px' }}>
+                 ✓ Observações sendo salvas...
+               </p>
+             )}
+             {!autoSavingObservations && (
+               <p className="section-subtitle">Controle de valores e custos do processo</p>
+             )}
           </div>
           <button 
             className="btn btn-primary"

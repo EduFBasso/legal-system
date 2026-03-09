@@ -174,7 +174,7 @@
   background: none;
   border: none;
   color: #2563eb;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   padding: 0.25rem 0;
@@ -192,7 +192,7 @@
 
 .filter-btn {
   padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
@@ -233,7 +233,7 @@
 .btn-consulta-oficial,
 .btn-consulta-alternativa {
   padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   border: none;
   border-radius: 6px;
