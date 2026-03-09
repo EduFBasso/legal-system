@@ -20,7 +20,7 @@ function CasesFilters({
         <span className="search-icon">🔍</span>
         <input
           type="text"
-          className="search-input"
+          className="cases-search-input"
           placeholder="Buscar por número, cliente ou juiz..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}

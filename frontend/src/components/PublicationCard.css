@@ -84,7 +84,7 @@
 .badge {
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
@@ -150,12 +150,12 @@
 .badge-status {
   /* Cores aplicadas via inline style no componente */
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.9375rem;
   padding: 0.35rem 0.6rem;
 }
 
 .publication-date {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #64748b;
   white-space: nowrap;
 }
@@ -213,7 +213,7 @@
 
 .processo-number {
   font-family: 'Courier New', monospace;
-  font-size: 0.875rem;
+  font-size: 1rem;
   flex: 1;
 }
 
@@ -240,13 +240,13 @@
 }
 
 .publication-orgao {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #64748b;
   line-height: 1.4;
 }
 
 .publication-resumo {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #475569;
   line-height: 1.5;
   display: -webkit-box;
@@ -281,7 +281,7 @@
   padding: 0.625rem 1rem;
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   border: none;
   border-radius: 8px;
@@ -308,7 +308,7 @@
   padding: 0.625rem 1rem;
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   border: none;
   border-radius: 8px;
@@ -373,7 +373,7 @@
   color: white;
   padding: 0.35rem 0.9rem;
   border-radius: 18px;
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -411,7 +411,7 @@
 }
 
 .highlighted-badge .badge-text {
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
@@ -426,7 +426,7 @@
   }
 
   .processo-number {
-    font-size: 0.813rem;
+    font-size: 1rem;
   }
 }
 

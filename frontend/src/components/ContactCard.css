@@ -82,9 +82,9 @@
 }
 
 .contact-name {
-  font-size: var(--card-name-size, 16px);
-  font-weight: var(--card-name-weight, 700);
-  color: var(--color-heading, #1e293b);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -99,7 +99,7 @@
 }
 
 .contact-type {
-  font-size: 12px;
+  font-size: 0.9rem;
   font-weight: 600;
   padding: 4px 10px;
   background: #dbeafe;
@@ -113,7 +113,7 @@
 .detail-text {
   font-weight: 500;
   color: #1e293b;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 .detail-text::first-letter {
@@ -128,7 +128,7 @@
 .detail-value {
   font-weight: 500;
   color: #1e293b;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 .detail-separator {
@@ -261,7 +261,7 @@
 
 /* Badge Cliente (verde) */
 .contact-type-client {
-  font-size: 12px;
+  font-size: 0.9rem;
   font-weight: 600;
   padding: 4px 10px;
   background: #d1fae5;
@@ -274,7 +274,7 @@
 
 /* Badge Outras Partes - Testemunha, etc (amarelo/marrom) */
 .contact-type-role {
-  font-size: 12px;
+  font-size: 0.9rem;
   font-weight: 600;
   padding: 4px 10px;
   background: #fef3c7;
@@ -293,7 +293,7 @@
   color: #1e293b;
   text-decoration: none;
   font-weight: 500;
-  font-size: 16px;
+  font-size: 1.15rem;
   transition: color 0.2s ease, text-decoration-color 0.2s ease;
 }
 

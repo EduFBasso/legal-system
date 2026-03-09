@@ -29,6 +29,12 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
   // Ícone padrão: 👤 PF, 🏢 PJ
   const defaultIcon = person_type === 'PF' ? '👤' : '🏢';
 
+  // Helper: Capitalize name (converts to lowercase first, then capitalizes each word)
+  const capitalizeName = (name) => {
+    if (!name) return '';
+    return name.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
+  };
+
   // Helper: Extract only digits from phone number for links
   const getPhoneDigits = (phoneStr) => {
     if (!phoneStr) return '';
@@ -62,7 +68,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
         {/* LINHA 0: Nome + Badges + Olho */}
         <div className="contact-row">
           <div className="contact-row-left">
-            <span className="contact-name">{name}</span>
+            <span className="contact-name">{capitalizeName(name)}</span>
             <div className="contact-badges">
               <span className="contact-type">{person_type === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}</span>
               {contact.is_client_anywhere && (

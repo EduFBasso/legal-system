@@ -1,0 +1,142 @@
+/* Button Component - Padrão Reutilizável */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ========================================
+   TAMANHOS
+   ======================================== */
+
+/* Pequeno */
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  height: 32px;
+}
+
+/* Médio (padrão) */
+.btn-md {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  height: 40px;
+}
+
+/* Grande */
+.btn-lg {
+  padding: 1rem 1.75rem;
+  font-size: 1.1rem;
+  height: 48px;
+}
+
+/* ========================================
+   VARIANTES DE COR
+   ======================================== */
+
+/* Primary - Azul (ações principais como Salvar) */
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  border: 2px solid #3b82f6;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Secondary - Cinza escuro (ações secundárias como Cancelar) */
+.btn-secondary {
+  background: #475569;
+  color: white;
+  border: 2px solid #475569;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #334155;
+  border-color: #334155;
+  color: white;
+  box-shadow: 0 2px 8px rgba(52, 65, 85, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+  color: white;
+}
+
+/* Danger - Vermelho (ações destrutivas como Apagar) */
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: 2px solid #ef4444;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Edit - Escuro (edição) */
+.btn-edit {
+  background: #1e293b;
+  color: white;
+  border: 2px solid #1e293b;
+}
+
+.btn-edit:hover:not(:disabled) {
+  background: #0f172a;
+  border-color: #0f172a;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-edit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Success - Verde (ações bem-sucedidas) */
+.btn-success {
+  background: #10b981;
+  color: white;
+  border: 2px solid #10b981;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #059669;
+  border-color: #059669;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-success:active:not(:disabled) {
+  transform: translateY(0);
+}

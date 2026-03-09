@@ -204,6 +204,8 @@
 .btn-danger {
   background: #ef4444;
   color: white;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .btn-danger:hover:not(:disabled) {
@@ -1082,35 +1084,43 @@
 }
 
 .process-registration-form .process-form-btn-save {
-  background: #166534;
-  border: 2px solid #166534;
+  background: #3b82f6;
+  border: 2px solid #3b82f6;
   color: #ffffff;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0.875rem 1.5rem;
+  transition: all 0.2s;
 }
 
 .process-registration-form .process-form-btn-save:hover:not(:disabled),
 .process-registration-form .process-form-btn-save:focus-visible {
-  background: #15803d;
-  border-color: #15803d;
+  background: #2563eb;
+  border-color: #2563eb;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(22, 101, 52, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
 }
 
 .process-registration-form .process-form-btn-cancel {
-  background: #334155;
-  border: 2px solid #334155;
+  background: #475569;
+  border: 2px solid #475569;
   color: #ffffff;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0.875rem 1.5rem;
+  transition: all 0.2s;
 }
 
 .process-registration-form .process-form-btn-cancel:hover:not(:disabled),
 .process-registration-form .process-form-btn-cancel:focus-visible {
-  background: #1e293b;
-  border-color: #1e293b;
+  background: #334155;
+  border-color: #334155;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.3);
+  box-shadow: 0 2px 8px rgba(52, 65, 85, 0.3);
+  transform: translateY(-1px);
 }
 
 /* Status Badge */
@@ -1697,6 +1707,15 @@
   flex-shrink: 0;
 }
 
+.checkbox-label input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.checkbox-label:has(input[type="checkbox"]:disabled) {
+  cursor: not-allowed;
+}
+
 .checkbox-label span {
   line-height: 1.5;
   user-select: none;
@@ -2197,6 +2216,7 @@
   background: transparent;
   border: none;
   color: #3b82f6;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   padding: 0;
@@ -2258,6 +2278,8 @@
   border: 2px solid #cbd5e1;
   border-radius: 8px;
   transition: all 0.2s;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .detail-item:hover {
@@ -2331,6 +2353,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #64748b;
+  text-align: left;
 }
 
 .detail-label-small {
@@ -2342,12 +2365,21 @@
   margin-bottom: 0.25rem;
 }
 
-/* Valores */
+/* Valores - especificidade aumentada para sobrescrever outras definições */
+.details-readonly .detail-value,
+.details-group .detail-value,
 .detail-value {
   font-size: 1.15rem;
   font-weight: 600;
   color: #1e293b;
   line-height: 1.4;
+  text-align: left;
+}
+
+.detail-value strong {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
 }
 
 .detail-value-large {
@@ -2386,7 +2418,7 @@
 }
 
 .detail-value-sub {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #64748b;
   font-weight: 500;
 }
@@ -2421,7 +2453,7 @@
 }
 
 .detail-partes-hint {
-  font-size: 0.875rem;
+  font-size: 1rem;
   margin-top: 0.5rem;
   text-align: left;
 }
@@ -2459,8 +2491,66 @@
 }
 
 .detail-financeiro-hint {
-  font-size: 0.875rem;
+  font-size: 1rem;
   text-align: left;
+}
+
+/* Origem dentro de Observacoes */
+.observacoes-origem-box {
+  background: #f0f9ff;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #bae6fd;
+}
+
+.observacoes-origem-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
+.observacoes-origem-text {
+  font-size: 1rem;
+  color: #0c4a6e;
+  font-weight: 500;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.observacoes-origem-link {
+  font-size: 1rem;
+  color: #0c4a6e;
+  font-weight: 500;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.observacoes-origem-link:hover {
+  text-decoration: underline;
+  color: #075985;
+}
+
+.observacoes-origem-link:focus-visible {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.observacoes-origem-actions {
+  margin-left: auto;
+  display: flex;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.observacoes-origem-actions .publication-buttons-group {
+  flex-wrap: nowrap !important;
 }
 
 .detail-client-block {
@@ -2495,7 +2585,7 @@
 }
 
 .detail-client-action {
-  font-size: 0.875rem;
+  font-size: 1rem;
   margin-top: 0.25rem;
 }
 
@@ -2513,6 +2603,340 @@
   gap: 0.5rem;
   align-items: flex-start;
 }
+
+/* ========================================
+   EDIÇÃO INLINE - Campos Editáveis
+   ======================================== */
+
+/* Indicador visual de modo de edição */
+.details-group[data-inline-editing="true"] {
+  border-color: #1e293b;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.details-group[data-inline-editing="true"] .details-group-title {
+  background: #1e293b;
+  border-bottom-color: #0f172a;
+}
+
+.editing-indicator {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.95;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.75; }
+}
+
+/* Grid 3 colunas para campos inline */
+.detail-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Grid 2 colunas para campos inline */
+.detail-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .detail-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .detail-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Campo editável inline */
+.editable-field {
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  padding: 0;
+  gap: 0.5rem;
+}
+
+.editable-field[data-editing="true"] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Container editável - alinhamento à esquerda */
+.detail-item.editable-field {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Label para campos de select (Tribunal, Status, Tipo) */
+.editable-field .detail-label {
+  color: var(--color-primary, #1e3a8a);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+  text-align: left;
+  display: block;
+  padding: 0;
+}
+
+/* Wrapper para inputs inline */
+.detail-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+}
+
+/* Input inline com estilo consistente */
+.detail-input {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  border: none;
+  border-bottom: 2px solid var(--color-border-focus, #3b82f6);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  width: 100%;
+  background: var(--color-primary-light, #e6f0fa);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.detail-input:focus {
+  outline: none;
+  border-bottom-color: var(--color-border-focus, #3b82f6);
+  background: var(--color-primary-light, #e6f0fa);
+  box-shadow: none;
+}
+
+.detail-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+  opacity: 1;
+}
+
+/* Input grande (ex: número do processo) */
+.detail-input-large {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.02em;
+}
+
+/* Input médio (ex: título) */
+.detail-input-medium {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Textarea inline */
+.detail-textarea {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+  padding: 0.75rem 0.5rem;
+  border: none;
+  border-bottom: 2px solid var(--color-border-focus, #3b82f6);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  width: 100%;
+  background: var(--color-primary-light, #e6f0fa);
+  transition: all 0.2s;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.detail-textarea:focus {
+  outline: none;
+  border-bottom-color: var(--color-border-focus, #3b82f6);
+  background: var(--color-primary-light, #e6f0fa);
+  box-shadow: none;
+}
+
+/* Wrapper para select inline */
+.detail-select-wrapper {
+  width: 100%;
+}
+
+.detail-select-wrapper select,
+.detail-select-wrapper .select-field select {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 24px 0.75rem 0.5rem;
+  border: none;
+  border-bottom: 2px solid var(--color-border-focus, #3b82f6);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  background: white;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 20px;
+  transition: all 0.2s;
+}
+
+.detail-select-wrapper select:hover,
+.detail-select-wrapper .select-field select:hover {
+  border-bottom-color: var(--color-secondary, #3b82f6);
+}
+
+.detail-select-wrapper select:focus,
+.detail-select-wrapper .select-field select:focus {
+  outline: none;
+  border-bottom-color: var(--color-border-focus, #3b82f6);
+  background: white;
+  box-shadow: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 20px;
+}
+
+/* CurrencyInput inline com estilo minimalista */
+.detail-input-wrapper .form-field {
+  margin: 0;
+  padding: 0;
+}
+
+.detail-input-wrapper .form-label {
+  display: none; /* Label já está no EditableDetailField */
+}
+
+.detail-input-wrapper .currency-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-bottom: 2px solid var(--color-border-focus, #3b82f6);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  padding: 0.75rem 0.5rem 0.5rem 0.5rem;
+  background: var(--color-primary-light, #e6f0fa);
+  transition: all 0.2s;
+}
+
+.detail-input-wrapper .currency-symbol {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.detail-input-wrapper .currency-input {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  width: 100%;
+  background: transparent;
+  transition: border-color 0.2s;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.02em;
+}
+
+.detail-input-wrapper .currency-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.detail-input-wrapper .currency-input-wrapper:focus-within {
+  border-bottom-color: var(--color-border-focus, #3b82f6);
+  background: var(--color-primary-light, #e6f0fa);
+  box-shadow: none;
+}
+
+/* DateInputMasked inline com estilo minimalista */
+.detail-input-wrapper .date-input-masked {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  padding: 0.75rem 0.5rem 0.5rem 0.5rem;
+  border: none;
+  border-bottom: 2px solid var(--color-border-focus, #3b82f6);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  width: 100%;
+  background: var(--color-primary-light, #e6f0fa);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.detail-input-wrapper .date-input-masked:focus {
+  outline: none;
+  border-bottom-color: var(--color-border-focus, #3b82f6);
+  background: var(--color-primary-light, #e6f0fa);
+  box-shadow: none;
+}
+
+/* Ajuste nos inputs da row especial (número e título) quando editando */
+.detail-item-row[data-editing="true"] {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  gap: 2rem;
+}
+
+.detail-item-row[data-editing="true"] .detail-item-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-item-row[data-editing="true"] .detail-label {
+  color: var(--color-primary, #1e3a8a);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-item-row[data-editing="true"] .detail-input {
+  background: var(--color-primary-light, #e6f0fa);
+  border-color: var(--color-border-focus, #3b82f6);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 2px solid var(--color-border-focus, #3b82f6);
+}
+
+.detail-item-row[data-editing="true"] .detail-input:focus {
+  background: var(--color-primary-light, #e6f0fa);
+  border-color: var(--color-border-focus, #3b82f6);
+}
+
+/* ========================================
+   FIM - EDIÇÃO INLINE
+   ======================================== */
 
 /* ========================================
    FINANCEIRO SECTION - Dois Blocos

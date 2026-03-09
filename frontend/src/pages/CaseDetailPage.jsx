@@ -609,6 +609,54 @@ function CaseDetailPage() {
     }, 3000);
   };
 
+  const handleOpenOrigemMovimentacao = () => {
+    if (!id) return;
+
+    // Preferir id_api da publicação de origem (quando vier da abertura via pub_id)
+    const sourcePublicationApiId = sourcePublication?.id_api
+      ? Number(sourcePublication.id_api)
+      : null;
+
+    // Fallback: resolver id_api via publicação vinculada ao caso (publicacao_origem_id)
+    const origemPublicationPk = Number(formData?.publicacao_origem || caseData?.publicacao_origem_id || 0);
+    const origemPublication = !sourcePublicationApiId && origemPublicationPk && Array.isArray(publicacoes)
+      ? publicacoes.find((pub) => Number(pub.id) === origemPublicationPk)
+      : null;
+
+    const origemPublicationApiId = sourcePublicationApiId || Number(origemPublication?.id_api || 0) || null;
+
+    // Se possível, destacar a movimentação originada da publicação
+    const origemMovimentacao = origemPublicationApiId && Array.isArray(movimentacoes)
+      ? movimentacoes.find((mov) => Number(mov.publicacao_id) === Number(origemPublicationApiId))
+      : null;
+
+    const targetUrl = origemMovimentacao?.id
+      ? `/cases/${id}?tab=movements&focusMovement=${origemMovimentacao.id}`
+      : `/cases/${id}?tab=movements`;
+
+    window.open(targetUrl, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+  };
+
+  /**
+   * Handler protegido para mudança de aba - previne perda de dados
+   */
+  const handleTabChange = (newTab) => {
+    // Se estiver editando na aba de informações, confirma antes de sair
+    if (isEditing && activeSection === 'info') {
+      const confirmLeave = window.confirm(
+        'Você está editando informações do processo.\n\n' +
+        'Deseja sair sem salvar as alterações?'
+      );
+      if (!confirmLeave) {
+        return; // Cancela mudança de aba
+      }
+      // Reverte mudanças não salvas
+      setFormData(caseData);
+      setIsEditing(false);
+    }
+    setActiveSection(newTab);
+  };
+
   /**
    * Handle contact selection from SelectContactModal
    */
@@ -1461,27 +1509,27 @@ function CaseDetailPage() {
           <div className="case-navbar-tabs">
             <button
               className={`nav-tab ${activeSection === 'info' ? 'active' : ''}`}
-              onClick={() => setActiveSection('info')}
+              onClick={() => handleTabChange('info')}
             >
-              📋 Informações
+              📋 Informações{isEditing && activeSection === 'info' && ' *'}
             </button>
             <button
               className={`nav-tab ${activeSection === 'parties' ? 'active' : ''}`}
-              onClick={() => setActiveSection('parties')}
+              onClick={() => handleTabChange('parties')}
             >
               👥 Partes
               {parties.length > 0 && <span className="badge">{parties.length}</span>}
             </button>
             <button
               className={`nav-tab ${activeSection === 'movimentacoes' ? 'active' : ''}`}
-              onClick={() => setActiveSection('movimentacoes')}
+              onClick={() => handleTabChange('movimentacoes')}
             >
               ⚖️ Movimentações
               {movimentacoes.length > 0 && <span className="badge">{movimentacoes.length}</span>}
             </button>
             <button
               className={`nav-tab ${activeSection === 'documentos' ? 'active' : ''}`}
-              onClick={() => setActiveSection('documentos')}
+              onClick={() => handleTabChange('documentos')}
             >
               📄 Documentos
               {documentos.length > 0 && <span className="badge">{documentos.length}</span>}
@@ -1490,7 +1538,7 @@ function CaseDetailPage() {
             {!(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
               <button
                 className={`nav-tab ${activeSection === 'publicacoes' ? 'active' : ''}`}
-                onClick={() => setActiveSection('publicacoes')}
+                onClick={() => handleTabChange('publicacoes')}
               >
                 📰 Publicações
                 {publicacoes.length > 0 && <span className="badge">{publicacoes.length}</span>}
@@ -1498,14 +1546,14 @@ function CaseDetailPage() {
             )}
             <button
               className={`nav-tab ${activeSection === 'tasks' ? 'active' : ''}`}
-              onClick={() => setActiveSection('tasks')}
+              onClick={() => handleTabChange('tasks')}
             >
               ✅ Tarefas
               {tasks.length > 0 && <span className="badge">{tasks.length}</span>}
             </button>
             <button
               className={`nav-tab ${activeSection === 'financeiro' ? 'active' : ''}`}
-              onClick={() => setActiveSection('financeiro')}
+              onClick={() => handleTabChange('financeiro')}
             >
               💰 Financeiro
             </button>
@@ -1528,6 +1576,7 @@ function CaseDetailPage() {
             onDelete={handleDelete}
             setActiveSection={setActiveSection}
             onOpenLatestMovimentacao={handleOpenLatestMovimentacao}
+            onOpenOrigemMovimentacao={handleOpenOrigemMovimentacao}
             onAddPartyClick={handleOpenContactSelection}
             parties={parties}
             caseData={caseData}
@@ -1840,18 +1889,29 @@ function CaseDetailPage() {
               </div>
 
               {/* Only show checkbox for AUTOR/REU/TERCEIRO */}
-              {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(partyFormData.role) && (
-                <div className="form-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={partyFormData.is_client}
-                      onChange={(e) => setPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
-                    />
-                    <span>É cliente do escritório neste processo</span>
-                  </label>
-                </div>
-              )}
+              {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(partyFormData.role) && (() => {
+                const hasExistingClient = parties.some(p => p.is_client);
+                return (
+                  <div className="form-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={partyFormData.is_client}
+                        onChange={(e) => setPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
+                        disabled={hasExistingClient}
+                      />
+                      <span style={{ opacity: hasExistingClient ? 0.6 : 1 }}>
+                        É cliente do escritório neste processo
+                      </span>
+                    </label>
+                    {hasExistingClient && (
+                      <div className="field-hint" style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                        ⓘ Este processo já possui um cliente cadastrado
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="form-group">
                 <label>Observações</label>

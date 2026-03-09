@@ -3,12 +3,15 @@ import { Edit2, Save, X, Trash2, UserPlus, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
+import EditableDetailField from '../EditableDetailField';
+import { SaveButton, CancelButton, DeleteButton, EditButton } from '../common/Button';
 
 /**
  * InformacaoTab - Aba de Informações do Processo
  * Exibe e permite edição de dados do case: número, tribunal, partes, datas, etc.
  */
 function InformacaoTab({
+  id,
   formData = {},
   setFormData = () => {},
   isEditing = false,
@@ -19,6 +22,7 @@ function InformacaoTab({
   onDelete = () => {},
   setActiveSection = () => {},
   onOpenLatestMovimentacao = () => {},
+  onOpenOrigemMovimentacao = null,
   onAddPartyClick,
   parties = [],
   formatCurrency = (value) => {
@@ -33,6 +37,16 @@ function InformacaoTab({
   tipoAcaoOptions = [],
   onInputChange = () => {},
 }) {
+  const handleOpenMovimentacoesFromOrigem = () => {
+    if (typeof onOpenOrigemMovimentacao === 'function') {
+      onOpenOrigemMovimentacao();
+      return;
+    }
+
+    const movementUrl = `${window.location.pathname}?tab=movements`;
+    window.open(movementUrl, '_blank', 'noopener,noreferrer,width=1400,height=900,left=100,top=100');
+  };
+
   // Handler para mudanças em inputs
   const handleInputChange = (field, value) => {
     setFormData({
@@ -45,7 +59,7 @@ function InformacaoTab({
   };
 
   // Renderizar botões de consulta processual
-  const renderProcessConsultaButtons = () => {
+  const renderProcessConsultaButtons = ({ wrap = true } = {}) => {
     if (!formData.publicacao_origem) return null;
 
     // Simular objeto publication a partir dos dados de case
@@ -79,7 +93,7 @@ function InformacaoTab({
       <div className="publication-buttons-group" style={{
         display: 'flex',
         gap: '0.5rem',
-        flexWrap: 'wrap'
+        flexWrap: wrap ? 'wrap' : 'nowrap'
       }}>
         {/* Link oficial (ESAJ ou principal) */}
         {consultaLinks.linkOficial && (
@@ -142,42 +156,112 @@ function InformacaoTab({
           <div className="section-header-actions">
             {!isEditing && (
               <>
-                <button className="btn case-btn-edit" onClick={() => {
+                <EditButton onClick={() => {
                   setActiveSection('info');
                   setIsEditing(true);
-                }}>
-                  <Edit2 size={18} />
-                  Editar
-                </button>
-                <button className="btn btn-danger" onClick={() => {
+                }} />
+                <DeleteButton onClick={() => {
                   setActiveSection('info');
                   onDelete();
-                }}>
-                  <Trash2 size={18} />
-                  Apagar
-                </button>
+                }} />
               </>
             )}
           </div>
         </div>
         
-        {!isEditing ? (
-          /* MODO READONLY - Agrupamento Temático */
-          <div className="details-readonly">
-            {/* Identificação do Processo */}
-            <div className="details-group">
-              <h3 className="details-group-title">🔖 Identificação</h3>
-              <div className="details-content">
-                <div className="detail-item-row">
-                  <div className="detail-item-col">
-                    <span className="detail-label">PROCESSO Nº</span>
-                    <span className="detail-value-large">{formData.numero_processo_formatted || formData.numero_processo}</span>
-                  </div>
-                  <div className="detail-item-col right">
-                    <span className="detail-label">TÍTULO</span>
-                    <span className="detail-value-medium">{formData.titulo || '—'}</span>
-                  </div>
+        {/* MODO MISTO - Visualização com Edição Inline no grupo Identificação */}
+        <div className="details-readonly">
+          {/* Identificação do Processo - EDIÇÃO INLINE */}
+          <div className="details-group" data-inline-editing={isEditing}>
+            <h3 className="details-group-title">
+              🔖 Identificação
+              {isEditing && <span className="editing-indicator"> EDITANDO</span>}
+            </h3>
+            <div className="details-content">
+              {/* Número do Processo e Título - Row especial */}
+              <div className="detail-item-row" data-editing={isEditing}>
+                <div className="detail-item-col">
+                  {!isEditing ? (
+                    <>
+                      <span className="detail-label">PROCESSO Nº</span>
+                      <span className="detail-value-large">{formData.numero_processo_formatted || formData.numero_processo}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="detail-label">
+                        PROCESSO Nº <span style={{color: '#ef4444'}}>*</span>
+                      </span>
+                      <input
+                        type="text"
+                        value={formData.numero_processo || ''}
+                        onChange={(e) => handleInputChange('numero_processo', e.target.value)}
+                        placeholder="0000000-00.0000.0.00.0000"
+                        className="detail-input detail-input-large"
+                      />
+                    </>
+                  )}
                 </div>
+                <div className="detail-item-col right">
+                  {!isEditing ? (
+                    <>
+                      <span className="detail-label">TÍTULO</span>
+                      <span className="detail-value-medium">{formData.titulo || '—'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="detail-label">TÍTULO</span>
+                      <input
+                        type="text"
+                        value={formData.titulo || ''}
+                        onChange={(e) => handleInputChange('titulo', e.target.value)}
+                        placeholder="Ex: Ação de Cobrança"
+                        className="detail-input detail-input-medium"
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {/* Tribunal, Status, Tipo - apenas no modo edição para evitar duplicidade */}
+              {isEditing && (
+                <div className="detail-grid-3">
+                  <EditableDetailField
+                    label="Tribunal"
+                    value={formData.tribunal}
+                    isEditing={isEditing}
+                    type="select"
+                    options={tribunalOptions}
+                    onChange={(value) => handleInputChange('tribunal', value)}
+                    formatDisplay={(v) => formData.tribunal_display || v}
+                    placeholder="Selecione..."
+                    required={true}
+                  />
+                  
+                  <EditableDetailField
+                    label="Status"
+                    value={formData.status || 'ATIVO'}
+                    isEditing={isEditing}
+                    type="select"
+                    options={statusOptions}
+                    onChange={(value) => handleInputChange('status', value)}
+                    formatDisplay={(v) => formData.status_display || v}
+                  />
+                  
+                  <EditableDetailField
+                    label="Tipo de Ação"
+                    value={formData.tipo_acao}
+                    isEditing={isEditing}
+                    type="select"
+                    options={tipoAcaoOptions}
+                    onChange={(value) => handleInputChange('tipo_acao', value)}
+                    formatDisplay={(v) => formData.tipo_acao_display || v}
+                    placeholder="Selecione..."
+                  />
+                </div>
+              )}
+              
+              {/* Badges - Apenas quando NÃO está editando */}
+              {!isEditing && (
                 <div className="detail-badges-row">
                   {formData.tipo_acao && (
                     <div className="detail-badge-item">
@@ -200,12 +284,13 @@ function InformacaoTab({
                     </span>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
+          </div>
 
-            {/* Partes e Financeiro */}
-            <div className="details-group">
-              <h3 className="details-group-title">👥 Partes e Financeiro</h3>
+          {/* Partes e Financeiro */}
+          <div className="details-group">
+            <h3 className="details-group-title">👥 Partes e Financeiro</h3>
               <div className="details-content">
                 <div className="detail-partes-row">
                   <div className="detail-partes-col">
@@ -255,7 +340,11 @@ function InformacaoTab({
                     })()}
                     <button
                       className="btn-link detail-partes-hint"
-                      onClick={() => setActiveSection('parties')}
+                      onClick={() => window.open(
+                        `/cases/${id}?tab=parties`,
+                        '_blank',
+                        'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
+                      )}
                     >ℹ️ Use a aba "Partes" para gerenciar detalhadamente</button>
                   </div>
                   <div className="detail-partes-col">
@@ -281,19 +370,45 @@ function InformacaoTab({
                   </div>
                 </div>
                 
-                {/* Valor da Causa - Compacto */}
-                <div className="detail-financeiro-row">
-                  <div className="detail-financeiro-item">
-                    <span className="detail-label">💰 Valor da Causa</span>
-                    <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
+                {/* Valor da Causa - Edição Inline */}
+                {!isEditing ? (
+                  <div className="detail-financeiro-row">
+                    <div className="detail-financeiro-item">
+                      <span className="detail-label">💰 Valor da Causa</span>
+                      <span className="detail-value-large">{formatCurrency(formData.valor_causa)}</span>
+                    </div>
+                    <div className="detail-financeiro-actions">
+                      <button
+                        className="btn-link detail-financeiro-hint"
+                        onClick={() => window.open(
+                          `/cases/${id}?tab=financeiro`,
+                          '_blank',
+                          'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
+                        )}
+                      >💰 Use a aba "Financeiro" para controlar recebimentos e despesas</button>
+                    </div>
                   </div>
-                  <div className="detail-financeiro-actions">
+                ) : (
+                  <div style={{marginTop: '1.5rem'}}>
+                    <EditableDetailField
+                      label="Valor da Causa"
+                      value={formData.valor_causa}
+                      isEditing={isEditing}
+                      type="currency"
+                      onChange={(value) => handleInputChange('valor_causa', value)}
+                      placeholder="0,00"
+                    />
                     <button
                       className="btn-link detail-financeiro-hint"
-                      onClick={() => setActiveSection('financeiro')}
+                      onClick={() => window.open(
+                        `/cases/${id}?tab=financeiro`,
+                        '_blank',
+                        'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
+                      )}
+                      style={{marginTop: '0.5rem', display: 'block'}}
                     >💰 Use a aba "Financeiro" para controlar recebimentos e despesas</button>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -301,30 +416,42 @@ function InformacaoTab({
             <div className="details-group">
               <h3 className="details-group-title">📅 Cronologia</h3>
               <div className="details-content">
-                <div className="detail-item">
-                  <span className="detail-label">Data de Distribuição</span>
-                  <span className="detail-value">{formatDate(formData.data_distribuicao)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Última Movimentação</span>
-                  {formData.data_ultima_movimentacao ? (
-                    <div className="detail-value-stacked">
-                      <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
-                      {formData.ultima_movimentacao_resumo && (
-                        <span className="detail-value-sub">{formData.ultima_movimentacao_resumo}</span>
-                      )}
-                      <button
-                        className="btn-link detail-partes-hint"
-                        style={{ marginTop: '0.35rem', alignSelf: 'flex-start' }}
-                        onClick={onOpenLatestMovimentacao}
-                      >
-                        🔎 Ver movimentação destacada
-                      </button>
+                {!isEditing ? (
+                  <>
+                    <div className="detail-item">
+                      <span className="detail-label">Data de Distribuição</span>
+                      <span className="detail-value"><strong>{formatDate(formData.data_distribuicao)}</strong></span>
                     </div>
-                  ) : (
-                    <span className="detail-value empty">Nenhuma movimentação cadastrada</span>
-                  )}
-                </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Última Movimentação</span>
+                      {formData.data_ultima_movimentacao ? (
+                        <div className="detail-value-stacked">
+                          <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
+                          {formData.ultima_movimentacao_resumo && (
+                            <span className="detail-value-sub">{formData.ultima_movimentacao_resumo}</span>
+                          )}
+                          <button
+                            className="btn-link detail-partes-hint"
+                            style={{ marginTop: '0.35rem', alignSelf: 'flex-start' }}
+                            onClick={onOpenLatestMovimentacao}
+                          >
+                            🔎 Ver movimentação destacada
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="detail-value empty">Nenhuma movimentação cadastrada</span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <EditableDetailField
+                    label="Data de Distribuição"
+                    value={formData.data_distribuicao}
+                    isEditing={isEditing}
+                    type="date"
+                    onChange={(value) => handleInputChange('data_distribuicao', value)}
+                  />
+                )}
               </div>
             </div>
 
@@ -332,249 +459,100 @@ function InformacaoTab({
             <div className="details-group">
               <h3 className="details-group-title">📍 Localização</h3>
               <div className="details-content">
-                <div className="detail-item">
-                  <span className="detail-label">Comarca</span>
-                  <span className="detail-value">{formData.comarca || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Vara</span>
-                  <span className="detail-value">{formData.vara || '-'}</span>
-                </div>
+                {!isEditing ? (
+                  <>
+                    <div className="detail-item">
+                      <span className="detail-label">Comarca</span>
+                      <span className="detail-value">{formData.comarca || '-'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Vara</span>
+                      <span className="detail-value">{formData.vara || '-'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="detail-grid-2">
+                    <EditableDetailField
+                      label="Comarca"
+                      value={formData.comarca}
+                      isEditing={isEditing}
+                      type="text"
+                      onChange={(value) => handleInputChange('comarca', value)}
+                      placeholder="Ex: São Paulo"
+                    />
+                    <EditableDetailField
+                      label="Vara"
+                      value={formData.vara}
+                      isEditing={isEditing}
+                      type="text"
+                      onChange={(value) => handleInputChange('vara', value)}
+                      placeholder="Ex: 1ª Vara Cível"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Origem - Criado a partir de Publicação (Versão compacta) */}
-            {formData.publicacao_origem && (
-              <div className="details-group" style={{
-                background: '#f0f9ff',
-                padding: '0.75rem 1rem',
-                borderRadius: '6px',
-                border: '1px solid #bae6fd',
-              }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                  flexWrap: 'wrap'
-                }}>
-                  <span style={{ 
-                    fontSize: '0.875rem',
-                    color: '#0c4a6e',
-                    fontWeight: 500
-                  }}>
-                    🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
-                  </span>
-                  {/* Botões de Consulta */}
-                  {renderProcessConsultaButtons()}
-                </div>
-              </div>
-            )}
-
             {/* Observações */}
-            {formData.observacoes && (
+            {(formData.observacoes || formData.publicacao_origem) && (
               <div className="details-group">
                 <h3 className="details-group-title">📝 Observações</h3>
                 <div className="details-content">
-                  <div className="detail-item full">
-                    <p className="detail-value">{formData.observacoes}</p>
-                  </div>
+                  {formData.publicacao_origem && (
+                    <div className="observacoes-origem-box">
+                      <div className="observacoes-origem-row">
+                        <button
+                          type="button"
+                          className="observacoes-origem-link"
+                          onClick={handleOpenMovimentacoesFromOrigem}
+                          title="Abrir aba Movimentações em nova janela"
+                        >
+                          🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
+                        </button>
+                        <div className="observacoes-origem-actions">
+                          {/* Botões de Consulta */}
+                          {renderProcessConsultaButtons({ wrap: false })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!isEditing ? (
+                    formData.observacoes ? (
+                      <div className="detail-item full">
+                        <p className="detail-value">{formData.observacoes}</p>
+                      </div>
+                    ) : null
+                  ) : (
+                    <EditableDetailField
+                      label="Observações"
+                      value={formData.observacoes}
+                      isEditing={isEditing}
+                      type="textarea"
+                      onChange={(value) => handleInputChange('observacoes', value)}
+                      placeholder="Observações sobre o processo..."
+                      rows={4}
+                    />
+                  )}
                 </div>
               </div>
             )}
-          </div>
-        ) : (
-          /* MODO EDIÇÃO - Formulário Vertical */
-          <div className="info-form-vertical process-registration-form">
-            {/* Título */}
-            <div className="info-field full-width">
-              <label>Título do Processo</label>
-              <input
-                type="text"
-                value={formData.titulo || ''}
-                onChange={(e) => handleInputChange('titulo', e.target.value)}
-                placeholder="Ex: Ação de Cobrança"
-              />
-            </div>
-
-            {/* Número do Processo */}
-            <div className="info-field">
-              <label>Número do Processo (CNJ) <span style={{color: '#ef4444'}}>*</span></label>
-              <input
-                type="text"
-                value={formData.numero_processo || ''}
-                onChange={(e) => handleInputChange('numero_processo', e.target.value)}
-                placeholder="0000000-00.0000.0.00.0000"
-              />
-            </div>
-
-            {/* Tribunal */}
-            <SelectField
-              label={<span>Tribunal <span style={{color: '#ef4444'}}>*</span></span>}
-              value={formData.tribunal || ''}
-              onChange={(value) => handleInputChange('tribunal', value)}
-              options={tribunalOptions}
-              placeholder="Selecione..."
-            />
-
-            {/* Status */}
-            <SelectField
-              label="Status"
-              value={formData.status || 'ATIVO'}
-              onChange={(value) => handleInputChange('status', value)}
-              options={statusOptions}
-            />
-
-            {/* Tipo de Ação */}
-            <SelectField
-              label="Tipo de Ação"
-              value={formData.tipo_acao || ''}
-              onChange={(value) => handleInputChange('tipo_acao', value)}
-              options={tipoAcaoOptions}
-            />
-
-            {/* Comarca */}
-            <div className="info-field">
-              <label>Comarca</label>
-              <input
-                type="text"
-                value={formData.comarca || ''}
-                onChange={(e) => handleInputChange('comarca', e.target.value)}
-                placeholder="Ex: São Paulo"
-              />
-            </div>
-
-            {/* Vara */}
-            <div className="info-field">
-              <label>Vara</label>
-              <input
-                type="text"
-                value={formData.vara || ''}
-                onChange={(e) => handleInputChange('vara', e.target.value)}
-                placeholder="Ex: 1ª Vara Cível"
-              />
-            </div>
-
-            {/* Data Distribuição */}
-            <DateInputMasked
-              label="Data de Distribuição"
-              value={formData.data_distribuicao || ''}
-              onChange={(value) => handleInputChange('data_distribuicao', value)}
-            />
-
-            {/* Nosso Cliente - Display only, gerenciado via aba Partes */}
-            <div className="info-field full-width">
-              <label>Nosso Cliente Neste Processo</label>
-              {(() => {
-                const clientParty = parties.find(p => p.is_client);
-                if (clientParty) {
-                  return (
-                    <div className="client-display">
-                      <p className="info-value">
-                        <strong>{clientParty.contact_name}</strong> ({clientParty.role_display})
-                      </p>
-                    </div>
-                  );
-                }
-                return (
-                  <div className="empty-state-inline">
-                    <p className="info-value empty">Nenhum cliente vinculado</p>
-                    <button
-                      className="btn btn-sm btn-primary"
-                      onClick={() => {
-                        if (onAddPartyClick) {
-                          onAddPartyClick();
-                        }
-                      }}
-                      style={{marginTop: '0.5rem'}}
-                    >
-                      <UserPlus size={16} />
-                      Selecionar Contato
-                    </button>
-                  </div>
-                );
-              })()}
-              <div style={{ marginTop: '0.5rem' }}>
-                {parties.length > 0 ? (
-                  <p className="info-value" style={{ color: '#4b5563' }}>
-                    <strong>Partes cadastradas:</strong>{' '}
-                    {parties.map((party, index) => (
-                      <span key={party.id}>
-                        {party.contact_name} ({party.role_display})
-                        {index < parties.length - 1 ? ' • ' : ''}
-                      </span>
-                    ))}
-                  </p>
-                ) : (
-                  <p className="info-value" style={{ color: '#9ca3af' }}>
-                    Nenhuma parte vinculada
-                  </p>
-                )}
-              </div>
-              <span className="field-hint">
-                💡 Clientes são gerenciados na aba "Partes". Marque "É nosso cliente?" ao adicionar.
-              </span>
-            </div>
-
-            {/* Valor da Causa */}
-            <CurrencyInput
-              label="Valor da Causa"
-              value={formData.valor_causa || 0}
-              onChange={(value) => handleInputChange('valor_causa', value)}
-              placeholder="0,00"
-            />
-
-            {/* Origem da Publicação - Versão compacta em 1 linha */}
-            {formData.publicacao_origem && (
-              <div className="info-field full-width" style={{
-                background: '#f0f9ff',
-                padding: '0.75rem 1rem',
-                borderRadius: '6px',
-                border: '1px solid #bae6fd',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1rem'
-              }}>
-                <span style={{ 
-                  fontSize: '0.875rem',
-                  color: '#0c4a6e',
-                  fontWeight: 500
-                }}>
-                  🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
-                </span>
-                {renderProcessConsultaButtons()}
-              </div>
-            )}
-
-            {/* Observações - Full Width */}
-            <TextAreaField
-              label="Observações"
-              value={formData.observacoes || ''}
-              onChange={(value) => handleInputChange('observacoes', value)}
-              rows={4}
-              placeholder="Observações sobre o processo..."
-              className="full-width"
-            />
-
-            {/* Botões de Ação - Final do Formulário */}
-            <div className="form-actions" style={{
-              display: 'flex',
-              gap: '1rem',
-              justifyContent: 'flex-end',
-              marginTop: '2rem',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid #e5e7eb'
-            }}>
-              <button className="btn btn-secondary process-form-btn-cancel" onClick={onCancel}>
-                <X size={18} />
-                Cancelar
-              </button>
-              <button className="btn btn-success process-form-btn-save" onClick={onSave} disabled={saving}>
-                <Save size={18} />
-                {saving ? 'Salvando...' : 'Salvar'}
-              </button>
-            </div>
+        </div>
+        
+        {/* Botões de Ação - Modo Edição */}
+        {isEditing && (
+          <div className="form-actions" style={{
+            display: 'flex',
+            gap: '1rem',
+            justifyContent: 'flex-end',
+            marginTop: '2rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid #e5e7eb'
+          }}>
+            <CancelButton onClick={onCancel} disabled={saving} />
+            <SaveButton onClick={onSave} disabled={saving}>
+              {saving ? '⏳ Salvando...' : '💾 Salvar'}
+            </SaveButton>
           </div>
         )}
       </div>
