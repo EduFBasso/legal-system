@@ -62,7 +62,7 @@ function CaseDetailPage() {
   const modalsNotif = useModalsAndNotifications();
 
   // Navegação de páginas (base)
-  const navigation = usePageNavigation(id);
+  const navigation = usePageNavigation();
 
   // Case core data
   const caseCore = useCaseCore(
@@ -101,9 +101,7 @@ function CaseDetailPage() {
     caseCore.formData,
     caseCore.setFormData,
     navigation.activeSection === 'financeiro',
-    caseCore.saving,
     modalsNotif.showToast,
-    handleSaveFinancialData,
   );
 
   // Auto-save financial data (debounce 800ms + só campos alterados)
@@ -204,7 +202,7 @@ function CaseDetailPage() {
   /**
    * Callback quando caso é criado
    */
-  const handleCaseCreated = (caseId) => {
+  function handleCaseCreated(caseId) {
     const currentParams = new URLSearchParams(location.search);
     currentParams.delete('pub_id');
     currentParams.delete('action');
@@ -213,52 +211,25 @@ function CaseDetailPage() {
     const nextQuery = currentParams.toString();
     const nextUrl = nextQuery ? `/cases/${caseId}?${nextQuery}` : `/cases/${caseId}`;
     navigate(nextUrl, { replace: true });
-  };
+  }
 
   /**
    * Callback quando caso é deletado
    */
-  const handleCaseDeleted = () => {
+  function handleCaseDeleted() {
     setTimeout(() => {
       window.close();
     }, 1500);
-  };
+  }
 
   /**
    * Extensão para salvar caso + parties
    */
   const handleSaveCaseWithParties = async () => {
     try {
-      await caseCore.handleSave(parties.parties, navigation.activeSection);
+      await caseCore.handleSave(parties.parties);
     } catch {
       // Error already handled by hook
-    }
-  };
-
-  /**
-   * Handler para salvar dados financeiros
-   */
-  const handleSaveFinancialData = async () => {
-    try {
-      const { default: casesService } = await import('../services/casesService');
-      const financialData = {
-        valor_causa: financial.parseCurrencyValue(caseCore.formData.valor_causa),
-        participation_type: financial.participacaoTipo,
-        participation_percentage: financial.participacaoTipo === 'percentage' ? parseFloat(financial.participacaoPercentual) || null : null,
-        participation_fixed_value: financial.participacaoTipo === 'fixed' ? financial.parseCurrencyValue(financial.participacaoValorFixo) : null,
-        payment_conditional: financial.pagaMedianteGanho,
-        payment_terms: caseCore.formData.payment_terms || '',
-        attorney_fee_amount: caseCore.formData.attorney_fee_amount ? financial.parseCurrencyValue(caseCore.formData.attorney_fee_amount) : null,
-        attorney_fee_installments: Math.max(parseInt(caseCore.formData.attorney_fee_installments || 1, 10) || 1, 1),
-        observations_financial_block_a: caseCore.formData.observations_financial_block_a || '',
-        observations_financial_block_b: caseCore.formData.observations_financial_block_b || '',
-      };
-
-      const updated = await casesService.update(id, financialData);
-      caseCore.setFormData(updated);
-      modalsNotif.showToast('Dados financeiros salvos com sucesso!', 'success');
-    } catch {
-      modalsNotif.showToast('Erro ao salvar dados financeiros', 'error');
     }
   };
 

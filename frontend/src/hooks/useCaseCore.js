@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import casesService from '../services/casesService';
-import publicationsService from '../services/publicationSync';
+import publicationsService from '../services/publicationsService';
 import { notifyPublicationSync } from '../services/publicationSync';
 
 /**
@@ -154,7 +154,7 @@ export function useCaseCore(
   /**
    * Salvar caso
    */
-  const handleSave = async (parties = [], activeSection = 'info') => {
+  const handleSave = async (parties = []) => {
     try {
       setSaving(true);
 

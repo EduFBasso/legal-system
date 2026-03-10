@@ -1,19 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import financialService from '../services/financialService';
-import useAutoSave from './useAutoSave';
 
 /**
  * useFinancialData
  * Gerencia todo o estado financeiro do caso: recebimentos, despesas, participações.
- * Inclui auto-save via useAutoSave hook.
+ * Fornece payload e diff para auto-save feito pelo componente pai.
  * 
  * @param {number} id - ID do caso
  * @param {Object} formData - Dados do formulário do caso (participação, valores)
  * @param {function} setFormData - Setter para formData
  * @param {boolean} activeIsFinanceiro - Se aba financeiro está ativa
- * @param {boolean} saving - Se está salvando (caso)
  * @param {function} showToast - Função para exibir notificações
- * @param {function} onSaveFinancialData - Handler para salvar dados financeiros
  * @returns {Object} Estado e funções para gerenciar dados financeiros
  */
 export function useFinancialData(
@@ -21,9 +18,7 @@ export function useFinancialData(
   formData,
   setFormData,
   activeIsFinanceiro,
-  saving,
-  showToast,
-  onSaveFinancialData
+  showToast
 ) {
   // Recebimentos e despesas
   const [recebimentos, setRecebimentos] = useState([]);
@@ -51,7 +46,7 @@ export function useFinancialData(
   /**
    * Parse valor monetário para número
    */
-  const parseCurrencyValue = (value) => {
+  const parseCurrencyValue = useCallback((value) => {
     if (!value) return 0;
     if (typeof value === 'number') return value;
     
@@ -61,15 +56,15 @@ export function useFinancialData(
         .replace(/\./g, '')
         .replace(',', '.')
     ) || 0;
-  };
+  }, []);
 
   /**
    * Formatar valor monetário
    */
-  const formatCurrencyInput = (value) => {
+  const formatCurrencyInput = useCallback((value) => {
     const numeric = parseCurrencyValue(value);
     return numeric.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
+  }, [parseCurrencyValue]);
 
   /**
    * Sincronizar campos financeiros do backend para state local
@@ -77,24 +72,29 @@ export function useFinancialData(
   useEffect(() => {
     if (!formData || !id) return;
 
-    setParticipacaoTipo(formData.participation_type ?? null);
-    
-    if (formData.participation_percentage !== null && formData.participation_percentage !== undefined) {
-      setParticipacaoPercentual(formData.participation_percentage.toString());
-    } else {
-      setParticipacaoPercentual('');
-    }
-    
-    if (formData.participation_fixed_value !== null && formData.participation_fixed_value !== undefined) {
-      setParticipacaoValorFixo(formatCurrencyInput(formData.participation_fixed_value));
-    } else {
-      setParticipacaoValorFixo('');
-    }
-    
-    if (formData.payment_conditional !== undefined) {
-      setPagaMedianteGanho(formData.payment_conditional);
-    }
-  }, [formData, id]);
+    const syncFromFormData = () => {
+      setParticipacaoTipo(formData.participation_type ?? null);
+
+      if (formData.participation_percentage !== null && formData.participation_percentage !== undefined) {
+        setParticipacaoPercentual(formData.participation_percentage.toString());
+      } else {
+        setParticipacaoPercentual('');
+      }
+
+      if (formData.participation_fixed_value !== null && formData.participation_fixed_value !== undefined) {
+        setParticipacaoValorFixo(formatCurrencyInput(formData.participation_fixed_value));
+      } else {
+        setParticipacaoValorFixo('');
+      }
+
+      if (formData.payment_conditional !== undefined) {
+        setPagaMedianteGanho(formData.payment_conditional);
+      }
+    };
+
+    const timerId = window.setTimeout(syncFromFormData, 0);
+    return () => window.clearTimeout(timerId);
+  }, [formData, id, formatCurrencyInput]);
 
   /**
    * Sincronizar mudanças para formData
@@ -109,7 +109,7 @@ export function useFinancialData(
       participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
       payment_conditional: pagaMedianteGanho,
     }));
-  }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho, setFormData]);
+  }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho, parseCurrencyValue, setFormData]);
 
   /**
    * Carregar recebimentos
@@ -146,9 +146,15 @@ export function useFinancialData(
    */
   useEffect(() => {
     if (activeIsFinanceiro && id) {
-      loadPayments();
-      loadExpenses();
+      const timerId = window.setTimeout(() => {
+        loadPayments();
+        loadExpenses();
+      }, 0);
+
+      return () => window.clearTimeout(timerId);
     }
+
+    return undefined;
   }, [activeIsFinanceiro, id, loadPayments, loadExpenses]);
 
   /**
@@ -176,6 +182,7 @@ export function useFinancialData(
     participacaoPercentual,
     participacaoValorFixo,
     pagaMedianteGanho,
+    parseCurrencyValue,
   ]);
 
   /**

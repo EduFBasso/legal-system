@@ -5,10 +5,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
  * usePageNavigation
  * Gerencia navegação de abas, URL query parameters e highlighting de elementos.
  * 
- * @param {number} caseId - ID do caso
  * @returns {Object} Estado e funções para navegação da página
  */
-export function usePageNavigation(caseId) {
+export function usePageNavigation() {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,21 +28,25 @@ export function usePageNavigation(caseId) {
     const focusMovement = params.get('focusMovement');
     const focusTask = params.get('focusTask');
 
-    if (tab === 'movements') {
-      setActiveSection('movimentacoes');
-    } else if (tab === 'parties') {
-      setActiveSection('parties');
-    } else if (tab === 'info') {
-      setActiveSection('info');
-    }
+    const timerId = window.setTimeout(() => {
+      if (tab === 'movements') {
+        setActiveSection('movimentacoes');
+      } else if (tab === 'parties') {
+        setActiveSection('parties');
+      } else if (tab === 'info') {
+        setActiveSection('info');
+      }
 
-    if (focusMovement) {
-      setHighlightedMovimentacaoId(parseInt(focusMovement, 10));
-    }
+      if (focusMovement) {
+        setHighlightedMovimentacaoId(parseInt(focusMovement, 10));
+      }
 
-    if (focusTask) {
-      setHighlightedTaskId(parseInt(focusTask, 10));
-    }
+      if (focusTask) {
+        setHighlightedTaskId(parseInt(focusTask, 10));
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
   }, [location.search]);
 
   /**
