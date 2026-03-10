@@ -95,6 +95,9 @@ class TaskSyncBroadcast {
         ...event,
       };
 
+      // Notifica assinantes locais imediatamente (mesma aba/janela).
+      this.handleMessage(payload);
+
       this.channel.postMessage(payload);
 
       if (typeof window !== 'undefined' && window.localStorage) {

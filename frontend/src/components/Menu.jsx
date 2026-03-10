@@ -3,11 +3,14 @@ import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import publicationsService from '../services/publicationsService';
 import { subscribePublicationSync } from '../services/publicationSync';
+import caseTasksService from '../services/caseTasksService';
+import { subscribeToTaskUpdates } from '../services/taskSyncService';
 import SettingsModal from './SettingsModal';
 import './Menu.css';
 
 export default function Menu() {
   const [pendingCount, setPendingCount] = useState(0);
+  const [scheduledTasksCount, setScheduledTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -33,6 +36,43 @@ export default function Menu() {
 
     return () => {
       unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadScheduledTasksCount = async () => {
+      try {
+        const tasks = await caseTasksService.getAllTasks();
+        if (Array.isArray(tasks)) {
+          const activeCount = tasks.filter((task) => task.status !== 'CONCLUIDA').length;
+          setScheduledTasksCount(activeCount);
+          return;
+        }
+        setScheduledTasksCount(0);
+      } catch {
+        setScheduledTasksCount(0);
+      }
+    };
+
+    loadScheduledTasksCount();
+
+    const unsubscribeTasks = subscribeToTaskUpdates((event) => {
+      if (event?.type === 'task-updated') {
+        loadScheduledTasksCount();
+      }
+    });
+
+    const handleFocus = () => {
+      loadScheduledTasksCount();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      if (unsubscribeTasks) {
+        unsubscribeTasks();
+      }
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
   
@@ -117,6 +157,9 @@ export default function Menu() {
             >
               <span className="menu-icon">⏰</span>
               <span className="menu-label">Tarefas Agendadas</span>
+              {scheduledTasksCount > 0 && (
+                <span className="menu-task-badge">{scheduledTasksCount}</span>
+              )}
             </NavLink>
           </li>
 
