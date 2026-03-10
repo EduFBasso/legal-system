@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { formatDate, formatCurrency } from '../utils/formatters';
@@ -344,6 +344,21 @@ function CaseDetailPage() {
     );
   };
 
+  const activeTasks = useMemo(
+    () => (movements.tasks || []).filter((task) => task.status !== 'CONCLUIDA'),
+    [movements.tasks]
+  );
+
+  const activeLinkedTasksCount = useMemo(
+    () => activeTasks.filter((task) => !!task.movimentacao).length,
+    [activeTasks]
+  );
+
+  const activeStandaloneTasksCount = useMemo(
+    () => activeTasks.filter((task) => !task.movimentacao).length,
+    [activeTasks]
+  );
+
   if (caseCore.loading) {
     return (
       <div className="case-detail-page">
@@ -390,7 +405,7 @@ function CaseDetailPage() {
               onClick={() => handleTabChange('movimentacoes')}
             >
               ⚖️ Movimentações
-              {movements.movimentacoes.length > 0 && <span className="badge">{movements.movimentacoes.length}</span>}
+              {activeLinkedTasksCount > 0 && <span className="badge">{activeLinkedTasksCount}</span>}
             </button>
             <button
               className={`nav-tab ${navigation.activeSection === 'documentos' ? 'active' : ''}`}
@@ -412,7 +427,7 @@ function CaseDetailPage() {
               onClick={() => handleTabChange('tasks')}
             >
               ✅ Tarefas
-              {movements.tasks.filter(t => !t.movimentacao).length > 0 && <span className="badge">{movements.tasks.filter(t => !t.movimentacao).length}</span>}
+              {activeStandaloneTasksCount > 0 && <span className="badge">{activeStandaloneTasksCount}</span>}
             </button>
             <button
               className={`nav-tab ${navigation.activeSection === 'financeiro' ? 'active' : ''}`}

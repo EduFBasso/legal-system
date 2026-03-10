@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import caseMovementsService from '../services/caseMovementsService';
 import caseTasksService from '../services/caseTasksService';
 import publicationsService from '../services/publicationsService';
+import useSyncTaskUpdates from './useSyncTaskUpdates';
 
 /**
  * useMovementsAndTasks
@@ -82,6 +83,15 @@ export function useMovementsAndTasks(id, systemSettings, showToast) {
       loadTasks();
     }
   }, [id, loadTasks, systemSettings]);
+
+  // Mantem tarefas sincronizadas quando houver atualização em outras telas/abas.
+  useSyncTaskUpdates({
+    caseId: id,
+    enabled: !!id,
+    onAnyUpdate: () => {
+      loadTasks();
+    },
+  });
 
   /**
    * Deletar movimentação
