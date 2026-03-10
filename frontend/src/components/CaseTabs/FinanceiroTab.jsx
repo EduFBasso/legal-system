@@ -4,6 +4,92 @@ import { formatDate, formatCurrencyValue, parseCurrencyValue } from '../../utils
 import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
 import EmptyState from '../common/EmptyState';
 
+function FinancialEntriesSection({
+  entryTitle,
+  form,
+  setForm,
+  onAdd,
+  addButtonLabel,
+  descriptionPlaceholder,
+  emptyMessage,
+  emptyHint,
+  items,
+  onRemove,
+  totalLabel,
+  totalValue,
+}) {
+  return (
+    <div className="financeiro-bloco-content">
+      <div className="financeiro-subsection">
+        <div className="financeiro-subsection-header">
+          <h4>{entryTitle}</h4>
+        </div>
+
+        <div className="financeiro-recebimento-form">
+          <DateInputMasked
+            label="Data"
+            value={form.data}
+            onChange={(value) => setForm({ ...form, data: value })}
+          />
+
+          <div className="financeiro-field">
+            <label className="financeiro-label">Descrição</label>
+            <input
+              type="text"
+              className="financeiro-input"
+              placeholder={descriptionPlaceholder}
+              value={form.descricao}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+            />
+          </div>
+
+          <CurrencyInput
+            label="Valor"
+            value={form.valor}
+            onChange={(value) => setForm({ ...form, valor: value })}
+            placeholder="0,00"
+          />
+
+          <button className="btn btn-success" onClick={onAdd}>
+            <Plus size={16} />
+            {addButtonLabel}
+          </button>
+        </div>
+
+        {items.length === 0 ? (
+          <EmptyState message={emptyMessage} hint={emptyHint} />
+        ) : (
+          <div className="financeiro-lista">
+            {items.map((item) => (
+              <div key={item.id} className="financeiro-item">
+                <div className="financeiro-item-info">
+                  <span className="financeiro-item-data">{formatDate(item.date)}</span>
+                  <span className="financeiro-item-descricao">{item.description}</span>
+                </div>
+                <div className="financeiro-item-actions">
+                  <span className="financeiro-item-valor">R$ {formatCurrencyValue(item.value)}</span>
+                  <button
+                    className="btn-icon-danger"
+                    onClick={() => onRemove(item.id)}
+                    title="Remover"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="financeiro-total-recebimentos">
+        <span>{totalLabel}</span>
+        <strong>R$ {formatCurrencyValue(totalValue)}</strong>
+      </div>
+    </div>
+  );
+}
+
 /**
  * FinanceiroTab - Aba de Gestão Financeira do Processo
  * Controla valores, custos, recebimentos e despesas
@@ -364,169 +450,39 @@ function FinanceiroTab({
         {/* BLOCO C: Recebimentos do Cliente */}
         <div className="financeiro-bloco financeiro-bloco-azul">
           <h3 className="financeiro-bloco-title">💵 Recebimentos do Cliente</h3>
-
-          <div className="financeiro-bloco-content">
-            <div className="financeiro-subsection">
-              <div className="financeiro-subsection-header">
-                <h4>Lançamentos de Recebimento</h4>
-              </div>
-
-              <div className="financeiro-recebimento-form">
-                <DateInputMasked
-                  label="Data"
-                  value={recebimentoForm.data}
-                  onChange={(value) => setRecebimentoForm({...recebimentoForm, data: value})}
-                />
-
-                <div className="financeiro-field">
-                  <label className="financeiro-label">Descrição</label>
-                  <input
-                    type="text"
-                    className="financeiro-input"
-                    placeholder="Ex: Honorários - Parcela 1/3"
-                    value={recebimentoForm.descricao}
-                    onChange={(e) => setRecebimentoForm({...recebimentoForm, descricao: e.target.value})}
-                  />
-                </div>
-
-                <CurrencyInput
-                  label="Valor"
-                  value={recebimentoForm.valor}
-                  onChange={(value) => setRecebimentoForm({...recebimentoForm, valor: value})}
-                  placeholder="0,00"
-                />
-
-                <button
-                  className="btn btn-success"
-                  onClick={onAddRecebimento}
-                >
-                  <Plus size={16} />
-                  Adicionar Recebimento
-                </button>
-              </div>
-
-              {recebimentos.length === 0 ? (
-                <EmptyState
-                  message="Nenhum recebimento registrado"
-                  hint="Preencha os campos acima e clique em 'Adicionar Recebimento'"
-                />
-              ) : (
-                <div className="financeiro-lista">
-                  {recebimentos.map(recebimento => (
-                    <div key={recebimento.id} className="financeiro-item">
-                      <div className="financeiro-item-info">
-                        <span className="financeiro-item-data">{formatDate(recebimento.date)}</span>
-                        <span className="financeiro-item-descricao">{recebimento.description}</span>
-                      </div>
-                      <div className="financeiro-item-actions">
-                        <span className="financeiro-item-valor">
-                          R$ {formatCurrencyValue(recebimento.value)}
-                        </span>
-                        <button
-                          className="btn-icon-danger"
-                          onClick={() => onRemoveRecebimento(recebimento.id)}
-                          title="Remover"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="financeiro-total-recebimentos">
-              <span>Total Recebido:</span>
-              <strong>R$ {formatCurrencyValue(calcularTotalRecebimentos())}</strong>
-            </div>
-          </div>
+          <FinancialEntriesSection
+            entryTitle="Lançamentos de Recebimento"
+            form={recebimentoForm}
+            setForm={setRecebimentoForm}
+            onAdd={onAddRecebimento}
+            addButtonLabel="Adicionar Recebimento"
+            descriptionPlaceholder="Ex: Honorários - Parcela 1/3"
+            emptyMessage="Nenhum recebimento registrado"
+            emptyHint="Preencha os campos acima e clique em 'Adicionar Recebimento'"
+            items={recebimentos}
+            onRemove={onRemoveRecebimento}
+            totalLabel="Total Recebido:"
+            totalValue={calcularTotalRecebimentos()}
+          />
         </div>
 
         {/* BLOCO D: Custos do Escritório */}
         <div className="financeiro-bloco financeiro-bloco-azul">
           <h3 className="financeiro-bloco-title">💸 Custos e Despesas do Escritório</h3>
-          
-          <div className="financeiro-bloco-content">
-            {/* Despesas */}
-            <div className="financeiro-subsection">
-              <div className="financeiro-subsection-header">
-                <h4>Registros de Gastos</h4>
-              </div>
-              
-              {/* Formulário para Nova Despesa */}
-              <div className="financeiro-recebimento-form">
-                <DateInputMasked
-                  label="Data"
-                  value={despesaForm.data}
-                  onChange={(value) => setDespesaForm({...despesaForm, data: value})}
-                />
-
-                <div className="financeiro-field">
-                  <label className="financeiro-label">Descrição</label>
-                  <input 
-                    type="text" 
-                    className="financeiro-input"
-                    placeholder="Ex: Custas processuais, Honorários perito"
-                    value={despesaForm.descricao}
-                    onChange={(e) => setDespesaForm({...despesaForm, descricao: e.target.value})}
-                  />
-                </div>
-
-                <CurrencyInput
-                  label="Valor"
-                  value={despesaForm.valor}
-                  onChange={(value) => setDespesaForm({...despesaForm, valor: value})}
-                  placeholder="0,00"
-                />
-
-                <button 
-                  className="btn btn-success"
-                  onClick={onAddDespesa}
-                >
-                  <Plus size={16} />
-                  Adicionar Despesa
-                </button>
-              </div>
-
-              {/* Lista de Despesas */}
-              {despesas.length === 0 ? (
-                <EmptyState
-                  message="Nenhuma despesa registrada"
-                  hint="Registre custas do tribunal, perícias, honorários e outros custos"
-                />
-              ) : (
-                <div className="financeiro-lista">
-                  {despesas.map(despesa => (
-                    <div key={despesa.id} className="financeiro-item">
-                      <div className="financeiro-item-info">
-                        <span className="financeiro-item-data">{formatDate(despesa.date)}</span>
-                        <span className="financeiro-item-descricao">{despesa.description}</span>
-                      </div>
-                      <div className="financeiro-item-actions">
-                        <span className="financeiro-item-valor">
-                          R$ {formatCurrencyValue(despesa.value)}
-                        </span>
-                        <button 
-                          className="btn-icon-danger"
-                          onClick={() => onRemoveDespesa(despesa.id)}
-                          title="Remover"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Total Despesas */}
-            <div className="financeiro-total-recebimentos">
-              <span>Total de Custos:</span>
-              <strong>R$ {formatCurrencyValue(calcularTotalDespesas())}</strong>
-            </div>
-          </div>
+          <FinancialEntriesSection
+            entryTitle="Registros de Gastos"
+            form={despesaForm}
+            setForm={setDespesaForm}
+            onAdd={onAddDespesa}
+            addButtonLabel="Adicionar Despesa"
+            descriptionPlaceholder="Ex: Custas processuais, Honorários perito"
+            emptyMessage="Nenhuma despesa registrada"
+            emptyHint="Registre custas do tribunal, perícias, honorários e outros custos"
+            items={despesas}
+            onRemove={onRemoveDespesa}
+            totalLabel="Total de Custos:"
+            totalValue={calcularTotalDespesas()}
+          />
         </div>
       </div>
     </div>
