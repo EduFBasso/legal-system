@@ -3,6 +3,13 @@ import { useUrgencyVisibility } from '../../hooks/useUrgencyVisibility';
 import caseTasksService from '../../services/caseTasksService';
 import { notifyTaskUpdate } from '../../services/taskSyncService';
 import useSyncTaskUpdates from '../../hooks/useSyncTaskUpdates';
+import {
+  getTaskUrgency,
+  formatDaysRemaining,
+  isOverdue,
+  isToday,
+  parseLocalDate,
+} from '../../utils/taskUrgency';
 import TaskCard from '../TaskCard';
 import UrgencySection from '../UrgencySection';
 import CreateTaskModal from '../CreateTaskModal';
@@ -22,8 +29,8 @@ import './TasksTab.css';
 export default function TasksTab({
   caseId = null,
   caseData = null,
-  tasks = [],
-  setTasks = () => {},
+  tasks: _externalTasks = [],     // recebido do pai mas não usado diretamente
+  setTasks: _setParentTasks = () => {},  // mantido por compatibilidade, não usar
   formatDate = (date) => date ? new Date(date).toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—',
   onRefreshTasks = () => {},
 }) {
@@ -34,24 +41,20 @@ export default function TasksTab({
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [creatingTask, setCreatingTask] = useState(false);
 
+  // Estado local: apenas tarefas tipo 2 (sem movimentação)
+  // NÃO usa o tasks/setTasks do pai para não sobrescrever as tarefas vinculadas a movimentações
+  const [tasks, setTasks] = useState([]);
+
   // Hook para visibilidade de urgências
   const { URGENCIES, urgencyConfig, shouldShowUrgency } = useUrgencyVisibility(selectedUrgency);
 
-  const parseLocalDate = (dateValue) => {
-    if (!dateValue) return null;
-    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-      return new Date(`${dateValue}T00:00:00`);
-    }
-    return new Date(dateValue);
-  };
-
-  // Carregar tarefas tipo 2 (movimentacao=NULL) do caso
+  // Carregar tarefas tipo 2 (movimentacao=NULL) do caso — usa estado LOCAL
   const loadCaseTasksType2 = useCallback(async () => {
     if (!caseId) return;
     try {
       setLoading(true);
       const allTasks = await caseTasksService.getTasksByCase(caseId);
-      // Filtra apenas tarefas tipo 2 (sem movimentação)
+      // Filtra apenas tarefas tipo 2 (sem movimentação) → armazena localmente
       const type2Tasks = allTasks.filter(task => !task.movimentacao);
       setTasks(type2Tasks);
       setError(null);
@@ -61,7 +64,7 @@ export default function TasksTab({
     } finally {
       setLoading(false);
     }
-  }, [caseId, setTasks]);
+  }, [caseId]);  // removido setTasks da dependência (é local agora)
 
   // Carregar tarefas ao montar componente
   useEffect(() => {
@@ -80,59 +83,9 @@ export default function TasksTab({
         );
       }
       loadCaseTasksType2();
+      onRefreshTasks(); // sincroniza o pai com todas as tarefas
     },
   });
-
-  const calculateUrgency = (dataVencimento) => {
-    if (!dataVencimento) return 'NORMAL';
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-    
-    const daysRemaining = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
-    
-    if (daysRemaining <= 3) return 'URGENTISSIMO';
-    if (daysRemaining <= 7) return 'URGENTE';
-    return 'NORMAL';
-  };
-
-  const formatDaysRemaining = (dataVencimento) => {
-    if (!dataVencimento) return 'Sem prazo';
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-    
-    const days = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
-    
-    if (days < 0) return `${Math.abs(days)}d atrasada`;
-    if (days === 0) return 'Hoje';
-    if (days === 1) return 'Amanhã';
-    return `${days}d`;
-  };
-
-  const isOverdue = (dataVencimento) => {
-    if (!dataVencimento) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-    return dueDate < today;
-  };
-
-  const isToday = (dataVencimento) => {
-    if (!dataVencimento) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-    return dueDate.getTime() === today.getTime();
-  };
 
   // Abre case em nova janela
   const handleOpenCase = (caseIdParam) => {
@@ -143,7 +96,7 @@ export default function TasksTab({
   const grouped = useMemo(() => {
     const tasksWithUrgency = tasks.map(task => ({
       ...task,
-      calculated_urgency: calculateUrgency(task.data_vencimento),
+      calculated_urgency: getTaskUrgency(task.data_vencimento),
     }));
 
     const groupedTasks = {
@@ -178,11 +131,13 @@ export default function TasksTab({
       const nextStatus = task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA';
       await caseTasksService.patchTask(task.id, { status: nextStatus });
       
+      // Atualiza estado local
       setTasks((prevTasks) =>
         prevTasks.map((t) =>
           t.id === task.id ? { ...t, status: nextStatus } : t
         )
       );
+      onRefreshTasks(); // sincroniza o pai
 
       notifyTaskUpdate({
         type: 'task-updated',
@@ -204,7 +159,9 @@ export default function TasksTab({
     try {
       const newTask = await caseTasksService.createTask(taskData);
       
+      // Adiciona ao estado local e sincroniza o pai
       setTasks(prevTasks => [...prevTasks, newTask]);
+      onRefreshTasks();
       
       // Notificar outros abas
       notifyTaskUpdate({

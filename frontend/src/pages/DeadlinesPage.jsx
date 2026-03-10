@@ -2,6 +2,13 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import caseTasksService from '../services/caseTasksService';
 import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
 import { useUrgencyVisibility } from '../hooks/useUrgencyVisibility';
+import {
+  getTaskUrgency,
+  formatDaysRemaining,
+  isOverdue,
+  isToday,
+  parseLocalDate,
+} from '../utils/taskUrgency';
 import TaskCard from '../components/TaskCard';
 import UrgencySection from '../components/UrgencySection';
 import './DeadlinesPage.css';
@@ -18,14 +25,6 @@ export default function DeadlinesPage() {
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null); // Para rastrear qual filtro está ativo
   const [selectedTaskId, setSelectedTaskId] = useState(null); // Para rastrear qual tarefa está selecionada
-
-  const parseLocalDate = (dateValue) => {
-    if (!dateValue) return null;
-    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-      return new Date(`${dateValue}T00:00:00`);
-    }
-    return new Date(dateValue);
-  };
 
   // Buscar todas as tarefas do sistema
   const fetchAllTasks = useCallback(async () => {
@@ -69,70 +68,6 @@ export default function DeadlinesPage() {
     });
     return unsubscribe;
   }, [fetchAllTasks]);
-
-  /**
-   * Calcula urgência baseado em data de vencimento
-   * Retorna: URGENTISSIMO (0-3d), URGENTE (4-7d), NORMAL (8+d)
-   */
-  const calculateUrgency = (dataVencimento) => {
-    if (!dataVencimento) return 'NORMAL';
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-    
-    const daysRemaining = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
-    
-    if (daysRemaining <= 3) return 'URGENTISSIMO';
-    if (daysRemaining <= 7) return 'URGENTE';
-    return 'NORMAL';
-  };
-
-  /**
-   * Formata dias restantes para exibição
-   */
-  const formatDaysRemaining = (dataVencimento) => {
-    if (!dataVencimento) return 'Sem prazo';
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-    
-    const days = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
-    
-    if (days < 0) return `${Math.abs(days)}d atrasada`;
-    if (days === 0) return 'Hoje';
-    if (days === 1) return 'Amanhã';
-    return `${days}d`;
-  };
-
-  const isOverdue = (dataVencimento) => {
-    if (!dataVencimento) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-
-    return dueDate < today;
-  };
-
-  const isToday = (dataVencimento) => {
-    if (!dataVencimento) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = parseLocalDate(dataVencimento);
-    dueDate.setHours(0, 0, 0, 0);
-
-    return dueDate.getTime() === today.getTime();
-  };
 
   /**
    * Gera URL para navegar até a movimentação e destacar tarefa específica
@@ -179,7 +114,7 @@ export default function DeadlinesPage() {
     // Adiciona urgência calculada a cada tarefa
     const tasksWithUrgency = tasks.map(task => ({
       ...task,
-      calculated_urgency: calculateUrgency(task.data_vencimento),
+      calculated_urgency: getTaskUrgency(task.data_vencimento),
     }));
 
     // Agrupa por urgência
