@@ -44,6 +44,7 @@ class CaseMovementSerializer(serializers.ModelSerializer):
     origem_display = serializers.CharField(source='get_origem_display', read_only=True)
     tasks_count = serializers.SerializerMethodField()
     orgao = serializers.SerializerMethodField()
+    publication_data = serializers.SerializerMethodField()
     prazos = CasePrazoSerializer(many=True, read_only=True)
     
     class Meta:
@@ -63,12 +64,13 @@ class CaseMovementSerializer(serializers.ModelSerializer):
             'origem_display',
             'publicacao_id',
             'orgao',
+            'publication_data',
             'prazos',
             'tasks_count',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at', 'orgao', 'prazos']
+        read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at', 'orgao', 'publication_data', 'prazos']
     
     def get_tasks_count(self, obj):
         """Retorna a quantidade de tarefas vinculadas a esta movimentação"""
@@ -88,6 +90,35 @@ class CaseMovementSerializer(serializers.ModelSerializer):
             except:
                 return None
         return None
+
+    def get_publication_data(self, obj):
+        """Retorna metadados da publicação de origem para renderização do card automático."""
+        if not obj.publicacao_id:
+            return None
+
+        try:
+            from apps.publications.models import Publication
+            publication = Publication.objects.get(id_api=obj.publicacao_id)
+            meio_map = {
+                'D': 'Digital',
+                'F': 'Físico',
+            }
+
+            return {
+                'exists': True,
+                'id_api': publication.id_api,
+                'numero_processo': publication.numero_processo,
+                'data_disponibilizacao': publication.data_disponibilizacao,
+                'orgao': publication.orgao,
+                'meio': publication.meio,
+                'meio_display': meio_map.get((publication.meio or '').upper(), publication.meio or '-'),
+                'texto_completo': publication.texto_completo,
+            }
+        except Exception:
+            return {
+                'exists': False,
+                'id_api': obj.publicacao_id,
+            }
     
     def validate_data(self, value):
         """Validate that data is not in the future"""
