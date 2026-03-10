@@ -1,16 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
-import { formatDate, parseCurrencyValue, formatCurrency } from '../utils/formatters';
+import { formatDate, formatCurrency } from '../utils/formatters';
 import useAutoSave from '../hooks/useAutoSave';
-import casesService from '../services/casesService';
-import contactsService from '../services/contactsService';
-import casePartiesService from '../services/casePartiesService';
-import publicationsService from '../services/publicationsService';
-import { notifyPublicationSync } from '../services/publicationSync';
-import caseMovementsService from '../services/caseMovementsService';
-import caseTasksService from '../services/caseTasksService';
-import financialService from '../services/financialService';
 import systemSettingsService from '../services/systemSettingsService';
 import Toast from '../components/common/Toast';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -24,6 +16,16 @@ import {
   PublicacoesTab,
   TasksTab,
 } from '../components/CaseTabs';
+
+// Custom hooks para separação de responsabilidades
+import { useModalsAndNotifications } from '../hooks/useModalsAndNotifications';
+import { usePageNavigation } from '../hooks/usePageNavigation';
+import { useCaseCore } from '../hooks/useCaseCore';
+import { usePartyManagement } from '../hooks/usePartyManagement';
+import { useMovementsAndTasks } from '../hooks/useMovementsAndTasks';
+import { usePublicationsForCase } from '../hooks/usePublicationsForCase';
+import { useFinancialData } from '../hooks/useFinancialData';
+
 import './CaseDetailPage.css';
 
 /**
@@ -31,6 +33,15 @@ import './CaseDetailPage.css';
  * 
  * Abre em nova aba do navegador, aproveitando toda largura da tela
  * sem sidebar. Permite edição inline de informações do processo.
+ * 
+ * Modularizado com 7 custom hooks:
+ * - useCaseCore: Dados e CRUD do caso
+ * - usePartyManagement: Partes do processo
+ * - useMovementsAndTasks: Movimentações e tarefas
+ * - useFinancialData: Dados financeiros
+ * - usePublicationsForCase: Publicações
+ * - useModalsAndNotifications: Modais e notificações (Toast)
+ * - usePageNavigation: Navegação de abas e URL params
  */
 function CaseDetailPage() {
   const { id } = useParams();
@@ -40,150 +51,74 @@ function CaseDetailPage() {
   const linkAction = new URLSearchParams(location.search).get('action');
   const linkContactId = parseInt(new URLSearchParams(location.search).get('contactId') || '', 10);
 
-  const getRoleDisplay = (role) => {
-    const labels = {
-      AUTOR: 'Autor/Requerente',
-      REU: 'Réu/Requerido',
-      TESTEMUNHA: 'Testemunha',
-      PERITO: 'Perito',
-      TERCEIRO: 'Terceiro Interessado',
-      CLIENTE: 'Cliente/Representado',
-    };
-    return labels[role] || role;
-  };
-
-  // State
-  const [caseData, setCaseData] = useState(null);
-  const [formData, setFormData] = useState({});
-  const [movimentacoes, setMovimentacoes] = useState([]);
-  const [documentos, setDocumentos] = useState([]);
-  const [publicacoes, setPublicacoes] = useState([]);
-  const [contacts, setContacts] = useState([]);
-  const [isEditing, setIsEditing] = useState(!id); // New case = editing mode
-  const [loading, setLoading] = useState(!!id); // Only load if has id
-  const [saving, setSaving] = useState(false);
-  const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
-  const [loadingTasks, setLoadingTasks] = useState(false);
-  const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
-  const [activeSection, setActiveSection] = useState('info'); // info, parties, movimentacoes, documentos, tasks
-  const [highlightedMovimentacaoId, setHighlightedMovimentacaoId] = useState(null);
-  const [highlightedTaskId, setHighlightedTaskId] = useState(null);
-  const [toast, setToast] = useState(null);
+  // System settings
   const [systemSettings, setSystemSettings] = useState(null);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [showSelectContactModal, setShowSelectContactModal] = useState(false);
-  const [sourcePublication, setSourcePublication] = useState(null);
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [deletePublicationToo, setDeletePublicationToo] = useState(false);
+
+  /**
+   * Hooks de negócio - cada um responsável por um domínio
+   */
   
-  // Parties state
-  const [parties, setParties] = useState([]);
-  const [loadingParties, setLoadingParties] = useState(false);
-  const [showAddPartyModal, setShowAddPartyModal] = useState(false);
-  const [selectedContact, setSelectedContact] = useState(null);
-  const [editingParty, setEditingParty] = useState(null);
-  const [editingContactId, setEditingContactId] = useState(null);
-  const [editingPartyFormData, setEditingPartyFormData] = useState({
-    role: 'AUTOR',
-    is_client: false,
-    observacoes: '',
-  });
-  const [partyFormData, setPartyFormData] = useState({
-    role: 'AUTOR',
-    is_client: false,
-    observacoes: '',
-  });
+  // Modals e notificações (base)
+  const modalsNotif = useModalsAndNotifications();
 
-  // Movimentações state
-  const [tasks, setTasks] = useState([]);
+  // Navegação de páginas (base)
+  const navigation = usePageNavigation(id);
 
+  // Case core data
+  const caseCore = useCaseCore(
+    id,
+    publicationId,
+    systemSettings,
+    modalsNotif.showToast,
+    handleCaseCreated,
+    handleCaseDeleted,
+  );
 
+  // Party management
+  const parties = usePartyManagement(
+    id,
+    modalsNotif.showToast,
+    []
+  );
 
-  // Financeiro state
-  const [recebimentos, setRecebimentos] = useState([]);
-  const [despesas, setDespesas] = useState([]);
-  const [participacaoTipo, setParticipacaoTipo] = useState(null);
-  const [participacaoPercentual, setParticipacaoPercentual] = useState('');
-  const [participacaoValorFixo, setParticipacaoValorFixo] = useState('');
-  const [pagaMedianteGanho, setPagaMedianteGanho] = useState(false);
-  const [recebimentoForm, setRecebimentoForm] = useState({
-    data: new Date().toISOString().split('T')[0],
-    descricao: '',
-    valor: ''
-  });
-  const [despesaForm, setDespesaForm] = useState({
-    data: new Date().toISOString().split('T')[0],
-    descricao: '',
-    valor: ''
-  });
+  // Movements and tasks
+  const movements = useMovementsAndTasks(
+    id,
+    systemSettings,
+    modalsNotif.showToast
+  );
 
-  // Tribunal options
-  const tribunalOptions = [
-    { value: 'TJSP', label: 'TJSP - Tribunal de Justiça de São Paulo' },
-    { value: 'TJRJ', label: 'TJRJ - Tribunal de Justiça do Rio de Janeiro' },
-    { value: 'TJMG', label: 'TJMG - Tribunal de Justiça de Minas Gerais' },
-    { value: 'TRF1', label: 'TRF1 - Tribunal Regional Federal da 1ª Região' },
-    { value: 'TRF2', label: 'TRF2 - Tribunal Regional Federal da 2ª Região' },
-    { value: 'TRF3', label: 'TRF3 - Tribunal Regional Federal da 3ª Região' },
-    { value: 'TRT2', label: 'TRT2 - Tribunal Regional do Trabalho da 2ª Região' },
-    { value: 'TRT15', label: 'TRT15 - Tribunal Regional do Trabalho da 15ª Região' },
-    { value: 'STJ', label: 'STJ - Superior Tribunal de Justiça' },
-    { value: 'STF', label: 'STF - Supremo Tribunal Federal' },
-    { value: 'TST', label: 'TST - Tribunal Superior do Trabalho' },
-  ];
+  // Publications
+  const publications = usePublicationsForCase(
+    id,
+    systemSettings,
+    modalsNotif.showToast
+  );
 
-  // Status options
-  const statusOptions = [
-    { value: 'ATIVO', label: 'Ativo' },
-    { value: 'INATIVO', label: 'Inativo' },
-    { value: 'SUSPENSO', label: 'Suspenso' },
-    { value: 'ARQUIVADO', label: 'Arquivado' },
-    { value: 'ENCERRADO', label: 'Encerrado' },
-  ];
+  // Financial data
+  const financial = useFinancialData(
+    id,
+    caseCore.formData,
+    caseCore.setFormData,
+    navigation.activeSection === 'financeiro',
+    caseCore.saving,
+    modalsNotif.showToast,
+    handleSaveFinancialData,
+  );
 
-  // Tipo de ação options
-  const tipoAcaoOptions = [
-    { value: '', label: 'Selecione...' },
-    { value: 'CIVEL', label: 'Cível' },
-    { value: 'CRIMINAL', label: 'Criminal' },
-    { value: 'TRABALHISTA', label: 'Trabalhista' },
-    { value: 'TRIBUTARIA', label: 'Tributária' },
-    { value: 'FAMILIA', label: 'Família' },
-    { value: 'CONSUMIDOR', label: 'Consumidor' },
-    { value: 'OUTROS', label: 'Outros' },
-  ];
-
-  /**
-   * Show toast message
-   */
-  const showToast = useCallback((message, type = 'info', duration = 3000) => {
-    setToast({ message, type, duration });
-    setTimeout(() => setToast(null), duration);
-  }, []);
-
-  /**
-   * Load case details
-   */
-  const loadCaseData = useCallback(async () => {
-    // Skip loading if creating new case
-    if (!id) {
-      setLoading(false);
-      return;
+  // Auto-save financial data (debounce 800ms + só campos alterados)
+  const { isSaving: autoSavingFinancial } = useAutoSave(
+    financial.buildFinancialPayload(),
+    async (changedFields) => {
+      const { default: casesService } = await import('../services/casesService');
+      await casesService.update(id, changedFields);
+    },
+    {
+      delay: 800,
+      enabled: !!(id && navigation.activeSection === 'financeiro' && !caseCore.saving),
+      getChangedFields: financial.getChangedFinancialFields,
     }
-
-    try {
-      setLoading(true);
-      const data = await casesService.getById(id);
-      setCaseData(data);
-      setFormData(data);
-
-    } catch (error) {
-      console.error('Error loading case:', error);
-      showToast('Erro ao carregar processo', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, showToast]);
+  );
 
   /**
    * Load system settings on mount
@@ -196,421 +131,203 @@ function CaseDetailPage() {
         console.log('⚙️ System settings carregadas:', settings);
       } catch (error) {
         console.error('Erro ao carregar system settings:', error);
-        // Continuar com padrões mesmo se erro (settings é opcional)
       }
     };
     
     loadSettings();
   }, []);
 
-  useEffect(() => {
-    loadCaseData();
-  }, [loadCaseData]);
-
   /**
-   * Detecta query params para navegação automática a seção, movimento e tarefa
-   * Exemplos: ?tab=movements&focusMovement=123&focusTask=456
-   * Instante A (0-5s): ambos movimento + tarefa com destaque azul
-   * Instante B (5s+): apenas tarefa mantém destaque
+   * Detecta link action para vincular contato ao caso
    */
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    const focusMovement = params.get('focusMovement');
-    const focusTask = params.get('focusTask');
-
-    if (tab === 'movements') {
-      setActiveSection('movimentacoes');
-    } else if (tab === 'parties') {
-      setActiveSection('parties');
-    } else if (tab === 'info') {
-      setActiveSection('info');
-    }
-
-    if (focusMovement) {
-      setHighlightedMovimentacaoId(parseInt(focusMovement, 10));
-    }
-
-    if (focusTask) {
-      setHighlightedTaskId(parseInt(focusTask, 10));
-    }
-  }, [location.search]);
-
-  const clearLinkQueryParams = useCallback(() => {
-    const params = new URLSearchParams(location.search);
-    params.delete('action');
-    params.delete('contactId');
-
-    const nextQuery = params.toString();
-    const nextUrl = nextQuery ? `${location.pathname}?${nextQuery}` : location.pathname;
-    navigate(nextUrl, { replace: true });
-  }, [location.pathname, location.search, navigate]);
-
-  useEffect(() => {
-    const loadPublicationPrefill = async () => {
-      if (id || !publicationId) return;
-
-      try {
-        const result = await publicationsService.getPublicationById(publicationId);
-        const publication = result?.publication;
-        if (!publication) return;
-        setSourcePublication(publication);
-
-        setFormData((prev) => {
-          return {
-            ...prev,
-            numero_processo: prev.numero_processo || publication.numero_processo || '',
-            tribunal: prev.tribunal || publication.tribunal || '',
-            vara: prev.vara || publication.orgao || '',
-            // Dados da origem da publicação (read-only no form - não vão para observacoes)
-            publicacao_origem: publication.id,
-            publicacao_origem_data: publication.data_disponibilizacao,
-            publicacao_origem_tipo: publication.tipo_comunicacao,
-          };
-        });
-      } catch (error) {
-        console.error('Error loading publication prefill:', error);
-        showToast('Não foi possível carregar os dados da publicação para pré-preenchimento', 'warning');
-      }
-    };
-
-    loadPublicationPrefill();
-  }, [id, publicationId, showToast]);
-
-  // Atualizar título da aba do navegador
-  useEffect(() => {
-    if (caseData?.numero_processo) {
-      document.title = `Proc.: ${caseData.numero_processo_formatted || caseData.numero_processo}`;
-    } else if (!id) {
-      document.title = 'Novo Processo - Sistema Jurídico';
-    }
-    
-    // Restaurar título original ao desmontar
-    return () => {
-      document.title = 'Sistema Jurídico';
-    };
-  }, [caseData, id]);
-
-  // Carregar contatos quando entrar em modo de edição
-  const loadContacts = useCallback(async () => {
-    try {
-      const data = await contactsService.getAllContacts();
-      setContacts(data);
-    } catch (error) {
-      console.error('Error loading contacts:', error);
-      showToast('Erro ao carregar contatos', 'error');
-    }
-  }, [showToast]);
-
-  useEffect(() => {
-    if (isEditing && contacts.length === 0) {
-      loadContacts();
-    }
-  }, [isEditing, contacts.length, loadContacts]);
-
   useEffect(() => {
     if (!id || linkAction !== 'link' || !Number.isInteger(linkContactId) || linkContactId <= 0) {
       return;
     }
 
-    if (activeSection !== 'parties') {
-      setActiveSection('parties');
-      return;
-    }
-
-    if (contacts.length === 0) {
-      loadContacts();
-      return;
-    }
-
-    const alreadyLinked = parties.some((party) => party.contact === linkContactId);
-    if (alreadyLinked) {
-      showToast('Contato já está vinculado a este processo.', 'warning');
-      clearLinkQueryParams();
-      return;
-    }
-
-    const contact = contacts.find((item) => item.id === linkContactId);
-    if (!contact) {
-      showToast('Contato não encontrado para vinculação.', 'error');
-      clearLinkQueryParams();
-      return;
-    }
-
-    setSelectedContact(contact);
-    setShowAddPartyModal(true);
-    clearLinkQueryParams();
-  }, [
-    id,
-    linkAction,
-    linkContactId,
-    activeSection,
-    contacts,
-    parties,
-    loadContacts,
-    showToast,
-    clearLinkQueryParams,
-  ]);
-
-  /**
-   * Handle contact created - reload contacts and select the new one
-   */
-  const handleContactCreated = async () => {
-    await loadContacts();
-    
-    // Only close modal if NOT in parties context
-    // In parties context, onLinkToProcess will handle the flow
-    if (activeSection !== 'parties') {
-      setShowContactModal(false);
-      showToast('Cliente criado com sucesso!', 'success');
-    }
-  };
-
-  /**
-   * Load parties for this case
-   */
-  const loadParties = useCallback(async () => {
-    if (!id) return;
-    
-    setLoadingParties(true);
-    try {
-      const data = await casePartiesService.getPartiesByCase(id);
-      setParties(data);
-    } catch (error) {
-      console.error('Error loading parties:', error);
-      showToast('Erro ao carregar partes do processo', 'error');
-    } finally {
-      setLoadingParties(false);
-    }
-  }, [id, showToast]);
-
-  /**
-   * Load movimentacoes for this case
-   */
-  const loadMovimentacoes = useCallback(async () => {
-    if (!id) return;
-    
-    setLoadingMovimentacoes(true);
-    try {
-      const data = await caseMovementsService.getMovementsByCase(id);
-      setMovimentacoes(data);
-    } catch (error) {
-      console.error('Error loading movimentacoes:', error);
-      showToast('Erro ao carregar movimentações', 'error');
-    } finally {
-      setLoadingMovimentacoes(false);
-    }
-  }, [id, showToast]);
-
-  useEffect(() => {
-    // Verificar setting antes de carregar
-    const shouldAutoLoad = systemSettings?.AUTO_LOAD_MOVEMENTS_ON_CASE !== false;
-    
-    if (id && shouldAutoLoad) {
-      loadMovimentacoes();
-    }
-  }, [id, loadMovimentacoes, systemSettings]);
-
-  useEffect(() => {
-    if (activeSection !== 'info' && isEditing) {
-      setIsEditing(false);
-    }
-  }, [activeSection, isEditing]);
-
-  /**
-   * Update deadline (prazo) status - mark as completed or not
-   */
-  const handleUpdateDeadline = async (deadline) => {
-    try {
-      await caseMovementsService.updateMovement(deadline.id, {
-        completed: deadline.completed,
-      });
-      showToast(
-        deadline.completed ? 'Prazo marcado como resolvido' : 'Prazo marcado como não resolvido',
-        'success'
-      );
-    } catch (error) {
-      console.error('Error updating deadline:', error);
-      showToast('Erro ao atualizar prazo', 'error');
-    }
-  };
-
-  /**
-   * Load publications linked to this case
-   */
-  const loadPublicacoes = useCallback(async () => {
-    if (!id) return;
-    
-    setLoadingPublicacoes(true);
-    try {
-      const data = await publicationsService.getPublicationsByCase(id);
-      setPublicacoes(data);
-    } catch (error) {
-      console.error('Error loading publications:', error);
-      showToast('Erro ao carregar publicações', 'error');
-    } finally {
-      setLoadingPublicacoes(false);
-    }
-  }, [id, showToast]);
-
-  useEffect(() => {
-    // Verificar setting antes de carregar
-    const shouldAutoLoad = systemSettings?.AUTO_LOAD_PUBLICATIONS_ON_CASE !== false;
-    
-    if (id && shouldAutoLoad) {
-      loadPublicacoes();
-    }
-  }, [id, loadPublicacoes, systemSettings]);
-
-  /**
-   * Load tasks linked to this case
-   */
-  const loadTasks = useCallback(async () => {
-    if (!id) return;
-
-    setLoadingTasks(true);
-    try {
-      const data = await caseTasksService.getTasksByCase(id);
-      setTasks(data);
-    } catch (error) {
-      console.error('Error loading tasks:', error);
-      showToast('Erro ao carregar tarefas', 'error');
-    } finally {
-      setLoadingTasks(false);
-    }
-  }, [id, showToast]);
-
-  useEffect(() => {
-    const shouldAutoLoad = systemSettings?.AUTO_LOAD_TASKS_ON_CASE !== false;
-
-    if (id && shouldAutoLoad) {
-      loadTasks();
-    }
-  }, [id, loadTasks, systemSettings]);
-
-  /**
-   * Load parties on mount for summary display
-   */
-  useEffect(() => {
-    // Verificar setting antes de carregar
-    const shouldAutoLoad = systemSettings?.AUTO_LOAD_PARTIES_ON_CASE !== false;
-    
-    if (shouldAutoLoad) {
-      loadParties();
-    }
-  }, [loadParties, systemSettings]);
-
-  /**
-   * Load parties when entering parties section (if not already loaded)
-   */
-  useEffect(() => {
-    // Reload parties when switching to parties tab (in case data was updated elsewhere)
-    if (activeSection === 'parties') {
-      loadParties();
-    }
-  }, [activeSection, loadParties]);
-
-  /**
-   * Handle opening contact selection modal
-   */
-  const handleOpenContactSelection = () => {
-    setShowSelectContactModal(true);
-  };
-
-  const handleCreateTask = async (taskPayload) => {
-    try {
-      await caseTasksService.createTask(taskPayload);
-      await loadTasks();
-      showToast('Tarefa criada com sucesso', 'success');
-    } catch (error) {
-      console.error('Error creating task:', error);
-      showToast('Erro ao criar tarefa', 'error');
-    }
-  };
-
-  const handleUpdateTaskStatus = async (taskId, nextStatus) => {
-    try {
-      await caseTasksService.patchTask(taskId, { status: nextStatus });
-      await loadTasks();
-      showToast('Status da tarefa atualizado', 'success');
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      showToast('Erro ao atualizar tarefa', 'error');
-    }
-  };
-
-  const handleDeleteTask = async (taskId) => {
-    if (!confirm('Deseja excluir esta tarefa?')) return;
-
-    try {
-      await caseTasksService.deleteTask(taskId);
-      await loadTasks();
-      showToast('Tarefa excluída', 'success');
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      showToast('Erro ao excluir tarefa', 'error');
-    }
-  };
-
-  const handleOpenLinkedMovimentacao = (movimentacaoId) => {
-    if (!movimentacaoId) return;
-
-    setActiveSection('movimentacoes');
-    setHighlightedMovimentacaoId(Number(movimentacaoId));
-
-    setTimeout(() => {
-      setHighlightedMovimentacaoId(null);
-    }, 3000);
-  };
-
-  const handleOpenLatestMovimentacao = () => {
-    setActiveSection('movimentacoes');
-
-    if (!movimentacoes || movimentacoes.length === 0) {
-      return;
-    }
-
-    const latestMov = [...movimentacoes].sort((a, b) => {
-      const dateA = new Date(a.data);
-      const dateB = new Date(b.data);
-
-      if (dateB.getTime() !== dateA.getTime()) {
-        return dateB - dateA;
+    const runLinkFlow = async () => {
+      if (navigation.activeSection !== 'parties') {
+        navigation.setActiveSection('parties');
+        return;
       }
 
-      return (b.id || 0) - (a.id || 0);
-    })[0];
+      if (modalsNotif.contacts.length === 0) {
+        await modalsNotif.loadContacts();
+        return;
+      }
 
-    if (!latestMov?.id) {
-      return;
+      const alreadyLinked = parties.parties.some((party) => party.contact === linkContactId);
+      if (alreadyLinked) {
+        modalsNotif.showToast('Contato já está vinculado a este processo.', 'warning');
+        navigation.clearLinkQueryParams();
+        return;
+      }
+
+      const contact = modalsNotif.contacts.find((item) => item.id === linkContactId);
+      if (!contact) {
+        modalsNotif.showToast('Contato não encontrado para vinculação.', 'error');
+        navigation.clearLinkQueryParams();
+        return;
+      }
+
+      parties.setSelectedContact(contact);
+      parties.setShowAddPartyModal(true);
+      navigation.clearLinkQueryParams();
+    };
+
+    runLinkFlow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, linkAction, linkContactId]);
+
+  /**
+   * Carregar partes ao carregar página
+   */
+  useEffect(() => {
+    const shouldAutoLoad = systemSettings?.AUTO_LOAD_PARTIES_ON_CASE !== false;
+    
+    if (shouldAutoLoad && parties.loadParties) {
+      parties.loadParties();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [systemSettings]);
 
-    setHighlightedMovimentacaoId(Number(latestMov.id));
+  /**
+   * Recarregar partes quando trocar de aba
+   */
+  useEffect(() => {
+    if (navigation.activeSection === 'parties' && parties.loadParties) {
+      parties.loadParties();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation.activeSection]);
 
-    setTimeout(() => {
-      setHighlightedMovimentacaoId(null);
-    }, 3000);
+  /**
+   * Callback quando caso é criado
+   */
+  const handleCaseCreated = (caseId) => {
+    const currentParams = new URLSearchParams(location.search);
+    currentParams.delete('pub_id');
+    currentParams.delete('action');
+    currentParams.delete('contactId');
+    currentParams.set('tab', navigation.activeSection || 'info');
+    const nextQuery = currentParams.toString();
+    const nextUrl = nextQuery ? `/cases/${caseId}?${nextQuery}` : `/cases/${caseId}`;
+    navigate(nextUrl, { replace: true });
   };
 
+  /**
+   * Callback quando caso é deletado
+   */
+  const handleCaseDeleted = () => {
+    setTimeout(() => {
+      window.close();
+    }, 1500);
+  };
+
+  /**
+   * Extensão para salvar caso + parties
+   */
+  const handleSaveCaseWithParties = async () => {
+    try {
+      await caseCore.handleSave(parties.parties, navigation.activeSection);
+    } catch {
+      // Error already handled by hook
+    }
+  };
+
+  /**
+   * Handler para salvar dados financeiros
+   */
+  const handleSaveFinancialData = async () => {
+    try {
+      const { default: casesService } = await import('../services/casesService');
+      const financialData = {
+        valor_causa: financial.parseCurrencyValue(caseCore.formData.valor_causa),
+        participation_type: financial.participacaoTipo,
+        participation_percentage: financial.participacaoTipo === 'percentage' ? parseFloat(financial.participacaoPercentual) || null : null,
+        participation_fixed_value: financial.participacaoTipo === 'fixed' ? financial.parseCurrencyValue(financial.participacaoValorFixo) : null,
+        payment_conditional: financial.pagaMedianteGanho,
+        payment_terms: caseCore.formData.payment_terms || '',
+        attorney_fee_amount: caseCore.formData.attorney_fee_amount ? financial.parseCurrencyValue(caseCore.formData.attorney_fee_amount) : null,
+        attorney_fee_installments: Math.max(parseInt(caseCore.formData.attorney_fee_installments || 1, 10) || 1, 1),
+        observations_financial_block_a: caseCore.formData.observations_financial_block_a || '',
+        observations_financial_block_b: caseCore.formData.observations_financial_block_b || '',
+      };
+
+      const updated = await casesService.update(id, financialData);
+      caseCore.setFormData(updated);
+      modalsNotif.showToast('Dados financeiros salvos com sucesso!', 'success');
+    } catch {
+      modalsNotif.showToast('Erro ao salvar dados financeiros', 'error');
+    }
+  };
+
+  /**
+   * Handler para abrir seleção de contato
+   */
+  const handleOpenContactSelection = () => {
+    parties.setShowAddPartyModal(false);
+    modalsNotif.setShowSelectContactModal(true);
+  };
+
+  /**
+   * Handler para seleção de contato
+   */
+  const handleSelectContactForParty = (contact) => {
+    parties.setSelectedContact(contact);
+    modalsNotif.setShowSelectContactModal(false);
+    modalsNotif.setShowContactModal(false);
+    parties.setShowAddPartyModal(true);
+  };
+
+  /**
+   * Handler para criar novo contato para parte
+   */
+  const handleCreateNewContactForParty = () => {
+    modalsNotif.setShowSelectContactModal(false);
+    modalsNotif.setShowContactModal(true);
+  };
+
+  /**
+   * Handler para salvar parte
+   */
+  const handleSaveParty = async () => {
+    await parties.handleSaveParty(parties.selectedContact, modalsNotif.loadContacts);
+  };
+
+  /**
+   * Handler para remover parte
+   */
+  const handleRemoveParty = async (partyId, partyName) => {
+    await parties.handleRemoveParty(partyId, partyName, modalsNotif.loadContacts);
+  };
+
+  /**
+   * Handler para salvar alterações na parte
+   */
+  const handleSavePartyChanges = async () => {
+    await parties.handleSavePartyChanges(modalsNotif.loadContacts);
+  };
+
+  /**
+   * Handler para abrir origem movimentação
+   */
   const handleOpenOrigemMovimentacao = () => {
     if (!id) return;
 
-    // Preferir id_api da publicação de origem (quando vier da abertura via pub_id)
-    const sourcePublicationApiId = sourcePublication?.id_api
-      ? Number(sourcePublication.id_api)
+    const sourcePublicationApiId = caseCore.sourcePublication?.id_api
+      ? Number(caseCore.sourcePublication.id_api)
       : null;
 
-    // Fallback: resolver id_api via publicação vinculada ao caso (publicacao_origem_id)
-    const origemPublicationPk = Number(formData?.publicacao_origem || caseData?.publicacao_origem_id || 0);
-    const origemPublication = !sourcePublicationApiId && origemPublicationPk && Array.isArray(publicacoes)
-      ? publicacoes.find((pub) => Number(pub.id) === origemPublicationPk)
+    const origemPublicationPk = Number(caseCore.formData?.publicacao_origem || caseCore.caseData?.publicacao_origem_id || 0);
+    const origemPublication = !sourcePublicationApiId && origemPublicationPk && Array.isArray(publications.publicacoes)
+      ? publications.publicacoes.find((pub) => Number(pub.id) === origemPublicationPk)
       : null;
 
     const origemPublicationApiId = sourcePublicationApiId || Number(origemPublication?.id_api || 0) || null;
 
-    // Se possível, destacar a movimentação originada da publicação
-    const origemMovimentacao = origemPublicationApiId && Array.isArray(movimentacoes)
-      ? movimentacoes.find((mov) => Number(mov.publicacao_id) === Number(origemPublicationApiId))
+    const origemMovimentacao = origemPublicationApiId && Array.isArray(movements.movimentacoes)
+      ? movements.movimentacoes.find((mov) => Number(mov.publicacao_id) === Number(origemPublicationApiId))
       : null;
 
     const targetUrl = origemMovimentacao?.id
@@ -621,738 +338,42 @@ function CaseDetailPage() {
   };
 
   /**
-   * Handler protegido para mudança de aba - previne perda de dados
-   */
-  const handleTabChange = (newTab) => {
-    // Se estiver editando na aba de informações, confirma antes de sair
-    if (isEditing && activeSection === 'info') {
-      const confirmLeave = window.confirm(
-        'Você está editando informações do processo.\n\n' +
-        'Deseja sair sem salvar as alterações?'
-      );
-      if (!confirmLeave) {
-        return; // Cancela mudança de aba
-      }
-      // Reverte mudanças não salvas
-      setFormData(caseData);
-      setIsEditing(false);
-    }
-    setActiveSection(newTab);
-  };
-
-  /**
-   * Handle contact selection from SelectContactModal
-   */
-  const handleSelectContactForParty = (contact) => {
-    setSelectedContact(contact);
-    setShowSelectContactModal(false);
-    setShowContactModal(false);
-    setShowAddPartyModal(true);
-  };
-
-  /**
-   * Handle create new contact from SelectContactModal
-   */
-  const handleCreateNewContactForParty = () => {
-    setShowSelectContactModal(false);
-    setShowContactModal(true);
-  };
-
-  /**
-   * Handle save party (create CaseParty)
-   */
-  const handleSaveParty = async () => {
-    if (!selectedContact) {
-      showToast('Selecione um contato primeiro', 'error');
-      return;
-    }
-
-    try {
-      if (!id) {
-        const draftId = `draft-${Date.now()}-${selectedContact.id}`;
-        const draftParty = {
-          id: draftId,
-          contact: selectedContact.id,
-          contact_name: selectedContact.name,
-          contact_person_type: selectedContact.person_type,
-          contact_document: selectedContact.document_number,
-          contact_phone: selectedContact.phone,
-          contact_email: selectedContact.email,
-          role: partyFormData.role,
-          role_display: getRoleDisplay(partyFormData.role),
-          is_client: partyFormData.is_client,
-          observacoes: partyFormData.observacoes,
-          is_draft: true,
-        };
-
-        setParties((prev) => {
-          const withoutSameContact = prev.filter((p) => p.contact !== selectedContact.id);
-          if (draftParty.is_client) {
-            return [...withoutSameContact.map((p) => ({ ...p, is_client: false })), draftParty];
-          }
-          return [...withoutSameContact, draftParty];
-        });
-
-        showToast('Parte adicionada ao rascunho do processo', 'success');
-        handleCloseAddPartyModal();
-        return;
-      }
-
-      await casePartiesService.createParty({
-        case: parseInt(id),
-        contact: selectedContact.id,
-        role: partyFormData.role,
-        is_client: partyFormData.is_client,
-        observacoes: partyFormData.observacoes,
-      });
-
-      showToast('Parte adicionada com sucesso!', 'success');
-      handleCloseAddPartyModal();
-      // Reload both parties and contacts to ensure linked_cases is updated
-      loadParties();
-      loadContacts();
-    } catch (error) {
-      console.error('Error saving party:', error);
-      
-      // Trata erro específico de cliente duplicado
-      if (error.message && error.message.includes('is_client')) {
-        // Extrair a mensagem após "is_client: "
-        const message = error.message.replace('is_client: ', '');
-        try {
-          showToast(message, 'error', 7000);
-        } catch (toastError) {
-          console.error('Error calling showToast:', toastError);
-          alert(message);
-        }
-        // Desmarcar o checkbox de cliente para deixar claro por que falhou
-        setPartyFormData(prev => ({
-          ...prev,
-          is_client: false
-        }));
-      } else {
-        try {
-          showToast('Erro ao adicionar parte', 'error', 7000);
-        } catch (toastError) {
-          console.error('Error calling showToast:', toastError);
-          alert('Erro ao adicionar parte');
-        }
-      }
-    }
-  };
-
-  /**
-   * Handle close add party modal
-   */
-  const handleCloseAddPartyModal = () => {
-    setShowAddPartyModal(false);
-    setSelectedContact(null);
-    setPartyFormData({
-      role: 'AUTOR',
-      is_client: false,
-      observacoes: '',
-    });
-  };
-
-  /**
-   * Handle remove party
-   */
-  const handleRemoveParty = async (partyId, partyName) => {
-    if (!window.confirm(`Remover ${partyName} deste processo?`)) return;
-
-    try {
-      if (!id) {
-        setParties((prev) => prev.filter((party) => party.id !== partyId));
-        showToast('Parte removida do rascunho', 'success');
-        return;
-      }
-
-      await casePartiesService.deleteParty(partyId);
-      showToast('Parte removida do processo', 'success');
-      // Reload both parties and contacts to sync linked_cases
-      loadParties();
-      loadContacts();
-    } catch (error) {
-      console.error('Error removing party:', error);
-      showToast('Erro ao remover parte', 'error');
-    }
-  };
-
-  /**
-   * Handle edit party (papel/role)
-   */
-  const handleEditParty = (party) => {
-    setEditingParty(party);
-    setEditingPartyFormData({
-      role: party.role,
-      is_client: party.is_client,
-      observacoes: party.observacoes || '',
-    });
-  };
-
-  /**
-   * Handle edit contact
-   */
-  const handleEditContact = (contactId) => {
-    setEditingContactId(contactId);
-  };
-
-  /**
-   * Handle contact updated (reloads parties)
-   */
-  const handleContactUpdated = () => {
-    setEditingContactId(null);
-    loadParties();
-    showToast('Dados pessoais atualizados!', 'success');
-  };
-
-  /**
-   * Handle save party changes
-   */
-  const handleSavePartyChanges = async () => {
-    if (!editingParty) return;
-
-    try {
-      if (!id) {
-        setParties((prev) => prev.map((party) => {
-          if (party.id !== editingParty.id) return party;
-          return {
-            ...party,
-            role: editingPartyFormData.role,
-            role_display: getRoleDisplay(editingPartyFormData.role),
-            is_client: editingPartyFormData.is_client,
-            observacoes: editingPartyFormData.observacoes,
-          };
-        }).map((party) => {
-          if (editingPartyFormData.is_client && party.id !== editingParty.id) {
-            return { ...party, is_client: false };
-          }
-          return party;
-        }));
-
-        showToast('Papel da parte atualizado no rascunho!', 'success');
-        setEditingParty(null);
-        return;
-      }
-
-      const payload = {
-        case: editingParty.case,
-        contact: editingParty.contact,
-        role: editingPartyFormData.role,
-        is_client: editingPartyFormData.is_client,
-        observacoes: editingPartyFormData.observacoes,
-      };
-
-      await casePartiesService.updateParty(editingParty.id, payload);
-      showToast('Papel da parte atualizado com sucesso!', 'success');
-      setEditingParty(null);
-      // Reload both parties and contacts to sync linked_cases
-      loadParties();
-      loadContacts();
-    } catch (error) {
-      console.error('Error updating party:', error);
-      
-      // Trata erro específico de cliente duplicado
-      if (error.message && error.message.includes('is_client')) {
-        // Extrair a mensagem após "is_client: "
-        const message = error.message.replace('is_client: ', '');
-        try {
-          showToast(message, 'error', 7000);
-        } catch (toastError) {
-          console.error('Error calling showToast:', toastError);
-          alert(message);
-        }
-        // Desmarcar o checkbox de cliente para evitar confusão
-        setEditingPartyFormData(prev => ({
-          ...prev,
-          is_client: false
-        }));
-      } else {
-        try {
-          showToast('Erro ao atualizar papel da parte', 'error', 7000);
-        } catch (toastError) {
-          console.error('Error calling showToast:', toastError);
-          alert('Erro ao atualizar papel da parte');
-        }
-      }
-    }
-  };
-
-
-
-  /**
-   * Handle input change
-   */
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  /**
-   * Save changes
-   */
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-
-      // Add financial fields from local state to formData
-      const dataToSave = {
-        ...formData,
-        participation_type: participacaoTipo,
-        participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
-        participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
-        payment_conditional: pagaMedianteGanho,
-      };
-
-      // Clean empty values
-      const cleanedData = {};
-      Object.entries(dataToSave).forEach(([key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          cleanedData[key] = value;
-        }
-      });
-
-      if (cleanedData.valor_causa !== undefined) {
-        cleanedData.valor_causa = parseCurrencyValue(cleanedData.valor_causa);
-      }
-
-      if (!id) {
-        const created = await casesService.create(cleanedData);
-
-        let failedParties = 0;
-        for (const party of parties) {
-          try {
-            await casePartiesService.createParty({
-              case: created.id,
-              contact: party.contact,
-              role: party.role,
-              is_client: !!party.is_client,
-              observacoes: party.observacoes || '',
-            });
-          } catch (partyError) {
-            failedParties += 1;
-            console.error('Error creating party after case creation:', partyError);
-          }
-        }
-
-        const pubId = sourcePublication?.id_api || publicationId;
-        const shouldCreateMovement = systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
-
-        if (pubId) {
-          try {
-            const integrationResult = await publicationsService.integratePublication(pubId, {
-              caseId: created.id,
-              // Padrão seguro: cria movimentação automaticamente, exceto se setting vier explicitamente false
-              createMovement: shouldCreateMovement,
-            });
-
-            // Fallback de segurança: se o backend não criar na integração, tenta endpoint dedicado.
-            if (shouldCreateMovement && integrationResult?.movement_created !== true) {
-              try {
-                await publicationsService.createMovementFromPublication(pubId);
-              } catch (fallbackError) {
-                console.warn('Fallback de criação de movimentação falhou:', fallbackError);
-              }
-            }
-
-            notifyPublicationSync({
-              type: 'PUBLICATION_INTEGRATED',
-              idApi: Number(pubId),
-              caseId: created.id,
-            });
-          } catch (integrationError) {
-            console.error('Error integrating source publication:', integrationError);
-            showToast('Processo criado, mas houve falha ao vincular a publicação automaticamente', 'warning');
-          }
-        }
-
-        setCaseData(created);
-        setFormData(created);
-        setIsEditing(false);
-
-        // Após criar, troca a rota para /cases/:id no mesmo tab para habilitar carregamentos dependentes de ID.
-        const currentParams = new URLSearchParams(location.search);
-        currentParams.delete('pub_id');
-        currentParams.delete('action');
-        currentParams.delete('contactId');
-        currentParams.set('tab', activeSection || 'info');
-        const nextQuery = currentParams.toString();
-        const nextUrl = nextQuery ? `/cases/${created.id}?${nextQuery}` : `/cases/${created.id}`;
-        navigate(nextUrl, { replace: true });
-
-        if (failedParties > 0) {
-          showToast(`Processo criado! ${failedParties} parte(s) não foram vinculadas`, 'warning');
-        } else {
-          showToast('Processo criado com sucesso!', 'success');
-        }
-
-        // Mantém a aba atual após criar processo (não abre nova aba)
-        return;
-      }
-
-      const updated = await casesService.update(id, cleanedData);
-      setCaseData(updated);
-      setFormData(updated);
-      setIsEditing(false);
-      showToast('Processo atualizado com sucesso!', 'success');
-    } catch (error) {
-      console.error('Error updating case:', error);
-      showToast('Erro ao atualizar processo', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  /**
-   * Cancel editing
-   */
-  const handleCancel = () => {
-    setFormData(caseData);
-    setIsEditing(false);
-  };
-
-  /**
-   * Delete case
+   * Handler para deletar caso
    */
   const handleDelete = async () => {
-    setShowDeleteConfirmModal(true);
+    modalsNotif.setShowDeleteConfirmModal(true);
   };
 
   const handleConfirmDelete = async () => {
-    setShowDeleteConfirmModal(false);
+    modalsNotif.setShowDeleteConfirmModal(false);
     
     try {
-      await casesService.delete(id, 'Deleted via UI', deletePublicationToo);
-      showToast('Processo deletado com sucesso!', 'success');
-      setTimeout(() => {
-        window.close(); // Fecha a aba
-      }, 1500);
-    } catch (error) {
-      console.error('Error deleting case:', error);
-      showToast('Erro ao deletar processo', 'error');
+      await caseCore.handleDelete(modalsNotif.deletePublicationToo);
     } finally {
-      setDeletePublicationToo(false);
+      modalsNotif.setDeletePublicationToo(false);
     }
   };
 
   const handleCancelDelete = () => {
-    setShowDeleteConfirmModal(false);
-    setDeletePublicationToo(false);
-  };
-
-
-  /**
-   * Delete movimentacao
-   */
-  const handleDeleteMovimentacao = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir esta movimentação?')) {
-      return;
-    }
-    
-    try {
-      await caseMovementsService.deleteMovement(id);
-      showToast('Movimentação excluída com sucesso!', 'success');
-      
-      // Reload movimentacoes and case data (to update resumo)
-      await loadMovimentacoes();
-      await loadCaseData();
-    } catch (error) {
-      console.error('Error deleting movimentacao:', error);
-      showToast('Erro ao excluir movimentação', 'error');
-    }
+    modalsNotif.setShowDeleteConfirmModal(false);
+    modalsNotif.setDeletePublicationToo(false);
   };
 
   /**
-   * Create movement from publication (manual mode)
+   * Handler para mudança de aba (protegido)
    */
-  const handleCreateMovementFromPublication = async (publicationIdApi) => {
-    try {
-      const result = await publicationsService.createMovementFromPublication(publicationIdApi);
-      
-      if (result.success) {
-        showToast('Movimentação criada com sucesso!', 'success');
-        
-        // Reload movimentacoes
-        await loadMovimentacoes();
-      } else {
-        showToast(result.error || 'Erro ao criar movimentação', 'error');
-      }
-    } catch (error) {
-      console.error('Error creating movement from publication:', error);
-      showToast('Erro ao criar movimentação', 'error');
-    }
+  const handleTabChange = (newTab) => {
+    navigation.handleTabChange(
+      newTab,
+      caseCore.isEditing,
+      caseCore.caseData,
+      caseCore.formData,
+      caseCore.setIsEditing,
+      caseCore.setFormData
+    );
   };
 
-
-  const formatCurrencyInput = (value) => {
-    const numeric = parseCurrencyValue(value);
-    return numeric.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
-  // Sync financial fields from backend to local state
-  useEffect(() => {
-    if (!formData || !id) return;
-
-    // Sync participation fields
-    setParticipacaoTipo(formData.participation_type ?? null);
-    if (formData.participation_percentage !== null && formData.participation_percentage !== undefined) {
-      setParticipacaoPercentual(formData.participation_percentage.toString());
-    } else {
-      setParticipacaoPercentual('');
-    }
-    if (formData.participation_fixed_value !== null && formData.participation_fixed_value !== undefined) {
-      setParticipacaoValorFixo(formatCurrencyInput(formData.participation_fixed_value));
-    } else {
-      setParticipacaoValorFixo('');
-    }
-    if (formData.payment_conditional !== undefined) {
-      setPagaMedianteGanho(formData.payment_conditional);
-    }
-  }, [formData, id]);
-
-  // ========== FINANCEIRO FUNCTIONS ==========
-
-  /**
-   * Load payments (recebimentos) from backend
-   */
-  const loadPayments = useCallback(async () => {
-    if (!id) return;
-    
-    try {
-      const data = await financialService.getPaymentsByCase(id);
-      setRecebimentos(data);
-    } catch (error) {
-      console.error('Error loading payments:', error);
-      showToast('Erro ao carregar recebimentos', 'error');
-    }
-  }, [id, showToast]);
-
-  /**
-   * Load expenses (despesas) from backend
-   */
-  const loadExpenses = useCallback(async () => {
-    if (!id) return;
-    
-    try {
-      const data = await financialService.getExpensesByCase(id);
-      setDespesas(data);
-    } catch (error) {
-      console.error('Error loading expenses:', error);
-      showToast('Erro ao carregar despesas', 'error');
-    }
-  }, [id, showToast]);
-
-  // Load payments and expenses when entering financeiro section
-  useEffect(() => {
-    if (activeSection === 'financeiro' && id) {
-      loadPayments();
-      loadExpenses();
-    }
-  }, [activeSection, id, loadPayments, loadExpenses]);
-
-  // Save financial fields to formData when any changes
-  useEffect(() => {
-    if (!id) return;
-
-    setFormData(prev => ({
-      ...prev,
-      participation_type: participacaoTipo,
-      participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
-      participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
-      payment_conditional: pagaMedianteGanho,
-    }));
-  }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho]);
-
-  const buildFinancialPayload = useCallback(() => ({
-    valor_causa: parseCurrencyValue(formData.valor_causa),
-    participation_type: participacaoTipo,
-    participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
-    participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
-    payment_conditional: pagaMedianteGanho,
-    payment_terms: formData.payment_terms || '',
-    attorney_fee_amount: formData.attorney_fee_amount ? parseCurrencyValue(formData.attorney_fee_amount) : null,
-    attorney_fee_installments: Math.max(parseInt(formData.attorney_fee_installments || 1, 10) || 1, 1),
-    observations_financial_block_a: formData.observations_financial_block_a || '',
-    observations_financial_block_b: formData.observations_financial_block_b || '',
-  }), [
-    formData.valor_causa,
-    formData.payment_terms,
-    formData.attorney_fee_amount,
-    formData.attorney_fee_installments,
-    formData.observations_financial_block_a,
-    formData.observations_financial_block_b,
-    participacaoTipo,
-    participacaoPercentual,
-    participacaoValorFixo,
-    pagaMedianteGanho,
-  ]);
-
-  const getChangedFinancialFields = useCallback((currentData, baseData) => {
-    if (!baseData) return currentData;
-
-    const changed = {};
-    Object.keys(currentData).forEach((key) => {
-      if (currentData[key] !== baseData[key]) {
-        changed[key] = currentData[key];
-      }
-    });
-
-    return changed;
-  }, []);
-
-  // Auto-save financial data using hook (debounce 800ms + save only changed fields)
-  const { isSaving: autoSavingFinancial } = useAutoSave(
-    buildFinancialPayload(),
-    async (changedFields) => {
-      await casesService.update(id, changedFields);
-    },
-    {
-      delay: 800,
-      enabled: !!(id && activeSection === 'financeiro' && !saving),
-      getChangedFields: getChangedFinancialFields,
-    }
-  );
-
-  /**
-   * Handle save financial data
-   */
-  const handleSaveFinancialData = async () => {
-    try {
-      setSaving(true);
-
-      const financialData = {
-        valor_causa: parseCurrencyValue(formData.valor_causa),
-        participation_type: participacaoTipo,
-        participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
-        participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
-        payment_conditional: pagaMedianteGanho,
-        payment_terms: formData.payment_terms || '',
-        attorney_fee_amount: formData.attorney_fee_amount ? parseCurrencyValue(formData.attorney_fee_amount) : null,
-        attorney_fee_installments: Math.max(parseInt(formData.attorney_fee_installments || 1, 10) || 1, 1),
-        observations_financial_block_a: formData.observations_financial_block_a || '',
-        observations_financial_block_b: formData.observations_financial_block_b || '',
-      };
-
-      const updated = await casesService.update(id, financialData);
-      setCaseData(updated);
-      setFormData(updated);
-      lastSavedFinancialDataRef.current = financialData;
-      financialAutoSaveInitializedRef.current = true;
-      showToast('Dados financeiros salvos com sucesso!', 'success');
-    } catch (error) {
-      console.error('Error saving financial data:', error);
-      showToast('Erro ao salvar dados financeiros', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  /**
-   * Handle adicionar recebimento
-   */
-  const handleAdicionarRecebimento = async () => {
-    if (!recebimentoForm.data || !recebimentoForm.descricao || !recebimentoForm.valor) {
-      showToast('Preencha todos os campos do recebimento', 'error');
-      return;
-    }
-
-    const valor = parseFloat(recebimentoForm.valor);
-    if (isNaN(valor) || valor <= 0) {
-      showToast('Valor deve ser um número positivo', 'error');
-      return;
-    }
-
-    try {
-      const paymentData = {
-        case: id,
-        date: recebimentoForm.data,
-        description: recebimentoForm.descricao,
-        value: valor
-      };
-
-      await financialService.createPayment(paymentData);
-      await loadPayments(); // Reload from backend
-      
-      setRecebimentoForm({
-        data: new Date().toISOString().split('T')[0],
-        descricao: '',
-        valor: ''
-      });
-      showToast('Recebimento adicionado', 'success');
-    } catch (error) {
-      console.error('Error creating payment:', error);
-      showToast('Erro ao adicionar recebimento', 'error');
-    }
-  };
-
-  /**
-   * Handle remover recebimento
-   */
-  const handleRemoverRecebimento = async (paymentId) => {
-    try {
-      await financialService.deletePayment(paymentId);
-      await loadPayments(); // Reload from backend
-      showToast('Recebimento removido', 'success');
-    } catch (error) {
-      console.error('Error deleting payment:', error);
-      showToast('Erro ao remover recebimento', 'error');
-    }
-  };
-
-  /**
-   * Handle adicionar despesa
-   */
-  const handleAdicionarDespesa = async () => {
-    if (!despesaForm.data || !despesaForm.descricao || !despesaForm.valor) {
-      showToast('Preencha todos os campos da despesa', 'error');
-      return;
-    }
-
-    const valor = parseFloat(despesaForm.valor);
-    if (isNaN(valor) || valor <= 0) {
-      showToast('Valor deve ser um número positivo', 'error');
-      return;
-    }
-
-    try {
-      const expenseData = {
-        case: id,
-        date: despesaForm.data,
-        description: despesaForm.descricao,
-        value: valor
-      };
-
-      await financialService.createExpense(expenseData);
-      await loadExpenses(); // Reload from backend
-      
-      setDespesaForm({
-        data: new Date().toISOString().split('T')[0],
-        descricao: '',
-        valor: ''
-      });
-      showToast('Despesa adicionada', 'success');
-    } catch (error) {
-      console.error('Error creating expense:', error);
-      showToast('Erro ao adicionar despesa', 'error');
-    }
-  };
-
-  /**
-   * Handle remover despesa
-   */
-  const handleRemoverDespesa = async (expenseId) => {
-    try {
-      await financialService.deleteExpense(expenseId);
-      await loadExpenses(); // Reload from backend
-      showToast('Despesa removida', 'success');
-    } catch (error) {
-      console.error('Error deleting expense:', error);
-      showToast('Erro ao remover despesa', 'error');
-    }
-  };
-
-  if (loading) {
+  if (caseCore.loading) {
     return (
       <div className="case-detail-page">
         <div className="loading-container">
@@ -1363,8 +384,7 @@ function CaseDetailPage() {
     );
   }
 
-  // Mostrar erro só se tem ID mas não carregou dados
-  if (id && !caseData) {
+  if (id && !caseCore.caseData) {
     return (
       <div className="case-detail-page">
         <div className="error-container">
@@ -1377,57 +397,54 @@ function CaseDetailPage() {
 
   return (
     <div className="case-detail-page">
-      {/* Navigation Bar - Fixo no topo */}
+      {/* Navigation Bar */}
       <nav className="case-navbar">
         <div className="case-navbar-content">
-          {/* Tabs */}
           <div className="case-navbar-tabs">
             <button
-              className={`nav-tab ${activeSection === 'info' ? 'active' : ''}`}
+              className={`nav-tab ${navigation.activeSection === 'info' ? 'active' : ''}`}
               onClick={() => handleTabChange('info')}
             >
-              📋 Informações{isEditing && activeSection === 'info' && ' *'}
+              📋 Informações{caseCore.isEditing && navigation.activeSection === 'info' && ' *'}
             </button>
             <button
-              className={`nav-tab ${activeSection === 'parties' ? 'active' : ''}`}
+              className={`nav-tab ${navigation.activeSection === 'parties' ? 'active' : ''}`}
               onClick={() => handleTabChange('parties')}
             >
               👥 Partes
-              {parties.length > 0 && <span className="badge">{parties.length}</span>}
+              {parties.parties.length > 0 && <span className="badge">{parties.parties.length}</span>}
             </button>
             <button
-              className={`nav-tab ${activeSection === 'movimentacoes' ? 'active' : ''}`}
+              className={`nav-tab ${navigation.activeSection === 'movimentacoes' ? 'active' : ''}`}
               onClick={() => handleTabChange('movimentacoes')}
             >
               ⚖️ Movimentações
-              {movimentacoes.length > 0 && <span className="badge">{movimentacoes.length}</span>}
+              {movements.movimentacoes.length > 0 && <span className="badge">{movements.movimentacoes.length}</span>}
             </button>
             <button
-              className={`nav-tab ${activeSection === 'documentos' ? 'active' : ''}`}
+              className={`nav-tab ${navigation.activeSection === 'documentos' ? 'active' : ''}`}
               onClick={() => handleTabChange('documentos')}
             >
               📄 Documentos
-              {documentos.length > 0 && <span className="badge">{documentos.length}</span>}
             </button>
-            {/* Oculta aba Publicações se auto-sync estiver ativo e configuração permitir */}
             {!(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
               <button
-                className={`nav-tab ${activeSection === 'publicacoes' ? 'active' : ''}`}
+                className={`nav-tab ${navigation.activeSection === 'publicacoes' ? 'active' : ''}`}
                 onClick={() => handleTabChange('publicacoes')}
               >
                 📰 Publicações
-                {publicacoes.length > 0 && <span className="badge">{publicacoes.length}</span>}
+                {publications.publicacoes.length > 0 && <span className="badge">{publications.publicacoes.length}</span>}
               </button>
             )}
             <button
-              className={`nav-tab ${activeSection === 'tasks' ? 'active' : ''}`}
+              className={`nav-tab ${navigation.activeSection === 'tasks' ? 'active' : ''}`}
               onClick={() => handleTabChange('tasks')}
             >
               ✅ Tarefas
-              {tasks.length > 0 && <span className="badge">{tasks.length}</span>}
+              {movements.tasks.filter(t => !t.movimentacao).length > 0 && <span className="badge">{movements.tasks.filter(t => !t.movimentacao).length}</span>}
             </button>
             <button
-              className={`nav-tab ${activeSection === 'financeiro' ? 'active' : ''}`}
+              className={`nav-tab ${navigation.activeSection === 'financeiro' ? 'active' : ''}`}
               onClick={() => handleTabChange('financeiro')}
             >
               💰 Financeiro
@@ -1438,173 +455,168 @@ function CaseDetailPage() {
 
       {/* Content */}
       <main className="case-content">
-        {activeSection === 'info' && (
+        {navigation.activeSection === 'info' && (
           <InformacaoTab
             id={id}
-            formData={formData}
-            setFormData={setFormData}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            saving={saving}
-            onSave={handleSave}
-            onCancel={handleCancel}
+            formData={caseCore.formData}
+            setFormData={caseCore.setFormData}
+            isEditing={caseCore.isEditing}
+            setIsEditing={caseCore.setIsEditing}
+            saving={caseCore.saving}
+            onSave={handleSaveCaseWithParties}
+            onCancel={caseCore.handleCancel}
             onDelete={handleDelete}
-            setActiveSection={setActiveSection}
-            onOpenLatestMovimentacao={handleOpenLatestMovimentacao}
+            setActiveSection={navigation.setActiveSection}
+            onOpenLatestMovimentacao={() => {
+              navigation.setActiveSection('movimentacoes');
+              movements.handleOpenLatestMovimentacao();
+            }}
             onOpenOrigemMovimentacao={handleOpenOrigemMovimentacao}
             onAddPartyClick={handleOpenContactSelection}
-            parties={parties}
-            caseData={caseData}
+            parties={parties.parties}
+            caseData={caseCore.caseData}
             formatDate={formatDate}
             formatCurrency={formatCurrency}
-            tribunalOptions={tribunalOptions}
-            statusOptions={statusOptions}
-            tipoAcaoOptions={tipoAcaoOptions}
-            onInputChange={handleInputChange}
+            tribunalOptions={caseCore.tribunalOptions}
+            statusOptions={caseCore.statusOptions}
+            tipoAcaoOptions={caseCore.tipoAcaoOptions}
+            onInputChange={caseCore.handleInputChange}
           />
         )}
 
-        {/* Movimentações Section */}
-        {activeSection === 'movimentacoes' && (
+        {navigation.activeSection === 'movimentacoes' && (
           <MovimentacoesTab 
             id={id}
-            movimentacoes={movimentacoes}
-            numeroProcesso={caseData?.numero_processo}
-            tasks={tasks}
-            highlightedMovimentacaoId={highlightedMovimentacaoId}
-            highlightedTaskId={highlightedTaskId}
+            movimentacoes={movements.movimentacoes}
+            numeroProcesso={caseCore.caseData?.numero_processo}
+            tasks={movements.tasks}
+            highlightedMovimentacaoId={navigation.highlightedMovimentacaoId}
+            highlightedTaskId={navigation.highlightedTaskId}
             formatDate={formatDate}
-            onDelete={handleDeleteMovimentacao}
-            onRefreshTasks={loadTasks}
-            onRefreshMovements={loadMovimentacoes}
+            onDelete={movements.handleDeleteMovimentacao}
+            onRefreshTasks={movements.loadTasks}
+            onRefreshMovements={movements.loadMovimentacoes}
           />
         )}
 
-        {/* Documentos Section */}
-        {activeSection === 'documentos' && (
+        {navigation.activeSection === 'documentos' && (
           <DocumentosTab 
-            documentos={documentos}
-            setDocumentos={setDocumentos}
+            documentos={[]}
+            setDocumentos={() => {}}
           />
         )}
 
-        {/* Publicações Section - Oculta se auto-sync estiver ativo */}
-        {activeSection === 'publicacoes' && !(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
+        {navigation.activeSection === 'publicacoes' && !(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
           <PublicacoesTab
             caseId={id}
-            publicacoes={publicacoes}
-            loading={loadingPublicacoes}
+            publicacoes={publications.publicacoes}
+            loading={publications.loadingPublicacoes}
             systemSettings={systemSettings}
             onVincularPublicacao={(publicacao) => {
-              // TODO: Implementar handler para vincular publicação ao caso
               console.log('Vincular publicação:', publicacao);
             }}
             onDesvincularPublicacao={(publicacaoId) => {
-              // TODO: Implementar handler para desvincular publicação
-              console.log('Desvincular publicação:', publicacaoId);
-              setPublicacoes(prev => prev.filter(p => p.id !== publicacaoId));
+              publications.setPublicacoes(prev => prev.filter(p => p.id !== publicacaoId));
             }}
-            onCreateMovement={handleCreateMovementFromPublication}
-            onRefresh={loadPublicacoes}
+            onCreateMovement={movements.handleCreateMovementFromPublication}
+            onRefresh={publications.loadPublicacoes}
           />
         )}
 
-        {activeSection === 'tasks' && (
+        {navigation.activeSection === 'tasks' && (
           <TasksTab
             caseId={id}
-            caseData={caseData}
-            tasks={tasks}
-            setTasks={setTasks}
+            caseData={caseCore.caseData}
+            tasks={movements.tasks}
+            setTasks={movements.setTasks}
             formatDate={formatDate}
-            onRefreshTasks={loadTasks}
+            onRefreshTasks={movements.loadTasks}
           />
         )}
 
-        {/* Financeiro Section */}
-        {activeSection === 'financeiro' && (
+        {navigation.activeSection === 'financeiro' && (
           <FinanceiroTab
             id={id}
-            formData={formData}
-            setFormData={setFormData}
-            recebimentos={recebimentos}
-            despesas={despesas}
-            participacaoTipo={participacaoTipo}
-            participacaoPercentual={participacaoPercentual}
-            participacaoValorFixo={participacaoValorFixo}
-            pagaMedianteGanho={pagaMedianteGanho}
-            recebimentoForm={recebimentoForm}
-            despesaForm={despesaForm}
-            onInputChange={handleInputChange}
-            setRecebimentoForm={setRecebimentoForm}
-            setDespesaForm={setDespesaForm}
-            setParticipacaoTipo={setParticipacaoTipo}
-            setParticipacaoPercentual={setParticipacaoPercentual}
-            setParticipacaoValorFixo={setParticipacaoValorFixo}
-            setPagaMedianteGanho={setPagaMedianteGanho}
-            onAddRecebimento={handleAdicionarRecebimento}
-            onRemoveRecebimento={handleRemoverRecebimento}
-            onAddDespesa={handleAdicionarDespesa}
-            onRemoveDespesa={handleRemoverDespesa}
+            formData={caseCore.formData}
+            setFormData={caseCore.setFormData}
+            recebimentos={financial.recebimentos}
+            despesas={financial.despesas}
+            participacaoTipo={financial.participacaoTipo}
+            participacaoPercentual={financial.participacaoPercentual}
+            participacaoValorFixo={financial.participacaoValorFixo}
+            pagaMedianteGanho={financial.pagaMedianteGanho}
+            recebimentoForm={financial.recebimentoForm}
+            despesaForm={financial.despesaForm}
+            onInputChange={caseCore.handleInputChange}
+            setRecebimentoForm={financial.setRecebimentoForm}
+            setDespesaForm={financial.setDespesaForm}
+            setParticipacaoTipo={financial.setParticipacaoTipo}
+            setParticipacaoPercentual={financial.setParticipacaoPercentual}
+            setParticipacaoValorFixo={financial.setParticipacaoValorFixo}
+            setPagaMedianteGanho={financial.setPagaMedianteGanho}
+            onAddRecebimento={financial.handleAdicionarRecebimento}
+            onRemoveRecebimento={financial.handleRemoverRecebimento}
+            onAddDespesa={financial.handleAdicionarDespesa}
+            onRemoveDespesa={financial.handleRemoverDespesa}
             autoSavingObservations={autoSavingFinancial}
           />
         )}
 
-        {/* Partes Section */}
-        {activeSection === 'parties' && (
+        {navigation.activeSection === 'parties' && (
           <PartiesTab 
             id={id}
-            parties={parties}
-            loadingParties={loadingParties}
+            parties={parties.parties}
+            loadingParties={parties.loadingParties}
             onAddPartyClick={handleOpenContactSelection}
             onRemoveParty={handleRemoveParty}
-            onEditParty={handleEditParty}
+            onEditParty={parties.handleEditParty}
           />
         )}
       </main>
 
       {/* Modal de Seleção de Contato */}
-      {showSelectContactModal && (
+      {modalsNotif.showSelectContactModal && (
         <SelectContactModal
-          isOpen={showSelectContactModal}
-          onClose={() => setShowSelectContactModal(false)}
+          isOpen={modalsNotif.showSelectContactModal}
+          onClose={() => modalsNotif.setShowSelectContactModal(false)}
           onSelectContact={handleSelectContactForParty}
           onCreateNew={handleCreateNewContactForParty}
-          existingPartyContactIds={parties.map(p => p.contact)}
+          existingPartyContactIds={parties.parties.map(p => p.contact)}
         />
       )}
 
       {/* Modal de Novo Cliente/Parte */}
-      {showContactModal && (
+      {modalsNotif.showContactModal && (
         <ContactDetailModal
           contactId={null}
-          isOpen={showContactModal}
-          onClose={() => setShowContactModal(false)}
-          onContactUpdated={handleContactCreated}
+          isOpen={modalsNotif.showContactModal}
+          onClose={() => modalsNotif.setShowContactModal(false)}
+          onContactUpdated={modalsNotif.handleContactCreated}
           showLinkToProcessButton={false}
           onLinkToProcess={handleSelectContactForParty}
         />
       )}
 
       {/* Modal de Edição de Papel da Parte */}
-      {editingParty && (
-        <div className="modal-overlay" onClick={() => setEditingParty(null)}>
+      {parties.editingParty && (
+        <div className="modal-overlay" onClick={() => parties.setEditingParty(null)}>
           <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Editar Papel da Parte</h2>
-              <button className="modal-close" onClick={() => setEditingParty(null)}>×</button>
+              <button className="modal-close" onClick={() => parties.setEditingParty(null)}>×</button>
             </div>
 
             <div className="modal-body">
               <div className="selected-contact-info">
                 <span className="contact-icon">
-                  {editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
+                  {parties.editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
                 </span>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <strong>{editingParty.contact_name}</strong>
+                    <strong>{parties.editingParty.contact_name}</strong>
                     <button
                       className="btn-edit-contact-link"
-                      onClick={() => handleEditContact(editingParty.contact)}
+                      onClick={() => modalsNotif.setEditingContactId(parties.editingParty.contact)}
                       title="Editar dados pessoais do contato"
                       style={{
                         background: 'none',
@@ -1632,8 +644,8 @@ function CaseDetailPage() {
                       ✏️ Editar dados pessoais
                     </button>
                   </div>
-                  {editingParty.contact_document && (
-                    <span className="contact-doc"> • {editingParty.contact_document}</span>
+                  {parties.editingParty.contact_document && (
+                    <span className="contact-doc"> • {parties.editingParty.contact_document}</span>
                   )}
                 </div>
               </div>
@@ -1641,10 +653,10 @@ function CaseDetailPage() {
               <div className="form-group">
                 <label>Papel no Processo *</label>
                 <select
-                  value={editingPartyFormData.role}
+                  value={parties.editingPartyFormData.role}
                   onChange={(e) => {
                     const newRole = e.target.value;
-                    setEditingPartyFormData(prev => ({
+                    parties.setEditingPartyFormData(prev => ({
                       ...prev,
                       role: newRole,
                     }));
@@ -1663,8 +675,8 @@ function CaseDetailPage() {
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
-                    checked={editingPartyFormData.is_client}
-                    onChange={(e) => setEditingPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
+                    checked={parties.editingPartyFormData.is_client}
+                    onChange={(e) => parties.setEditingPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
                   />
                   <span>É cliente do escritório neste processo</span>
                 </label>
@@ -1673,8 +685,8 @@ function CaseDetailPage() {
               <div className="form-group">
                 <label>Observações</label>
                 <textarea
-                  value={editingPartyFormData.observacoes}
-                  onChange={(e) => setEditingPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  value={parties.editingPartyFormData.observacoes}
+                  onChange={(e) => parties.setEditingPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
                   placeholder="Ex: Cliente pela contraparte, não é nosso cliente..."
                   rows={3}
                 />
@@ -1682,7 +694,7 @@ function CaseDetailPage() {
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setEditingParty(null)}>
+              <button className="btn btn-secondary" onClick={() => parties.setEditingParty(null)}>
                 Cancelar
               </button>
               <button className="btn btn-success" onClick={handleSavePartyChanges}>
@@ -1694,35 +706,38 @@ function CaseDetailPage() {
       )}
 
       {/* Modal de Edição de Contato (dados pessoais) */}
-      {editingContactId && (
+      {modalsNotif.editingContactId && (
         <ContactDetailModal
-          contactId={editingContactId}
-          isOpen={!!editingContactId}
-          onClose={() => setEditingContactId(null)}
-          onContactUpdated={handleContactUpdated}
+          contactId={modalsNotif.editingContactId}
+          isOpen={!!modalsNotif.editingContactId}
+          onClose={() => modalsNotif.setEditingContactId(null)}
+          onContactUpdated={() => {
+            modalsNotif.handleContactUpdated();
+            parties.loadParties();
+          }}
           showLinkToProcessButton={false}
           openInEditMode={true}
         />
       )}
 
       {/* Modal de Definir Papel da Parte */}
-      {showAddPartyModal && selectedContact && (
-        <div className="modal-overlay" onClick={handleCloseAddPartyModal}>
+      {parties.showAddPartyModal && parties.selectedContact && (
+        <div className="modal-overlay" onClick={parties.handleCloseAddPartyModal}>
           <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Adicionar ao Processo</h2>
-              <button className="modal-close" onClick={handleCloseAddPartyModal}>×</button>
+              <button className="modal-close" onClick={parties.handleCloseAddPartyModal}>×</button>
             </div>
 
             <div className="modal-body">
               <div className="selected-contact-info">
                 <span className="contact-icon">
-                  {selectedContact.person_type === 'PF' ? '👤' : '🏢'}
+                  {parties.selectedContact.person_type === 'PF' ? '👤' : '🏢'}
                 </span>
                 <div>
-                  <strong>{selectedContact.name}</strong>
-                  {selectedContact.document_number && (
-                    <span className="contact-doc"> • {selectedContact.document_number}</span>
+                  <strong>{parties.selectedContact.name}</strong>
+                  {parties.selectedContact.document_number && (
+                    <span className="contact-doc"> • {parties.selectedContact.document_number}</span>
                   )}
                 </div>
               </div>
@@ -1730,13 +745,12 @@ function CaseDetailPage() {
               <div className="form-group">
                 <label>Papel no Processo *</label>
                 <select
-                  value={partyFormData.role}
+                  value={parties.partyFormData.role}
                   onChange={(e) => {
                     const newRole = e.target.value;
-                    setPartyFormData(prev => ({
+                    parties.setPartyFormData(prev => ({
                       ...prev,
                       role: newRole,
-                      // Auto-set is_client based on role
                       is_client: newRole === 'CLIENTE' ? true : 
                                  (newRole === 'TESTEMUNHA' || newRole === 'PERITO') ? false : 
                                  prev.is_client
@@ -1752,16 +766,15 @@ function CaseDetailPage() {
                 </select>
               </div>
 
-              {/* Only show checkbox for AUTOR/REU/TERCEIRO */}
-              {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(partyFormData.role) && (() => {
-                const hasExistingClient = parties.some(p => p.is_client);
+              {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(parties.partyFormData.role) && (() => {
+                const hasExistingClient = parties.parties.some(p => p.is_client);
                 return (
                   <div className="form-group">
                     <label className="checkbox-label">
                       <input
                         type="checkbox"
-                        checked={partyFormData.is_client}
-                        onChange={(e) => setPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
+                        checked={parties.partyFormData.is_client}
+                        onChange={(e) => parties.setPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
                         disabled={hasExistingClient}
                       />
                       <span style={{ opacity: hasExistingClient ? 0.6 : 1 }}>
@@ -1780,8 +793,8 @@ function CaseDetailPage() {
               <div className="form-group">
                 <label>Observações</label>
                 <textarea
-                  value={partyFormData.observacoes}
-                  onChange={(e) => setPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  value={parties.partyFormData.observacoes}
+                  onChange={(e) => parties.setPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
                   rows="3"
                   placeholder="Observações sobre a participação desta parte..."
                 />
@@ -1791,7 +804,7 @@ function CaseDetailPage() {
             <div className="modal-footer">
               <button 
                 className="btn btn-secondary"
-                onClick={handleCloseAddPartyModal}
+                onClick={parties.handleCloseAddPartyModal}
               >
                 Cancelar
               </button>
@@ -1808,7 +821,7 @@ function CaseDetailPage() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmModal && (
+      {modalsNotif.showDeleteConfirmModal && (
         <div className="modal-overlay" onClick={handleCancelDelete}>
           <div className="modal-content modal-medium" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ borderBottom: '2px solid #ef4444' }}>
@@ -1824,10 +837,10 @@ function CaseDetailPage() {
             
             <div className="modal-body" style={{ padding: '1.5rem' }}>
               <p style={{ fontSize: '1rem', marginBottom: '1rem', color: '#374151' }}>
-                Tem certeza que deseja deletar este processo <strong>{caseData?.numero_processo}</strong>?
+                Tem certeza que deseja deletar este processo <strong>{caseCore.caseData?.numero_processo}</strong>?
               </p>
               
-              {caseData?.publicacao_origem_id && (
+              {caseCore.caseData?.publicacao_origem_id && (
                 <div style={{
                   background: '#fef3c7',
                   border: '1px solid #fcd34d',
@@ -1839,24 +852,24 @@ function CaseDetailPage() {
                     ⚠️ Este processo está vinculado a uma publicação:
                   </p>
                   <p style={{ margin: 0, color: '#78350f', fontSize: '0.95rem' }}>
-                    <strong>{caseData?.publicacao_origem_numero_processo}</strong> - {caseData?.publicacao_origem_tipo}
+                    <strong>{caseCore.caseData?.publicacao_origem_numero_processo}</strong> - {caseCore.caseData?.publicacao_origem_tipo}
                   </p>
                 </div>
               )}
               
-              {caseData?.publicacao_origem_id && (
+              {caseCore.caseData?.publicacao_origem_id && (
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
-                      checked={deletePublicationToo}
-                      onChange={(e) => setDeletePublicationToo(e.target.checked)}
+                      checked={modalsNotif.deletePublicationToo}
+                      onChange={(e) => modalsNotif.setDeletePublicationToo(e.target.checked)}
                       style={{ marginTop: '0.25rem', cursor: 'pointer' }}
                     />
                     <span style={{ color: '#374151' }}>
                       <strong>Deletar também a publicação de origem</strong>
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem', color: '#6b7280' }}>
-                        {deletePublicationToo 
+                        {modalsNotif.deletePublicationToo 
                           ? '✓ A publicação será deletada do sistema e não poderá ser recuperada'
                           : 'A publicação será desvinculada e retornará à lista "Publicações Não Vinculadas"'
                         }
@@ -1897,14 +910,14 @@ function CaseDetailPage() {
         </div>
       )}
 
-      {/* Toast - Renderizado por último para ficar visualmente acima de todos os modais */}
-      {toast && (
+      {/* Toast - Renderizado por último para ficar visualmente acima */}
+      {modalsNotif.toast && (
         <Toast
           isOpen={true}
-          message={toast.message}
-          type={toast.type}
-          autoCloseMs={toast.duration || 3000}
-          onClose={() => setToast(null)}
+          message={modalsNotif.toast.message}
+          type={modalsNotif.toast.type}
+          autoCloseMs={modalsNotif.toast.duration || 3000}
+          onClose={() => modalsNotif.setToast(null)}
         />
       )}
     </div>
