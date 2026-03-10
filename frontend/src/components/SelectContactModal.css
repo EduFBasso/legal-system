@@ -109,18 +109,19 @@
 
 .select-contact-modal .btn-secondary {
   padding: 0.625rem 1.25rem;
-  background: var(--color-bg-tertiary, #e5e7eb);
-  color: var(--color-text, #111);
+  background: var(--color-bg-tertiary, #e5e7eb) !important;
+  color: var(--color-text, #111) !important;
   border: none;
   border-radius: 6px;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s;
 }
 
 .select-contact-modal .btn-secondary:hover {
-  background: var(--color-bg-hover, #d1d5db);
+  background: var(--color-bg-hover, #d1d5db) !important;
+  color: var(--color-text, #111) !important;
 }
 
 .select-contact-modal .btn-cancel {

@@ -131,8 +131,10 @@ function CaseDetailPage() {
     descricao: '',
     valor: ''
   });
-  const [autoSavingFinancialObs, setAutoSavingFinancialObs] = useState(false);
-  const autoSaveTimerRef = useRef(null);
+  const [autoSavingFinancial, setAutoSavingFinancial] = useState(false);
+  const financialAutoSaveTimerRef = useRef(null);
+  const financialAutoSaveInitializedRef = useRef(false);
+  const lastSavedFinancialDataRef = useRef(null);
 
   // Tribunal options
   const tribunalOptions = [
@@ -270,9 +272,7 @@ function CaseDetailPage() {
       try {
         const result = await publicationsService.getPublicationById(publicationId);
         const publication = result?.publication;
-
         if (!publication) return;
-
         setSourcePublication(publication);
 
         setFormData((prev) => {
@@ -956,12 +956,25 @@ function CaseDetailPage() {
         }
 
         const pubId = sourcePublication?.id_api || publicationId;
+        const shouldCreateMovement = systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
+
         if (pubId) {
           try {
-            await publicationsService.integratePublication(pubId, {
+            const integrationResult = await publicationsService.integratePublication(pubId, {
               caseId: created.id,
-              createMovement: systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION || false,
+              // Padrão seguro: cria movimentação automaticamente, exceto se setting vier explicitamente false
+              createMovement: shouldCreateMovement,
             });
+
+            // Fallback de segurança: se o backend não criar na integração, tenta endpoint dedicado.
+            if (shouldCreateMovement && integrationResult?.movement_created !== true) {
+              try {
+                await publicationsService.createMovementFromPublication(pubId);
+              } catch (fallbackError) {
+                console.warn('Fallback de criação de movimentação falhou:', fallbackError);
+              }
+            }
+
             notifyPublicationSync({
               type: 'PUBLICATION_INTEGRATED',
               idApi: Number(pubId),
@@ -976,6 +989,16 @@ function CaseDetailPage() {
         setCaseData(created);
         setFormData(created);
         setIsEditing(false);
+
+        // Após criar, troca a rota para /cases/:id no mesmo tab para habilitar carregamentos dependentes de ID.
+        const currentParams = new URLSearchParams(location.search);
+        currentParams.delete('pub_id');
+        currentParams.delete('action');
+        currentParams.delete('contactId');
+        currentParams.set('tab', activeSection || 'info');
+        const nextQuery = currentParams.toString();
+        const nextUrl = nextQuery ? `/cases/${created.id}?${nextQuery}` : `/cases/${created.id}`;
+        navigate(nextUrl, { replace: true });
 
         if (failedParties > 0) {
           showToast(`Processo criado! ${failedParties} parte(s) não foram vinculadas`, 'warning');
@@ -1333,6 +1356,15 @@ function CaseDetailPage() {
     }
   }, [activeSection, id, loadPayments, loadExpenses]);
 
+  // Reset do controle de auto-save quando trocar de processo
+  useEffect(() => {
+    financialAutoSaveInitializedRef.current = false;
+    lastSavedFinancialDataRef.current = null;
+    if (financialAutoSaveTimerRef.current) {
+      clearTimeout(financialAutoSaveTimerRef.current);
+    }
+  }, [id]);
+
   // Save financial fields to formData when any changes
   useEffect(() => {
     if (!id) return;
@@ -1346,45 +1378,94 @@ function CaseDetailPage() {
     }));
   }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho]);
 
-  /**
-   * Auto-save financial observations with 800ms debounce
-   * Saves observations_financial_block_a and observations_financial_block_b automatically
-   */
-  useEffect(() => {
-    if (!id || !formData.observations_financial_block_a && !formData.observations_financial_block_b) return;
+  const buildFinancialPayload = useCallback(() => ({
+    valor_causa: parseCurrencyValue(formData.valor_causa),
+    participation_type: participacaoTipo,
+    participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
+    participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
+    payment_conditional: pagaMedianteGanho,
+    payment_terms: formData.payment_terms || '',
+    attorney_fee_amount: formData.attorney_fee_amount ? parseCurrencyValue(formData.attorney_fee_amount) : null,
+    attorney_fee_installments: Math.max(parseInt(formData.attorney_fee_installments || 1, 10) || 1, 1),
+    observations_financial_block_a: formData.observations_financial_block_a || '',
+    observations_financial_block_b: formData.observations_financial_block_b || '',
+  }), [
+    formData.valor_causa,
+    formData.payment_terms,
+    formData.attorney_fee_amount,
+    formData.attorney_fee_installments,
+    formData.observations_financial_block_a,
+    formData.observations_financial_block_b,
+    participacaoTipo,
+    participacaoPercentual,
+    participacaoValorFixo,
+    pagaMedianteGanho,
+  ]);
 
-    // Limpa timer anterior se existe
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current);
+  const getChangedFinancialFields = useCallback((currentData, baseData) => {
+    if (!baseData) return currentData;
+
+    const changed = {};
+    Object.keys(currentData).forEach((key) => {
+      if (currentData[key] !== baseData[key]) {
+        changed[key] = currentData[key];
+      }
+    });
+
+    return changed;
+  }, []);
+
+  // Auto-save completo da aba Financeiro (debounce 800ms + save only changed fields)
+  useEffect(() => {
+    if (!id || activeSection !== 'financeiro' || saving) return;
+
+    const currentFinancialData = buildFinancialPayload();
+
+    if (!financialAutoSaveInitializedRef.current) {
+      lastSavedFinancialDataRef.current = currentFinancialData;
+      financialAutoSaveInitializedRef.current = true;
+      return;
     }
 
-    // Inicia novo timer com 800ms de debounce
-    setAutoSavingFinancialObs(true);
-    autoSaveTimerRef.current = setTimeout(async () => {
-      try {
-        const observationsData = {
-          observations_financial_block_a: formData.observations_financial_block_a || '',
-          observations_financial_block_b: formData.observations_financial_block_b || '',
-        };
+    const changedFields = getChangedFinancialFields(
+      currentFinancialData,
+      lastSavedFinancialDataRef.current
+    );
 
-        await casesService.update(id, observationsData);
-        setAutoSavingFinancialObs(false);
-        // Não mostra toast para não poluir a UI, mas você pode descomentar se quiser feedback visual
-        // showToast('Observações salvas automaticamente', 'success');
+    if (Object.keys(changedFields).length === 0) return;
+
+    if (financialAutoSaveTimerRef.current) {
+      clearTimeout(financialAutoSaveTimerRef.current);
+    }
+
+    setAutoSavingFinancial(true);
+
+    financialAutoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await casesService.update(id, changedFields);
+        lastSavedFinancialDataRef.current = {
+          ...lastSavedFinancialDataRef.current,
+          ...changedFields,
+        };
       } catch (error) {
-        console.error('Error auto-saving financial observations:', error);
-        setAutoSavingFinancialObs(false);
-        // Silencioso para não incomodar... caso queira feedback: showToast('Erro ao salvar observações', 'error');
+        console.error('Error auto-saving financial data:', error);
+      } finally {
+        setAutoSavingFinancial(false);
       }
     }, 800);
 
-    // Cleanup: cancela timer se componente desmontar
     return () => {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current);
+      if (financialAutoSaveTimerRef.current) {
+        clearTimeout(financialAutoSaveTimerRef.current);
       }
     };
-  }, [id, formData.observations_financial_block_a, formData.observations_financial_block_b]);
+  }, [
+    id,
+    activeSection,
+    saving,
+    buildFinancialPayload,
+    getChangedFinancialFields,
+  ]);
 
   /**
    * Handle save financial data
@@ -1399,6 +1480,9 @@ function CaseDetailPage() {
         participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
         participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
         payment_conditional: pagaMedianteGanho,
+        payment_terms: formData.payment_terms || '',
+        attorney_fee_amount: formData.attorney_fee_amount ? parseCurrencyValue(formData.attorney_fee_amount) : null,
+        attorney_fee_installments: Math.max(parseInt(formData.attorney_fee_installments || 1, 10) || 1, 1),
         observations_financial_block_a: formData.observations_financial_block_a || '',
         observations_financial_block_b: formData.observations_financial_block_b || '',
       };
@@ -1406,6 +1490,8 @@ function CaseDetailPage() {
       const updated = await casesService.update(id, financialData);
       setCaseData(updated);
       setFormData(updated);
+      lastSavedFinancialDataRef.current = financialData;
+      financialAutoSaveInitializedRef.current = true;
       showToast('Dados financeiros salvos com sucesso!', 'success');
     } catch (error) {
       console.error('Error saving financial data:', error);
@@ -1718,7 +1804,7 @@ function CaseDetailPage() {
             onRemoveDespesa={handleRemoverDespesa}
             onSaveFinancial={handleSaveFinancialData}
             saving={saving}
-            autoSavingObservations={autoSavingFinancialObs}
+            autoSavingObservations={autoSavingFinancial}
             formatDate={formatDate}
             parseCurrencyValue={parseCurrencyValue}
             formatCurrencyInput={formatCurrencyInput}

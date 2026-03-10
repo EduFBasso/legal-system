@@ -162,6 +162,25 @@ class Case(models.Model):
         help_text='Cliente paga apenas mediante ganho de causa'
     )
 
+    payment_terms = models.TextField(
+        blank=True,
+        default='',
+        help_text='Condições de pagamento acordadas com o cliente'
+    )
+
+    attorney_fee_amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Valor dos honorarios por parcela (R$)'
+    )
+
+    attorney_fee_installments = models.PositiveIntegerField(
+        default=1,
+        help_text='Quantidade de parcelas dos honorarios'
+    )
+
     observations_financial_block_a = models.TextField(
         blank=True,
         default='',

@@ -123,6 +123,9 @@ class CaseAdmin(admin.ModelAdmin):
         ('Informações Adicionais', {
             'fields': (
                 'valor_causa',
+                'payment_terms',
+                'attorney_fee_amount',
+                'attorney_fee_installments',
                 'observacoes',
             )
         }),

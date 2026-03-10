@@ -70,21 +70,19 @@
 /* Secondary - Cinza escuro (ações secundárias como Cancelar) */
 .btn-secondary {
   background: #475569;
-  color: white;
+  color: #111;
   border: 2px solid #475569;
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: #334155;
   border-color: #334155;
-  color: white;
   box-shadow: 0 2px 8px rgba(52, 65, 85, 0.3);
   transform: translateY(-1px);
 }
 
 .btn-secondary:active:not(:disabled) {
   transform: translateY(0);
-  color: white;
 }
 
 /* Danger - Vermelho (ações destrutivas como Apagar) */
