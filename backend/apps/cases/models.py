@@ -134,6 +134,8 @@ class Case(models.Model):
     participation_type = models.CharField(
         max_length=20,
         default='percentage',
+        null=True,
+        blank=True,
         choices=[
             ('percentage', 'Percentual'),
             ('fixed', 'Valor Fixo'),

@@ -116,7 +116,7 @@ function CaseDetailPage() {
   // Financeiro state
   const [recebimentos, setRecebimentos] = useState([]);
   const [despesas, setDespesas] = useState([]);
-  const [participacaoTipo, setParticipacaoTipo] = useState('percentage');
+  const [participacaoTipo, setParticipacaoTipo] = useState(null);
   const [participacaoPercentual, setParticipacaoPercentual] = useState('');
   const [participacaoValorFixo, setParticipacaoValorFixo] = useState('');
   const [pagaMedianteGanho, setPagaMedianteGanho] = useState(false);
@@ -1273,14 +1273,16 @@ function CaseDetailPage() {
     if (!formData || !id) return;
 
     // Sync participation fields
-    if (formData.participation_type) {
-      setParticipacaoTipo(formData.participation_type);
-    }
+    setParticipacaoTipo(formData.participation_type ?? null);
     if (formData.participation_percentage !== null && formData.participation_percentage !== undefined) {
       setParticipacaoPercentual(formData.participation_percentage.toString());
+    } else {
+      setParticipacaoPercentual('');
     }
     if (formData.participation_fixed_value !== null && formData.participation_fixed_value !== undefined) {
       setParticipacaoValorFixo(formatCurrencyInput(formData.participation_fixed_value));
+    } else {
+      setParticipacaoValorFixo('');
     }
     if (formData.payment_conditional !== undefined) {
       setPagaMedianteGanho(formData.payment_conditional);
