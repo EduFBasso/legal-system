@@ -41,8 +41,8 @@ export default function TaskForm({
   return (
     <div style={{
       padding: '0.75rem',
-      background: '#faf5ff',
-      border: '1px solid #c4b5fd',
+      background: '#2d3748',
+      border: '1px solid #374151',
       borderRadius: '6px',
       marginBottom: '0.75rem'
     }}>
@@ -55,12 +55,12 @@ export default function TaskForm({
         style={{
           width: '100%',
           padding: '0.5rem',
-          border: '1px solid #6b21a8',
+          border: '1px solid #16a34a',
           borderRadius: '4px',
           fontSize: '1.05rem',
           marginBottom: '0.5rem',
-          background: 'white',
-          color: '#6b21a8',
+          background: '#1f2937',
+          color: '#f0f4f8',
           fontWeight: '500'
         }}
       />
@@ -74,13 +74,13 @@ export default function TaskForm({
         style={{
           width: '100%',
           padding: '0.5rem',
-          border: '1px solid #6b21a8',
+          border: '1px solid #16a34a',
           borderRadius: '4px',
           fontSize: '1rem',
           marginBottom: '0.5rem',
           resize: 'vertical',
-          background: 'white',
-          color: '#6b21a8',
+          background: '#1f2937',
+          color: '#f0f4f8',
           fontWeight: '500'
         }}
       />
@@ -95,11 +95,11 @@ export default function TaskForm({
           style={{
             width: '100%',
             padding: '0.5rem',
-            border: '1px solid #6b21a8',
+            border: '1px solid #16a34a',
             borderRadius: '4px',
             fontSize: '0.975rem',
-            background: 'white',
-            color: '#6b21a8',
+            background: '#1f2937',
+            color: '#f0f4f8',
             fontWeight: '500'
           }}
         />
@@ -111,9 +111,9 @@ export default function TaskForm({
           onClick={onCancel}
           disabled={isSaving}
           style={{
-            border: '1px solid #6b21a8',
-            background: '#ffffff',
-            color: '#6b21a8',
+            border: '1px solid #16a34a',
+            background: 'transparent',
+            color: '#16a34a',
             borderRadius: '8px',
             padding: '0.375rem 0.75rem',
             fontSize: '0.8125rem',
@@ -133,7 +133,7 @@ export default function TaskForm({
           disabled={!canSubmit}
           style={{
             border: 'none',
-            background: '#6b21a8',
+            background: '#16a34a',
             color: 'white',
             borderRadius: '8px',
             padding: '0.375rem 0.75rem',

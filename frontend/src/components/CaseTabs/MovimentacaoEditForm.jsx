@@ -26,14 +26,14 @@ export default function MovimentacaoEditForm({
 
   return (
     <div style={{ 
-      background: '#fcfaff',
+      background: '#2d3748',
       padding: '1rem',
       borderRadius: '8px',
-      border: '1px solid #7c3aed',
-      boxShadow: 'inset 0 0 0 1px #ede9fe',
+      border: '1px solid #374151',
+      boxShadow: 'inset 0 0 0 1px #4a5568',
       marginBottom: '0.85rem'
     }}>
-      <h4 style={{ marginBottom: '0.85rem', color: '#6b21a8', fontWeight: '600', fontSize: '1.1rem' }}>
+      <h4 style={{ marginBottom: '0.85rem', color: '#f0f4f8', fontWeight: '600', fontSize: '1.1rem' }}>
         Editar Movimentação (inline)
       </h4>
       
@@ -43,7 +43,7 @@ export default function MovimentacaoEditForm({
           <label style={{ 
             display: 'block', 
             marginBottom: '0.5rem', 
-            color: '#6b21a8', 
+            color: '#f0f4f8', 
             fontWeight: '600', 
             fontSize: '1rem' 
           }}>
@@ -57,10 +57,12 @@ export default function MovimentacaoEditForm({
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #374151',
               borderRadius: '6px',
               fontSize: '1rem',
-              fontFamily: 'inherit'
+              fontFamily: 'inherit',
+              background: '#1f2937',
+              color: '#f0f4f8'
             }}
           />
         </div>
@@ -70,7 +72,7 @@ export default function MovimentacaoEditForm({
           <label style={{ 
             display: 'block', 
             marginBottom: '0.5rem', 
-            color: '#6b21a8', 
+            color: '#f0f4f8', 
             fontWeight: '600', 
             fontSize: '1rem' 
           }}>
@@ -82,10 +84,12 @@ export default function MovimentacaoEditForm({
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #374151',
               borderRadius: '6px',
               fontSize: '1rem',
-              fontFamily: 'inherit'
+              fontFamily: 'inherit',
+              background: '#1f2937',
+              color: '#f0f4f8'
             }}
           >
             <option value="">Selecione um tipo</option>
@@ -115,7 +119,7 @@ export default function MovimentacaoEditForm({
           <label style={{ 
             display: 'block', 
             marginBottom: '0.5rem', 
-            color: '#6b21a8', 
+            color: '#f0f4f8', 
             fontWeight: '600', 
             fontSize: '1rem' 
           }}>
@@ -129,10 +133,12 @@ export default function MovimentacaoEditForm({
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #374151',
               borderRadius: '6px',
               fontSize: '1rem',
-              fontFamily: 'inherit'
+              fontFamily: 'inherit',
+              background: '#1f2937',
+              color: '#f0f4f8'
             }}
           />
         </div>
@@ -143,7 +149,7 @@ export default function MovimentacaoEditForm({
         <label style={{ 
           display: 'block', 
           marginBottom: '0.5rem', 
-          color: '#6b21a8', 
+          color: '#f0f4f8', 
           fontWeight: '600', 
           fontSize: '1rem' 
         }}>
@@ -157,10 +163,12 @@ export default function MovimentacaoEditForm({
           style={{
             width: '100%',
             padding: '0.75rem',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #374151',
             borderRadius: '6px',
             fontSize: '1rem',
-            fontFamily: 'inherit'
+            fontFamily: 'inherit',
+            background: '#1f2937',
+            color: '#f0f4f8'
           }}
         />
       </div>
@@ -170,7 +178,7 @@ export default function MovimentacaoEditForm({
         <label style={{ 
           display: 'block', 
           marginBottom: '0.5rem', 
-          color: '#6b21a8', 
+          color: '#f0f4f8', 
           fontWeight: '600', 
           fontSize: '1rem' 
         }}>
@@ -184,11 +192,13 @@ export default function MovimentacaoEditForm({
           style={{
             width: '100%',
             padding: '0.75rem',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #374151',
             borderRadius: '6px',
             fontSize: '1rem',
             fontFamily: 'inherit',
-            resize: 'vertical'
+            resize: 'vertical',
+            background: '#1f2937',
+            color: '#f0f4f8'
           }}
         />
       </div>
@@ -198,7 +208,7 @@ export default function MovimentacaoEditForm({
         <label style={{ 
           display: 'block', 
           marginBottom: '0.5rem', 
-          color: '#6b21a8', 
+          color: '#f0f4f8', 
           fontWeight: '600', 
           fontSize: '1rem' 
         }}>
@@ -212,10 +222,12 @@ export default function MovimentacaoEditForm({
           style={{
             width: '100%',
             padding: '0.75rem',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #374151',
             borderRadius: '6px',
             fontSize: '1rem',
-            fontFamily: 'inherit'
+            fontFamily: 'inherit',
+            background: '#1f2937',
+            color: '#f0f4f8'
           }}
         />
       </div>
@@ -226,7 +238,7 @@ export default function MovimentacaoEditForm({
           onClick={onSave}
           disabled={!canSave || saving}
           style={{
-            background: '#6b21a8',
+            background: '#16a34a',
             color: 'white',
             border: 'none',
             padding: '0.75rem 1.5rem',
@@ -242,12 +254,12 @@ export default function MovimentacaoEditForm({
           }}
           onMouseEnter={(e) => { 
             if (!saving && canSave) {
-              e.target.style.background = '#581c87';
+              e.target.style.background = '#15803d';
             }
           }}
           onMouseLeave={(e) => { 
             if (!saving && canSave) {
-              e.target.style.background = '#6b21a8';
+              e.target.style.background = '#16a34a';
             }
           }}
         >
@@ -257,9 +269,9 @@ export default function MovimentacaoEditForm({
           onClick={onCancel}
           disabled={saving}
           style={{
-            background: '#e2e8f0',
-            color: '#6b21a8',
-            border: 'none',
+            background: '#4a5568',
+            color: '#f0f4f8',
+            border: '1px solid #5a6670',
             padding: '0.75rem 1.5rem',
             borderRadius: '6px',
             cursor: saving ? 'not-allowed' : 'pointer',
@@ -272,12 +284,12 @@ export default function MovimentacaoEditForm({
           }}
           onMouseEnter={(e) => { 
             if (!saving) {
-              e.target.style.background = '#cbd5e1';
+              e.target.style.background = '#5a6670';
             }
           }}
           onMouseLeave={(e) => { 
             if (!saving) {
-              e.target.style.background = '#e2e8f0';
+              e.target.style.background = '#4a5568';
             }
           }}
         >
