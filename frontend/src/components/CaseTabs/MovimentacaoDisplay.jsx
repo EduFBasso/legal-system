@@ -21,6 +21,8 @@ export default function MovimentacaoDisplay({
 }) {
   const isManual = mov?.origem === 'MANUAL';
   const hasPrazo = Number.isFinite(mov?.prazo) && mov.prazo > 0;
+  const hasOrgao = Boolean(mov?.orgao_julgador);
+  const shouldShowOrgao = !isManual || hasOrgao;
 
   return (
     <>
@@ -51,9 +53,11 @@ export default function MovimentacaoDisplay({
         <strong style={movementDisplayStyles.infoLabel}>Tipo:</strong> {tipoDisplay || mov?.tipo || '-'}
       </div>
 
-      <div style={{ ...movementDisplayStyles.infoLine, marginTop: '0.25rem' }}>
-        <strong style={movementDisplayStyles.infoLabel}>Orgão:</strong> {mov?.orgao_julgador || '-'}
-      </div>
+      {shouldShowOrgao && (
+        <div style={{ ...movementDisplayStyles.infoLine, marginTop: '0.25rem' }}>
+          <strong style={movementDisplayStyles.infoLabel}>Orgão:</strong> {mov.orgao_julgador}
+        </div>
+      )}
 
       {isManual ? (
         <p style={movementDisplayStyles.descriptionManual}>
