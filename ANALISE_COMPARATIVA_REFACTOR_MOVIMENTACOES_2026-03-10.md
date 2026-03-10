@@ -140,3 +140,22 @@ Se apos Commit 2 ainda houver regressao critica em fluxo de leitura/destaque, co
 ## Estado de decisao
 
 A estrategia de documentar + comparar esta concluida e viavel. Com base nos achados atuais, a opcao de correcao incremental no codigo modular oferece melhor relacao risco/beneficio que restaurar tudo e refazer do zero.
+
+## Atualizacao de implementacao (2026-03-10)
+
+Itens efetivamente aplicados no codigo apos esta analise:
+
+1. Botao `Nova Movimentacao` migrado para fluxo inline em `frontend/src/components/CaseTabs/MovimentacoesTab.jsx`.
+2. Criacao inline passou a usar o mesmo formulario visual de edicao (`MovimentacaoEditForm`) sem abrir modal legado.
+3. Dependencias do modal antigo removidas de `frontend/src/pages/CaseDetailPage.jsx`:
+
+- estados: `showMovimentacaoModal`, `editingMovimentacaoId`, `movimentacaoFormData`, `savingMovimentacao`.
+- handlers: `handleOpenMovimentacaoModal`, `handleSaveMovimentacao`, `handleEditMovimentacao`, `handleCloseMovimentacaoModal`.
+- bloco JSX do modal de movimentacao (renderizacao condicional) removido.
+
+4. Props legadas de modal removidas da chamada de `MovimentacoesTab` (`onOpenModal`, `onEdit`).
+
+Resultado:
+
+- O fluxo de movimentacao agora fica centralizado na propria aba (inline), reduzindo acoplamento com `CaseDetailPage`.
+- O caminho legado de modal foi descontinuado para evitar logica duplicada.

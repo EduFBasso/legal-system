@@ -6,9 +6,10 @@ import EmptyState from '../common/EmptyState';
 import caseTasksService from '../../services/caseTasksService';
 import caseMovementsService from '../../services/caseMovementsService';
 import MovimentacaoCard from './MovimentacaoCard';
-import { sanitizeManualDescription, getTipoDisplay } from '../../utils/movementUtils';
+import MovimentacaoEditForm from './MovimentacaoEditForm';
 
 const HIGHLIGHT_DURATION_MS = 3000;
+const getTodayIsoDate = () => new Date().toISOString().split('T')[0];
 
 /**
  * MovimentacoesTab - Aba de Movimentações Processuais
@@ -25,8 +26,6 @@ function MovimentacoesTab({
   highlightedTaskId = null,
   numeroProcesso = '',
   tasks = [],
-  onOpenModal = () => {},
-  onEdit = () => {},
   onDelete = () => {},
   onRefreshTasks = () => {},
   onRefreshMovements = () => {},
@@ -46,6 +45,15 @@ function MovimentacoesTab({
     prazo: '',
   });
   const [savingMovimentacao, setSavingMovimentacao] = useState(false);
+  const [creatingMovimentacao, setCreatingMovimentacao] = useState(false);
+  const [newMovimentacaoForm, setNewMovimentacaoForm] = useState({
+    data: getTodayIsoDate(),
+    tipo: 'DESPACHO',
+    tipo_customizado: '',
+    titulo: '',
+    descricao: '',
+    prazo: '',
+  });
 
   // Tarefa - Estados
   const [addingTaskForMovement, setAddingTaskForMovement] = useState(null);
@@ -113,6 +121,65 @@ function MovimentacoesTab({
     } catch (error) {
       console.error('Error saving movimentacao:', error);
       alert('Erro ao salvar movimentação');
+    } finally {
+      setSavingMovimentacao(false);
+    }
+  };
+
+  const handleOpenCreateMovimentacao = () => {
+    if (!id) {
+      alert('Salve o processo antes de adicionar movimentações.');
+      return;
+    }
+
+    setEditingMovimentacaoId(null);
+    setCreatingMovimentacao(true);
+    setNewMovimentacaoForm({
+      data: getTodayIsoDate(),
+      tipo: 'DESPACHO',
+      tipo_customizado: '',
+      titulo: '',
+      descricao: '',
+      prazo: '',
+    });
+  };
+
+  const handleCancelCreateMovimentacao = () => {
+    setCreatingMovimentacao(false);
+    setNewMovimentacaoForm({
+      data: getTodayIsoDate(),
+      tipo: 'DESPACHO',
+      tipo_customizado: '',
+      titulo: '',
+      descricao: '',
+      prazo: '',
+    });
+  };
+
+  const handleSaveNewMovimentacao = async () => {
+    if (!newMovimentacaoForm.titulo.trim()) {
+      alert('Título é obrigatório');
+      return;
+    }
+
+    setSavingMovimentacao(true);
+    try {
+      await caseMovementsService.createMovement({
+        case: parseInt(id, 10),
+        data: newMovimentacaoForm.data,
+        tipo: newMovimentacaoForm.tipo,
+        tipo_customizado: newMovimentacaoForm.tipo_customizado || '',
+        titulo: newMovimentacaoForm.titulo,
+        descricao: newMovimentacaoForm.descricao || '',
+        prazo: newMovimentacaoForm.prazo ? parseInt(newMovimentacaoForm.prazo, 10) : null,
+        origem: 'MANUAL',
+      });
+
+      await Promise.all([onRefreshTasks(), onRefreshMovements()]);
+      handleCancelCreateMovimentacao();
+    } catch (error) {
+      console.error('Error creating movimentacao:', error);
+      alert('Erro ao criar movimentação');
     } finally {
       setSavingMovimentacao(false);
     }
@@ -338,14 +405,14 @@ function MovimentacoesTab({
           </div>
           {id && (
             <button
-              onClick={onOpenModal}
+              onClick={handleOpenCreateMovimentacao}
               style={{
                 background: '#6b21a8',
                 color: 'white',
                 border: 'none',
                 padding: '0.625rem 1.25rem',
                 borderRadius: '8px',
-                fontSize: '0.9375rem',
+                fontSize: '1rem',
                 fontWeight: '600',
                 cursor: 'pointer',
                 display: 'inline-flex',
@@ -381,6 +448,16 @@ function MovimentacoesTab({
               style={{ width: '100%' }}
             />
           </div>
+        )}
+
+        {creatingMovimentacao && (
+          <MovimentacaoEditForm
+            form={newMovimentacaoForm}
+            onChange={setNewMovimentacaoForm}
+            onSave={handleSaveNewMovimentacao}
+            onCancel={handleCancelCreateMovimentacao}
+            saving={savingMovimentacao}
+          />
         )}
 
         {movimentacoes.length === 0 ? (
