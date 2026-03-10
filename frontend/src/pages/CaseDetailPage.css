@@ -62,10 +62,13 @@
 .nav-tab .badge {
   background: #1e293b;
   color: white;
-  font-size: 0.75rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: 12px;
-  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.2rem 0.55rem;
+  border-radius: 14px;
+  font-weight: 700;
+  min-width: 1.45rem;
+  text-align: center;
 }
 
 .badge-soon {

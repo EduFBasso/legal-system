@@ -142,7 +142,7 @@ export default function Menu() {
             <span className="menu-icon">⏳</span>
             <span className="menu-label">Não Vinculadas</span>
             {pendingCount > 0 && (
-              <span className="notification-badge">{pendingCount}</span>
+              <span className="menu-count-badge menu-count-badge--pending">{pendingCount}</span>
             )}
           </NavLink>
         </li>
@@ -158,7 +158,7 @@ export default function Menu() {
               <span className="menu-icon">⏰</span>
               <span className="menu-label">Tarefas Agendadas</span>
               {scheduledTasksCount > 0 && (
-                <span className="menu-task-badge">{scheduledTasksCount}</span>
+                <span className="menu-count-badge menu-count-badge--tasks">{scheduledTasksCount}</span>
               )}
             </NavLink>
           </li>

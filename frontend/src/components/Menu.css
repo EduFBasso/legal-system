@@ -111,23 +111,27 @@
   font-size: 16px;
 }
 
-/* Badge de notificações */
-.notification-badge {
+/* Badge numérico padrão do menu */
+.menu-count-badge {
   position: absolute;
-  top: 8px;
+  top: 7px;
   right: 16px;
-  background: #ef4444;
-  color: white;
-  font-size: 11px;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1;
   font-weight: 700;
-  min-width: 20px;
-  height: 20px;
-  border-radius: 10px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 6px;
+  padding: 0 7px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.menu-count-badge--pending {
+  background: #ef4444;
   animation: pulse 2s infinite;
 }
 
@@ -140,28 +144,14 @@
   }
 }
 
-.menu-item a.active .notification-badge {
+.menu-item a.active .menu-count-badge--pending {
   background: #dc2626;
 }
 
-.menu-task-badge {
-  position: absolute;
-  top: 8px;
-  right: 16px;
+.menu-count-badge--tasks {
   background: #dc2626;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.menu-item a.active .menu-task-badge {
+.menu-item a.active .menu-count-badge--tasks {
   background: #b91c1c;
 }
