@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { calculateUrgency } from '../../utils/movementUtils';
+import { formatDaysRemaining } from '../../utils/taskUrgency';
 import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
 import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle, getButtonHoverHandlers } from './caseTheme';
@@ -143,9 +144,14 @@ export default function TasksInlineList({
                         background: urgencyMeta.background,
                         color: urgencyMeta.color,
                         fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
                       }}
                     >
-                      Vence: {formatDate(task.data_vencimento)}
+                      <span>{formatDate(task.data_vencimento)}</span>
+                      <span style={{ opacity: 0.8 }}>•</span>
+                      <span>{formatDaysRemaining(task.data_vencimento)}</span>
                     </span>
                   ) : (
                     <span
