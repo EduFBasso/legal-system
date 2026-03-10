@@ -1,3 +1,11 @@
+// Color Palette - Tema Verde (alinhado com TasksTab)
+const colorPalette = {
+  normal: '#16a34a',           // Green Primary
+  normalLight: '#f0fdf4',      // Green Light Background
+  normalDark: '#15803d',       // Green Dark
+  normalRgb: '22, 163, 74',    // RGB for transparency
+};
+
 export const movementCardStyles = {
   base: {
     cursor: 'pointer',
@@ -5,17 +13,17 @@ export const movementCardStyles = {
     transition: 'all 0.3s ease',
     padding: '1rem 1rem 1rem 1.15rem',
     marginBottom: '0.75rem',
-    background: '#faf5ff',
-    border: '1px solid #e9d5ff',
+    background: colorPalette.normalLight,
+    border: `1px solid rgba(${colorPalette.normalRgb}, 0.2)`,
   },
   highlighted: {
-    background: '#eff6ff',
-    border: '3px solid #3b82f6',
-    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.2)',
+    background: '#f0fdfb',
+    border: `3px solid ${colorPalette.normal}`,
+    boxShadow: `0 0 0 3px rgba(${colorPalette.normalRgb}, 0.2)`,
   },
   selected: {
-    border: '3px solid #6b21a8',
-    background: '#fdf4ff',
+    border: `3px solid ${colorPalette.normalDark}`,
+    background: colorPalette.normalLight,
   },
 };
 
@@ -69,9 +77,9 @@ export const movementDisplayStyles = {
     justifyContent: 'flex-end',
   },
   actionButtonEdit: {
-    border: '1px solid #6b21a8',
+    border: `1px solid ${colorPalette.normal}`,
     background: '#fff',
-    color: '#6b21a8',
+    color: colorPalette.normal,
     borderRadius: '6px',
     padding: '0.3rem 0.7rem',
     fontSize: '1rem',
@@ -95,8 +103,8 @@ export const getOriginBadgeStyle = (isManual) => ({
   fontWeight: 700,
   borderRadius: '999px',
   padding: '0.2rem 0.55rem',
-  background: isManual ? '#fef3c7' : '#dbeafe',
-  color: isManual ? '#92400e' : '#1e40af',
+  background: isManual ? '#fef3c7' : colorPalette.normalLight,
+  color: isManual ? '#92400e' : colorPalette.normalDark,
 });
 
 export const movementDeadlineBadgeStyle = {
@@ -111,14 +119,14 @@ export const movementDeadlineBadgeStyle = {
 export const tasksInlineStyles = {
   wrapper: {
     marginTop: '1rem',
-    borderTop: '1px solid #ddd6fe',
+    borderTop: `1px solid rgba(${colorPalette.normalRgb}, 0.2)`,
     paddingTop: '0.85rem',
   },
   innerContainer: {
-    border: '1px solid #ddd6fe',
-    borderLeft: '4px solid #7c3aed',
+    border: `1px solid rgba(${colorPalette.normalRgb}, 0.15)`,
+    borderLeft: `4px solid ${colorPalette.normal}`,
     borderRadius: '10px',
-    background: '#fcfaff',
+    background: colorPalette.normalLight,
     padding: '0.7rem',
   },
   titleRow: {
@@ -130,12 +138,12 @@ export const tasksInlineStyles = {
   sectionTitle: {
     fontSize: '1rem',
     fontWeight: 700,
-    color: '#5b21b6',
+    color: colorPalette.normalDark,
   },
   addButton: {
-    border: '1px solid #6b21a8',
+    border: `1px solid ${colorPalette.normal}`,
     background: '#fff',
-    color: '#6b21a8',
+    color: colorPalette.normal,
     borderRadius: '6px',
     padding: '0.25rem 0.6rem',
     fontSize: '1rem',
@@ -175,9 +183,9 @@ export const tasksInlineStyles = {
     fontWeight: 600,
   },
   editTaskButton: {
-    border: '1px solid #6b21a8',
+    border: `1px solid ${colorPalette.normal}`,
     background: '#fff',
-    color: '#6b21a8',
+    color: colorPalette.normal,
     borderRadius: '6px',
     padding: '0.2rem 0.55rem',
     fontSize: '1rem',
@@ -187,7 +195,11 @@ export const tasksInlineStyles = {
 };
 
 export const getTaskCardStyle = ({ isHighlighted, isSelected, isDone }) => ({
-  border: isHighlighted ? '2px solid #3b82f6' : isSelected ? '2px solid #6b21a8' : '1px solid #ddd6fe',
+  border: isHighlighted
+    ? `2px solid ${colorPalette.normal}`
+    : isSelected
+      ? `2px solid ${colorPalette.normalDark}`
+      : `1px solid rgba(${colorPalette.normalRgb}, 0.15)`,
   borderRadius: '8px',
   padding: '0.65rem',
   marginBottom: '0.5rem',

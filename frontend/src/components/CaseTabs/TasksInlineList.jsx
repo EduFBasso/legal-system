@@ -36,7 +36,23 @@ export default function TasksInlineList({
     <div style={tasksInlineStyles.wrapper}>
       <div style={tasksInlineStyles.innerContainer}>
       <div style={tasksInlineStyles.titleRow}>
-        <span style={tasksInlineStyles.sectionTitle}>TAREFAS VINCULADAS</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <span style={tasksInlineStyles.sectionTitle}>TAREFAS VINCULADAS</span>
+          <span
+            style={{
+              background: '#16a34a',
+              color: '#fff',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              borderRadius: '999px',
+              padding: '0.15rem 0.5rem',
+              minWidth: '1.5rem',
+              textAlign: 'center',
+            }}
+          >
+            TODAS <strong>({taskList.length})</strong>
+          </span>
+        </div>
         {!isCreating && (
           <button
             onClick={(e) => {
