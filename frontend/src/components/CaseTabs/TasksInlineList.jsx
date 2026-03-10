@@ -3,12 +3,7 @@ import { formatDate } from '../../utils/formatters';
 import { getDaysToDueDate, calculateUrgency } from '../../utils/movementUtils';
 import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
-
-const urgencyStyle = {
-  URGENTISSIMO: { background: '#5f3d1a', color: '#fde047', label: 'Urgentissimo' },
-  URGENTE: { background: '#5d4037', color: '#fed7aa', label: 'Urgente' },
-  NORMAL: { background: '#1e3a2c', color: '#16a34a', label: 'Normal' },
-};
+import { getUrgencyStyle } from './caseTheme';
 
 export default function TasksInlineList({
   tasks,
@@ -89,7 +84,7 @@ export default function TasksInlineList({
         const isHighlighted = auxiliarHighlightedTaskId === task.id;
         const daysRemaining = getDaysToDueDate(task.data_vencimento);
         const urgency = calculateUrgency(task.data_vencimento);
-        const urgencyMeta = urgencyStyle[urgency] || urgencyStyle.NORMAL;
+        const urgencyMeta = getUrgencyStyle(urgency);
 
         return (
           <div

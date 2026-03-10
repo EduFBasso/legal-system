@@ -1,14 +1,15 @@
-// Color Palette - Tema Escuro
-const colorPalette = {
-  // Dark Theme
-  darkBg: '#1f2937',           // Dark background base
-  darkBgLight: '#2d3748',      // Slightly lighter dark background
-  darkBorder: '#374151',       // Dark border
-  darkText: '#f0f4f8',         // Light text (almost white)
-  darkTextSecondary: '#cbd5e0', // Secondary text (light gray)
-  accentGreen: '#16a34a',      // Green accent (may appear bright on dark)
-  accentGreenRgb: '22, 163, 74',
-};
+/**
+ * movementCardStyles.js - Layout e estrutura dos estilos de cards de movimentação
+ * 
+ * As CORES estão centralizadas em caseTheme.js
+ * Este arquivo contém apenas a estrutura e layout dos componentes.
+ */
+
+import {
+  caseTheme,
+  getOriginBadgeStyle,
+  getTaskCardStyle,
+} from './caseTheme';
 
 export const movementCardStyles = {
   base: {
@@ -17,18 +18,18 @@ export const movementCardStyles = {
     transition: 'all 0.3s ease',
     padding: '1rem 1rem 1rem 1.15rem',
     marginBottom: '0.75rem',
-    background: colorPalette.darkBgLight,
-    border: `1px solid ${colorPalette.darkBorder}`,
-    color: colorPalette.darkText,
+    background: caseTheme.darkBgLight,
+    border: `1px solid ${caseTheme.darkBorder}`,
+    color: caseTheme.darkText,
   },
   highlighted: {
-    background: '#3d4556',
-    border: `3px solid ${colorPalette.accentGreen}`,
-    boxShadow: `0 0 0 3px rgba(${colorPalette.accentGreenRgb}, 0.3)`,
+    background: caseTheme.card.highlightedBg,
+    border: `3px solid ${caseTheme.accentGreen}`,
+    boxShadow: `0 0 0 3px rgba(${caseTheme.accentGreenRgb}, 0.3)`,
   },
   selected: {
-    border: `3px solid ${colorPalette.accentGreen}`,
-    background: colorPalette.darkBgLight,
+    border: `3px solid ${caseTheme.accentGreen}`,
+    background: caseTheme.darkBgLight,
   },
 };
 
@@ -41,13 +42,13 @@ export const movementDisplayStyles = {
   },
   date: {
     fontSize: '1rem',
-    color: colorPalette.darkTextSecondary,
+    color: caseTheme.darkTextSecondary,
     marginBottom: '0.25rem',
   },
   title: {
     margin: 0,
     fontSize: '1rem',
-    color: colorPalette.darkText,
+    color: caseTheme.darkText,
   },
   badgeRow: {
     display: 'flex',
@@ -58,21 +59,21 @@ export const movementDisplayStyles = {
   infoLine: {
     marginTop: '0.5rem',
     fontSize: '1.025rem',
-    color: colorPalette.darkTextSecondary,
+    color: caseTheme.darkTextSecondary,
   },
   infoLabel: {
-    color: colorPalette.darkText,
+    color: caseTheme.darkText,
   },
   descriptionManual: {
     margin: '0.6rem 0 0',
     fontSize: '1.025rem',
-    color: colorPalette.darkText,
+    color: caseTheme.darkText,
     lineHeight: 1.5,
   },
   descriptionAuto: {
     margin: '0.6rem 0 0',
     fontSize: '1.025rem',
-    color: colorPalette.darkTextSecondary,
+    color: caseTheme.darkTextSecondary,
     lineHeight: 1.5,
   },
   actionsRow: {
@@ -82,9 +83,9 @@ export const movementDisplayStyles = {
     justifyContent: 'flex-end',
   },
   actionButtonEdit: {
-    border: `1px solid ${colorPalette.accentGreen}`,
+    border: `1px solid ${caseTheme.accentGreen}`,
     background: 'transparent',
-    color: colorPalette.accentGreen,
+    color: caseTheme.accentGreen,
     borderRadius: '6px',
     padding: '0.3rem 0.7rem',
     fontSize: '1rem',
@@ -92,9 +93,9 @@ export const movementDisplayStyles = {
     cursor: 'pointer',
   },
   actionButtonDelete: {
-    border: '1px solid #ef4444',
+    border: `1px solid ${caseTheme.button.danger}`,
     background: 'transparent',
-    color: '#ef4444',
+    color: caseTheme.button.danger,
     borderRadius: '6px',
     padding: '0.3rem 0.7rem',
     fontSize: '1rem',
@@ -103,35 +104,28 @@ export const movementDisplayStyles = {
   },
 };
 
-export const getOriginBadgeStyle = (isManual) => ({
-  fontSize: '0.95rem',
-  fontWeight: 700,
-  borderRadius: '999px',
-  padding: '0.2rem 0.55rem',
-  background: isManual ? '#5f3d1a' : '#1e3a2c',
-  color: isManual ? '#fde047' : colorPalette.accentGreen,
-});
+// Re-exportar helpers de caseTheme para compatibilidade
+export { getOriginBadgeStyle };
 
 export const movementDeadlineBadgeStyle = {
   fontSize: '0.95rem',
   fontWeight: 700,
   borderRadius: '999px',
   padding: '0.2rem 0.55rem',
-  background: '#5f3d1a',
-  color: '#fde047',
+  ...caseTheme.deadline,
 };
 
 export const tasksInlineStyles = {
   wrapper: {
     marginTop: '1rem',
-    borderTop: `1px solid ${colorPalette.darkBorder}`,
+    borderTop: `1px solid ${caseTheme.darkBorder}`,
     paddingTop: '0.85rem',
   },
   innerContainer: {
-    border: `1px solid ${colorPalette.darkBorder}`,
-    borderLeft: `4px solid ${colorPalette.accentGreen}`,
+    border: `1px solid ${caseTheme.darkBorder}`,
+    borderLeft: `4px solid ${caseTheme.accentGreen}`,
     borderRadius: '10px',
-    background: colorPalette.darkBg,
+    background: caseTheme.taskInline.background,
     padding: '0.7rem',
   },
   titleRow: {
@@ -143,12 +137,12 @@ export const tasksInlineStyles = {
   sectionTitle: {
     fontSize: '1rem',
     fontWeight: 700,
-    color: colorPalette.darkText,
+    color: caseTheme.darkText,
   },
   addButton: {
-    border: `1px solid ${colorPalette.accentGreen}`,
+    border: `1px solid ${caseTheme.accentGreen}`,
     background: 'transparent',
-    color: colorPalette.accentGreen,
+    color: caseTheme.accentGreen,
     borderRadius: '6px',
     padding: '0.25rem 0.6rem',
     fontSize: '1rem',
@@ -160,18 +154,18 @@ export const tasksInlineStyles = {
   },
   emptyText: {
     margin: 0,
-    color: colorPalette.darkTextSecondary,
+    color: caseTheme.darkTextSecondary,
     fontSize: '1rem',
   },
   taskTitle: {
     fontSize: '1.1rem',
     fontWeight: 600,
-    color: colorPalette.darkText,
+    color: caseTheme.darkText,
   },
   taskDescription: {
     marginTop: '0.15rem',
     fontSize: '1rem',
-    color: colorPalette.darkTextSecondary,
+    color: caseTheme.darkTextSecondary,
   },
   metaBadge: {
     fontSize: '0.9rem',
@@ -179,19 +173,17 @@ export const tasksInlineStyles = {
     borderRadius: '999px',
   },
   dueDateBadge: {
-    background: '#2d3e4f',
-    color: '#93c5fd',
+    ...caseTheme.dueDate,
     fontWeight: 600,
   },
   noDueDateBadge: {
-    background: '#3f4649',
-    color: colorPalette.darkTextSecondary,
+    ...caseTheme.noDueDate,
     fontWeight: 600,
   },
   editTaskButton: {
-    border: `1px solid ${colorPalette.accentGreen}`,
+    border: `1px solid ${caseTheme.accentGreen}`,
     background: 'transparent',
-    color: colorPalette.accentGreen,
+    color: caseTheme.accentGreen,
     borderRadius: '6px',
     padding: '0.2rem 0.55rem',
     fontSize: '1rem',
@@ -200,15 +192,5 @@ export const tasksInlineStyles = {
   },
 };
 
-export const getTaskCardStyle = ({ isHighlighted, isSelected, isDone }) => ({
-  border: isHighlighted
-    ? `2px solid ${colorPalette.accentGreen}`
-    : isSelected
-      ? `2px solid ${colorPalette.accentGreen}`
-      : `1px solid ${colorPalette.darkBorder}`,
-  borderRadius: '8px',
-  padding: '0.65rem',
-  marginBottom: '0.5rem',
-  background: isDone ? '#3f4649' : colorPalette.darkBgLight,
-  color: isDone ? colorPalette.darkTextSecondary : colorPalette.darkText,
-});
+// Re-exportar para compatibilidade
+export { getTaskCardStyle };
