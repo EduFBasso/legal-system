@@ -1,5 +1,6 @@
 import { Check, X } from 'lucide-react';
 import { MOVIMENTO_TIPOS } from '../../utils/movementUtils';
+import { caseTheme } from './caseTheme';
 
 /**
  * MovimentacaoEditForm - Formulário inline para editar movimentação
@@ -26,14 +27,14 @@ export default function MovimentacaoEditForm({
 
   return (
     <div style={{ 
-      background: '#2d3748',
+      background: caseTheme.form.background,
       padding: '1rem',
       borderRadius: '8px',
-      border: '1px solid #374151',
-      boxShadow: 'inset 0 0 0 1px #4a5568',
+      border: `1px solid ${caseTheme.form.border}`,
+      boxShadow: `inset 0 0 0 1px ${caseTheme.darkBorder}`,
       marginBottom: '0.85rem'
     }}>
-      <h4 style={{ marginBottom: '0.85rem', color: '#f0f4f8', fontWeight: '600', fontSize: '1.1rem' }}>
+      <h4 style={{ marginBottom: '0.85rem', color: caseTheme.darkText, fontWeight: '600', fontSize: '1.1rem' }}>
         Editar Movimentação (inline)
       </h4>
       
@@ -43,7 +44,7 @@ export default function MovimentacaoEditForm({
           <label style={{ 
             display: 'block', 
             marginBottom: '0.5rem', 
-            color: '#f0f4f8', 
+            color: caseTheme.darkText, 
             fontWeight: '600', 
             fontSize: '1rem' 
           }}>
@@ -57,12 +58,12 @@ export default function MovimentacaoEditForm({
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: '1px solid #374151',
+              border: `1px solid ${caseTheme.form.border}`,
               borderRadius: '6px',
               fontSize: '1rem',
               fontFamily: 'inherit',
-              background: '#1f2937',
-              color: '#f0f4f8'
+              background: caseTheme.form.input.background,
+              color: caseTheme.form.input.text
             }}
           />
         </div>
@@ -72,7 +73,7 @@ export default function MovimentacaoEditForm({
           <label style={{ 
             display: 'block', 
             marginBottom: '0.5rem', 
-            color: '#f0f4f8', 
+            color: caseTheme.darkText, 
             fontWeight: '600', 
             fontSize: '1rem' 
           }}>
@@ -84,12 +85,12 @@ export default function MovimentacaoEditForm({
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: '1px solid #374151',
+              border: `1px solid ${caseTheme.form.border}`,
               borderRadius: '6px',
               fontSize: '1rem',
               fontFamily: 'inherit',
-              background: '#1f2937',
-              color: '#f0f4f8'
+              background: caseTheme.form.input.background,
+              color: caseTheme.form.input.text
             }}
           >
             <option value="">Selecione um tipo</option>
@@ -119,7 +120,7 @@ export default function MovimentacaoEditForm({
           <label style={{ 
             display: 'block', 
             marginBottom: '0.5rem', 
-            color: '#f0f4f8', 
+            color: caseTheme.darkText, 
             fontWeight: '600', 
             fontSize: '1rem' 
           }}>
@@ -133,12 +134,12 @@ export default function MovimentacaoEditForm({
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: '1px solid #374151',
+              border: `1px solid ${caseTheme.form.border}`,
               borderRadius: '6px',
               fontSize: '1rem',
               fontFamily: 'inherit',
-              background: '#1f2937',
-              color: '#f0f4f8'
+              background: caseTheme.form.input.background,
+              color: caseTheme.form.input.text
             }}
           />
         </div>
@@ -149,7 +150,7 @@ export default function MovimentacaoEditForm({
         <label style={{ 
           display: 'block', 
           marginBottom: '0.5rem', 
-          color: '#f0f4f8', 
+          color: caseTheme.darkText, 
           fontWeight: '600', 
           fontSize: '1rem' 
         }}>
@@ -163,12 +164,12 @@ export default function MovimentacaoEditForm({
           style={{
             width: '100%',
             padding: '0.75rem',
-            border: '1px solid #374151',
+            border: `1px solid ${caseTheme.form.border}`,
             borderRadius: '6px',
             fontSize: '1rem',
             fontFamily: 'inherit',
-            background: '#1f2937',
-            color: '#f0f4f8'
+            background: caseTheme.form.input.background,
+            color: caseTheme.form.input.text
           }}
         />
       </div>
@@ -178,7 +179,7 @@ export default function MovimentacaoEditForm({
         <label style={{ 
           display: 'block', 
           marginBottom: '0.5rem', 
-          color: '#f0f4f8', 
+          color: caseTheme.darkText, 
           fontWeight: '600', 
           fontSize: '1rem' 
         }}>
@@ -192,13 +193,13 @@ export default function MovimentacaoEditForm({
           style={{
             width: '100%',
             padding: '0.75rem',
-            border: '1px solid #374151',
+            border: `1px solid ${caseTheme.form.border}`,
             borderRadius: '6px',
             fontSize: '1rem',
             fontFamily: 'inherit',
             resize: 'vertical',
-            background: '#1f2937',
-            color: '#f0f4f8'
+            background: caseTheme.form.input.background,
+            color: caseTheme.form.input.text
           }}
         />
       </div>
@@ -208,7 +209,7 @@ export default function MovimentacaoEditForm({
         <label style={{ 
           display: 'block', 
           marginBottom: '0.5rem', 
-          color: '#f0f4f8', 
+          color: caseTheme.darkText, 
           fontWeight: '600', 
           fontSize: '1rem' 
         }}>
@@ -222,12 +223,12 @@ export default function MovimentacaoEditForm({
           style={{
             width: '100%',
             padding: '0.75rem',
-            border: '1px solid #374151',
+            border: `1px solid ${caseTheme.form.border}`,
             borderRadius: '6px',
             fontSize: '1rem',
             fontFamily: 'inherit',
-            background: '#1f2937',
-            color: '#f0f4f8'
+            background: caseTheme.form.input.background,
+            color: caseTheme.form.input.text
           }}
         />
       </div>
@@ -238,7 +239,7 @@ export default function MovimentacaoEditForm({
           onClick={onSave}
           disabled={!canSave || saving}
           style={{
-            background: '#16a34a',
+            background: caseTheme.button.primary,
             color: 'white',
             border: 'none',
             padding: '0.75rem 1.5rem',
@@ -254,12 +255,12 @@ export default function MovimentacaoEditForm({
           }}
           onMouseEnter={(e) => { 
             if (!saving && canSave) {
-              e.target.style.background = '#15803d';
+              e.target.style.background = caseTheme.button.primaryDark;
             }
           }}
           onMouseLeave={(e) => { 
             if (!saving && canSave) {
-              e.target.style.background = '#16a34a';
+              e.target.style.background = caseTheme.button.primary;
             }
           }}
         >
@@ -269,9 +270,9 @@ export default function MovimentacaoEditForm({
           onClick={onCancel}
           disabled={saving}
           style={{
-            background: '#4a5568',
-            color: '#f0f4f8',
-            border: '1px solid #5a6670',
+            background: caseTheme.button.secondary,
+            color: caseTheme.darkText,
+            border: `1px solid ${caseTheme.darkBorder}`,
             padding: '0.75rem 1.5rem',
             borderRadius: '6px',
             cursor: saving ? 'not-allowed' : 'pointer',
@@ -284,12 +285,12 @@ export default function MovimentacaoEditForm({
           }}
           onMouseEnter={(e) => { 
             if (!saving) {
-              e.target.style.background = '#5a6670';
+              e.target.style.background = caseTheme.button.secondaryDark;
             }
           }}
           onMouseLeave={(e) => { 
             if (!saving) {
-              e.target.style.background = '#4a5568';
+              e.target.style.background = caseTheme.button.secondary;
             }
           }}
         >

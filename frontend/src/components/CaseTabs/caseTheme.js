@@ -5,74 +5,83 @@
  * Facilita mudanças de tema e mantém consistência visual.
  */
 
+/**
+ * caseTheme.js - Paleta de cores centralizada para o tema das movimentações
+ * 
+ * Um único lugar para definir todas as cores do sistema.
+ * Facilita mudanças de tema e mantém consistência visual.
+ * 
+ * Tema atual: LIGHT MODE (background claro #F8FAFC, texto #475569)
+ */
+
 export const caseTheme = {
-  // === DARK THEME BASE ===
-  darkBg: '#1f2937',           // Dark background base
-  darkBgLight: '#2d3748',      // Slightly lighter dark background
-  darkBorder: '#374151',       // Dark border
-  darkText: '#f0f4f8',         // Light text (almost white)
-  darkTextSecondary: '#cbd5e0', // Secondary text (light gray)
-  darkTextTertiary: '#9ca3af', // Tertiary text (very light gray, for done tasks)
+  // === LIGHT THEME BASE ===
+  darkBg: '#F8FAFC',           // Light background base (almost white)
+  darkBgLight: '#FFFFFF',      // Slightly lighter (white for inputs)
+  darkBorder: '#CBD5E1',       // Light border (steel gray)
+  darkText: '#475569',         // Dark text (slate)
+  darkTextSecondary: '#64748B', // Secondary text (lighter slate)
+  darkTextTertiary: '#94A3B8', // Tertiary text (even lighter for done tasks)
 
   // === PRIMARY ACCENT ===
   accentGreen: '#16a34a',      // Green primary
   accentGreenDark: '#15803d',  // Green dark
   accentGreenRgb: '22, 163, 74',
 
-  // === URGENCY BADGES ===
+  // === URGENCY BADGES (Light theme) ===
   urgency: {
-    URGENTISSIMO: { background: '#5f3d1a', color: '#fde047', label: 'Urgentissimo' },
-    URGENTE: { background: '#5d4037', color: '#fed7aa', label: 'Urgente' },
-    NORMAL: { background: '#1e3a2c', color: '#16a34a', label: 'Normal' },
+    URGENTISSIMO: { background: '#FECACA', color: '#991B1B', label: 'Urgentissimo' },
+    URGENTE: { background: '#FED7AA', color: '#92400E', label: 'Urgente' },
+    NORMAL: { background: '#DCFCE7', color: '#166534', label: 'Normal' },
   },
 
-  // === ORIGIN BADGES ===
+  // === ORIGIN BADGES (Light theme) ===
   origin: {
-    MANUAL: { background: '#5f3d1a', color: '#fde047' },
-    AUTOMATICA: { background: '#1e3a2c', color: '#16a34a' },
+    MANUAL: { background: '#FEF3C7', color: '#92400E' },
+    AUTOMATICA: { background: '#DCFCE7', color: '#166534' },
   },
 
-  // === DEADLINE BADGE ===
-  deadline: { background: '#5f3d1a', color: '#fde047' },
+  // === DEADLINE BADGE (Light theme) ===
+  deadline: { background: '#FECACA', color: '#991B1B' },
 
-  // === DUE DATE BADGE ===
-  dueDate: { background: '#2d3e4f', color: '#93c5fd' },
-  noDueDate: { background: '#3f4649', color: '#cbd5e0' },
+  // === DUE DATE BADGE (Light theme) ===
+  dueDate: { background: '#EEF2FF', color: '#3730A3' },
+  noDueDate: { background: '#F3F4F6', color: '#374151' },
 
   // === BUTTON COLORS ===
   button: {
     primary: '#16a34a',        // Green for save/add
     primaryDark: '#15803d',    // Darker green on hover
-    secondary: '#4a5568',      // Gray for cancel
-    secondaryDark: '#5a6670',  // Darker gray on hover
-    danger: '#ef4444',         // Red for delete
+    secondary: '#E2E8F0',      // Light gray for cancel
+    secondaryDark: '#CBD5E1',  // Darker gray on hover
+    danger: '#EF4444',         // Red for delete
   },
 
   // === FORM STYLING ===
   form: {
-    background: '#2d3748',
-    border: '#374151',
+    background: '#FFFFFF',
+    border: '#CBD5E1',
     input: {
-      background: '#1f2937',
-      border: '#374151',
-      text: '#f0f4f8',
+      background: '#FFFFFF',
+      border: '#CBD5E1',
+      text: '#475569',
     },
   },
 
   // === TASK LIST ===
   taskInline: {
-    background: '#1f2937',
-    border: '#374151',
-    container: '#2d3748',
+    background: '#F8FAFC',
+    border: '#CBD5E1',
+    container: '#FFFFFF',
   },
 
   // === CARD STATES ===
   card: {
-    normalBg: '#2d3748',
-    normalBorder: '#374151',
-    highlightedBg: '#3d4556',
+    normalBg: '#FFFFFF',
+    normalBorder: '#CBD5E1',
+    highlightedBg: '#F0FDF4',
     highlightedBorder: '#16a34a',
-    doneBg: '#3f4649',
+    doneBg: '#F9FAFB',
   },
 };
 

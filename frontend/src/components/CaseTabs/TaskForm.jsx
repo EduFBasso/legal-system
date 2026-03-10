@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Check, X } from 'lucide-react';
+import { caseTheme } from './caseTheme';
 
 /**
  * TaskForm - Formulário inline para criar ou editar tarefas
@@ -41,8 +42,8 @@ export default function TaskForm({
   return (
     <div style={{
       padding: '0.75rem',
-      background: '#2d3748',
-      border: '1px solid #374151',
+      background: caseTheme.taskInline.container,
+      border: `1px solid ${caseTheme.darkBorder}`,
       borderRadius: '6px',
       marginBottom: '0.75rem'
     }}>
@@ -55,12 +56,12 @@ export default function TaskForm({
         style={{
           width: '100%',
           padding: '0.5rem',
-          border: '1px solid #16a34a',
+          border: `1px solid ${caseTheme.accentGreen}`,
           borderRadius: '4px',
           fontSize: '1.05rem',
           marginBottom: '0.5rem',
-          background: '#1f2937',
-          color: '#f0f4f8',
+          background: caseTheme.form.input.background,
+          color: caseTheme.form.input.text,
           fontWeight: '500'
         }}
       />
@@ -74,13 +75,13 @@ export default function TaskForm({
         style={{
           width: '100%',
           padding: '0.5rem',
-          border: '1px solid #16a34a',
+          border: `1px solid ${caseTheme.accentGreen}`,
           borderRadius: '4px',
           fontSize: '1rem',
           marginBottom: '0.5rem',
           resize: 'vertical',
-          background: '#1f2937',
-          color: '#f0f4f8',
+          background: caseTheme.form.input.background,
+          color: caseTheme.form.input.text,
           fontWeight: '500'
         }}
       />
@@ -95,11 +96,11 @@ export default function TaskForm({
           style={{
             width: '100%',
             padding: '0.5rem',
-            border: '1px solid #16a34a',
+            border: `1px solid ${caseTheme.accentGreen}`,
             borderRadius: '4px',
             fontSize: '0.975rem',
-            background: '#1f2937',
-            color: '#f0f4f8',
+            background: caseTheme.form.input.background,
+            color: caseTheme.form.input.text,
             fontWeight: '500'
           }}
         />
@@ -111,9 +112,9 @@ export default function TaskForm({
           onClick={onCancel}
           disabled={isSaving}
           style={{
-            border: '1px solid #16a34a',
+            border: `1px solid ${caseTheme.accentGreen}`,
             background: 'transparent',
-            color: '#16a34a',
+            color: caseTheme.accentGreen,
             borderRadius: '8px',
             padding: '0.375rem 0.75rem',
             fontSize: '0.8125rem',
@@ -133,7 +134,7 @@ export default function TaskForm({
           disabled={!canSubmit}
           style={{
             border: 'none',
-            background: '#16a34a',
+            background: caseTheme.button.primary,
             color: 'white',
             borderRadius: '8px',
             padding: '0.375rem 0.75rem',

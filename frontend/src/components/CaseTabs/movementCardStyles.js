@@ -18,18 +18,18 @@ export const movementCardStyles = {
     transition: 'all 0.3s ease',
     padding: '1rem 1rem 1rem 1.15rem',
     marginBottom: '0.75rem',
-    background: caseTheme.darkBgLight,
-    border: `1px solid ${caseTheme.darkBorder}`,
+    background: caseTheme.card.normalBg,
+    border: `1px solid ${caseTheme.card.normalBorder}`,
     color: caseTheme.darkText,
   },
   highlighted: {
     background: caseTheme.card.highlightedBg,
     border: `3px solid ${caseTheme.accentGreen}`,
-    boxShadow: `0 0 0 3px rgba(${caseTheme.accentGreenRgb}, 0.3)`,
+    boxShadow: `0 0 0 3px rgba(${caseTheme.accentGreenRgb}, 0.2)`,
   },
   selected: {
     border: `3px solid ${caseTheme.accentGreen}`,
-    background: caseTheme.darkBgLight,
+    background: caseTheme.card.normalBg,
   },
 };
 
@@ -125,7 +125,7 @@ export const tasksInlineStyles = {
     border: `1px solid ${caseTheme.darkBorder}`,
     borderLeft: `4px solid ${caseTheme.accentGreen}`,
     borderRadius: '10px',
-    background: caseTheme.taskInline.background,
+    background: caseTheme.taskInline.container,
     padding: '0.7rem',
   },
   titleRow: {
