@@ -1804,8 +1804,6 @@ function CaseDetailPage() {
             onRemoveRecebimento={handleRemoverRecebimento}
             onAddDespesa={handleAdicionarDespesa}
             onRemoveDespesa={handleRemoverDespesa}
-            onSaveFinancial={handleSaveFinancialData}
-            saving={saving}
             autoSavingObservations={autoSavingFinancial}
             formatDate={formatDate}
             parseCurrencyValue={parseCurrencyValue}

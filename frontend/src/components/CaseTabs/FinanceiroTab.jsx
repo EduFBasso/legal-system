@@ -1,4 +1,4 @@
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatDate, formatCurrencyValue, parseCurrencyValue } from '../../utils/formatters';
 import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
@@ -30,9 +30,7 @@ function FinanceiroTab({
   onRemoveRecebimento = () => {},
   onAddDespesa = () => {},
   onRemoveDespesa = () => {},
-  onSaveFinancial = () => {},
-  saving = false,
-   autoSavingObservations = false,
+  autoSavingObservations = false,
   calcularParticipacao = () => {
     const valorCausa = parseCurrencyValue(formData.valor_causa);
     if (participacaoTipo === 'percentage') {
@@ -144,14 +142,6 @@ function FinanceiroTab({
                <p className="section-subtitle">Controle de valores e custos do processo</p>
              )}
           </div>
-          <button 
-            className="btn btn-primary"
-            onClick={onSaveFinancial}
-            disabled={saving}
-          >
-            <Save size={16} />
-            {saving ? 'Salvando...' : 'Salvar Dados Financeiros'}
-          </button>
         </div>
 
         {/* BLOCO A: Informações do Processo */}
@@ -198,14 +188,6 @@ function FinanceiroTab({
               />
             </div>
 
-            {/* Observações Bloco A */}
-            <TextAreaField
-              label="Observações"
-              value={formData.observations_financial_block_a || ''}
-              onChange={(value) => onInputChange('observations_financial_block_a', value)}
-              placeholder="Anotações sobre ajustes de valores, acordos, parcelamentos, etc..."
-              rows={3}
-            />
           </div>
         </div>
 
