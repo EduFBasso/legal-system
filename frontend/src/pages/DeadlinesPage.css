@@ -90,6 +90,7 @@
 .stat-card {
   background: var(--color-white);
   border: 1px solid var(--color-gray-300);
+  box-sizing: border-box;
   border-radius: 8px;
   padding: 1.5rem;
   text-align: center;
@@ -162,54 +163,57 @@
 
 /* ========== SELECTED STATE ========== */
 .stat-card.stat-selected {
-  border-width: 3px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: var(--transform-hover-normal);
+  border-width: 1px;
+  transform: none;
 }
 
 /* Selected state for each urgency */
 .stat-card.stat-total.stat-selected {
   border-color: var(--color-total) !important;
   background: var(--color-total-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-total-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-total.stat-selected:hover {
   --color-rgb: var(--color-total-rgb);
   box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .stat-card.stat-urgentissimo.stat-selected {
   border-color: var(--color-urgentissimo) !important;
   background: var(--color-urgentissimo-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-urgentissimo-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-urgentissimo.stat-selected:hover {
   --color-rgb: var(--color-urgentissimo-rgb);
   box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .stat-card.stat-urgente.stat-selected {
   border-color: var(--color-urgente) !important;
   background: var(--color-urgente-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-urgente-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-urgente.stat-selected:hover {
   --color-rgb: var(--color-urgente-rgb);
   box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .stat-card.stat-normal.stat-selected {
   border-color: var(--color-normal) !important;
   background: var(--color-normal-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-normal-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-normal.stat-selected:hover {
   --color-rgb: var(--color-normal-rgb);
   box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .stat-number {
