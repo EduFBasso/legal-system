@@ -76,7 +76,7 @@ export default function TaskForm({
           padding: '0.5rem',
           border: '1px solid #6b21a8',
           borderRadius: '4px',
-          fontSize: '0.975rem',
+          fontSize: '1rem',
           marginBottom: '0.5rem',
           resize: 'vertical',
           background: 'white',

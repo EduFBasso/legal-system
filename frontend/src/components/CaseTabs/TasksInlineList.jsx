@@ -62,7 +62,7 @@ export default function TasksInlineList({
               color: '#6b21a8',
               borderRadius: '6px',
               padding: '0.25rem 0.6rem',
-              fontSize: '0.78rem',
+              fontSize: '1rem',
               fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
@@ -70,7 +70,7 @@ export default function TasksInlineList({
               cursor: 'pointer',
             }}
           >
-            <Plus size={14} /> Add Task
+            <Plus size={16} /> Add Task
           </button>
         )}
       </div>
@@ -88,7 +88,7 @@ export default function TasksInlineList({
       )}
 
       {taskList.length === 0 && !isCreating && (
-        <p style={{ margin: 0, color: '#6b7280', fontSize: '0.84rem' }}>Nenhuma tarefa para esta movimentacao.</p>
+        <p style={{ margin: 0, color: '#6b7280', fontSize: '1rem' }}>Nenhuma tarefa para esta movimentacao.</p>
       )}
 
       {taskList.map((task) => {
@@ -132,12 +132,12 @@ export default function TasksInlineList({
                   />
 
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isDone ? '#6b7280' : '#111827' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 600, color: isDone ? '#6b7280' : '#111827' }}>
                       {task.titulo}
                     </div>
 
                     {task.descricao && (
-                      <div style={{ marginTop: '0.15rem', fontSize: '0.82rem', color: '#4b5563' }}>
+                      <div style={{ marginTop: '0.15rem', fontSize: '1rem', color: '#4b5563' }}>
                         {task.descricao}
                       </div>
                     )}
@@ -147,7 +147,7 @@ export default function TasksInlineList({
                         <>
                           <span
                             style={{
-                              fontSize: '0.72rem',
+                              fontSize: '0.9rem',
                               padding: '0.15rem 0.45rem',
                               borderRadius: '999px',
                               background: '#eef2ff',
@@ -159,7 +159,7 @@ export default function TasksInlineList({
                           </span>
                           <span
                             style={{
-                              fontSize: '0.72rem',
+                              fontSize: '0.9rem',
                               padding: '0.15rem 0.45rem',
                               borderRadius: '999px',
                               background: urgencyMeta.background,
@@ -173,7 +173,7 @@ export default function TasksInlineList({
                       ) : (
                         <span
                           style={{
-                            fontSize: '0.72rem',
+                            fontSize: '0.9rem',
                             padding: '0.15rem 0.45rem',
                             borderRadius: '999px',
                             background: '#f3f4f6',
@@ -197,7 +197,7 @@ export default function TasksInlineList({
                       color: '#6b21a8',
                       borderRadius: '6px',
                       padding: '0.2rem 0.55rem',
-                      fontSize: '0.75rem',
+                      fontSize: '1rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}

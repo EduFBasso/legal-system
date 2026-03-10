@@ -33,7 +33,7 @@ export default function MovimentacaoEditForm({
       boxShadow: 'inset 0 0 0 1px #ede9fe',
       marginBottom: '0.85rem'
     }}>
-      <h4 style={{ marginBottom: '0.85rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.95rem' }}>
+      <h4 style={{ marginBottom: '0.85rem', color: '#6b21a8', fontWeight: '600', fontSize: '1.1rem' }}>
         Editar Movimentação (inline)
       </h4>
       
@@ -45,7 +45,7 @@ export default function MovimentacaoEditForm({
             marginBottom: '0.5rem', 
             color: '#6b21a8', 
             fontWeight: '600', 
-            fontSize: '0.875rem' 
+            fontSize: '1rem' 
           }}>
             Data *
           </label>
@@ -59,7 +59,7 @@ export default function MovimentacaoEditForm({
               padding: '0.75rem',
               border: '1px solid #e2e8f0',
               borderRadius: '6px',
-              fontSize: '0.9375rem',
+              fontSize: '1rem',
               fontFamily: 'inherit'
             }}
           />
@@ -72,7 +72,7 @@ export default function MovimentacaoEditForm({
             marginBottom: '0.5rem', 
             color: '#6b21a8', 
             fontWeight: '600', 
-            fontSize: '0.875rem' 
+            fontSize: '1rem' 
           }}>
             Tipo *
           </label>
@@ -84,7 +84,7 @@ export default function MovimentacaoEditForm({
               padding: '0.75rem',
               border: '1px solid #e2e8f0',
               borderRadius: '6px',
-              fontSize: '0.9375rem',
+              fontSize: '1rem',
               fontFamily: 'inherit'
             }}
           >
@@ -117,7 +117,7 @@ export default function MovimentacaoEditForm({
             marginBottom: '0.5rem', 
             color: '#6b21a8', 
             fontWeight: '600', 
-            fontSize: '0.875rem' 
+            fontSize: '1rem' 
           }}>
             Especifique o tipo *
           </label>
@@ -131,7 +131,7 @@ export default function MovimentacaoEditForm({
               padding: '0.75rem',
               border: '1px solid #e2e8f0',
               borderRadius: '6px',
-              fontSize: '0.9375rem',
+              fontSize: '1rem',
               fontFamily: 'inherit'
             }}
           />
@@ -145,7 +145,7 @@ export default function MovimentacaoEditForm({
           marginBottom: '0.5rem', 
           color: '#6b21a8', 
           fontWeight: '600', 
-          fontSize: '0.875rem' 
+          fontSize: '1rem' 
         }}>
           Título/Resumo *
         </label>
@@ -159,7 +159,7 @@ export default function MovimentacaoEditForm({
             padding: '0.75rem',
             border: '1px solid #e2e8f0',
             borderRadius: '6px',
-            fontSize: '0.9375rem',
+            fontSize: '1rem',
             fontFamily: 'inherit'
           }}
         />
@@ -172,7 +172,7 @@ export default function MovimentacaoEditForm({
           marginBottom: '0.5rem', 
           color: '#6b21a8', 
           fontWeight: '600', 
-          fontSize: '0.875rem' 
+          fontSize: '1rem' 
         }}>
           Descrição Completa
         </label>
@@ -186,7 +186,7 @@ export default function MovimentacaoEditForm({
             padding: '0.75rem',
             border: '1px solid #e2e8f0',
             borderRadius: '6px',
-            fontSize: '0.9375rem',
+            fontSize: '1rem',
             fontFamily: 'inherit',
             resize: 'vertical'
           }}
@@ -200,7 +200,7 @@ export default function MovimentacaoEditForm({
           marginBottom: '0.5rem', 
           color: '#6b21a8', 
           fontWeight: '600', 
-          fontSize: '0.875rem' 
+          fontSize: '1rem' 
         }}>
           Prazo (em dias)
         </label>
@@ -214,7 +214,7 @@ export default function MovimentacaoEditForm({
             padding: '0.75rem',
             border: '1px solid #e2e8f0',
             borderRadius: '6px',
-            fontSize: '0.9375rem',
+            fontSize: '1rem',
             fontFamily: 'inherit'
           }}
         />

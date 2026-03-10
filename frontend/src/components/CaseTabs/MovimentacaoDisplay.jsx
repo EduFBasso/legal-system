@@ -21,7 +21,7 @@ export default function MovimentacaoDisplay({
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: '0.82rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+          <div style={{ fontSize: '1rem', color: '#6b7280', marginBottom: '0.25rem' }}>
             {formatDate(mov?.data)}
           </div>
           <h4 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
@@ -32,7 +32,7 @@ export default function MovimentacaoDisplay({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
           <span
             style={{
-              fontSize: '0.75rem',
+              fontSize: '0.95rem',
               fontWeight: 700,
               borderRadius: '999px',
               padding: '0.2rem 0.55rem',
@@ -46,7 +46,7 @@ export default function MovimentacaoDisplay({
           {hasPrazo && (
             <span
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.95rem',
                 fontWeight: 700,
                 borderRadius: '999px',
                 padding: '0.2rem 0.55rem',
@@ -60,20 +60,20 @@ export default function MovimentacaoDisplay({
         </div>
       </div>
 
-      <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#374151' }}>
+      <div style={{ marginTop: '0.5rem', fontSize: '1.025rem', color: '#374151' }}>
         <strong style={{ color: '#111827' }}>Tipo:</strong> {tipoDisplay || mov?.tipo || '-'}
       </div>
 
-      <div style={{ marginTop: '0.25rem', fontSize: '0.9rem', color: '#374151' }}>
+      <div style={{ marginTop: '0.25rem', fontSize: '1.025rem', color: '#374151' }}>
         <strong style={{ color: '#111827' }}>Orgão:</strong> {mov?.orgao_julgador || '-'}
       </div>
 
       {isManual ? (
-        <p style={{ margin: '0.6rem 0 0', fontSize: '0.9rem', color: '#1f2937', lineHeight: 1.5 }}>
+        <p style={{ margin: '0.6rem 0 0', fontSize: '1.025rem', color: '#1f2937', lineHeight: 1.5 }}>
           {truncateAtSentence(manualDescricao || mov?.descricao || '', 180, 260) || 'Sem descrição.'}
         </p>
       ) : (
-        <p style={{ margin: '0.6rem 0 0', fontSize: '0.9rem', color: '#4b5563', lineHeight: 1.5 }}>
+        <p style={{ margin: '0.6rem 0 0', fontSize: '1.025rem', color: '#4b5563', lineHeight: 1.5 }}>
           {truncateAtSentence(mov?.descricao || '', 180, 260) || 'Movimentação automática sem descrição detalhada.'}
         </p>
       )}
@@ -91,7 +91,7 @@ export default function MovimentacaoDisplay({
               color: '#6b21a8',
               borderRadius: '6px',
               padding: '0.3rem 0.7rem',
-              fontSize: '0.8rem',
+              fontSize: '1rem',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -109,7 +109,7 @@ export default function MovimentacaoDisplay({
               color: '#dc2626',
               borderRadius: '6px',
               padding: '0.3rem 0.7rem',
-              fontSize: '0.8rem',
+              fontSize: '1rem',
               fontWeight: 600,
               cursor: 'pointer',
             }}
