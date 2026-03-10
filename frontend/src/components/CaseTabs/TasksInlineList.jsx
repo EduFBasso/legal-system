@@ -5,9 +5,9 @@ import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
 
 const urgencyStyle = {
-  URGENTISSIMO: { background: '#fee2e2', color: '#991b1b', label: 'Urgentissimo' },
-  URGENTE: { background: '#fef3c7', color: '#92400e', label: 'Urgente' },
-  NORMAL: { background: '#dcfce7', color: '#166534', label: 'Normal' },
+  URGENTISSIMO: { background: '#5f3d1a', color: '#fde047', label: 'Urgentissimo' },
+  URGENTE: { background: '#5d4037', color: '#fed7aa', label: 'Urgente' },
+  NORMAL: { background: '#1e3a2c', color: '#16a34a', label: 'Normal' },
 };
 
 export default function TasksInlineList({
@@ -41,7 +41,7 @@ export default function TasksInlineList({
           <span
             style={{
               background: '#16a34a',
-              color: '#fff',
+              color: '#000',
               fontSize: '0.85rem',
               fontWeight: 700,
               borderRadius: '999px',
@@ -117,7 +117,7 @@ export default function TasksInlineList({
                   />
 
                   <div style={{ flex: 1 }}>
-                    <div style={{ ...tasksInlineStyles.taskTitle, color: isDone ? '#6b7280' : '#111827' }}>
+                    <div style={{ ...tasksInlineStyles.taskTitle, color: isDone ? '#9ca3af' : '#f0f4f8' }}>
                       {task.titulo}
                     </div>
 

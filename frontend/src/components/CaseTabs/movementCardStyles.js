@@ -1,9 +1,13 @@
-// Color Palette - Tema Verde (alinhado com TasksTab)
+// Color Palette - Tema Escuro
 const colorPalette = {
-  normal: '#16a34a',           // Green Primary
-  normalLight: '#f0fdf4',      // Green Light Background
-  normalDark: '#15803d',       // Green Dark
-  normalRgb: '22, 163, 74',    // RGB for transparency
+  // Dark Theme
+  darkBg: '#1f2937',           // Dark background base
+  darkBgLight: '#2d3748',      // Slightly lighter dark background
+  darkBorder: '#374151',       // Dark border
+  darkText: '#f0f4f8',         // Light text (almost white)
+  darkTextSecondary: '#cbd5e0', // Secondary text (light gray)
+  accentGreen: '#16a34a',      // Green accent (may appear bright on dark)
+  accentGreenRgb: '22, 163, 74',
 };
 
 export const movementCardStyles = {
@@ -13,17 +17,18 @@ export const movementCardStyles = {
     transition: 'all 0.3s ease',
     padding: '1rem 1rem 1rem 1.15rem',
     marginBottom: '0.75rem',
-    background: colorPalette.normalLight,
-    border: `1px solid rgba(${colorPalette.normalRgb}, 0.2)`,
+    background: colorPalette.darkBgLight,
+    border: `1px solid ${colorPalette.darkBorder}`,
+    color: colorPalette.darkText,
   },
   highlighted: {
-    background: '#f0fdfb',
-    border: `3px solid ${colorPalette.normal}`,
-    boxShadow: `0 0 0 3px rgba(${colorPalette.normalRgb}, 0.2)`,
+    background: '#3d4556',
+    border: `3px solid ${colorPalette.accentGreen}`,
+    boxShadow: `0 0 0 3px rgba(${colorPalette.accentGreenRgb}, 0.3)`,
   },
   selected: {
-    border: `3px solid ${colorPalette.normalDark}`,
-    background: colorPalette.normalLight,
+    border: `3px solid ${colorPalette.accentGreen}`,
+    background: colorPalette.darkBgLight,
   },
 };
 
@@ -36,13 +41,13 @@ export const movementDisplayStyles = {
   },
   date: {
     fontSize: '1rem',
-    color: '#6b7280',
+    color: colorPalette.darkTextSecondary,
     marginBottom: '0.25rem',
   },
   title: {
     margin: 0,
     fontSize: '1rem',
-    color: '#111827',
+    color: colorPalette.darkText,
   },
   badgeRow: {
     display: 'flex',
@@ -53,21 +58,21 @@ export const movementDisplayStyles = {
   infoLine: {
     marginTop: '0.5rem',
     fontSize: '1.025rem',
-    color: '#374151',
+    color: colorPalette.darkTextSecondary,
   },
   infoLabel: {
-    color: '#111827',
+    color: colorPalette.darkText,
   },
   descriptionManual: {
     margin: '0.6rem 0 0',
     fontSize: '1.025rem',
-    color: '#1f2937',
+    color: colorPalette.darkText,
     lineHeight: 1.5,
   },
   descriptionAuto: {
     margin: '0.6rem 0 0',
     fontSize: '1.025rem',
-    color: '#4b5563',
+    color: colorPalette.darkTextSecondary,
     lineHeight: 1.5,
   },
   actionsRow: {
@@ -77,9 +82,9 @@ export const movementDisplayStyles = {
     justifyContent: 'flex-end',
   },
   actionButtonEdit: {
-    border: `1px solid ${colorPalette.normal}`,
-    background: '#fff',
-    color: colorPalette.normal,
+    border: `1px solid ${colorPalette.accentGreen}`,
+    background: 'transparent',
+    color: colorPalette.accentGreen,
     borderRadius: '6px',
     padding: '0.3rem 0.7rem',
     fontSize: '1rem',
@@ -87,9 +92,9 @@ export const movementDisplayStyles = {
     cursor: 'pointer',
   },
   actionButtonDelete: {
-    border: '1px solid #dc2626',
-    background: '#fff',
-    color: '#dc2626',
+    border: '1px solid #ef4444',
+    background: 'transparent',
+    color: '#ef4444',
     borderRadius: '6px',
     padding: '0.3rem 0.7rem',
     fontSize: '1rem',
@@ -103,8 +108,8 @@ export const getOriginBadgeStyle = (isManual) => ({
   fontWeight: 700,
   borderRadius: '999px',
   padding: '0.2rem 0.55rem',
-  background: isManual ? '#fef3c7' : colorPalette.normalLight,
-  color: isManual ? '#92400e' : colorPalette.normalDark,
+  background: isManual ? '#5f3d1a' : '#1e3a2c',
+  color: isManual ? '#fde047' : colorPalette.accentGreen,
 });
 
 export const movementDeadlineBadgeStyle = {
@@ -119,14 +124,14 @@ export const movementDeadlineBadgeStyle = {
 export const tasksInlineStyles = {
   wrapper: {
     marginTop: '1rem',
-    borderTop: `1px solid rgba(${colorPalette.normalRgb}, 0.2)`,
+    borderTop: `1px solid ${colorPalette.darkBorder}`,
     paddingTop: '0.85rem',
   },
   innerContainer: {
-    border: `1px solid rgba(${colorPalette.normalRgb}, 0.15)`,
-    borderLeft: `4px solid ${colorPalette.normal}`,
+    border: `1px solid ${colorPalette.darkBorder}`,
+    borderLeft: `4px solid ${colorPalette.accentGreen}`,
     borderRadius: '10px',
-    background: colorPalette.normalLight,
+    background: colorPalette.darkBg,
     padding: '0.7rem',
   },
   titleRow: {
@@ -138,12 +143,12 @@ export const tasksInlineStyles = {
   sectionTitle: {
     fontSize: '1rem',
     fontWeight: 700,
-    color: colorPalette.normalDark,
+    color: colorPalette.darkText,
   },
   addButton: {
-    border: `1px solid ${colorPalette.normal}`,
-    background: '#fff',
-    color: colorPalette.normal,
+    border: `1px solid ${colorPalette.accentGreen}`,
+    background: 'transparent',
+    color: colorPalette.accentGreen,
     borderRadius: '6px',
     padding: '0.25rem 0.6rem',
     fontSize: '1rem',
@@ -155,17 +160,18 @@ export const tasksInlineStyles = {
   },
   emptyText: {
     margin: 0,
-    color: '#6b7280',
+    color: colorPalette.darkTextSecondary,
     fontSize: '1rem',
   },
   taskTitle: {
     fontSize: '1.1rem',
     fontWeight: 600,
+    color: colorPalette.darkText,
   },
   taskDescription: {
     marginTop: '0.15rem',
     fontSize: '1rem',
-    color: '#4b5563',
+    color: colorPalette.darkTextSecondary,
   },
   metaBadge: {
     fontSize: '0.9rem',
@@ -173,19 +179,19 @@ export const tasksInlineStyles = {
     borderRadius: '999px',
   },
   dueDateBadge: {
-    background: '#eef2ff',
-    color: '#3730a3',
+    background: '#2d3e4f',
+    color: '#93c5fd',
     fontWeight: 600,
   },
   noDueDateBadge: {
-    background: '#f3f4f6',
-    color: '#374151',
+    background: '#3f4649',
+    color: colorPalette.darkTextSecondary,
     fontWeight: 600,
   },
   editTaskButton: {
-    border: `1px solid ${colorPalette.normal}`,
-    background: '#fff',
-    color: colorPalette.normal,
+    border: `1px solid ${colorPalette.accentGreen}`,
+    background: 'transparent',
+    color: colorPalette.accentGreen,
     borderRadius: '6px',
     padding: '0.2rem 0.55rem',
     fontSize: '1rem',
@@ -196,12 +202,13 @@ export const tasksInlineStyles = {
 
 export const getTaskCardStyle = ({ isHighlighted, isSelected, isDone }) => ({
   border: isHighlighted
-    ? `2px solid ${colorPalette.normal}`
+    ? `2px solid ${colorPalette.accentGreen}`
     : isSelected
-      ? `2px solid ${colorPalette.normalDark}`
-      : `1px solid rgba(${colorPalette.normalRgb}, 0.15)`,
+      ? `2px solid ${colorPalette.accentGreen}`
+      : `1px solid ${colorPalette.darkBorder}`,
   borderRadius: '8px',
   padding: '0.65rem',
   marginBottom: '0.5rem',
-  background: isDone ? '#f9fafb' : '#fff',
+  background: isDone ? '#3f4649' : colorPalette.darkBgLight,
+  color: isDone ? colorPalette.darkTextSecondary : colorPalette.darkText,
 });
