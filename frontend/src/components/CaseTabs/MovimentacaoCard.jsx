@@ -13,7 +13,6 @@ import TasksInlineList from './TasksInlineList';
  * Props:
  * - mov: Movimento object
  * - isTemporaryHighlighted: boolean
- * - isSelected: boolean
  * - isEditing: boolean
  * - editForm: {data, tipo, tipo_customizado, titulo, descricao, prazo}
  * - onEditFormChange: (newForm) => void
@@ -22,9 +21,8 @@ import TasksInlineList from './TasksInlineList';
  * - onEditSave: () => Promise
  * - onDelete: () => void
  * - saving: boolean
- * - onClick: () => void
  * - tasks: Task[]
- * - addingTaskForMovement, editingTaskId, selectedTaskId, auxiliarHighlightedTaskId
+ * - addingTaskForMovement, editingTaskId, auxiliarHighlightedTaskId
  * - newTaskForm, editTaskForm
  * - savingTask, savingEditedTask
  * - onOpenAddTask, onCancelAddTask, onSaveTask
@@ -35,7 +33,6 @@ import TasksInlineList from './TasksInlineList';
 export default function MovimentacaoCard({
   mov,
   isTemporaryHighlighted,
-  isSelected,
   isEditing,
   editForm,
   onEditFormChange,
@@ -44,12 +41,10 @@ export default function MovimentacaoCard({
   onEditSave,
   onDelete,
   saving,
-  onClick,
   // Task props
   tasks = [],
   addingTaskForMovement,
   editingTaskId,
-  selectedTaskId,
   auxiliarHighlightedTaskId,
   newTaskForm,
   editTaskForm,
@@ -74,14 +69,9 @@ export default function MovimentacaoCard({
     <div
       id={`movimentacao-${mov.id}`}
       className="timeline-item"
-      onClick={onClick}
       style={{
         ...movementCardStyles.base,
-        ...(isTemporaryHighlighted
-          ? movementCardStyles.highlighted
-          : isSelected
-            ? movementCardStyles.selected
-            : {}),
+        ...(isTemporaryHighlighted ? movementCardStyles.highlighted : {}),
       }}
     >
       <div className="timeline-marker"></div>
@@ -115,7 +105,6 @@ export default function MovimentacaoCard({
               movimentoId={mov.id}
               addingTaskForMovement={addingTaskForMovement}
               editingTaskId={editingTaskId}
-              selectedTaskId={selectedTaskId}
               auxiliarHighlightedTaskId={auxiliarHighlightedTaskId}
               newTaskForm={newTaskForm}
               editTaskForm={editTaskForm}

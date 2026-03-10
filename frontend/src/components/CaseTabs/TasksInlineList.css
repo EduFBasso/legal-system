@@ -1,0 +1,69 @@
+.movement-task-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid #16a34a;
+  border-radius: 4px;
+  background: #ffffff;
+  display: grid;
+  place-content: center;
+  transition: all 0.15s ease;
+}
+
+.movement-task-checkbox::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  transform: scale(0);
+  transition: transform 0.12s ease-in-out;
+  background-color: #ffffff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.movement-task-checkbox:checked::before {
+  transform: scale(1);
+}
+
+.movement-task-checkbox--urgentissimo {
+  border-color: #dc2626;
+}
+
+.movement-task-checkbox--urgentissimo:checked {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.movement-task-checkbox--urgentissimo:focus-visible {
+  outline: 2px solid #fef2f2;
+  outline-offset: 1px;
+}
+
+.movement-task-checkbox--urgente {
+  border-color: #92400e;
+}
+
+.movement-task-checkbox--urgente:checked {
+  background: #92400e;
+  border-color: #92400e;
+}
+
+.movement-task-checkbox--urgente:focus-visible {
+  outline: 2px solid #fef3c7;
+  outline-offset: 1px;
+}
+
+.movement-task-checkbox--normal {
+  border-color: #166534;
+}
+
+.movement-task-checkbox--normal:checked {
+  background: #166534;
+  border-color: #166534;
+}
+
+.movement-task-checkbox--normal:focus-visible {
+  outline: 2px solid #ecfdf3;
+  outline-offset: 1px;
+}

@@ -34,7 +34,6 @@ function MovimentacoesTab({
   
   // Movimentação - Estados
   const [editingMovimentacaoId, setEditingMovimentacaoId] = useState(null);
-  const [selectedMovimentacaoId, setSelectedMovimentacaoId] = useState(null);
   const [temporaryHighlightedMovimentacaoId, setTemporaryHighlightedMovimentacaoId] = useState(null);
   const [editMovimentacaoForm, setEditMovimentacaoForm] = useState({
     data: '',
@@ -70,7 +69,6 @@ function MovimentacoesTab({
     data_vencimento: '',
   });
   const [savingEditedTask, setSavingEditedTask] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [auxiliarHighlightedTaskId, setAuxiliarHighlightedTaskId] = useState(null);
 
   // ========== HANDLERS MOVIMENTAÇÃO ==========
@@ -205,8 +203,8 @@ function MovimentacoesTab({
     });
   };
 
-  const handleSaveTask = async (movementId) => {
-    if (!newTaskForm.titulo.trim()) {
+  const handleSaveTask = async (movementId, formData = newTaskForm) => {
+    if (!formData.titulo.trim()) {
       alert('Título da tarefa é obrigatório');
       return;
     }
@@ -216,9 +214,9 @@ function MovimentacoesTab({
       const response = await caseTasksService.createTask({
         case: id,
         movimentacao: movementId,
-        titulo: newTaskForm.titulo,
-        descricao: newTaskForm.descricao || '',
-        data_vencimento: newTaskForm.data_vencimento || null,
+        titulo: formData.titulo,
+        descricao: formData.descricao || '',
+        data_vencimento: formData.data_vencimento || null,
         status: 'PENDENTE',
       });
       
@@ -230,8 +228,8 @@ function MovimentacoesTab({
         action: 'created',
         taskId: response?.id,
         caseId: id,
-        titulo: newTaskForm.titulo,
-        data_vencimento: newTaskForm.data_vencimento,
+        titulo: formData.titulo,
+        data_vencimento: formData.data_vencimento,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
@@ -261,8 +259,8 @@ function MovimentacoesTab({
     });
   };
 
-  const handleSaveEditedTask = async (taskId) => {
-    if (!editTaskForm.titulo.trim()) {
+  const handleSaveEditedTask = async (taskId, formData = editTaskForm) => {
+    if (!formData.titulo.trim()) {
       alert('Título da tarefa é obrigatório');
       return;
     }
@@ -270,9 +268,9 @@ function MovimentacoesTab({
     setSavingEditedTask(true);
     try {
       await caseTasksService.patchTask(taskId, {
-        titulo: editTaskForm.titulo,
-        descricao: editTaskForm.descricao || '',
-        data_vencimento: editTaskForm.data_vencimento || null,
+        titulo: formData.titulo,
+        descricao: formData.descricao || '',
+        data_vencimento: formData.data_vencimento || null,
       });
       await onRefreshTasks();
       handleCancelEditTask();
@@ -282,8 +280,8 @@ function MovimentacoesTab({
         action: 'edited',
         taskId: taskId,
         caseId: id,
-        titulo: editTaskForm.titulo,
-        data_vencimento: editTaskForm.data_vencimento,
+        titulo: formData.titulo,
+        data_vencimento: formData.data_vencimento,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
@@ -342,8 +340,6 @@ function MovimentacoesTab({
     if (!highlightedMovimentacaoId) return;
 
     setTemporaryHighlightedMovimentacaoId(highlightedMovimentacaoId);
-    setSelectedMovimentacaoId(highlightedMovimentacaoId);
-    setSelectedTaskId(null);
 
     const scrollTimeout = setTimeout(() => {
       const element = document.getElementById(`movimentacao-${highlightedMovimentacaoId}`);
@@ -382,11 +378,6 @@ function MovimentacoesTab({
     };
   }, [highlightedTaskId]);
 
-  // Limpar seleção de tarefa quando movimento muda
-  useEffect(() => {
-    setSelectedTaskId(null);
-  }, [selectedMovimentacaoId]);
-
   // Sincronizar com outras abas
   useSyncTaskUpdates({
     onTaskUpdate: () => {
@@ -407,7 +398,7 @@ function MovimentacoesTab({
             <button
               onClick={handleOpenCreateMovimentacao}
               style={{
-                background: '#6b21a8',
+                background: '#166534',
                 color: 'white',
                 border: 'none',
                 padding: '0.625rem 1.25rem',
@@ -422,12 +413,12 @@ function MovimentacoesTab({
                 whiteSpace: 'nowrap'
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = '#581c87';
+                e.target.style.background = '#15803d';
                 e.target.style.transform = 'translateY(-1px)';
-                e.target.style.boxShadow = '0 4px 12px rgba(107, 33, 168, 0.3)';
+                e.target.style.boxShadow = '0 2px 8px rgba(22, 101, 52, 0.3)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = '#6b21a8';
+                e.target.style.background = '#166534';
                 e.target.style.transform = 'translateY(0)';
                 e.target.style.boxShadow = 'none';
               }}
@@ -481,7 +472,6 @@ function MovimentacoesTab({
                 key={mov.id}
                 mov={mov}
                 isTemporaryHighlighted={temporaryHighlightedMovimentacaoId === mov.id}
-                isSelected={selectedMovimentacaoId === mov.id}
                 isEditing={editingMovimentacaoId === mov.id}
                 editForm={editMovimentacaoForm}
                 onEditFormChange={setEditMovimentacaoForm}
@@ -490,12 +480,10 @@ function MovimentacoesTab({
                 onEditSave={() => handleSaveMovimentacao(mov.id)}
                 onDelete={() => onDelete(mov.id)}
                 saving={savingMovimentacao}
-                onClick={() => setSelectedMovimentacaoId(mov.id)}
                 // Task props
                 tasks={tasks}
                 addingTaskForMovement={addingTaskForMovement}
                 editingTaskId={editingTaskId}
-                selectedTaskId={selectedTaskId}
                 auxiliarHighlightedTaskId={auxiliarHighlightedTaskId}
                 newTaskForm={newTaskForm}
                 editTaskForm={editTaskForm}

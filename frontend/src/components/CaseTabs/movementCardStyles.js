@@ -13,7 +13,7 @@ import {
 
 export const movementCardStyles = {
   base: {
-    cursor: 'pointer',
+    cursor: 'default',
     borderRadius: '8px',
     transition: 'all 0.3s ease',
     padding: '1rem 1rem 1rem 1.15rem',
@@ -28,7 +28,7 @@ export const movementCardStyles = {
     boxShadow: `0 0 0 3px rgba(${caseTheme.accentGreenRgb}, 0.2)`,
   },
   selected: {
-    border: `3px solid ${caseTheme.accentGreen}`,
+    border: `3px solid ${caseTheme.card.normalBorder}`,
     background: caseTheme.card.normalBg,
   },
 };
@@ -61,6 +61,26 @@ export const movementDisplayStyles = {
     fontSize: '1.025rem',
     color: caseTheme.darkTextSecondary,
   },
+  publicationHeader: {
+    marginTop: '0.55rem',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '0.45rem 0.85rem',
+  },
+  publicationHeaderItem: {
+    fontSize: '0.98rem',
+    color: caseTheme.darkTextSecondary,
+    lineHeight: 1.35,
+  },
+  publicationHeaderLabel: {
+    display: 'block',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.35px',
+    color: caseTheme.darkText,
+    marginBottom: '0.15rem',
+  },
   infoLabel: {
     color: caseTheme.darkText,
   },
@@ -71,7 +91,7 @@ export const movementDisplayStyles = {
     lineHeight: 1.5,
   },
   descriptionAuto: {
-    margin: '0.6rem 0 0',
+    margin: '0.75rem 0 0',
     fontSize: '1.025rem',
     color: caseTheme.darkTextSecondary,
     lineHeight: 1.5,
@@ -83,24 +103,26 @@ export const movementDisplayStyles = {
     justifyContent: 'flex-end',
   },
   actionButtonEdit: {
-    border: `1px solid ${caseTheme.accentGreen}`,
-    background: 'transparent',
-    color: caseTheme.accentGreen,
+    border: 'none',
+    background: caseTheme.button.primary,
+    color: '#fff',
     borderRadius: '6px',
-    padding: '0.3rem 0.7rem',
+    padding: '0.35rem 0.8rem',
     fontSize: '1rem',
     fontWeight: 600,
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
   actionButtonDelete: {
-    border: `1px solid ${caseTheme.button.danger}`,
-    background: 'transparent',
-    color: caseTheme.button.danger,
+    border: 'none',
+    background: caseTheme.button.danger,
+    color: '#fff',
     borderRadius: '6px',
     padding: '0.3rem 0.7rem',
     fontSize: '1rem',
     fontWeight: 600,
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
 };
 
@@ -118,15 +140,11 @@ export const movementDeadlineBadgeStyle = {
 export const tasksInlineStyles = {
   wrapper: {
     marginTop: '1rem',
-    borderTop: `1px solid ${caseTheme.darkBorder}`,
     paddingTop: '0.85rem',
+    borderTop: `1px solid ${caseTheme.darkBorder}`,
   },
   innerContainer: {
-    border: `1px solid ${caseTheme.darkBorder}`,
-    borderLeft: `4px solid ${caseTheme.accentGreen}`,
-    borderRadius: '10px',
-    background: caseTheme.taskInline.container,
-    padding: '0.7rem',
+    padding: '0.25rem 0 0',
   },
   titleRow: {
     display: 'flex',
@@ -135,27 +153,30 @@ export const tasksInlineStyles = {
     marginBottom: '0.6rem',
   },
   sectionTitle: {
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     fontWeight: 700,
     color: caseTheme.darkText,
+    letterSpacing: '0.4px',
+    textTransform: 'uppercase',
   },
   addButton: {
-    border: `1px solid ${caseTheme.accentGreen}`,
-    background: 'transparent',
-    color: caseTheme.accentGreen,
+    border: 'none',
+    background: caseTheme.button.primary,
+    color: '#fff',
     borderRadius: '6px',
-    padding: '0.25rem 0.6rem',
+    padding: '0.35rem 0.8rem',
     fontSize: '1rem',
     fontWeight: 600,
     display: 'inline-flex',
     alignItems: 'center',
     gap: '0.25rem',
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
   emptyText: {
     margin: 0,
     color: caseTheme.darkTextSecondary,
-    fontSize: '1rem',
+    fontSize: '0.98rem',
   },
   taskTitle: {
     fontSize: '1.1rem',
@@ -181,14 +202,15 @@ export const tasksInlineStyles = {
     fontWeight: 600,
   },
   editTaskButton: {
-    border: `1px solid ${caseTheme.accentGreen}`,
-    background: 'transparent',
-    color: caseTheme.accentGreen,
+    border: 'none',
+    background: caseTheme.origin.MANUAL.color,
+    color: '#fff',
     borderRadius: '6px',
-    padding: '0.2rem 0.55rem',
+    padding: '0.3rem 0.7rem',
     fontSize: '1rem',
     fontWeight: 600,
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
 };
 

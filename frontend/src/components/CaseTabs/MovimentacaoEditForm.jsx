@@ -270,9 +270,9 @@ export default function MovimentacaoEditForm({
           onClick={onCancel}
           disabled={saving}
           style={{
-            background: caseTheme.button.secondary,
-            color: caseTheme.darkText,
-            border: `1px solid ${caseTheme.darkBorder}`,
+            background: caseTheme.button.neutral,
+            color: '#fff',
+            border: 'none',
             padding: '0.75rem 1.5rem',
             borderRadius: '6px',
             cursor: saving ? 'not-allowed' : 'pointer',
@@ -285,12 +285,16 @@ export default function MovimentacaoEditForm({
           }}
           onMouseEnter={(e) => { 
             if (!saving) {
-              e.target.style.background = caseTheme.button.secondaryDark;
+              e.target.style.background = caseTheme.button.neutralDark;
+              e.target.style.transform = 'translateY(-1px)';
+              e.target.style.boxShadow = '0 2px 8px rgba(71, 85, 105, 0.3)';
             }
           }}
           onMouseLeave={(e) => { 
             if (!saving) {
-              e.target.style.background = caseTheme.button.secondary;
+              e.target.style.background = caseTheme.button.neutral;
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = 'none';
             }
           }}
         >
