@@ -1,16 +1,16 @@
 import { Plus } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
-import { getDaysToDueDate, calculateUrgency } from '../../utils/movementUtils';
+import { calculateUrgency } from '../../utils/movementUtils';
 import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
-import { getUrgencyStyle } from './caseTheme';
+import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle } from './caseTheme';
+import './TasksInlineList.css';
 
 export default function TasksInlineList({
   tasks,
   movimentoId,
   addingTaskForMovement,
   editingTaskId,
-  selectedTaskId,
   auxiliarHighlightedTaskId,
   newTaskForm,
   editTaskForm,
@@ -31,23 +31,7 @@ export default function TasksInlineList({
     <div style={tasksInlineStyles.wrapper}>
       <div style={tasksInlineStyles.innerContainer}>
       <div style={tasksInlineStyles.titleRow}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <span style={tasksInlineStyles.sectionTitle}>TAREFAS VINCULADAS</span>
-          <span
-            style={{
-              background: '#16a34a',
-              color: '#000',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              borderRadius: '999px',
-              padding: '0.15rem 0.5rem',
-              minWidth: '1.5rem',
-              textAlign: 'center',
-            }}
-          >
-            TODAS <strong>({taskList.length})</strong>
-          </span>
-        </div>
+        <span style={tasksInlineStyles.sectionTitle}>Tarefas vinculadas a esta movimentacao</span>
         {!isCreating && (
           <button
             onClick={(e) => {
@@ -55,8 +39,18 @@ export default function TasksInlineList({
               onOpenAddTask(movimentoId);
             }}
             style={tasksInlineStyles.addButton}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = caseTheme.button.primaryDark;
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(22, 101, 52, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = caseTheme.button.primary;
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
-            <Plus size={16} /> Add Task
+            <Plus size={16} /> Nova Tarefa
           </button>
         )}
       </div>
@@ -65,7 +59,7 @@ export default function TasksInlineList({
         <div onClick={(e) => e.stopPropagation()}>
           <TaskForm
             initialData={newTaskForm}
-            onSave={() => onSaveTask(movimentoId)}
+            onSave={(formData) => onSaveTask(movimentoId, formData)}
             onCancel={onCancelAddTask}
             isLoading={savingTask}
             submitLabel="Criar tarefa"
@@ -74,29 +68,40 @@ export default function TasksInlineList({
       )}
 
       {taskList.length === 0 && !isCreating && (
-        <p style={tasksInlineStyles.emptyText}>Nenhuma tarefa para esta movimentacao.</p>
+        <p style={tasksInlineStyles.emptyText}>Nenhuma tarefa vinculada a esta movimentacao.</p>
       )}
 
       {taskList.map((task) => {
         const isEditing = editingTaskId === task.id;
         const isDone = task.status === 'CONCLUIDA';
-        const isSelected = selectedTaskId === task.id;
         const isHighlighted = auxiliarHighlightedTaskId === task.id;
-        const daysRemaining = getDaysToDueDate(task.data_vencimento);
         const urgency = calculateUrgency(task.data_vencimento);
         const urgencyMeta = getUrgencyStyle(urgency);
+        const taskToneColor = task.data_vencimento ? urgencyMeta.color : caseTheme.darkText;
+        const urgencyButtonStyle = getUrgencyButtonStyle(urgency);
+        const editButtonBaseColor = task.data_vencimento ? urgencyButtonStyle.base : caseTheme.button.primary;
+        const editButtonHoverColor = task.data_vencimento ? urgencyButtonStyle.hover : caseTheme.button.primaryDark;
+        const editButtonShadow = task.data_vencimento ? urgencyButtonStyle.shadow : '0 2px 8px rgba(22, 101, 52, 0.3)';
 
         return (
           <div
             id={`task-${task.id}`}
             key={task.id}
             onClick={(e) => e.stopPropagation()}
-            style={getTaskCardStyle({ isHighlighted, isSelected, isDone })}
+            style={{
+              ...getTaskCardStyle({ isHighlighted, isSelected: false, isDone }),
+              ...(!isDone && task.data_vencimento
+                ? {
+                    background: urgencyMeta.background,
+                    border: `1px solid ${urgencyMeta.color}`,
+                  }
+                : {}),
+            }}
           >
             {isEditing ? (
               <TaskForm
                 initialData={editTaskForm}
-                onSave={() => onSaveEditedTask(task.id)}
+                onSave={(formData) => onSaveEditedTask(task.id, formData)}
                 onCancel={onCancelEditTask}
                 isLoading={savingEditedTask}
                 submitLabel="Salvar tarefa"
@@ -105,63 +110,71 @@ export default function TasksInlineList({
               <>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                   <input
+                    className={`movement-task-checkbox movement-task-checkbox--${urgency.toLowerCase()}`}
                     type="checkbox"
                     checked={isDone}
                     onChange={() => onToggleTaskStatus(task)}
-                    style={{ marginTop: '0.2rem', cursor: 'pointer' }}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      marginTop: '0.2rem',
+                    }}
                   />
 
                   <div style={{ flex: 1 }}>
-                    <div style={{ ...tasksInlineStyles.taskTitle, color: isDone ? '#9ca3af' : '#f0f4f8' }}>
+                    <div style={{ ...tasksInlineStyles.taskTitle, color: isDone ? '#9ca3af' : taskToneColor }}>
                       {task.titulo}
                     </div>
 
                     {task.descricao && (
-                      <div style={tasksInlineStyles.taskDescription}>
+                      <div style={{ ...tasksInlineStyles.taskDescription, color: isDone ? '#9ca3af' : taskToneColor }}>
                         {task.descricao}
                       </div>
                     )}
 
-                    <div style={{ marginTop: '0.35rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                      {task.data_vencimento ? (
-                        <>
-                          <span
-                            style={{
-                              ...tasksInlineStyles.metaBadge,
-                              ...tasksInlineStyles.dueDateBadge,
-                            }}
-                          >
-                            Vence: {formatDate(task.data_vencimento)}
-                          </span>
-                          <span
-                            style={{
-                              ...tasksInlineStyles.metaBadge,
-                              background: urgencyMeta.background,
-                              color: urgencyMeta.color,
-                              fontWeight: 700,
-                            }}
-                          >
-                            {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d atrasada` : `${daysRemaining}d restantes`} - {urgencyMeta.label}
-                          </span>
-                        </>
-                      ) : (
-                        <span
-                          style={{
-                            ...tasksInlineStyles.metaBadge,
-                            ...tasksInlineStyles.noDueDateBadge,
-                          }}
-                        >
-                          Sem vencimento
-                        </span>
-                      )}
-                    </div>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '0.45rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ marginTop: '0.45rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                  {task.data_vencimento ? (
+                    <span
+                      style={{
+                        ...tasksInlineStyles.metaBadge,
+                        background: urgencyMeta.background,
+                        color: urgencyMeta.color,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Vence: {formatDate(task.data_vencimento)}
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        ...tasksInlineStyles.metaBadge,
+                        ...tasksInlineStyles.noDueDateBadge,
+                      }}
+                    >
+                      Sem vencimento
+                    </span>
+                  )}
                   <button
-                    onClick={() => onOpenEditTask(task)}
-                    style={tasksInlineStyles.editTaskButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenEditTask(task);
+                    }}
+                    style={{
+                      ...tasksInlineStyles.editTaskButton,
+                      background: editButtonBaseColor,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = editButtonHoverColor;
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = editButtonShadow;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = editButtonBaseColor;
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
                     Editar
                   </button>
