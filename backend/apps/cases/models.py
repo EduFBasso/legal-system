@@ -881,3 +881,93 @@ class Expense(models.Model):
     
     def __str__(self):
         return f"{self.case.numero_processo} - R$ {self.value:.2f} ({self.date})"
+
+
+class CaseDocument(models.Model):
+    """
+    Documento anexado ao processo (PDF, XLS/XLSX, DOC/DOCX).
+    """
+
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='documents',
+        help_text='Processo relacionado ao documento'
+    )
+
+    file = models.FileField(
+        upload_to='case_documents/%Y/%m/%d/',
+        help_text='Arquivo do documento'
+    )
+
+    original_name = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Nome original do arquivo enviado'
+    )
+
+    file_extension = models.CharField(
+        max_length=10,
+        blank=True,
+        help_text='Extensão do arquivo (pdf, xls, xlsx, doc, docx)'
+    )
+
+    mime_type = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='Tipo MIME do arquivo'
+    )
+
+    file_size = models.BigIntegerField(
+        null=True,
+        blank=True,
+        help_text='Tamanho do arquivo em bytes'
+    )
+
+    tipo_documento = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text='Categoria opcional (ex: petição, contrato, sentença)'
+    )
+
+    description = models.TextField(
+        blank=True,
+        default='',
+        help_text='Descrição opcional do documento'
+    )
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Documento do Processo'
+        verbose_name_plural = 'Documentos do Processo'
+        indexes = [
+            models.Index(fields=['case', '-uploaded_at']),
+            models.Index(fields=['file_extension']),
+        ]
+
+    def __str__(self):
+        label = self.original_name or (self.file.name.split('/')[-1] if self.file else 'documento')
+        return f"{self.case.numero_processo} - {label}"
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            uploaded_name = self.file.name.split('/')[-1]
+            if not self.original_name:
+                self.original_name = uploaded_name
+
+            ext = uploaded_name.split('.')[-1].lower() if '.' in uploaded_name else ''
+            self.file_extension = ext
+
+            self.file_size = getattr(self.file, 'size', None)
+            self.mime_type = getattr(self.file, 'content_type', '') or self.mime_type
+
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.file:
+            self.file.delete(save=False)
+        super().delete(*args, **kwargs)

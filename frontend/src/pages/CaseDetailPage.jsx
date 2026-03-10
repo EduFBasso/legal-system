@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import useAutoSave from '../hooks/useAutoSave';
 import systemSettingsService from '../services/systemSettingsService';
+import caseDocumentsService from '../services/caseDocumentsService';
 import Toast from '../components/common/Toast';
 import ContactDetailModal from '../components/ContactDetailModal';
 import SelectContactModal from '../components/SelectContactModal';
@@ -53,6 +54,9 @@ function CaseDetailPage() {
 
   // System settings
   const [systemSettings, setSystemSettings] = useState(null);
+  const [documentos, setDocumentos] = useState([]);
+  const [loadingDocumentos, setLoadingDocumentos] = useState(false);
+  const [uploadingDocumento, setUploadingDocumento] = useState(false);
 
   /**
    * Hooks de negócio - cada um responsável por um domínio
@@ -344,6 +348,58 @@ function CaseDetailPage() {
     );
   };
 
+  const loadDocumentos = useCallback(async () => {
+    if (!id) {
+      setDocumentos([]);
+      return;
+    }
+
+    setLoadingDocumentos(true);
+    try {
+      const docs = await caseDocumentsService.getByCase(id);
+      setDocumentos(Array.isArray(docs) ? docs : []);
+    } catch {
+      modalsNotif.showToast('Erro ao carregar documentos do processo', 'error');
+    } finally {
+      setLoadingDocumentos(false);
+    }
+  }, [id, modalsNotif]);
+
+  const handleUploadDocument = useCallback(async (file) => {
+    if (!id) {
+      modalsNotif.showToast('Salve o processo antes de anexar documentos', 'warning');
+      return;
+    }
+
+    setUploadingDocumento(true);
+    try {
+      await caseDocumentsService.upload({ caseId: id, file });
+      modalsNotif.showToast('Documento enviado com sucesso', 'success');
+      await loadDocumentos();
+    } catch (error) {
+      modalsNotif.showToast(error.message || 'Erro ao enviar documento', 'error');
+    } finally {
+      setUploadingDocumento(false);
+    }
+  }, [id, loadDocumentos, modalsNotif]);
+
+  const handleDeleteDocument = useCallback(async (documentId) => {
+    try {
+      await caseDocumentsService.remove(documentId);
+      modalsNotif.showToast('Documento excluido com sucesso', 'success');
+      await loadDocumentos();
+    } catch {
+      modalsNotif.showToast('Erro ao excluir documento', 'error');
+    }
+  }, [loadDocumentos, modalsNotif]);
+
+  useEffect(() => {
+    const shouldAutoLoadDocuments = systemSettings?.AUTO_LOAD_DOCUMENTS_ON_CASE !== false;
+    if (navigation.activeSection === 'documentos' && shouldAutoLoadDocuments && id) {
+      loadDocumentos();
+    }
+  }, [id, loadDocumentos, navigation.activeSection, systemSettings]);
+
   const activeTasks = useMemo(
     () => (movements.tasks || []).filter((task) => task.status !== 'CONCLUIDA'),
     [movements.tasks]
@@ -487,8 +543,12 @@ function CaseDetailPage() {
 
         {navigation.activeSection === 'documentos' && (
           <DocumentosTab 
-            documentos={[]}
-            setDocumentos={() => {}}
+            caseId={id}
+            documentos={documentos}
+            loading={loadingDocumentos}
+            uploading={uploadingDocumento}
+            onUploadDocument={handleUploadDocument}
+            onDeleteDocument={handleDeleteDocument}
           />
         )}
 

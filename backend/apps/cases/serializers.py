@@ -3,7 +3,7 @@ Serializers for Cases app
 """
 import unicodedata
 from rest_framework import serializers
-from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense
+from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
 
 
 def normalize_text(text):
@@ -267,6 +267,63 @@ class ExpenseSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class CaseDocumentSerializer(serializers.ModelSerializer):
+    """Serializer para documentos anexados ao processo."""
+
+    file_url = serializers.SerializerMethodField(read_only=True)
+    case_numero = serializers.CharField(source='case.numero_processo', read_only=True)
+
+    class Meta:
+        model = CaseDocument
+        fields = [
+            'id',
+            'case',
+            'case_numero',
+            'file',
+            'file_url',
+            'original_name',
+            'file_extension',
+            'mime_type',
+            'file_size',
+            'tipo_documento',
+            'description',
+            'uploaded_at',
+            'updated_at',
+        ]
+        read_only_fields = [
+            'id',
+            'case_numero',
+            'original_name',
+            'file_extension',
+            'mime_type',
+            'file_size',
+            'uploaded_at',
+            'updated_at',
+        ]
+
+    def get_file_url(self, obj):
+        if not obj.file:
+            return None
+        request = self.context.get('request')
+        url = obj.file.url
+        return request.build_absolute_uri(url) if request else url
+
+    def validate_file(self, value):
+        allowed_extensions = {'pdf', 'xls', 'xlsx', 'doc', 'docx'}
+        max_size = 25 * 1024 * 1024
+
+        ext = value.name.split('.')[-1].lower() if '.' in value.name else ''
+        if ext not in allowed_extensions:
+            raise serializers.ValidationError(
+                'Formato não permitido. Use: PDF, XLS, XLSX, DOC ou DOCX.'
+            )
+
+        if value.size > max_size:
+            raise serializers.ValidationError('Arquivo deve ter no máximo 25MB.')
+
+        return value
 
 
 class CaseListSerializer(serializers.ModelSerializer):

@@ -8,7 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count
 
-from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense
+from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
 from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
@@ -18,6 +18,7 @@ from .serializers import (
     CaseTaskSerializer,
     PaymentSerializer,
     ExpenseSerializer,
+    CaseDocumentSerializer,
 )
 
 
@@ -340,6 +341,31 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         Optionally filter by case_id from URL parameter.
         For use in nested routes like /api/cases/{id}/expenses/
         """
+        queryset = super().get_queryset()
+        case_id = self.request.query_params.get('case_id')
+        if case_id:
+            queryset = queryset.filter(case_id=case_id)
+        return queryset
+
+
+class CaseDocumentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para documentos anexados ao processo.
+    """
+
+    queryset = CaseDocument.objects.select_related('case').all().order_by('-uploaded_at')
+    serializer_class = CaseDocumentSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        'case': ['exact'],
+        'file_extension': ['exact', 'in'],
+        'uploaded_at': ['gte', 'lte', 'exact'],
+    }
+    search_fields = ['original_name', 'tipo_documento', 'description', 'case__numero_processo']
+    ordering_fields = ['uploaded_at', 'original_name', 'file_size']
+    ordering = ['-uploaded_at']
+
+    def get_queryset(self):
         queryset = super().get_queryset()
         case_id = self.request.query_params.get('case_id')
         if case_id:
