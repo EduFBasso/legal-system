@@ -99,7 +99,7 @@ function FinanceiroTab({
   formData = {},
   recebimentos = [],
   despesas = [],
-  participacaoTipo = 'percentage',
+  participacaoTipo = null,
   participacaoPercentual = '',
   participacaoValorFixo = '',
   pagaMedianteGanho = false,
@@ -117,19 +117,6 @@ function FinanceiroTab({
   onAddDespesa = () => {},
   onRemoveDespesa = () => {},
   autoSavingObservations = false,
-  calcularParticipacao = () => {
-    const valorCausa = parseCurrencyValue(formData.valor_causa);
-    if (participacaoTipo === 'percentage') {
-      return (valorCausa * (parseFloat(participacaoPercentual) || 0)) / 100;
-    }
-    return parseCurrencyValue(participacaoValorFixo);
-  },
-  calcularTotalRecebimentos = () => {
-    return recebimentos.reduce((sum, r) => sum + (r.value || 0), 0);
-  },
-  calcularTotalDespesas = () => {
-    return despesas.reduce((sum, d) => sum + (d.value || 0), 0);
-  },
 }) {
   const calcularTotalHonorarios = () => {
     const honorarioParcela = parseCurrencyValue(formData.attorney_fee_amount || '');
@@ -168,6 +155,14 @@ function FinanceiroTab({
   const totalHonorariosSelecionado = honorariosModo === 'hora' ? totalHonorariosHora : totalHonorariosParcelado;
   const totalHonorarios = participacaoChecks.honorarios ? totalHonorariosSelecionado : 0;
   const totalParticipacao = totalPercentual + totalValorFixo + totalHonorarios;
+
+  const calcularTotalRecebimentos = () => {
+    return recebimentos.reduce((sum, r) => sum + parseFloat(r.value || 0), 0);
+  };
+
+  const calcularTotalDespesas = () => {
+    return despesas.reduce((sum, d) => sum + parseFloat(d.value || 0), 0);
+  };
 
   const handleToggleParticipacao = (tipo, checked) => {
     setManualCheckControl(true);

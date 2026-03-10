@@ -120,7 +120,6 @@ function CaseDetailPage() {
   const [participacaoPercentual, setParticipacaoPercentual] = useState('');
   const [participacaoValorFixo, setParticipacaoValorFixo] = useState('');
   const [pagaMedianteGanho, setPagaMedianteGanho] = useState(false);
-  const [valorCausaInput, setValorCausaInput] = useState('');
   const [recebimentoForm, setRecebimentoForm] = useState({
     data: new Date().toISOString().split('T')[0],
     descricao: '',
@@ -1259,15 +1258,6 @@ function CaseDetailPage() {
     return numeric.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  useEffect(() => {
-    if (formData.valor_causa === null || formData.valor_causa === undefined || formData.valor_causa === '') {
-      setValorCausaInput('');
-      return;
-    }
-
-    setValorCausaInput(formatCurrencyInput(formData.valor_causa));
-  }, [formData.valor_causa]);
-
   // Sync financial fields from backend to local state
   useEffect(() => {
     if (!formData || !id) return;
@@ -1290,35 +1280,6 @@ function CaseDetailPage() {
   }, [formData, id]);
 
   // ========== FINANCEIRO FUNCTIONS ==========
-
-  /**
-   * Calculate participacao value based on type
-   */
-  const calcularParticipacao = () => {
-    const valorCausa = parseCurrencyValue(formData.valor_causa);
-    if (valorCausa === 0) return 0;
-
-    if (participacaoTipo === 'percentage') {
-      const percentual = parseFloat(participacaoPercentual) || 0;
-      return (valorCausa * percentual) / 100;
-    } else {
-      return parseCurrencyValue(participacaoValorFixo);
-    }
-  };
-
-  /**
-   * Calculate total recebimentos
-   */
-  const calcularTotalRecebimentos = () => {
-    return recebimentos.reduce((sum, r) => sum + parseFloat(r.value || 0), 0);
-  };
-
-  /**
-   * Calculate total despesas
-   */
-  const calcularTotalDespesas = () => {
-    return despesas.reduce((sum, d) => sum + parseFloat(d.value || 0), 0);
-  };
 
   /**
    * Load payments (recebimentos) from backend
@@ -1789,7 +1750,6 @@ function CaseDetailPage() {
             participacaoPercentual={participacaoPercentual}
             participacaoValorFixo={participacaoValorFixo}
             pagaMedianteGanho={pagaMedianteGanho}
-            valorCausaInput={valorCausaInput}
             recebimentoForm={recebimentoForm}
             despesaForm={despesaForm}
             onInputChange={handleInputChange}
@@ -1799,18 +1759,11 @@ function CaseDetailPage() {
             setParticipacaoPercentual={setParticipacaoPercentual}
             setParticipacaoValorFixo={setParticipacaoValorFixo}
             setPagaMedianteGanho={setPagaMedianteGanho}
-            setValorCausaInput={setValorCausaInput}
             onAddRecebimento={handleAdicionarRecebimento}
             onRemoveRecebimento={handleRemoverRecebimento}
             onAddDespesa={handleAdicionarDespesa}
             onRemoveDespesa={handleRemoverDespesa}
             autoSavingObservations={autoSavingFinancial}
-            formatDate={formatDate}
-            parseCurrencyValue={parseCurrencyValue}
-            formatCurrencyInput={formatCurrencyInput}
-            calcularParticipacao={calcularParticipacao}
-            calcularTotalRecebimentos={calcularTotalRecebimentos}
-            calcularTotalDespesas={calcularTotalDespesas}
           />
         )}
 
