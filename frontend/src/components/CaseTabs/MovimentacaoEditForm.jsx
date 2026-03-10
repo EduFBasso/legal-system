@@ -26,14 +26,15 @@ export default function MovimentacaoEditForm({
 
   return (
     <div style={{ 
-      background: '#faf5ff',
-      padding: '1.5rem',
+      background: '#fcfaff',
+      padding: '1rem',
       borderRadius: '8px',
-      border: '2px solid #6b21a8',
-      marginBottom: '1rem'
+      border: '1px solid #7c3aed',
+      boxShadow: 'inset 0 0 0 1px #ede9fe',
+      marginBottom: '0.85rem'
     }}>
-      <h4 style={{ marginBottom: '1rem', color: '#6b21a8', fontWeight: '600' }}>
-        Editar Movimentação
+      <h4 style={{ marginBottom: '0.85rem', color: '#6b21a8', fontWeight: '600', fontSize: '0.95rem' }}>
+        Editar Movimentação (inline)
       </h4>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>

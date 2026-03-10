@@ -32,7 +32,22 @@ export default function TasksInlineList({
   const isCreating = addingTaskForMovement === movimentoId;
 
   return (
-    <div style={{ marginTop: '0.85rem', borderTop: '1px solid #ede9fe', paddingTop: '0.75rem' }}>
+    <div
+      style={{
+        marginTop: '1rem',
+        borderTop: '1px solid #ddd6fe',
+        paddingTop: '0.85rem',
+      }}
+    >
+      <div
+        style={{
+          border: '1px solid #ddd6fe',
+          borderLeft: '4px solid #7c3aed',
+          borderRadius: '10px',
+          background: '#fcfaff',
+          padding: '0.7rem',
+        }}
+      >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>TAREFAS VINCULADAS</span>
         {!isCreating && (
@@ -93,7 +108,7 @@ export default function TasksInlineList({
             style={{
               border: isHighlighted ? '2px solid #3b82f6' : isSelected ? '2px solid #6b21a8' : '1px solid #ddd6fe',
               borderRadius: '8px',
-              padding: '0.55rem',
+              padding: '0.65rem',
               marginBottom: '0.5rem',
               background: isDone ? '#f9fafb' : '#fff',
             }}
@@ -195,6 +210,7 @@ export default function TasksInlineList({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

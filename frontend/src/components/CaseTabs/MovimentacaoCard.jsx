@@ -72,11 +72,16 @@ export default function MovimentacaoCard({
   return (
     <div
       id={`movimentacao-${mov.id}`}
+      className="timeline-item"
       onClick={onClick}
       style={{
         cursor: 'pointer',
         borderRadius: '8px',
         transition: 'all 0.3s ease',
+        padding: '1rem 1rem 1rem 1.15rem',
+        marginBottom: '0.75rem',
+        background: '#faf5ff',
+        border: '1px solid #e9d5ff',
         ...(isTemporaryHighlighted
           ? {
               background: '#eff6ff',
@@ -86,6 +91,7 @@ export default function MovimentacaoCard({
           : isSelected
             ? {
                 border: '3px solid #6b21a8',
+                background: '#fdf4ff',
               }
             : {}),
       }}
