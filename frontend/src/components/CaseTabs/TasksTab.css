@@ -91,6 +91,7 @@
 .tasks-stats .stat-card {
   background: var(--color-white);
   border: 1px solid var(--color-gray-300);
+  box-sizing: border-box;
   border-radius: 8px;
   padding: 1.5rem;
   text-align: center;
@@ -156,53 +157,56 @@
 
 /* Selected state */
 .tasks-stats .stat-card.stat-selected {
-  border-width: 3px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: var(--transform-hover-normal);
+  border-width: 1px;
+  transform: none;
 }
 
 .tasks-stats .stat-card.stat-total.stat-selected {
   border-color: var(--color-total) !important;
   background: var(--color-total-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-total-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .tasks-stats .stat-card.stat-total.stat-selected:hover {
   --color-rgb: var(--color-total-rgb);
   box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .tasks-stats .stat-card.stat-urgentissimo.stat-selected {
   border-color: var(--color-urgentissimo) !important;
   background: var(--color-urgentissimo-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-urgentissimo-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .tasks-stats .stat-card.stat-urgentissimo.stat-selected:hover {
   --color-rgb: var(--color-urgentissimo-rgb);
   box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .tasks-stats .stat-card.stat-urgente.stat-selected {
   border-color: var(--color-urgente) !important;
   background: var(--color-urgente-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-urgente-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .tasks-stats .stat-card.stat-urgente.stat-selected:hover {
   --color-rgb: var(--color-urgente-rgb);
   box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .tasks-stats .stat-card.stat-normal.stat-selected {
   border-color: var(--color-normal) !important;
   background: var(--color-normal-light) !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-normal-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .tasks-stats .stat-card.stat-normal.stat-selected:hover {
   --color-rgb: var(--color-normal-rgb);
   box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
-  transform: var(--transform-hover-emphasis);
+  transform: var(--transform-hover-normal);
 }
 
 .tasks-stats .stat-number {

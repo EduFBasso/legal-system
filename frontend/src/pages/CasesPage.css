@@ -64,6 +64,7 @@
 .stat-card {
   background: white;
   border: 1px solid #e2e8f0;
+  box-sizing: border-box;
   border-radius: 8px;
   padding: 1.5rem;
   text-align: center;
@@ -114,15 +115,15 @@
 
 /* Selected state - shows active filter */
 .stat-card.stat-selected {
-  border-width: 3px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+  border-width: 1px;
+  transform: none;
 }
 
 /* Total - Gray/Black when selected */
 .stat-card.stat-selected:not(.stat-active):not(.stat-inactive):not(.stat-tribunal) {
   border-color: #475569;
   background: #f8fafc;
+  box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-selected:not(.stat-active):not(.stat-inactive):not(.stat-tribunal) .stat-value {
@@ -132,13 +133,14 @@
 /* Total selected + hover */
 .stat-card.stat-selected:not(.stat-active):not(.stat-inactive):not(.stat-tribunal):hover {
   box-shadow: 0 6px 16px rgba(71, 85, 105, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 /* Active - Green when selected */
 .stat-card.stat-active.stat-selected {
   border-color: #16a34a;
   background: #f0fdf4;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-active.stat-selected .stat-value {
@@ -148,13 +150,14 @@
 /* Active selected + hover */
 .stat-card.stat-active.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(22, 163, 74, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 /* Inactive - Red when selected */
 .stat-card.stat-inactive.stat-selected {
   border-color: #dc2626;
   background: #fef2f2;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-inactive.stat-selected .stat-value {
@@ -164,13 +167,14 @@
 /* Inactive selected + hover */
 .stat-card.stat-inactive.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 /* Tribunal - Blue when selected */
 .stat-card.stat-tribunal.stat-selected {
   border-color: #6366f1;
   background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card.stat-tribunal.stat-selected .stat-value {
@@ -180,7 +184,7 @@
 /* Tribunal selected + hover */
 .stat-card.stat-tribunal.stat-selected:hover {
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .stat-value {
