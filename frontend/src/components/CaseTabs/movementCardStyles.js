@@ -117,8 +117,8 @@ export const movementDeadlineBadgeStyle = {
   fontWeight: 700,
   borderRadius: '999px',
   padding: '0.2rem 0.55rem',
-  background: '#fee2e2',
-  color: '#991b1b',
+  background: '#5f3d1a',
+  color: '#fde047',
 };
 
 export const tasksInlineStyles = {
