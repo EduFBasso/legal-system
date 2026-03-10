@@ -55,6 +55,42 @@ function DocumentosTab({
     }
   };
 
+  const openInSystemDefault = (doc) => {
+    if (!doc?.file_url) return;
+
+    // Open in separate tab to avoid disrupting current workflow.
+    window.open(doc.file_url, '_blank', 'noopener,noreferrer');
+  };
+
+  const downloadDocument = async (doc) => {
+    if (!doc?.file_url) return;
+
+    try {
+      const response = await fetch(doc.file_url, { credentials: 'include' });
+      if (!response.ok) throw new Error('Falha ao baixar arquivo');
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = doc.original_name || 'documento';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      const anchor = document.createElement('a');
+      anchor.href = doc.file_url;
+      anchor.download = doc.original_name || 'documento';
+      anchor.rel = 'noopener noreferrer';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+    }
+  };
+
   return (
     <div className="case-section">
       <div className="section-card">
@@ -96,7 +132,12 @@ function DocumentosTab({
         ) : (
           <div className="documentos-grid">
             {documentsSafe.map((doc) => (
-              <div key={doc.id} className="documento-card">
+              <div
+                key={doc.id}
+                className="documento-card"
+                onDoubleClick={() => openInSystemDefault(doc)}
+                title="Duplo clique para abrir no aplicativo padrao"
+              >
                 <div className="documento-icon">
                   {doc.file_extension === 'pdf' ? '📕' : ['doc', 'docx'].includes(doc.file_extension) ? '📘' : '📄'}
                 </div>
@@ -110,19 +151,35 @@ function DocumentosTab({
                 </div>
                 <div className="documento-actions">
                   <button
-                    className="btn-icon-small"
-                    title="Baixar"
-                    onClick={() => window.open(doc.file_url, '_blank')}
+                    className="btn btn-success btn-doc-open"
+                    title="Abrir no aplicativo padrao do sistema"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openInSystemDefault(doc);
+                    }}
                   >
-                    ⬇️
+                    Abrir
                   </button>
                   <button
-                    className="btn-icon-small btn-danger"
+                    className="btn btn-secondary btn-doc-open"
+                    title="Download do arquivo"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      downloadDocument(doc);
+                    }}
+                  >
+                    Download
+                  </button>
+                  <button
+                    className="btn btn-danger btn-doc-open"
                     title="Excluir"
-                    onClick={() => handleDeleteDocument(doc.id, doc.original_name)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDeleteDocument(doc.id, doc.original_name);
+                    }}
                     disabled={deletingDocumentId === doc.id}
                   >
-                    {deletingDocumentId === doc.id ? '…' : '🗑️'}
+                    {deletingDocumentId === doc.id ? 'Apagando...' : 'Apagar'}
                   </button>
                 </div>
               </div>

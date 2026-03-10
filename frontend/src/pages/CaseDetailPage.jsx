@@ -396,9 +396,14 @@ function CaseDetailPage() {
   useEffect(() => {
     const shouldAutoLoadDocuments = systemSettings?.AUTO_LOAD_DOCUMENTS_ON_CASE !== false;
     if (navigation.activeSection === 'documentos' && shouldAutoLoadDocuments && id) {
-      loadDocumentos();
+      // Inline fetch to avoid circular dependency with loadDocumentos callback
+      setLoadingDocumentos(true);
+      caseDocumentsService.getByCase(id)
+        .then(docs => setDocumentos(Array.isArray(docs) ? docs : []))
+        .catch(() => modalsNotif.showToast('Erro ao carregar documentos do processo', 'error'))
+        .finally(() => setLoadingDocumentos(false));
     }
-  }, [id, loadDocumentos, navigation.activeSection, systemSettings]);
+  }, [id, navigation.activeSection, systemSettings]);
 
   const activeTasks = useMemo(
     () => (movements.tasks || []).filter((task) => task.status !== 'CONCLUIDA'),

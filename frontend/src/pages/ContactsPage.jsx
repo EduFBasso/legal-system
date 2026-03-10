@@ -161,7 +161,7 @@ export default function ContactsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button className="btn-new-contact" onClick={handleNewContact}>
+        <button className="contacts-btn-new" onClick={handleNewContact}>
           + Novo Contato
         </button>
       </div>
