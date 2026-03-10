@@ -103,6 +103,8 @@ function FinanceiroTab({
       } else {
         setParticipacaoTipo(null);
       }
+      // Limpar valor de percentual ao desmarcar
+      setParticipacaoPercentual('');
     }
     if (!checked && tipo === 'valorFixo' && participacaoTipo === 'fixed') {
       if (participacaoChecks.percentual) {
@@ -110,6 +112,15 @@ function FinanceiroTab({
       } else {
         setParticipacaoTipo(null);
       }
+      // Limpar valor fixo ao desmarcar
+      setParticipacaoValorFixo('');
+    }
+    if (!checked && tipo === 'honorarios') {
+      // Limpar todos os valores de honorários ao desmarcar
+      onInputChange('attorney_fee_amount', '');
+      onInputChange('attorney_fee_installments', '');
+      setHonorarioValorHora('');
+      setHonorarioQtdHoras('');
     }
   };
 
