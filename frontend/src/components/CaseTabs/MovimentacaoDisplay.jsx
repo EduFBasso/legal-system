@@ -1,4 +1,9 @@
 import { truncateAtSentence } from '../../utils/movementUtils';
+import {
+  movementDisplayStyles,
+  getOriginBadgeStyle,
+  movementDeadlineBadgeStyle,
+} from './movementCardStyles';
 
 const formatDate = (value) => {
   if (!value) return '-';
@@ -19,82 +24,55 @@ export default function MovimentacaoDisplay({
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+      <div style={movementDisplayStyles.headerRow}>
         <div>
-          <div style={{ fontSize: '1rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+          <div style={movementDisplayStyles.date}>
             {formatDate(mov?.data)}
           </div>
-          <h4 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
+          <h4 style={movementDisplayStyles.title}>
             {mov?.titulo || tipoDisplay || 'Movimentação'}
           </h4>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-          <span
-            style={{
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              borderRadius: '999px',
-              padding: '0.2rem 0.55rem',
-              background: isManual ? '#fef3c7' : '#dbeafe',
-              color: isManual ? '#92400e' : '#1e40af',
-            }}
-          >
+        <div style={movementDisplayStyles.badgeRow}>
+          <span style={getOriginBadgeStyle(isManual)}>
             {mov?.origem_display || (isManual ? 'MANUAL' : 'AUTOMATICA')}
           </span>
 
           {hasPrazo && (
-            <span
-              style={{
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                borderRadius: '999px',
-                padding: '0.2rem 0.55rem',
-                background: '#fee2e2',
-                color: '#991b1b',
-              }}
-            >
+            <span style={movementDeadlineBadgeStyle}>
               Prazo: {mov.prazo}d
             </span>
           )}
         </div>
       </div>
 
-      <div style={{ marginTop: '0.5rem', fontSize: '1.025rem', color: '#374151' }}>
-        <strong style={{ color: '#111827' }}>Tipo:</strong> {tipoDisplay || mov?.tipo || '-'}
+      <div style={movementDisplayStyles.infoLine}>
+        <strong style={movementDisplayStyles.infoLabel}>Tipo:</strong> {tipoDisplay || mov?.tipo || '-'}
       </div>
 
-      <div style={{ marginTop: '0.25rem', fontSize: '1.025rem', color: '#374151' }}>
-        <strong style={{ color: '#111827' }}>Orgão:</strong> {mov?.orgao_julgador || '-'}
+      <div style={{ ...movementDisplayStyles.infoLine, marginTop: '0.25rem' }}>
+        <strong style={movementDisplayStyles.infoLabel}>Orgão:</strong> {mov?.orgao_julgador || '-'}
       </div>
 
       {isManual ? (
-        <p style={{ margin: '0.6rem 0 0', fontSize: '1.025rem', color: '#1f2937', lineHeight: 1.5 }}>
+        <p style={movementDisplayStyles.descriptionManual}>
           {truncateAtSentence(manualDescricao || mov?.descricao || '', 180, 260) || 'Sem descrição.'}
         </p>
       ) : (
-        <p style={{ margin: '0.6rem 0 0', fontSize: '1.025rem', color: '#4b5563', lineHeight: 1.5 }}>
+        <p style={movementDisplayStyles.descriptionAuto}>
           {truncateAtSentence(mov?.descricao || '', 180, 260) || 'Movimentação automática sem descrição detalhada.'}
         </p>
       )}
 
       {isManual && (
-        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+        <div style={movementDisplayStyles.actionsRow}>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onEditClick();
             }}
-            style={{
-              border: '1px solid #6b21a8',
-              background: '#fff',
-              color: '#6b21a8',
-              borderRadius: '6px',
-              padding: '0.3rem 0.7rem',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            style={movementDisplayStyles.actionButtonEdit}
           >
             Editar
           </button>
@@ -103,16 +81,7 @@ export default function MovimentacaoDisplay({
               e.stopPropagation();
               onDeleteClick();
             }}
-            style={{
-              border: '1px solid #dc2626',
-              background: '#fff',
-              color: '#dc2626',
-              borderRadius: '6px',
-              padding: '0.3rem 0.7rem',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            style={movementDisplayStyles.actionButtonDelete}
           >
             Excluir
           </button>

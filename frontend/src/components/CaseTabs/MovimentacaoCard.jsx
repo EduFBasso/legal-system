@@ -2,6 +2,7 @@ import {
   getTipoDisplay,
   sanitizeManualDescription
 } from '../../utils/movementUtils';
+import { movementCardStyles } from './movementCardStyles';
 import MovimentacaoEditForm from './MovimentacaoEditForm';
 import MovimentacaoDisplay from './MovimentacaoDisplay';
 import TasksInlineList from './TasksInlineList';
@@ -75,24 +76,11 @@ export default function MovimentacaoCard({
       className="timeline-item"
       onClick={onClick}
       style={{
-        cursor: 'pointer',
-        borderRadius: '8px',
-        transition: 'all 0.3s ease',
-        padding: '1rem 1rem 1rem 1.15rem',
-        marginBottom: '0.75rem',
-        background: '#faf5ff',
-        border: '1px solid #e9d5ff',
+        ...movementCardStyles.base,
         ...(isTemporaryHighlighted
-          ? {
-              background: '#eff6ff',
-              border: '3px solid #3b82f6',
-              boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.2)',
-            }
+          ? movementCardStyles.highlighted
           : isSelected
-            ? {
-                border: '3px solid #6b21a8',
-                background: '#fdf4ff',
-              }
+            ? movementCardStyles.selected
             : {}),
       }}
     >

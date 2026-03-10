@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { getDaysToDueDate, calculateUrgency } from '../../utils/movementUtils';
 import TaskForm from './TaskForm';
+import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
 
 const urgencyStyle = {
   URGENTISSIMO: { background: '#fee2e2', color: '#991b1b', label: 'Urgentissimo' },
@@ -32,43 +33,17 @@ export default function TasksInlineList({
   const isCreating = addingTaskForMovement === movimentoId;
 
   return (
-    <div
-      style={{
-        marginTop: '1rem',
-        borderTop: '1px solid #ddd6fe',
-        paddingTop: '0.85rem',
-      }}
-    >
-      <div
-        style={{
-          border: '1px solid #ddd6fe',
-          borderLeft: '4px solid #7c3aed',
-          borderRadius: '10px',
-          background: '#fcfaff',
-          padding: '0.7rem',
-        }}
-      >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>TAREFAS VINCULADAS</span>
+    <div style={tasksInlineStyles.wrapper}>
+      <div style={tasksInlineStyles.innerContainer}>
+      <div style={tasksInlineStyles.titleRow}>
+        <span style={tasksInlineStyles.sectionTitle}>TAREFAS VINCULADAS</span>
         {!isCreating && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onOpenAddTask(movimentoId);
             }}
-            style={{
-              border: '1px solid #6b21a8',
-              background: '#fff',
-              color: '#6b21a8',
-              borderRadius: '6px',
-              padding: '0.25rem 0.6rem',
-              fontSize: '1rem',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              cursor: 'pointer',
-            }}
+            style={tasksInlineStyles.addButton}
           >
             <Plus size={16} /> Add Task
           </button>
@@ -88,7 +63,7 @@ export default function TasksInlineList({
       )}
 
       {taskList.length === 0 && !isCreating && (
-        <p style={{ margin: 0, color: '#6b7280', fontSize: '1rem' }}>Nenhuma tarefa para esta movimentacao.</p>
+        <p style={tasksInlineStyles.emptyText}>Nenhuma tarefa para esta movimentacao.</p>
       )}
 
       {taskList.map((task) => {
@@ -105,13 +80,7 @@ export default function TasksInlineList({
             id={`task-${task.id}`}
             key={task.id}
             onClick={(e) => e.stopPropagation()}
-            style={{
-              border: isHighlighted ? '2px solid #3b82f6' : isSelected ? '2px solid #6b21a8' : '1px solid #ddd6fe',
-              borderRadius: '8px',
-              padding: '0.65rem',
-              marginBottom: '0.5rem',
-              background: isDone ? '#f9fafb' : '#fff',
-            }}
+            style={getTaskCardStyle({ isHighlighted, isSelected, isDone })}
           >
             {isEditing ? (
               <TaskForm
@@ -132,12 +101,12 @@ export default function TasksInlineList({
                   />
 
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 600, color: isDone ? '#6b7280' : '#111827' }}>
+                    <div style={{ ...tasksInlineStyles.taskTitle, color: isDone ? '#6b7280' : '#111827' }}>
                       {task.titulo}
                     </div>
 
                     {task.descricao && (
-                      <div style={{ marginTop: '0.15rem', fontSize: '1rem', color: '#4b5563' }}>
+                      <div style={tasksInlineStyles.taskDescription}>
                         {task.descricao}
                       </div>
                     )}
@@ -147,21 +116,15 @@ export default function TasksInlineList({
                         <>
                           <span
                             style={{
-                              fontSize: '0.9rem',
-                              padding: '0.15rem 0.45rem',
-                              borderRadius: '999px',
-                              background: '#eef2ff',
-                              color: '#3730a3',
-                              fontWeight: 600,
+                              ...tasksInlineStyles.metaBadge,
+                              ...tasksInlineStyles.dueDateBadge,
                             }}
                           >
                             Vence: {formatDate(task.data_vencimento)}
                           </span>
                           <span
                             style={{
-                              fontSize: '0.9rem',
-                              padding: '0.15rem 0.45rem',
-                              borderRadius: '999px',
+                              ...tasksInlineStyles.metaBadge,
                               background: urgencyMeta.background,
                               color: urgencyMeta.color,
                               fontWeight: 700,
@@ -173,12 +136,8 @@ export default function TasksInlineList({
                       ) : (
                         <span
                           style={{
-                            fontSize: '0.9rem',
-                            padding: '0.15rem 0.45rem',
-                            borderRadius: '999px',
-                            background: '#f3f4f6',
-                            color: '#374151',
-                            fontWeight: 600,
+                            ...tasksInlineStyles.metaBadge,
+                            ...tasksInlineStyles.noDueDateBadge,
                           }}
                         >
                           Sem vencimento
@@ -191,16 +150,7 @@ export default function TasksInlineList({
                 <div style={{ marginTop: '0.45rem', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => onOpenEditTask(task)}
-                    style={{
-                      border: '1px solid #6b21a8',
-                      background: '#fff',
-                      color: '#6b21a8',
-                      borderRadius: '6px',
-                      padding: '0.2rem 0.55rem',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
+                    style={tasksInlineStyles.editTaskButton}
                   >
                     Editar
                   </button>
