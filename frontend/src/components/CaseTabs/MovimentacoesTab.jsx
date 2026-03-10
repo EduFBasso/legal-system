@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Plus, FileText, Trash2, Check, X } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
-import { subscribeToTaskUpdates, notifyTaskUpdate } from '../../services/taskSyncService';
+import { notifyTaskUpdate } from '../../services/taskSyncService';
+import useSyncTaskUpdates from '../../hooks/useSyncTaskUpdates';
 import EmptyState from '../common/EmptyState';
 import caseTasksService from '../../services/caseTasksService';
 import caseMovementsService from '../../services/caseMovementsService';
@@ -407,14 +408,11 @@ function MovimentacoesTab({
    * Sincroniza alterações de tarefas entre abas/janelas do navegador
    * Quando uma tarefa é marcada como concluída em outra aba, recarrega os dados
    */
-  useEffect(() => {
-    const unsubscribe = subscribeToTaskUpdates((event) => {
-      if (event?.type === 'task-updated' && event?.action === 'status-changed') {
-        Promise.all([onRefreshTasks(), onRefreshMovements()]);
-      }
-    });
-    return unsubscribe;
-  }, [onRefreshTasks, onRefreshMovements]);
+  useSyncTaskUpdates({
+    onTaskUpdate: () => {
+      Promise.all([onRefreshTasks(), onRefreshMovements()]);
+    },
+  });
 
   return (
     <div className="case-section">

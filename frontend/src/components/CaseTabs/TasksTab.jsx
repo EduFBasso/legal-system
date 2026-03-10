@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useUrgencyVisibility } from '../../hooks/useUrgencyVisibility';
 import caseTasksService from '../../services/caseTasksService';
-import { notifyTaskUpdate, subscribeToTaskUpdates } from '../../services/taskSyncService';
+import { notifyTaskUpdate } from '../../services/taskSyncService';
+import useSyncTaskUpdates from '../../hooks/useSyncTaskUpdates';
 import TaskCard from '../TaskCard';
 import UrgencySection from '../UrgencySection';
 import CreateTaskModal from '../CreateTaskModal';
@@ -68,21 +69,19 @@ export default function TasksTab({
   }, [loadCaseTasksType2]);
 
   // Sincronizar atualizações entre abas
-  useEffect(() => {
-    const unsubscribe = subscribeToTaskUpdates((event) => {
-      if (event?.type === 'task-updated' && event?.caseId === parseInt(caseId)) {
-        if (event?.taskId && event?.newStatus) {
-          setTasks((prevTasks) =>
-            prevTasks.map((task) =>
-              task.id === event.taskId ? { ...task, status: event.newStatus } : task
-            )
-          );
-        }
-        loadCaseTasksType2();
+  useSyncTaskUpdates({
+    caseId,
+    onTaskUpdate: (event) => {
+      if (event?.taskId && event?.newStatus) {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.id === event.taskId ? { ...task, status: event.newStatus } : task
+          )
+        );
       }
-    });
-    return unsubscribe;
-  }, [caseId, loadCaseTasksType2, setTasks]);
+      loadCaseTasksType2();
+    },
+  });
 
   const calculateUrgency = (dataVencimento) => {
     if (!dataVencimento) return 'NORMAL';
