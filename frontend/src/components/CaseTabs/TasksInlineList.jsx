@@ -3,7 +3,7 @@ import { formatDate } from '../../utils/formatters';
 import { calculateUrgency } from '../../utils/movementUtils';
 import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
-import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle } from './caseTheme';
+import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle, getButtonHoverHandlers } from './caseTheme';
 import './TasksInlineList.css';
 
 export default function TasksInlineList({
@@ -26,6 +26,11 @@ export default function TasksInlineList({
 }) {
   const taskList = (tasks || []).filter((task) => Number(task.movimentacao) === Number(movimentoId));
   const isCreating = addingTaskForMovement === movimentoId;
+  const addTaskButtonInteractions = getButtonHoverHandlers({
+    base: caseTheme.button.primary,
+    hover: caseTheme.button.primaryDark,
+    shadow: '0 2px 8px rgba(22, 101, 52, 0.3)',
+  });
 
   return (
     <div style={tasksInlineStyles.wrapper}>
@@ -39,16 +44,7 @@ export default function TasksInlineList({
               onOpenAddTask(movimentoId);
             }}
             style={tasksInlineStyles.addButton}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = caseTheme.button.primaryDark;
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(22, 101, 52, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = caseTheme.button.primary;
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            {...addTaskButtonInteractions}
           >
             <Plus size={16} /> Nova Tarefa
           </button>
@@ -82,6 +78,11 @@ export default function TasksInlineList({
         const editButtonBaseColor = task.data_vencimento ? urgencyButtonStyle.base : caseTheme.button.primary;
         const editButtonHoverColor = task.data_vencimento ? urgencyButtonStyle.hover : caseTheme.button.primaryDark;
         const editButtonShadow = task.data_vencimento ? urgencyButtonStyle.shadow : '0 2px 8px rgba(22, 101, 52, 0.3)';
+        const editTaskButtonInteractions = getButtonHoverHandlers({
+          base: editButtonBaseColor,
+          hover: editButtonHoverColor,
+          shadow: editButtonShadow,
+        });
 
         return (
           <div
@@ -165,16 +166,7 @@ export default function TasksInlineList({
                       ...tasksInlineStyles.editTaskButton,
                       background: editButtonBaseColor,
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = editButtonHoverColor;
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = editButtonShadow;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = editButtonBaseColor;
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
+                    {...editTaskButtonInteractions}
                   >
                     Editar
                   </button>

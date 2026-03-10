@@ -129,6 +129,20 @@ export const getUrgencyButtonStyle = (urgency) => {
   return toneByUrgency[urgencyKey] || toneByUrgency.NORMAL;
 };
 
+// === HELPER: Build hover handlers for inline button styles ===
+export const getButtonHoverHandlers = ({ base, hover, shadow }) => ({
+  onMouseEnter: (e) => {
+    e.currentTarget.style.background = hover;
+    e.currentTarget.style.transform = 'translateY(-1px)';
+    e.currentTarget.style.boxShadow = shadow;
+  },
+  onMouseLeave: (e) => {
+    e.currentTarget.style.background = base;
+    e.currentTarget.style.transform = 'translateY(0)';
+    e.currentTarget.style.boxShadow = 'none';
+  },
+});
+
 // === HELPER: Get task card style ===
 export const getTaskCardStyle = ({ isDone }) => ({
   border: `1px solid ${caseTheme.card.normalBorder}`,
