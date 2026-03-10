@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Save, X, UserPlus, RefreshCw } from 'lucide-react';
 import { formatDate, parseCurrencyValue, formatCurrency } from '../utils/formatters';
+import useAutoSave from '../hooks/useAutoSave';
 import casesService from '../services/casesService';
 import contactsService from '../services/contactsService';
 import casePartiesService from '../services/casePartiesService';
@@ -130,10 +131,6 @@ function CaseDetailPage() {
     descricao: '',
     valor: ''
   });
-  const [autoSavingFinancial, setAutoSavingFinancial] = useState(false);
-  const financialAutoSaveTimerRef = useRef(null);
-  const financialAutoSaveInitializedRef = useRef(false);
-  const lastSavedFinancialDataRef = useRef(null);
 
   // Tribunal options
   const tribunalOptions = [
@@ -1319,15 +1316,6 @@ function CaseDetailPage() {
     }
   }, [activeSection, id, loadPayments, loadExpenses]);
 
-  // Reset do controle de auto-save quando trocar de processo
-  useEffect(() => {
-    financialAutoSaveInitializedRef.current = false;
-    lastSavedFinancialDataRef.current = null;
-    if (financialAutoSaveTimerRef.current) {
-      clearTimeout(financialAutoSaveTimerRef.current);
-    }
-  }, [id]);
-
   // Save financial fields to formData when any changes
   useEffect(() => {
     if (!id) return;
@@ -1378,57 +1366,18 @@ function CaseDetailPage() {
     return changed;
   }, []);
 
-  // Auto-save completo da aba Financeiro (debounce 800ms + save only changed fields)
-  useEffect(() => {
-    if (!id || activeSection !== 'financeiro' || saving) return;
-
-    const currentFinancialData = buildFinancialPayload();
-
-    if (!financialAutoSaveInitializedRef.current) {
-      lastSavedFinancialDataRef.current = currentFinancialData;
-      financialAutoSaveInitializedRef.current = true;
-      return;
+  // Auto-save financial data using hook (debounce 800ms + save only changed fields)
+  const { isSaving: autoSavingFinancial } = useAutoSave(
+    buildFinancialPayload(),
+    async (changedFields) => {
+      await casesService.update(id, changedFields);
+    },
+    {
+      delay: 800,
+      enabled: !!(id && activeSection === 'financeiro' && !saving),
+      getChangedFields: getChangedFinancialFields,
     }
-
-    const changedFields = getChangedFinancialFields(
-      currentFinancialData,
-      lastSavedFinancialDataRef.current
-    );
-
-    if (Object.keys(changedFields).length === 0) return;
-
-    if (financialAutoSaveTimerRef.current) {
-      clearTimeout(financialAutoSaveTimerRef.current);
-    }
-
-    setAutoSavingFinancial(true);
-
-    financialAutoSaveTimerRef.current = setTimeout(async () => {
-      try {
-        await casesService.update(id, changedFields);
-        lastSavedFinancialDataRef.current = {
-          ...lastSavedFinancialDataRef.current,
-          ...changedFields,
-        };
-      } catch (error) {
-        console.error('Error auto-saving financial data:', error);
-      } finally {
-        setAutoSavingFinancial(false);
-      }
-    }, 800);
-
-    return () => {
-      if (financialAutoSaveTimerRef.current) {
-        clearTimeout(financialAutoSaveTimerRef.current);
-      }
-    };
-  }, [
-    id,
-    activeSection,
-    saving,
-    buildFinancialPayload,
-    getChangedFinancialFields,
-  ]);
+  );
 
   /**
    * Handle save financial data
