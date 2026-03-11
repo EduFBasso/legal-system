@@ -106,17 +106,21 @@ export default function NotificationsSummary() {
       return notification.title;
     }
 
-    const publicationId = notification.metadata?.id_api;
+    const processNumber = notification.metadata?.numero_processo;
     const tribunal = notification.metadata?.tribunal;
 
-    if (!publicationId && !tribunal) {
+    if (!processNumber && !tribunal) {
       return notification.title;
     }
 
-    const firstDigits = publicationId ? String(publicationId).slice(0, 7) : '';
-    const tribunalLabel = tribunal ? ` - [${tribunal}]` : '';
+    const processPrefix = processNumber?.split('-')[0]?.trim();
+    const tribunalLabel = tribunal ? ` ${tribunal}` : '';
 
-    return `Pub. N° ${firstDigits}${tribunalLabel}`.trim();
+    if (!processPrefix) {
+      return `Publicação -${tribunalLabel}`.trim();
+    }
+
+    return `Pub. N° ${processPrefix}-...${tribunalLabel}`.trim();
   };
 
   // Contar total de notificações não lidas (publicações + alertas 90+)
