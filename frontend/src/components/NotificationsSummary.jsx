@@ -101,6 +101,24 @@ export default function NotificationsSummary() {
     return `${diffDays}d`;
   };
 
+  const formatSidebarPublicationTitle = (notification) => {
+    if (notification.type !== 'publication') {
+      return notification.title;
+    }
+
+    const publicationId = notification.metadata?.id_api;
+    const tribunal = notification.metadata?.tribunal;
+
+    if (!publicationId && !tribunal) {
+      return notification.title;
+    }
+
+    const firstDigits = publicationId ? String(publicationId).slice(0, 7) : '';
+    const tribunalLabel = tribunal ? ` - [${tribunal}]` : '';
+
+    return `Pub. N° ${firstDigits}${tribunalLabel}`.trim();
+  };
+
   // Contar total de notificações não lidas (publicações + alertas 90+)
   const totalUnreadCount = publicationUnreadCount + staleAlertItems.length;
   const hasNotifications = recentUnread.length > 0 || staleAlertItems.length > 0;
@@ -136,7 +154,7 @@ export default function NotificationsSummary() {
                 <span className="card-type">Publicação</span>
               </div>
               <div className="card-content">
-                <div className="card-title">{notification.title}</div>
+                <div className="card-title">{formatSidebarPublicationTitle(notification)}</div>
                 <div className="card-meta">
                   {notification.metadata?.tribunal && (
                     <span className="card-tribunal">{abbreviateCourt(notification.metadata.tribunal)}</span>
