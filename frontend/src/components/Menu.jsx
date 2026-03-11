@@ -27,6 +27,14 @@ export default function Menu() {
 
     loadPendingCount();
 
+    const handlePublicationsSearchCompleted = () => {
+      loadPendingCount();
+    };
+
+    const handleWindowFocus = () => {
+      loadPendingCount();
+    };
+
     // Escutar eventos de integração para atualizar contador
     const unsubscribe = subscribePublicationSync((event) => {
       if (event.type === 'PUBLICATION_INTEGRATED') {
@@ -34,8 +42,13 @@ export default function Menu() {
       }
     });
 
+    window.addEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
+    window.addEventListener('focus', handleWindowFocus);
+
     return () => {
       unsubscribe();
+      window.removeEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
+      window.removeEventListener('focus', handleWindowFocus);
     };
   }, []);
 

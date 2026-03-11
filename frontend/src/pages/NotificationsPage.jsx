@@ -122,9 +122,19 @@ export default function NotificationsPage() {
       return;
     }
     
-    // Se for notificação de publicação, abrir a página Todas Publicações no layout principal
+    // Se for notificação de publicação, abrir detalhes da publicação em nova janela
     if (notification.type === 'publication') {
-      navigate('/publications/all');
+      const publicationId = notification.metadata?.id_api;
+
+      if (publicationId) {
+        window.open(
+          `/publications/${publicationId}/details`,
+          '_blank',
+          'width=1200,height=800,resizable=yes,scrollbars=yes'
+        );
+      } else {
+        navigate('/publications/all');
+      }
       return;
     }
     

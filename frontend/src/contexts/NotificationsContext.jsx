@@ -347,6 +347,45 @@ export function NotificationsProvider({ children }) {
     return () => clearInterval(interval);
   }, [fetchUnreadNotifications]);
 
+  // Atualizar notificações ao finalizar busca de publicações
+  // Inclui retries curtos para cobrir criação assíncrona no backend
+  useEffect(() => {
+    const handlePublicationsSearchCompleted = () => {
+      fetchUnreadNotifications();
+
+      const retryFast = setTimeout(() => {
+        fetchUnreadNotifications();
+      }, 1500);
+
+      const retrySlow = setTimeout(() => {
+        fetchUnreadNotifications();
+      }, 4000);
+
+      return () => {
+        clearTimeout(retryFast);
+        clearTimeout(retrySlow);
+      };
+    };
+
+    let clearRetries = null;
+
+    const onSearchCompleted = () => {
+      if (typeof clearRetries === 'function') {
+        clearRetries();
+      }
+      clearRetries = handlePublicationsSearchCompleted();
+    };
+
+    window.addEventListener('publicationsSearchCompleted', onSearchCompleted);
+
+    return () => {
+      window.removeEventListener('publicationsSearchCompleted', onSearchCompleted);
+      if (typeof clearRetries === 'function') {
+        clearRetries();
+      }
+    };
+  }, [fetchUnreadNotifications]);
+
   const value = {
     notifications,
     unreadCount,

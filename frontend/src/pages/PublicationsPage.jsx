@@ -50,6 +50,9 @@ export default function PublicationsPage() {
     hideToast,
     showToast
   } = usePublicationsContext();
+  const notifyPublicationsUpdated = useCallback(() => {
+    window.dispatchEvent(new Event('publicationsSearchCompleted'));
+  }, []);
 
   /**
    * Handler para busca com filtros
@@ -153,6 +156,7 @@ export default function PublicationsPage() {
         setSelectedIds(new Set());
         setSelectionMode(false);
         await loadLastSearch();
+        notifyPublicationsUpdated();
       } else {
         setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
           result.error,
@@ -201,6 +205,7 @@ export default function PublicationsPage() {
           notificationsDeleted: result.notifications_deleted || 0,
         }), 'success');
         await loadLastSearch();
+        notifyPublicationsUpdated();
       } else {
         setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
           result.error,
@@ -298,6 +303,7 @@ export default function PublicationsPage() {
         setSelectedIds(new Set());
         setSelectionMode(false);
         await loadLastSearch();
+        notifyPublicationsUpdated();
       } else {
         setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
           result.error,
