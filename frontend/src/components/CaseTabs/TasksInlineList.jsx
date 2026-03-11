@@ -37,7 +37,7 @@ export default function TasksInlineList({
     <div style={tasksInlineStyles.wrapper}>
       <div style={tasksInlineStyles.innerContainer}>
       <div style={tasksInlineStyles.titleRow}>
-        <span style={tasksInlineStyles.sectionTitle}>Tarefas vinculadas a esta movimentacao</span>
+        <span style={tasksInlineStyles.sectionTitle}>Tarefas vinculadas a esta movimentação</span>
         {!isCreating && (
           <button
             onClick={(e) => {
@@ -65,7 +65,7 @@ export default function TasksInlineList({
       )}
 
       {taskList.length === 0 && !isCreating && (
-        <p style={tasksInlineStyles.emptyText}>Nenhuma tarefa vinculada a esta movimentacao.</p>
+        <p style={tasksInlineStyles.emptyText}>Nenhuma tarefa vinculada a esta movimentação.</p>
       )}
 
       {taskList.map((task) => {

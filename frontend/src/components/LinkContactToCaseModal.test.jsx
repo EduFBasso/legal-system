@@ -11,31 +11,26 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LinkContactToCaseModal from './LinkContactToCaseModal';
 
-// Mock API
-vi.mock('../services/api', () => ({
+// Mock casesService (component imports from '../services/casesService', not '../services/api')
+vi.mock('../services/casesService', () => ({
   default: {
-    cases: {
-      getAll: vi.fn(() => Promise.resolve([
-        {
-          id: 1,
-          numero_processo: '0000001-23.2025.8.26.0100',
-          assunto: 'Ação de Cobrança',
-        },
-        {
-          id: 2,
-          numero_processo: '0000002-23.2025.8.26.0100',
-          assunto: 'Ação Trabalhista',
-        },
-        {
-          id: 3,
-          numero_processo: '0000003-23.2025.8.26.0100',
-          assunto: 'Ação de Despejo',
-        },
-      ])),
-    },
-    caseParties: {
-      create: vi.fn(() => Promise.resolve({ id: 100 })),
-    },
+    getAll: vi.fn(() => Promise.resolve([
+      {
+        id: 1,
+        numero_processo: '0000001-23.2025.8.26.0100',
+        assunto: 'Ação de Cobrança',
+      },
+      {
+        id: 2,
+        numero_processo: '0000002-23.2025.8.26.0100',
+        assunto: 'Ação Trabalhista',
+      },
+      {
+        id: 3,
+        numero_processo: '0000003-23.2025.8.26.0100',
+        assunto: 'Ação de Despejo',
+      },
+    ])),
   },
 }));
 

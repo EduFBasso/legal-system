@@ -92,7 +92,7 @@
   padding: 20px;
 }
 
-.section-title {
+.contact-detail-content .section-title {
   margin: 0 0 16px 0;
   font-size: var(--font-title-md, 18px);
   font-weight: 600;
@@ -201,7 +201,7 @@
 }
 
 .metadata-item label {
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-muted, #6b7280);
   text-transform: uppercase;

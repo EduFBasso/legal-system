@@ -29,10 +29,11 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
   // Ícone padrão: 👤 PF, 🏢 PJ
   const defaultIcon = person_type === 'PF' ? '👤' : '🏢';
 
-  // Helper: Capitalize name (converts to lowercase first, then capitalizes each word)
+  // Helper: Capitalize name — splits by whitespace to avoid Unicode \b\w boundary issues
+  // (e.g. "joão" has a boundary inside due to 'ã' not being \w, causing "JoãO")
   const capitalizeName = (name) => {
     if (!name) return '';
-    return name.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
+    return name.toLowerCase().split(/\s+/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   // Helper: Extract only digits from phone number for links

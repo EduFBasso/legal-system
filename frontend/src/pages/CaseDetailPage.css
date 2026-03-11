@@ -74,7 +74,7 @@
 .badge-soon {
   background: #fbbf24;
   color: #78350f;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   padding: 0.125rem 0.5rem;
   border-radius: 12px;
   font-weight: 600;
@@ -1656,9 +1656,9 @@
 /* Form helper text/small print */
 .form-helper-text {
   display: block;
-  color: #64748b;
+  color: #6b7280;
   font-size: 0.97rem;
-  margin-top: 0.375rem;
+  margin-top: 0.5rem;
   line-height: 1.5;
 }
 
@@ -1936,44 +1936,7 @@
   margin-left: auto;
 }
 
-.btn-icon-small {
-  padding: 0.375rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.btn-icon-small:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #334155;
-}
-
-.btn-icon-small.btn-danger {
-  color: #dc2626;
-  background: #ffffff;
-}
-
-.btn-icon-small.btn-danger:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-}
-
-.btn-icon-small.btn-warning {
-  color: #f59e0b;
-  background: #ffffff;
-}
-
-.btn-icon-small.btn-warning:hover {
-  background: #fef3c7;
-  border-color: #fcd34d;
-}
 
 /* ========================================
    DOCUMENTOS GRID
@@ -3846,11 +3809,6 @@
 .form-group label:contains("Prazo") {
   color: #b45309;
   font-weight: 600;
-}
-
-.form-helper-text {
-  color: #6b7280;
-  margin-top: 0.5rem;
 }
 
 /* Alternativa: usar nth-child para evitar problemas com :contains */

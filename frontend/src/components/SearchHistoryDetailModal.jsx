@@ -85,7 +85,7 @@ function SearchHistoryDetailModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content search-history-modal" onClick={(e) => e.stopPropagation()}>
         {/* Cabeçalho do Modal */}
         <div className="modal-header">
           <h2>Detalhes da Busca</h2>
