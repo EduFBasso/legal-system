@@ -160,13 +160,13 @@
   align-items: center;
 }
 
-.detail-label {
+.case-card .detail-label {
   color: #64748b;
   font-weight: 500;
   font-size: 1rem;
 }
 
-.detail-value {
+.case-card .detail-value {
   color: #1e293b;
   font-weight: 600;
   text-align: right;

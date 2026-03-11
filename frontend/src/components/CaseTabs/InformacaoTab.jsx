@@ -90,29 +90,13 @@ function InformacaoTab({
     };
 
     return (
-      <div className="publication-buttons-group" style={{
-        display: 'flex',
-        gap: '0.5rem',
-        flexWrap: wrap ? 'wrap' : 'nowrap'
-      }}>
+      <div className={`publication-buttons-group ${wrap ? 'is-wrap' : 'is-nowrap'}`}>
         {/* Link oficial (ESAJ ou principal) */}
         {consultaLinks.linkOficial && (
-          <button 
+          <button
             className="btn-official-link btn btn-sm"
             onClick={() => handleConsultarProcesso(consultaLinks.linkOficial)}
             title="Copia o número e abre o portal do tribunal"
-            style={{
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              padding: '0.4rem 0.8rem',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.3rem'
-            }}
           >
             🔍 {formData.tribunal || 'Consultar'}
           </button>
@@ -120,23 +104,11 @@ function InformacaoTab({
         
         {/* Links alternativos (eProc, TRF3, TRT15, etc.) */}
         {consultaLinks.linksAlternativos.map((system, index) => (
-          <button 
+          <button
             key={index}
             className="btn-alternative-link btn btn-sm"
             onClick={() => handleConsultarProcesso(system.url)}
             title={system.description}
-            style={{
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              padding: '0.4rem 0.8rem',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.3rem'
-            }}
           >
             {system.icon} {system.shortName}
           </button>

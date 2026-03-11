@@ -20,7 +20,7 @@
   margin: 0;
 }
 
-.btn {
+.cases-page .btn {
   padding: 0.625rem 1.25rem;
   border-radius: 6px;
   font-size: 1rem;
@@ -33,23 +33,23 @@
   gap: 0.5rem;
 }
 
-.btn-primary {
+.cases-page .btn-primary {
   background: #6366f1;
   color: white;
 }
 
-.btn-primary:hover {
+.cases-page .btn-primary:hover {
   background: #4f46e5;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-.btn-secondary {
+.cases-page .btn-secondary {
   background: #e2e8f0;
   color: #475569;
 }
 
-.btn-secondary:hover {
+.cases-page .btn-secondary:hover {
   background: #cbd5e1;
 }
 
@@ -194,7 +194,7 @@
   margin-bottom: 0.25rem;
 }
 
-.stat-label {
+.cases-page .stat-label {
   font-size: 1rem;
   color: #1e293b;
   text-transform: uppercase;
@@ -203,19 +203,19 @@
 }
 
 /* Label colors matching stat values */
-.stat-active .stat-label {
+.cases-page .stat-active .stat-label {
   color: #16a34a;
 }
 
-.stat-inactive .stat-label {
+.cases-page .stat-inactive .stat-label {
   color: #dc2626;
 }
 
-.stat-tribunal .stat-label {
+.cases-page .stat-tribunal .stat-label {
   color: #1e293b;
 }
 
-.stat-active .stat-value {
+.cases-page .stat-active .stat-value {
   color: #16a34a;
 }
 

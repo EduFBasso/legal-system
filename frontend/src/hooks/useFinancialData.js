@@ -49,13 +49,26 @@ export function useFinancialData(
   const parseCurrencyValue = useCallback((value) => {
     if (!value) return 0;
     if (typeof value === 'number') return value;
-    
-    return parseFloat(
-      String(value)
-        .replace(/[^\d,.-]/g, '')
-        .replace(/\./g, '')
-        .replace(',', '.')
-    ) || 0;
+
+    let cleaned = String(value)
+      .replace(/[^\d,.-]/g, '')
+      .trim();
+
+    if (!cleaned) return 0;
+
+    if (cleaned.includes(',')) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+    } else if (cleaned.includes('.')) {
+      const parts = cleaned.split('.');
+      const hasSingleDot = parts.length === 2;
+      const decimalDigits = hasSingleDot ? parts[1].length : 0;
+
+      if (!(hasSingleDot && decimalDigits > 0 && decimalDigits <= 2)) {
+        cleaned = cleaned.replace(/\./g, '');
+      }
+    }
+
+    return parseFloat(cleaned) || 0;
   }, []);
 
   /**
@@ -102,11 +115,27 @@ export function useFinancialData(
   useEffect(() => {
     if (!id) return;
 
+    const parsedPercentual = parseFloat(participacaoPercentual);
+    const hasPercentual = participacaoPercentual !== '' && !Number.isNaN(parsedPercentual);
+    const parsedValorFixo = parseCurrencyValue(participacaoValorFixo);
+    const hasValorFixo = participacaoValorFixo !== '' && parsedValorFixo > 0;
+
+    let participationTypeCompat = participacaoTipo;
+    if (hasPercentual && hasValorFixo) {
+      participationTypeCompat = participacaoTipo || 'percentage';
+    } else if (hasPercentual) {
+      participationTypeCompat = 'percentage';
+    } else if (hasValorFixo) {
+      participationTypeCompat = 'fixed';
+    } else {
+      participationTypeCompat = null;
+    }
+
     setFormData(prev => ({
       ...prev,
-      participation_type: participacaoTipo,
-      participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
-      participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
+      participation_type: participationTypeCompat,
+      participation_percentage: hasPercentual ? parsedPercentual : null,
+      participation_fixed_value: hasValorFixo ? parsedValorFixo : null,
       payment_conditional: pagaMedianteGanho,
     }));
   }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho, parseCurrencyValue, setFormData]);
@@ -160,18 +189,36 @@ export function useFinancialData(
   /**
    * Construir payload financeiro para auto-save
    */
-  const buildFinancialPayload = useCallback(() => ({
-    valor_causa: parseCurrencyValue(formData.valor_causa),
-    participation_type: participacaoTipo,
-    participation_percentage: participacaoTipo === 'percentage' ? parseFloat(participacaoPercentual) || null : null,
-    participation_fixed_value: participacaoTipo === 'fixed' ? parseCurrencyValue(participacaoValorFixo) : null,
-    payment_conditional: pagaMedianteGanho,
-    payment_terms: formData.payment_terms || '',
-    attorney_fee_amount: formData.attorney_fee_amount ? parseCurrencyValue(formData.attorney_fee_amount) : null,
-    attorney_fee_installments: Math.max(parseInt(formData.attorney_fee_installments || 1, 10) || 1, 1),
-    observations_financial_block_a: formData.observations_financial_block_a || '',
-    observations_financial_block_b: formData.observations_financial_block_b || '',
-  }), [
+  const buildFinancialPayload = useCallback(() => {
+    const parsedPercentual = parseFloat(participacaoPercentual);
+    const hasPercentual = participacaoPercentual !== '' && !Number.isNaN(parsedPercentual);
+    const parsedValorFixo = parseCurrencyValue(participacaoValorFixo);
+    const hasValorFixo = participacaoValorFixo !== '' && parsedValorFixo > 0;
+
+    let participationTypeCompat = participacaoTipo;
+    if (hasPercentual && hasValorFixo) {
+      participationTypeCompat = participacaoTipo || 'percentage';
+    } else if (hasPercentual) {
+      participationTypeCompat = 'percentage';
+    } else if (hasValorFixo) {
+      participationTypeCompat = 'fixed';
+    } else {
+      participationTypeCompat = null;
+    }
+
+    return {
+      valor_causa: parseCurrencyValue(formData.valor_causa),
+      participation_type: participationTypeCompat,
+      participation_percentage: hasPercentual ? parsedPercentual : null,
+      participation_fixed_value: hasValorFixo ? parsedValorFixo : null,
+      payment_conditional: pagaMedianteGanho,
+      payment_terms: formData.payment_terms || '',
+      attorney_fee_amount: formData.attorney_fee_amount ? parseCurrencyValue(formData.attorney_fee_amount) : null,
+      attorney_fee_installments: Math.max(parseInt(formData.attorney_fee_installments || 1, 10) || 1, 1),
+      observations_financial_block_a: formData.observations_financial_block_a || '',
+      observations_financial_block_b: formData.observations_financial_block_b || '',
+    };
+  }, [
     formData.valor_causa,
     formData.payment_terms,
     formData.attorney_fee_amount,

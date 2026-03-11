@@ -40,8 +40,6 @@ button {
 label,
 .form-field-label,
 .form-label,
-.detail-label,
-.section-title,
 .settings-section-title {
   text-transform: uppercase;
   letter-spacing: 0.5px;

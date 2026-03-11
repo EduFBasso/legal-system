@@ -170,7 +170,7 @@
   border-top: 1px solid #f3f4f6;
 }
 
-.btn-link {
+.publicacoes-list .btn-link {
   background: none;
   border: none;
   color: #2563eb;
@@ -181,7 +181,7 @@
   transition: color 0.2s ease;
 }
 
-.btn-link:hover {
+.publicacoes-list .btn-link:hover {
   color: #1d4ed8;
   text-decoration: underline;
 }

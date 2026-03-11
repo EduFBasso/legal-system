@@ -87,7 +87,7 @@
   gap: 16px;
 }
 
-.stat-card {
+.deadlines-page .stat-card {
   background: var(--color-white);
   border: 1px solid var(--color-gray-300);
   box-sizing: border-box;
@@ -97,17 +97,17 @@
   transition: var(--transition-default);
 }
 
-.stat-card.stat-clickable {
+.deadlines-page .stat-card.stat-clickable {
   cursor: pointer;
 }
 
 /* Stat colors and hover - Total (Slate) */
-.stat-card.stat-total .stat-number,
-.stat-card.stat-total .stat-label {
+.deadlines-page .stat-card.stat-total .stat-number,
+.deadlines-page .stat-card.stat-total .stat-label {
   color: var(--color-total);
 }
 
-.stat-card.stat-total.stat-clickable:hover {
+.deadlines-page .stat-card.stat-total.stat-clickable:hover {
   border-color: var(--color-total);
   border-width: 1px;
   --color-rgb: var(--color-total-rgb);
@@ -117,12 +117,12 @@
 }
 
 /* Stat colors and hover - Urgentissimo (Red) */
-.stat-card.stat-urgentissimo .stat-number,
-.stat-card.stat-urgentissimo .stat-label {
+.deadlines-page .stat-card.stat-urgentissimo .stat-number,
+.deadlines-page .stat-card.stat-urgentissimo .stat-label {
   color: var(--color-urgentissimo);
 }
 
-.stat-card.stat-urgentissimo.stat-clickable:hover {
+.deadlines-page .stat-card.stat-urgentissimo.stat-clickable:hover {
   border-color: var(--color-urgentissimo);
   border-width: 1px;
   --color-rgb: var(--color-urgentissimo-rgb);
@@ -132,12 +132,12 @@
 }
 
 /* Stat colors and hover - Urgente (Orange) */
-.stat-card.stat-urgente .stat-number,
-.stat-card.stat-urgente .stat-label {
+.deadlines-page .stat-card.stat-urgente .stat-number,
+.deadlines-page .stat-card.stat-urgente .stat-label {
   color: var(--color-urgente);
 }
 
-.stat-card.stat-urgente.stat-clickable:hover {
+.deadlines-page .stat-card.stat-urgente.stat-clickable:hover {
   border-color: var(--color-urgente);
   border-width: 1px;
   --color-rgb: var(--color-urgente-rgb);
@@ -147,12 +147,12 @@
 }
 
 /* Stat colors and hover - Normal (Green) */
-.stat-card.stat-normal .stat-number,
-.stat-card.stat-normal .stat-label {
+.deadlines-page .stat-card.stat-normal .stat-number,
+.deadlines-page .stat-card.stat-normal .stat-label {
   color: var(--color-normal);
 }
 
-.stat-card.stat-normal.stat-clickable:hover {
+.deadlines-page .stat-card.stat-normal.stat-clickable:hover {
   border-color: var(--color-normal);
   border-width: 1px;
   --color-rgb: var(--color-normal-rgb);
@@ -162,68 +162,68 @@
 }
 
 /* ========== SELECTED STATE ========== */
-.stat-card.stat-selected {
+.deadlines-page .stat-card.stat-selected {
   border-width: 1px;
   transform: none;
 }
 
 /* Selected state for each urgency */
-.stat-card.stat-total.stat-selected {
+.deadlines-page .stat-card.stat-total.stat-selected {
   border-color: var(--color-total) !important;
   background: var(--color-total-light) !important;
   box-shadow: 0 0 0 2px rgba(var(--color-total-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.stat-card.stat-total.stat-selected:hover {
+.deadlines-page .stat-card.stat-total.stat-selected:hover {
   --color-rgb: var(--color-total-rgb);
   box-shadow: var(--shadow-hover-dark);
   transform: var(--transform-hover-normal);
 }
 
-.stat-card.stat-urgentissimo.stat-selected {
+.deadlines-page .stat-card.stat-urgentissimo.stat-selected {
   border-color: var(--color-urgentissimo) !important;
   background: var(--color-urgentissimo-light) !important;
   box-shadow: 0 0 0 2px rgba(var(--color-urgentissimo-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.stat-card.stat-urgentissimo.stat-selected:hover {
+.deadlines-page .stat-card.stat-urgentissimo.stat-selected:hover {
   --color-rgb: var(--color-urgentissimo-rgb);
   box-shadow: var(--shadow-hover-dark);
   transform: var(--transform-hover-normal);
 }
 
-.stat-card.stat-urgente.stat-selected {
+.deadlines-page .stat-card.stat-urgente.stat-selected {
   border-color: var(--color-urgente) !important;
   background: var(--color-urgente-light) !important;
   box-shadow: 0 0 0 2px rgba(var(--color-urgente-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.stat-card.stat-urgente.stat-selected:hover {
+.deadlines-page .stat-card.stat-urgente.stat-selected:hover {
   --color-rgb: var(--color-urgente-rgb);
   box-shadow: var(--shadow-hover-dark);
   transform: var(--transform-hover-normal);
 }
 
-.stat-card.stat-normal.stat-selected {
+.deadlines-page .stat-card.stat-normal.stat-selected {
   border-color: var(--color-normal) !important;
   background: var(--color-normal-light) !important;
   box-shadow: 0 0 0 2px rgba(var(--color-normal-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.stat-card.stat-normal.stat-selected:hover {
+.deadlines-page .stat-card.stat-normal.stat-selected:hover {
   --color-rgb: var(--color-normal-rgb);
   box-shadow: var(--shadow-hover-dark);
   transform: var(--transform-hover-normal);
 }
 
-.stat-number {
+.deadlines-page .stat-number {
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--color-gray-900);
   margin-bottom: 0.25rem;
 }
 
-.stat-label {
+.deadlines-page .stat-label {
   font-size: 1rem;
   color: var(--color-gray-900);
   text-transform: uppercase;

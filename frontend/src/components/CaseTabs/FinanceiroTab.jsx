@@ -128,11 +128,16 @@ function FinanceiroTab({
   const [honorarioValorHora, setHonorarioValorHora] = useState('');
   const [honorarioQtdHoras, setHonorarioQtdHoras] = useState('');
 
-  const buildInitialChecks = () => ({
-    percentual: participacaoTipo === 'percentage',
-    valorFixo: participacaoTipo === 'fixed',
-    honorarios: parseCurrencyValue(formData.attorney_fee_amount || '') > 0,
-  });
+  const buildInitialChecks = () => {
+    const percentualPreenchido = participacaoPercentual !== '' && !Number.isNaN(parseFloat(participacaoPercentual));
+    const valorFixoPreenchido = participacaoValorFixo !== '' && parseCurrencyValue(participacaoValorFixo) > 0;
+
+    return {
+      percentual: percentualPreenchido || participacaoTipo === 'percentage',
+      valorFixo: valorFixoPreenchido || participacaoTipo === 'fixed',
+      honorarios: parseCurrencyValue(formData.attorney_fee_amount || '') > 0,
+    };
+  };
 
   const [participacaoChecks, setParticipacaoChecks] = useState(buildInitialChecks);
   const [manualCheckControl, setManualCheckControl] = useState(false);
@@ -144,7 +149,7 @@ function FinanceiroTab({
   useEffect(() => {
     if (manualCheckControl) return;
     setParticipacaoChecks(buildInitialChecks());
-  }, [manualCheckControl, participacaoTipo, formData.attorney_fee_amount]);
+  }, [manualCheckControl, participacaoTipo, participacaoPercentual, participacaoValorFixo, formData.attorney_fee_amount]);
 
   const valorCausa = parseCurrencyValue(formData.valor_causa);
   const percentualValue = parseFloat(participacaoPercentual) || 0;
@@ -166,34 +171,27 @@ function FinanceiroTab({
 
   const handleToggleParticipacao = (tipo, checked) => {
     setManualCheckControl(true);
-    setParticipacaoChecks((prev) => ({ ...prev, [tipo]: checked }));
+    const nextChecks = { ...participacaoChecks, [tipo]: checked };
+    setParticipacaoChecks(nextChecks);
 
-    // Compatibilidade com os campos antigos de participacao no backend.
-    if (tipo === 'percentual' && checked) {
-      setParticipacaoTipo('percentage');
-    }
-    if (tipo === 'valorFixo' && checked) {
-      setParticipacaoTipo('fixed');
-    }
-
-    if (!checked && tipo === 'percentual' && participacaoTipo === 'percentage') {
-      if (participacaoChecks.valorFixo) {
-        setParticipacaoTipo('fixed');
-      } else {
-        setParticipacaoTipo(null);
-      }
-      // Limpar valor de percentual ao desmarcar
+    if (!checked && tipo === 'percentual') {
       setParticipacaoPercentual('');
     }
-    if (!checked && tipo === 'valorFixo' && participacaoTipo === 'fixed') {
-      if (participacaoChecks.percentual) {
-        setParticipacaoTipo('percentage');
-      } else {
-        setParticipacaoTipo(null);
-      }
-      // Limpar valor fixo ao desmarcar
+    if (!checked && tipo === 'valorFixo') {
       setParticipacaoValorFixo('');
     }
+
+    // Compatibilidade com o campo legado participation_type no backend.
+    if (nextChecks.percentual && nextChecks.valorFixo) {
+      setParticipacaoTipo((prev) => prev || 'percentage');
+    } else if (nextChecks.percentual) {
+      setParticipacaoTipo('percentage');
+    } else if (nextChecks.valorFixo) {
+      setParticipacaoTipo('fixed');
+    } else {
+      setParticipacaoTipo(null);
+    }
+
     if (!checked && tipo === 'honorarios') {
       // Limpar todos os valores de honorários ao desmarcar
       onInputChange('attorney_fee_amount', '');
@@ -303,7 +301,7 @@ function FinanceiroTab({
                   </div>
                 </div>
 
-                <div className="financeiro-participacao-item">
+                <div className="financeiro-participacao-item financeiro-participacao-item-honorarios">
                   <div className="financeiro-participacao-topo">
                     <label className="financeiro-check-inline">
                       <input
@@ -334,34 +332,34 @@ function FinanceiroTab({
                       />
                       <span>Honorários</span>
                     </label>
-                    {participacaoChecks.honorarios && (
-                      <div className="financeiro-honorarios-modo">
-                        <label className="financeiro-honorarios-opcao">
-                          <input
-                            type="radio"
-                            name="honorarios_modo"
-                            value="hora"
-                            checked={honorariosModo === 'hora'}
-                            onChange={(e) => setHonorariosModo(e.target.value)}
-                          />
-                          <span>Por hora</span>
-                        </label>
-                        <label className="financeiro-honorarios-opcao">
-                          <input
-                            type="radio"
-                            name="honorarios_modo"
-                            value="parcelado"
-                            checked={honorariosModo === 'parcelado'}
-                            onChange={(e) => setHonorariosModo(e.target.value)}
-                          />
-                          <span>Por parcela</span>
-                        </label>
-                      </div>
-                    )}
                   </div>
 
                   {participacaoChecks.honorarios && (
                     <div className="financeiro-participacao-campos">
+                      <div className="financeiro-honorarios-modo-row">
+                        <div className="financeiro-honorarios-modo">
+                          <label className="financeiro-honorarios-opcao">
+                            <input
+                              type="radio"
+                              name="honorarios_modo"
+                              value="hora"
+                              checked={honorariosModo === 'hora'}
+                              onChange={(e) => setHonorariosModo(e.target.value)}
+                            />
+                            <span>Por hora</span>
+                          </label>
+                          <label className="financeiro-honorarios-opcao">
+                            <input
+                              type="radio"
+                              name="honorarios_modo"
+                              value="parcelado"
+                              checked={honorariosModo === 'parcelado'}
+                              onChange={(e) => setHonorariosModo(e.target.value)}
+                            />
+                            <span>Por parcela</span>
+                          </label>
+                        </div>
+                      </div>
 
                       {honorariosModo === 'hora' && (
                         <div className="financeiro-grid financeiro-grid-honorarios">

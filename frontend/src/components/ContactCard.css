@@ -125,7 +125,7 @@
   flex-shrink: 0;
 }
 
-.detail-value {
+.contact-card .detail-value {
   font-weight: 500;
   color: #1e293b;
   font-size: 1rem;

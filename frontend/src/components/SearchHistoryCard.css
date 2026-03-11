@@ -149,7 +149,7 @@
   color: var(--publication-primary, #6366f1);
 }
 
-.stat-label {
+.search-history-card .stat-label {
   display: block;
   font-size: 0.85rem;
   color: #666;

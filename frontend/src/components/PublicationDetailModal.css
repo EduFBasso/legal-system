@@ -130,7 +130,7 @@
   border-bottom: none;
 }
 
-.detail-label {
+.publication-modal .detail-label {
   font-weight: 600;
   color: #64748b;
   font-size: 1rem;
@@ -138,7 +138,7 @@
   flex-shrink: 0;
 }
 
-.detail-value {
+.publication-modal .detail-value {
   color: #1e293b;
   flex: 1;
 }
@@ -294,7 +294,7 @@
   flex: 1;
 }
 
-.btn {
+.publication-modal .btn {
   padding: 0.625rem 1.25rem;
   border-radius: 6px;
   font-size: 1rem;
@@ -304,35 +304,35 @@
   border: none;
 }
 
-.btn-secondary {
+.publication-modal .btn-secondary {
   background: #f1f5f9;
   color: #475569;
 }
 
-.btn-secondary:hover {
+.publication-modal .btn-secondary:hover {
   background: #e2e8f0;
   color: #1e293b;
 }
 
-.btn-primary-link {
+.publication-modal .btn-primary-link {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
   box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
 }
 
-.btn-primary-link:hover {
+.publication-modal .btn-primary-link:hover {
   background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
   transform: translateY(-1px);
 }
 
-.btn-alternative-link {
+.publication-modal .btn-alternative-link {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
   box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
 }
 
-.btn-alternative-link:hover {
+.publication-modal .btn-alternative-link:hover {
   background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
   transform: translateY(-1px);

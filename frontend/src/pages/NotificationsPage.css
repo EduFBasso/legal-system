@@ -112,7 +112,7 @@
   background: #fef2f2;
 }
 
-.btn-danger {
+.notifications-page .btn-danger {
   background: #dc2626;
   color: white;
   border: none;
@@ -124,13 +124,13 @@
   transition: all 0.2s;
 }
 
-.btn-danger:hover {
+.notifications-page .btn-danger:hover {
   background: #b91c1c;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
 }
 
-.btn-danger:disabled {
+.notifications-page .btn-danger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
@@ -194,13 +194,13 @@
   opacity: 0.9;
 }
 
-.btn-sm {
+.notifications-page .btn-sm {
   padding: 8px 16px;
   font-size: 1rem;
   border-radius: 6px;
 }
 
-.btn-ghost {
+.notifications-page .btn-ghost {
   background: transparent;
   border: none;
   color: white;
@@ -209,7 +209,7 @@
   padding: 4px 8px;
 }
 
-.btn-ghost:hover {
+.notifications-page .btn-ghost:hover {
   opacity: 0.8;
 }
 
@@ -591,7 +591,7 @@
 }
 
 /* Buttons */
-.btn-primary {
+.notifications-page .btn-primary {
   padding: 10px 20px;
   background: #3b82f6;
   color: white;
@@ -603,16 +603,16 @@
   transition: all 0.2s;
 }
 
-.btn-primary:hover:not(:disabled) {
+.notifications-page .btn-primary:hover:not(:disabled) {
   background: #2563eb;
 }
 
-.btn-primary:disabled {
+.notifications-page .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-secondary {
+.notifications-page .btn-secondary {
   padding: 10px 20px;
   background: #f1f5f9;
   color: #475569;
@@ -624,17 +624,17 @@
   transition: all 0.2s;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.notifications-page .btn-secondary:hover:not(:disabled) {
   background: #e2e8f0;
   border-color: #94a3b8;
 }
 
-.btn-secondary:disabled {
+.notifications-page .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-warning {
+.notifications-page .btn-warning {
   padding: 10px 20px;
   background: #f59e0b;
   color: white;
