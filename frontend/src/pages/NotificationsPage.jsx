@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
+import { useSettings } from '../contexts/SettingsContext';
 import NotificationDetailModal from '../components/NotificationDetailModal';
 import './NotificationsPage.css';
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const {
     notifications,
     unreadCount,
@@ -261,21 +263,25 @@ export default function NotificationsPage() {
             </button>
           )}
 
-          <button 
-            className="btn-primary" 
-            onClick={handleCreateTest}
-            disabled={loading}
-          >
-            🧪 Criar Teste
-          </button>
-          <button
-            className="btn-warning"
-            onClick={handleCreateTestStale90Days}
-            disabled={loading}
-            title="Criar notificação de teste de processo sem publicação há mais de 90 dias"
-          >
-            🧪 Teste 90+ dias
-          </button>
+          {settings?.showNotificationTestButtons && (
+            <>
+              <button 
+                className="btn-primary" 
+                onClick={handleCreateTest}
+                disabled={loading}
+              >
+                🧪 Criar Teste
+              </button>
+              <button
+                className="btn-warning"
+                onClick={handleCreateTestStale90Days}
+                disabled={loading}
+                title="Criar notificação de teste de processo sem publicação há mais de 90 dias"
+              >
+                🧪 Teste 90+ dias
+              </button>
+            </>
+          )}
         </div>
       </div>
 

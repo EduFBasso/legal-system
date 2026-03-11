@@ -116,6 +116,23 @@ export default function SettingsModal({ isOpen, onClose }) {
               </p>
             </div>
           </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Exibir botões de teste</label>
+              <p className="setting-description">
+                Mostra os botões "Criar Teste" e "Teste 90+ dias" na página de Notificações.
+                Recomendado manter desativado em uso normal.
+              </p>
+            </div>
+            <button
+              className={`toggle-button ${localSettings.showNotificationTestButtons ? 'active' : ''}`}
+              onClick={() => handleToggle('showNotificationTestButtons')}
+              aria-label="Alternar botões de teste em notificações"
+            >
+              <span className="toggle-slider"></span>
+            </button>
+          </div>
         </section>
 
         {/* Integração de Publicações */}

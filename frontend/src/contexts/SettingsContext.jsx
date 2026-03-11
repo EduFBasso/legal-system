@@ -20,6 +20,7 @@ export function SettingsProvider({ children }) {
       deletePassword: '',
       retroactiveDays: 7,  // Notificações para publicações dos últimos 7 dias
       autoIntegration: false,  // Integração automática de publicações
+      showNotificationTestButtons: false, // Exibe botões de teste na página de notificações
     };
   });
 
