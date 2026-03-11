@@ -345,6 +345,16 @@ export default function NotificationsPage() {
             <div
               key={notification.id}
               className={`notification-card ${notification.read ? 'read' : 'unread'} ${getNotificationCardClass(notification)}`}
+              onClick={() => handleViewDetails(notification)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleViewDetails(notification);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              title="Clique para marcar como lida e abrir detalhes"
             >
               
               <div className="notification-icon">
@@ -367,29 +377,20 @@ export default function NotificationsPage() {
                     >
                       {notification.priority_display}
                     </span>
-                    
-                    {!notification.read && (
-                      <button
-                        className="btn-mark-read"
-                        onClick={() => handleMarkAsRead(notification.id)}
-                      >
-                        ✓ Marcar como lida
-                      </button>
-                    )}
-                    
-                    <button
-                      className="notification-link"
-                      onClick={() => handleViewDetails(notification)}
-                    >
-                      Ver detalhes →
-                    </button>
 
                     <button
                       className="btn-delete-notification"
-                      onClick={() => handleDeleteNotification(notification.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteNotification(notification.id);
+                      }}
+                      onKeyDown={(event) => {
+                        event.stopPropagation();
+                      }}
                       title="Apagar notificação"
+                      aria-label="Apagar notificação"
                     >
-                      🗑 Apagar
+                      🗑
                     </button>
                   </div>
 

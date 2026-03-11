@@ -258,6 +258,11 @@ export function useCaseCore(
    * Cancelar edição
    */
   const handleCancel = () => {
+    if (!id) {
+      window.close();
+      return;
+    }
+
     setFormData(caseData);
     setIsEditing(false);
   };

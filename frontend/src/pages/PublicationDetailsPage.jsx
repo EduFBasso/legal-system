@@ -68,6 +68,12 @@ export default function PublicationDetailsPage() {
     });
   };
 
+  const handleCreateCase = () => {
+    const publicationId = publication?.id_api || idApi;
+    if (!publicationId) return;
+    window.open(`/cases/new?pub_id=${publicationId}`, '_blank', 'noopener,noreferrer');
+  };
+
   const handleCopyProcesso = async (e) => {
     e.preventDefault();
     if (publication?.numero_processo) {
@@ -162,6 +168,7 @@ export default function PublicationDetailsPage() {
   const texto = publication.texto_completo || publication.texto_resumo || 'Texto não disponível';
   const isHTMLContent = isHTML(texto);
   const consultaLinks = generateAllConsultaLinks(publication);
+  const isIntegrated = publication.integration_status === 'INTEGRATED' || !!publication.case_id;
 
   return (
     <div className="publication-details-page">
@@ -185,6 +192,17 @@ export default function PublicationDetailsPage() {
               </span>
             </div>
           </div>
+          {!isIntegrated && (
+            <div className="header-actions">
+              <button
+                className="btn-create-case-top"
+                onClick={handleCreateCase}
+                title="Criar novo caso para esta publicação"
+              >
+                ➕ Criar Caso
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

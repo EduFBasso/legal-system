@@ -190,6 +190,7 @@ export function useFinancialData(
    * Construir payload financeiro para auto-save
    */
   const buildFinancialPayload = useCallback(() => {
+    const safeFormData = formData || {};
     const parsedPercentual = parseFloat(participacaoPercentual);
     const hasPercentual = participacaoPercentual !== '' && !Number.isNaN(parsedPercentual);
     const parsedValorFixo = parseCurrencyValue(participacaoValorFixo);
@@ -207,24 +208,19 @@ export function useFinancialData(
     }
 
     return {
-      valor_causa: parseCurrencyValue(formData.valor_causa),
+      valor_causa: parseCurrencyValue(safeFormData.valor_causa),
       participation_type: participationTypeCompat,
       participation_percentage: hasPercentual ? parsedPercentual : null,
       participation_fixed_value: hasValorFixo ? parsedValorFixo : null,
       payment_conditional: pagaMedianteGanho,
-      payment_terms: formData.payment_terms || '',
-      attorney_fee_amount: formData.attorney_fee_amount ? parseCurrencyValue(formData.attorney_fee_amount) : null,
-      attorney_fee_installments: Math.max(parseInt(formData.attorney_fee_installments || 1, 10) || 1, 1),
-      observations_financial_block_a: formData.observations_financial_block_a || '',
-      observations_financial_block_b: formData.observations_financial_block_b || '',
+      payment_terms: safeFormData.payment_terms || '',
+      attorney_fee_amount: safeFormData.attorney_fee_amount ? parseCurrencyValue(safeFormData.attorney_fee_amount) : null,
+      attorney_fee_installments: Math.max(parseInt(safeFormData.attorney_fee_installments || 1, 10) || 1, 1),
+      observations_financial_block_a: safeFormData.observations_financial_block_a || '',
+      observations_financial_block_b: safeFormData.observations_financial_block_b || '',
     };
   }, [
-    formData.valor_causa,
-    formData.payment_terms,
-    formData.attorney_fee_amount,
-    formData.attorney_fee_installments,
-    formData.observations_financial_block_a,
-    formData.observations_financial_block_b,
+    formData,
     participacaoTipo,
     participacaoPercentual,
     participacaoValorFixo,

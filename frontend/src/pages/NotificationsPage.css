@@ -317,6 +317,12 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s;
   position: relative;
+  cursor: pointer;
+}
+
+.notification-card:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
 }
 
 .notification-card:hover {
@@ -535,15 +541,20 @@
 }
 
 .btn-delete-notification {
-  padding: 6px 12px;
+  width: 32px;
+  height: 32px;
   background: #fef2f2;
   color: #b91c1c;
   border: 1px solid #fecaca;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
 }
 
 .btn-delete-notification:hover {

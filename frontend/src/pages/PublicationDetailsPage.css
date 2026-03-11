@@ -23,6 +23,34 @@
   margin: 0 auto;
 }
 
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.btn-create-case-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding: 0.625rem 1.1rem;
+  border-radius: 8px;
+  border: none;
+  background: #166534;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-create-case-top:hover {
+  background: #14532d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(20, 83, 45, 0.25);
+}
+
 .btn-back {
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
