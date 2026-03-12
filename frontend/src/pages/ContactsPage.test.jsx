@@ -7,7 +7,11 @@ import ContactsPage from './ContactsPage';
 
 // Mock the API module
 const mockGetAll = vi.fn();
-const mockWindowOpen = vi.fn();
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 vi.mock('../services/api', () => ({
   default: {
     getAll: (...args) => mockGetAll(...args)
@@ -103,12 +107,10 @@ describe('ContactsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetAll.mockResolvedValue(mockContacts);
-    vi.spyOn(window, 'open').mockImplementation(mockWindowOpen);
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   describe('Initial Rendering', () => {
@@ -389,7 +391,7 @@ describe('ContactsPage', () => {
       });
     });
 
-    it('opens cases page in link mode when Link button is clicked', async () => {
+    it('navigates to cases page in link mode when Link button is clicked', async () => {
       const user = userEvent.setup();
       
       renderWithRouter(<ContactsPage />);
@@ -402,14 +404,10 @@ describe('ContactsPage', () => {
       const linkButton = card1.querySelectorAll('button')[2]; // Link is 3rd button
       await user.click(linkButton);
 
-      expect(mockWindowOpen).toHaveBeenCalledWith(
-        '/cases?action=link&contactId=1',
-        '_blank',
-        'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
-      );
+      expect(mockNavigate).toHaveBeenCalledWith('/cases?action=link&contactId=1');
     });
 
-    it('opens cases page in link mode from detail modal', async () => {
+    it('navigates to cases page in link mode from detail modal', async () => {
       const user = userEvent.setup();
       
       renderWithRouter(<ContactsPage />);
@@ -427,11 +425,7 @@ describe('ContactsPage', () => {
       const openLinkButton = screen.getByRole('button', { name: /Open Link Modal/i });
       await user.click(openLinkButton);
 
-      expect(mockWindowOpen).toHaveBeenCalledWith(
-        '/cases?action=link&contactId=1',
-        '_blank',
-        'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
-      );
+      expect(mockNavigate).toHaveBeenCalledWith('/cases?action=link&contactId=1');
     });
   });
 
@@ -579,24 +573,6 @@ describe('ContactsPage', () => {
       });
     });
 
-    it('shows info toast after opening process to link contact', async () => {
-      const user = userEvent.setup();
-      
-      renderWithRouter(<ContactsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('João Silva')).toBeInTheDocument();
-      });
-
-      const card1 = screen.getByTestId('contact-card-1');
-      const linkButton = card1.querySelectorAll('button')[2];
-      await user.click(linkButton);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('toast')).toBeInTheDocument();
-        expect(screen.getByText(/Selecione o processo na lista para concluir o vínculo/i)).toBeInTheDocument();
-      });
-    });
 
     it('closes toast when close button is clicked', async () => {
       const user = userEvent.setup();

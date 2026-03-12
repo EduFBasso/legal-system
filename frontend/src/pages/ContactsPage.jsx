@@ -1,6 +1,6 @@
 // src/pages/ContactsPage.jsx
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
 import Toast from '../components/common/Toast';
@@ -9,6 +9,7 @@ import './ContactsPage.css';
 
 export default function ContactsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -24,10 +25,7 @@ export default function ContactsPage() {
   const [toastType, setToastType] = useState('info');
   const openCasesForLinking = (contact) => {
     if (!contact?.id) return;
-
-    const targetUrl = `/cases?action=link&contactId=${contact.id}`;
-    window.open(targetUrl, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
-    displayToast('📂 Selecione o processo na lista para concluir o vínculo na aba Partes.', 'info');
+    navigate(`/cases?action=link&contactId=${contact.id}`);
   };
 
 
