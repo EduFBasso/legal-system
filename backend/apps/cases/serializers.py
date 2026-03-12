@@ -336,7 +336,19 @@ class CaseListSerializer(serializers.ModelSerializer):
     tipo_acao_display = serializers.CharField(source='get_tipo_acao_display', read_only=True)
     cliente_nome = serializers.CharField(source='cliente_principal.name', read_only=True)
     cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
-    
+    parties_summary = serializers.SerializerMethodField()
+    active_tasks_count = serializers.IntegerField(read_only=True, default=0)
+
+    def get_parties_summary(self, obj):
+        return [
+            {
+                'name': p.contact.name,
+                'role_display': p.get_role_display(),
+                'is_client': p.is_client,
+            }
+            for p in obj.parties.all()
+        ]
+
     class Meta:
         model = Case
         fields = [
@@ -371,6 +383,8 @@ class CaseListSerializer(serializers.ModelSerializer):
             'attorney_fee_installments',
             'observacoes',
             'tags',
+            'parties_summary',
+            'active_tasks_count',
             'created_at',
             'updated_at',
         ]

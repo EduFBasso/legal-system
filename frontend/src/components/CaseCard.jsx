@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import './CaseCard.css';
 
 /**
@@ -5,6 +6,7 @@ import './CaseCard.css';
  * Displays a case summary card
  */
 export default function CaseCard({ caseData, onClick }) {
+  const navigate = useNavigate();
   /**
    * Handle card click - open in new tab
    */
@@ -87,6 +89,14 @@ export default function CaseCard({ caseData, onClick }) {
     }
     
     return null;
+  };
+
+  /**
+   * Navigate to deadlines page when tasks badge is clicked
+   */
+  const handleTasksBadgeClick = (e) => {
+    e.stopPropagation();
+    navigate('/deadlines');
   };
 
   /**
@@ -198,6 +208,29 @@ export default function CaseCard({ caseData, onClick }) {
             )}
           </div>
         )}
+
+        {/* Parties */}
+        {caseData.parties_summary && caseData.parties_summary.length > 0 && (
+          <div className="case-parties">
+            <span className="parties-label">Partes:</span>
+            <div className="parties-list">
+              {caseData.parties_summary.slice(0, 3).map((party, i) => (
+                <span
+                  key={i}
+                  className={`party-chip${party.is_client ? ' party-chip--client' : ''}`}
+                  title={`${party.name} · ${party.role_display}`}
+                >
+                  {party.name}
+                </span>
+              ))}
+              {caseData.parties_summary.length > 3 && (
+                <span className="party-chip party-chip--more">
+                  +{caseData.parties_summary.length - 3}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -205,6 +238,15 @@ export default function CaseCard({ caseData, onClick }) {
         <span className="footer-text">
           Atualizado em {formatDate(caseData.updated_at?.split('T')[0])}
         </span>
+        {caseData.active_tasks_count > 0 && (
+          <button
+            className="tasks-badge"
+            onClick={handleTasksBadgeClick}
+            title={`${caseData.active_tasks_count} ${caseData.active_tasks_count === 1 ? 'tarefa pendente' : 'tarefas pendentes'} neste processo`}
+          >
+            ⏰ {caseData.active_tasks_count} {caseData.active_tasks_count === 1 ? 'tarefa' : 'tarefas'}
+          </button>
+        )}
       </div>
     </div>
   );

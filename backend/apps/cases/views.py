@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
 
 from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
 from .serializers import (
@@ -36,6 +36,21 @@ class CaseViewSet(viewsets.ModelViewSet):
     - update_status: Auto-update status based on activity
     """
     queryset = Case.objects.filter(deleted=False).order_by('-data_ultima_movimentacao')
+
+    def get_queryset(self):
+        qs = Case.objects.filter(deleted=False).order_by('-data_ultima_movimentacao')
+        if self.action == 'list':
+            qs = qs.prefetch_related(
+                Prefetch('parties', queryset=CaseParty.objects.select_related('contact'))
+            ).annotate(
+                active_tasks_count=Count(
+                    'tasks',
+                    filter=~Q(tasks__status='CONCLUIDA'),
+                    distinct=True
+                )
+            )
+        return qs
+
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = {
         'tribunal': ['exact', 'in'],
