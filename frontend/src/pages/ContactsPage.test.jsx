@@ -7,6 +7,7 @@ import ContactsPage from './ContactsPage';
 
 // Mock the API module
 const mockGetAll = vi.fn();
+const mockWindowOpen = vi.fn();
 vi.mock('../services/api', () => ({
   default: {
     getAll: (...args) => mockGetAll(...args)
@@ -42,19 +43,6 @@ vi.mock('../components/ContactDetailModal', () => ({
         <button onClick={() => onLinkToCase({ id: 1, name: 'João' })}>
           Open Link Modal
         </button>
-      </div>
-    );
-  }
-}));
-
-vi.mock('../components/LinkContactToCaseModal', () => ({
-  default: ({ isOpen, contactId, contactName, onClose, onSuccess }) => {
-    if (!isOpen) return null;
-    return (
-      <div data-testid="link-contact-modal">
-        <span>Link {contactName} (ID: {contactId})</span>
-        <button onClick={onClose}>Close Link Modal</button>
-        <button onClick={() => onSuccess({ contactId, caseId: 123 })}>Success Link</button>
       </div>
     );
   }
@@ -115,10 +103,12 @@ describe('ContactsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetAll.mockResolvedValue(mockContacts);
+    vi.spyOn(window, 'open').mockImplementation(mockWindowOpen);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe('Initial Rendering', () => {
@@ -399,7 +389,7 @@ describe('ContactsPage', () => {
       });
     });
 
-    it('opens link modal when Link button is clicked', async () => {
+    it('opens cases page in link mode when Link button is clicked', async () => {
       const user = userEvent.setup();
       
       renderWithRouter(<ContactsPage />);
@@ -412,11 +402,14 @@ describe('ContactsPage', () => {
       const linkButton = card1.querySelectorAll('button')[2]; // Link is 3rd button
       await user.click(linkButton);
 
-      expect(screen.getByTestId('link-contact-modal')).toBeInTheDocument();
-      expect(screen.getByText(/Link João Silva/i)).toBeInTheDocument();
+      expect(mockWindowOpen).toHaveBeenCalledWith(
+        '/cases?action=link&contactId=1',
+        '_blank',
+        'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
+      );
     });
 
-    it('closes link modal when close button is clicked', async () => {
+    it('opens cases page in link mode from detail modal', async () => {
       const user = userEvent.setup();
       
       renderWithRouter(<ContactsPage />);
@@ -425,41 +418,20 @@ describe('ContactsPage', () => {
         expect(screen.getByText('João Silva')).toBeInTheDocument();
       });
 
-      const card1 = screen.getByTestId('contact-card-1');
-      const linkButton = card1.querySelectorAll('button')[2];
-      await user.click(linkButton);
-
-      expect(screen.getByTestId('link-contact-modal')).toBeInTheDocument();
-
-      const closeButton = screen.getByRole('button', { name: /Close Link Modal/i });
-      await user.click(closeButton);
-
-      await waitFor(() => {
-        expect(screen.queryByTestId('link-contact-modal')).not.toBeInTheDocument();
-      });
-    });
-
-    it('opens link modal from detail modal', async () => {
-      const user = userEvent.setup();
-      
-      renderWithRouter(<ContactsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('João Silva')).toBeInTheDocument();
-      });
-
-      // Open detail modal
       const card1 = screen.getByTestId('contact-card-1');
       const viewButton = card1.querySelectorAll('button')[1];
       await user.click(viewButton);
 
       expect(screen.getByTestId('contact-detail-modal')).toBeInTheDocument();
 
-      // Click link button in detail modal
       const openLinkButton = screen.getByRole('button', { name: /Open Link Modal/i });
       await user.click(openLinkButton);
 
-      expect(screen.getByTestId('link-contact-modal')).toBeInTheDocument();
+      expect(mockWindowOpen).toHaveBeenCalledWith(
+        '/cases?action=link&contactId=1',
+        '_blank',
+        'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
+      );
     });
   });
 
@@ -616,20 +588,13 @@ describe('ContactsPage', () => {
         expect(screen.getByText('João Silva')).toBeInTheDocument();
       });
 
-      // Open link modal
       const card1 = screen.getByTestId('contact-card-1');
       const linkButton = card1.querySelectorAll('button')[2];
       await user.click(linkButton);
 
-      // Simulate successful link
-      mockGetAll.mockResolvedValueOnce(mockContacts);
-
-      const successButton = screen.getByRole('button', { name: /Success Link/i });
-      await user.click(successButton);
-
       await waitFor(() => {
         expect(screen.getByTestId('toast')).toBeInTheDocument();
-        expect(screen.getByText(/Processo aberto em nova aba/i)).toBeInTheDocument();
+        expect(screen.getByText(/Selecione o processo na lista para concluir o vínculo/i)).toBeInTheDocument();
       });
     });
 
@@ -671,13 +636,9 @@ describe('ContactsPage', () => {
         expect(mockGetAll).toHaveBeenCalledTimes(1);
       });
 
-      // Open link modal
       const card1 = screen.getByTestId('contact-card-1');
       const linkButton = card1.querySelectorAll('button')[2];
       await user.click(linkButton);
-
-      const successButton = screen.getByRole('button', { name: /Success Link/i });
-      await user.click(successButton);
 
       await waitFor(() => {
         expect(mockGetAll).toHaveBeenCalledTimes(1); // Only initial load

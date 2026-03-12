@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
-import LinkContactToCaseModal from '../components/LinkContactToCaseModal';
 import Toast from '../components/common/Toast';
 import contactsAPI from '../services/api';
 import './ContactsPage.css';
@@ -19,14 +18,18 @@ export default function ContactsPage() {
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Link to case modal state
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [contactToLink, setContactToLink] = useState(null);
-  
   // Toast state
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('info');
+  const openCasesForLinking = (contact) => {
+    if (!contact?.id) return;
+
+    const targetUrl = `/cases?action=link&contactId=${contact.id}`;
+    window.open(targetUrl, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+    displayToast('📂 Selecione o processo na lista para concluir o vínculo na aba Partes.', 'info');
+  };
+
 
   // Helper to show toast
   const displayToast = (message, type = 'info') => {
@@ -138,13 +141,8 @@ export default function ContactsPage() {
   const handleLinkToCase = (contactId) => {
     const contact = contacts.find(c => c.id === contactId);
     if (contact) {
-      setContactToLink(contact);
-      setIsLinkModalOpen(true);
+      openCasesForLinking(contact);
     }
-  };
-
-  const handleLinkSuccess = () => {
-    displayToast('📂 Processo aberto em nova aba para concluir o vínculo na aba Partes.', 'info');
   };
 
   return (
@@ -210,8 +208,7 @@ export default function ContactsPage() {
         onClose={handleCloseModal}
         onContactUpdated={handleContactUpdated}
         onLinkToCase={(contact) => {
-          setContactToLink(contact);
-          setIsLinkModalOpen(true);
+          openCasesForLinking(contact);
         }}
         allowModification={
           // Permite edição em 3 casos:
@@ -231,16 +228,6 @@ export default function ContactsPage() {
             return contact.is_client_anywhere === true;
           })()
         }
-      />
-      
-      {/* Link to Case Modal */}
-      <LinkContactToCaseModal
-        isOpen={isLinkModalOpen}
-        onClose={() => setIsLinkModalOpen(false)}
-        contactId={contactToLink?.id}
-        contactName={contactToLink?.name}
-        linkedCaseIds={contactToLink?.linked_cases?.map(lc => lc.case_id) || []}
-        onSuccess={handleLinkSuccess}
       />
       
       {/* Toast Notifications */}

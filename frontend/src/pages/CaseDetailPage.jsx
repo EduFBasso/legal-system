@@ -4,6 +4,7 @@ import { UserPlus } from 'lucide-react';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import useAutoSave from '../hooks/useAutoSave';
 import systemSettingsService from '../services/systemSettingsService';
+import contactsAPI from '../services/api';
 import caseDocumentsService from '../services/caseDocumentsService';
 import Toast from '../components/common/Toast';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -147,17 +148,16 @@ function CaseDetailPage() {
       return;
     }
 
+    // Passo 1: garantir que a aba Partes está ativa
+    if (navigation.activeSection !== 'parties') {
+      navigation.setActiveSection('parties');
+      return; // re-executa quando activeSection mudar
+    }
+
+    // Passo 2: aguardar carregamento das partes (necessário para checar duplicidade)
+    if (parties.loadingParties) return;
+
     const runLinkFlow = async () => {
-      if (navigation.activeSection !== 'parties') {
-        navigation.setActiveSection('parties');
-        return;
-      }
-
-      if (modalsNotif.contacts.length === 0) {
-        await modalsNotif.loadContacts();
-        return;
-      }
-
       const alreadyLinked = parties.parties.some((party) => party.contact === linkContactId);
       if (alreadyLinked) {
         modalsNotif.showToast('Contato já está vinculado a este processo.', 'warning');
@@ -165,21 +165,21 @@ function CaseDetailPage() {
         return;
       }
 
-      const contact = modalsNotif.contacts.find((item) => item.id === linkContactId);
-      if (!contact) {
+      // Busca o contato diretamente por ID — sem depender da lista carregada
+      try {
+        const contact = await contactsAPI.getById(linkContactId);
+        parties.setSelectedContact(contact);
+        parties.setShowAddPartyModal(true);
+      } catch {
         modalsNotif.showToast('Contato não encontrado para vinculação.', 'error');
+      } finally {
         navigation.clearLinkQueryParams();
-        return;
       }
-
-      parties.setSelectedContact(contact);
-      parties.setShowAddPartyModal(true);
-      navigation.clearLinkQueryParams();
     };
 
     runLinkFlow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, linkAction, linkContactId]);
+  }, [id, linkAction, linkContactId, navigation.activeSection, parties.loadingParties]);
 
   /**
    * Carregar partes ao carregar página

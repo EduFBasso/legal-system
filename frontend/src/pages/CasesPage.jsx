@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import casesService from '../services/casesService';
 import CaseCard from '../components/CaseCard';
 import Toast from '../components/common/Toast';
@@ -11,6 +11,7 @@ import './CasesPage.css';
  */
 export default function CasesPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const debounceTimerRef = useRef(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,10 @@ export default function CasesPage() {
   const [allTribunals, setAllTribunals] = useState({});
   const [showTribunalBreakdown, setShowTribunalBreakdown] = useState(false);
   const [selectedTribunals, setSelectedTribunals] = useState([]);
+
+  const linkAction = searchParams.get('action');
+  const linkContactId = parseInt(searchParams.get('contactId') || '', 10);
+  const isLinkMode = linkAction === 'link' && Number.isInteger(linkContactId) && linkContactId > 0;
   
   // Filters
   const [filters, setFilters] = useState({
@@ -134,6 +139,12 @@ export default function CasesPage() {
    */
   const openCaseDetail = (caseItem) => {
     if (caseItem) {
+      if (isLinkMode) {
+        const targetUrl = `/cases/${caseItem.id}?tab=parties&action=link&contactId=${linkContactId}`;
+        window.open(targetUrl, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+        return;
+      }
+
       // Navigate to existing case detail page
       navigate(`/cases/${caseItem.id}`);
     } else {
