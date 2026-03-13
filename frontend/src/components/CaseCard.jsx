@@ -220,7 +220,7 @@ export default function CaseCard({ caseData, onClick }) {
                   className={`party-chip${party.is_client ? ' party-chip--client' : ''}`}
                   title={`${party.name} · ${party.role_display}`}
                 >
-                  {party.name}
+                  {party.name} - ({party.is_client ? 'Cliente' : party.role_display})
                 </span>
               ))}
               {caseData.parties_summary.length > 3 && (

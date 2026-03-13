@@ -21,7 +21,7 @@ function CasesFilters({
         <input
           type="text"
           className="cases-search-input"
-          placeholder="Buscar por número, cliente ou juiz..."
+          placeholder="Buscar por número ou partes..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />

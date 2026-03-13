@@ -1,12 +1,23 @@
 """
 Views for Cases app
 """
+import unicodedata
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count, Prefetch
+
+
+def _normalize(text):
+    """Remove acentos e diacríticos e converte para minúsculas.
+    Permite buscar 'jose' e encontrar 'José', 'JOSE', etc.
+    """
+    if not text:
+        return ''
+    nfd = unicodedata.normalize('NFD', str(text))
+    return ''.join(c for c in nfd if unicodedata.category(c) != 'Mn').lower()
 
 from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
 from .serializers import (
@@ -68,6 +79,8 @@ class CaseViewSet(viewsets.ModelViewSet):
         'comarca',
         'vara',
         'tipo_acao',
+        # parties__contact__name é tratado via _normalize em filter_queryset
+        # para suportar busca sem acento no SQLite
     ]
     ordering_fields = [
         'data_distribuicao',
@@ -78,6 +91,53 @@ class CaseViewSet(viewsets.ModelViewSet):
     ]
     ordering = ['-data_ultima_movimentacao']
     
+    def get_serializer_class(self):
+        """Use different serializers for list and detail views"""
+        if self.action == 'list':
+            return CaseListSerializer
+        return CaseDetailSerializer
+
+    def filter_queryset(self, queryset):
+        """
+        Override para aplicar busca normalizada (sem acento) nos nomes das partes.
+        SQLite não suporta icontains com unicode/acentos via LIKE, então
+        buscamos os IDs dos contatos em Python e os adicionamos ao Q filter.
+        """
+        # Aplica DjangoFilterBackend e OrderingFilter; pula SearchFilter (tratado abaixo)
+        for backend in self.filter_backends:
+            if backend is filters.SearchFilter:
+                continue
+            queryset = backend().filter_queryset(self.request, queryset, self)
+
+        search = self.request.query_params.get('search', '').strip()
+        if not search:
+            return queryset
+
+        normalized = _normalize(search)
+
+        # Busca nos campos do próprio processo (icontains padrão)
+        q = (
+            Q(numero_processo__icontains=search)
+            | Q(numero_processo_unformatted__icontains=search)
+            | Q(titulo__icontains=search)
+            | Q(observacoes__icontains=search)
+            | Q(comarca__icontains=search)
+            | Q(vara__icontains=search)
+            | Q(tipo_acao__icontains=search)
+        )
+
+        # Busca normalizada (sem acento) nos nomes das partes
+        from apps.contacts.models import Contact
+        matching_ids = [
+            cid
+            for cid, name in Contact.objects.values_list('id', 'name')
+            if name and normalized in _normalize(name)
+        ]
+        if matching_ids:
+            q |= Q(parties__contact__id__in=matching_ids)
+
+        return queryset.filter(q).distinct()
+
     def get_serializer_class(self):
         """Use different serializers for list and detail views"""
         if self.action == 'list':
