@@ -1,4 +1,5 @@
 import { truncateAtSentence } from '../../utils/movementUtils';
+import { generateAllConsultaLinks, openConsultaWithCopy } from '../../utils/consultaLinksHelper';
 import {
   movementDisplayStyles,
   getOriginBadgeStyle,
@@ -38,6 +39,15 @@ export default function MovimentacaoDisplay({
   const shouldShowPublicationHeader = !isManual && publicationData?.exists;
   const shouldShowOrgao = !shouldShowPublicationHeader && (!isManual || hasOrgao);
   const automaticDescription = publicationData?.texto_completo || mov?.descricao || '';
+  const consultaLinks = publicationData?.exists
+    ? generateAllConsultaLinks({
+        tribunal: publicationData?.tribunal,
+        numero_processo: publicationData?.numero_processo,
+        link_oficial: publicationData?.link_oficial,
+      })
+    : { linkOficial: null, linksAlternativos: [] };
+  const consultaUrl = consultaLinks.linkOficial || consultaLinks.linksAlternativos?.[0]?.url || null;
+  const canConsultar = !isManual && publicationData?.numero_processo && consultaUrl;
   const editButtonInteractions = getButtonHoverHandlers({
     base: caseTheme.button.primary,
     hover: caseTheme.button.primaryDark,
@@ -128,6 +138,22 @@ export default function MovimentacaoDisplay({
               Prazo: {mov.prazo}d
             </span>
           )}
+        </div>
+      )}
+
+      {canConsultar && (
+        <div style={movementDisplayStyles.publicationActionsRow}>
+          <button
+            type="button"
+            style={movementDisplayStyles.consultaButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              openConsultaWithCopy(consultaUrl, publicationData.numero_processo, e.currentTarget);
+            }}
+            title="Copia o número do processo e abre o site oficial"
+          >
+            🔍 Consultar processo
+          </button>
         </div>
       )}
 

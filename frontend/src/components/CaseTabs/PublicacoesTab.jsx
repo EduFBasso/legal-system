@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link2, FileText, Calendar, Building2, ExternalLink, PlusCircle } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
 import { formatDate } from '../../utils/formatters';
-import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
+import { generateAllConsultaLinks, openConsultaWithCopy } from '../../utils/consultaLinksHelper';
 import './PublicacoesTab.css';
 
 /**
@@ -33,39 +33,7 @@ function PublicacoesTab({
    */
   const handleConsultarProcesso = (e, url, numeroProcesso) => {
     e.stopPropagation();
-    const btn = e.currentTarget;
-    
-    // Copiar automaticamente o número do processo
-    if (numeroProcesso) {
-      navigator.clipboard.writeText(numeroProcesso).then(() => {
-        // Verificar se o elemento ainda existe no DOM
-        if (btn && document.contains(btn)) {
-          const originalHTML = btn.innerHTML;
-          btn.innerHTML = '✅ Copiado! Abrindo...';
-          
-          // Restaurar texto original
-          setTimeout(() => {
-            if (btn && document.contains(btn)) {
-              btn.innerHTML = originalHTML;
-            }
-          }, 2000);
-        }
-        
-        // Abrir link
-        if (url) {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
-      }).catch(err => {
-        console.error('Erro ao copiar:', err);
-        // Mesmo com erro, abre o link
-        if (url) {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
-      });
-    } else if (url) {
-      // Se não tem número, só abre o link
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    openConsultaWithCopy(url, numeroProcesso, e.currentTarget);
   };
   
   /**

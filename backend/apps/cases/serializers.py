@@ -108,10 +108,12 @@ class CaseMovementSerializer(serializers.ModelSerializer):
                 'exists': True,
                 'id_api': publication.id_api,
                 'numero_processo': publication.numero_processo,
+                'tribunal': publication.tribunal,
                 'data_disponibilizacao': publication.data_disponibilizacao,
                 'orgao': publication.orgao,
                 'meio': publication.meio,
                 'meio_display': meio_map.get((publication.meio or '').upper(), publication.meio or '-'),
+                'link_oficial': publication.link_oficial,
                 'texto_completo': publication.texto_completo,
             }
         except Exception:

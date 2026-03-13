@@ -56,6 +56,22 @@ export const movementDisplayStyles = {
     gap: '0.4rem',
     flexWrap: 'wrap',
   },
+  publicationActionsRow: {
+    marginTop: '0.55rem',
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
+  consultaButton: {
+    border: `1px solid ${caseTheme.darkBorder}`,
+    background: '#ffffff',
+    color: caseTheme.darkText,
+    borderRadius: '8px',
+    padding: '0.35rem 0.7rem',
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
   infoLine: {
     marginTop: '0.5rem',
     fontSize: '1.025rem',
