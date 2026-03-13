@@ -43,6 +43,17 @@ def normalize_processo_numero(numero_processo):
     return ''.join(char for char in str(numero_processo) if char.isdigit())
 
 
+def _to_bool(value, default=False):
+    """Converte valores de request para boolean de forma previsível."""
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+    return bool(value)
+
+
 def _extract_prazo_days(texto_publicacao):
     """Extrai prazo em dias do texto da publicação (ex: 'prazo de 15 dias')."""
     if not texto_publicacao:
@@ -655,6 +666,42 @@ def _create_movement_from_publication(publication, case):
     )
 
 
+def _integrate_publication_to_case(publication, case, notes=''):
+    """Vincula uma publicação ao caso e atualiza status de integração."""
+    publication.case = case
+    publication.integration_status = 'INTEGRATED'
+    publication.integration_attempted_at = timezone.now()
+    if notes:
+        publication.integration_notes = notes
+
+    update_fields = [
+        'case',
+        'integration_status',
+        'integration_attempted_at',
+        'updated_at',
+    ]
+    if notes:
+        update_fields.append('integration_notes')
+
+    publication.save(update_fields=update_fields)
+
+
+def _ensure_movement_from_publication(publication, case):
+    """
+    Garante criação idempotente de movimentação por publicação.
+    Retorna True se criou, False se já existia.
+    """
+    existing = CaseMovement.objects.filter(
+        case=case,
+        publicacao_id=publication.id_api
+    ).exists()
+    if existing:
+        return False
+
+    _create_movement_from_publication(publication, case)
+    return True
+
+
 @api_view(['GET'])
 def get_pending_publications(request):
     """
@@ -919,7 +966,8 @@ def integrate_publication(request, id_api):
     """
     try:
         case_id = request.data.get('case_id')
-        create_movement = bool(request.data.get('create_movement', False))
+        create_movement = _to_bool(request.data.get('create_movement', False), default=False)
+        auto_integrate_related = _to_bool(request.data.get('auto_integrate_related', True), default=True)
         notes = request.data.get('notes', '')
 
         if not case_id:
@@ -936,18 +984,7 @@ def integrate_publication(request, id_api):
             case.publicacao_origem = publication
             case.save(update_fields=['publicacao_origem', 'updated_at'])
 
-        publication.case = case
-        publication.integration_status = 'INTEGRATED'
-        publication.integration_attempted_at = timezone.now()
-        if notes:
-            publication.integration_notes = notes
-        publication.save(update_fields=[
-            'case',
-            'integration_status',
-            'integration_attempted_at',
-            'integration_notes',
-            'updated_at'
-        ])
+        _integrate_publication_to_case(publication, case, notes=notes)
 
         # Mark corresponding notification as read (user interacted with publication)
         try:
@@ -963,14 +1000,43 @@ def integrate_publication(request, id_api):
             print(f"[Warn] Could not mark notification as read for publication {id_api}: {notif_error}")
 
         movement_created = False
-        if create_movement:
-            _create_movement_from_publication(publication, case)
+        related_integrated = 0
+        related_movements_created = 0
+        if create_movement and _ensure_movement_from_publication(publication, case):
             movement_created = True
+
+        if auto_integrate_related:
+            numero_limpo = normalize_processo_numero(
+                publication.numero_processo or case.numero_processo
+            )
+
+            if numero_limpo:
+                candidates = Publication.objects.filter(
+                    case__isnull=True,
+                    integration_status='PENDING',
+                ).exclude(id=publication.id)
+
+                for related_pub in candidates:
+                    related_numero = normalize_processo_numero(related_pub.numero_processo)
+                    if related_numero != numero_limpo:
+                        continue
+
+                    _integrate_publication_to_case(
+                        related_pub,
+                        case,
+                        notes='Integrada automaticamente por mesmo número de processo',
+                    )
+                    related_integrated += 1
+
+                    if create_movement and _ensure_movement_from_publication(related_pub, case):
+                        related_movements_created += 1
 
         return Response({
             'success': True,
             'message': 'Publicação vinculada com sucesso',
             'movement_created': movement_created,
+            'related_integrated': related_integrated,
+            'related_movements_created': related_movements_created,
             'publication': {
                 'id': publication.id,
                 'id_api': publication.id_api,
@@ -1154,7 +1220,7 @@ def batch_integrate_publications(request):
                 ])
 
                 if create_movement:
-                    _create_movement_from_publication(pub, case)
+                    _ensure_movement_from_publication(pub, case)
                 integrated += 1
             else:
                 pub.integration_status = 'PENDING'
