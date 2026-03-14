@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.db.models.deletion import ProtectedError
+from django.conf import settings
 
 
 class Publication(models.Model):
@@ -9,7 +10,17 @@ class Publication(models.Model):
     """
     
     # Identificação única da API
-    id_api = models.BigIntegerField(unique=True, db_index=True)
+    id_api = models.BigIntegerField(db_index=True)
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_publications',
+        db_index=True,
+        help_text='Responsável pelo escopo desta publicação'
+    )
     
     # Dados do processo
     numero_processo = models.CharField(
@@ -137,6 +148,14 @@ class Publication(models.Model):
             models.Index(fields=['numero_processo']),
             models.Index(fields=['-created_at']),
             models.Index(fields=['integration_status']),
+            models.Index(fields=['owner', 'integration_status']),
+            models.Index(fields=['owner', '-data_disponibilizacao']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['owner', 'id_api'],
+                name='unique_publication_id_api_per_owner'
+            ),
         ]
     
     def __str__(self):
@@ -167,6 +186,16 @@ class SearchHistory(models.Model):
     """
     
     # Parâmetros da busca
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='publication_search_history',
+        db_index=True,
+        help_text='Usuário responsável por esta busca'
+    )
+
     data_inicio = models.DateField()
     data_fim = models.DateField()
     tribunais = models.JSONField(help_text='Lista de tribunais consultados')

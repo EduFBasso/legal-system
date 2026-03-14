@@ -46,6 +46,7 @@ class CaseAdmin(admin.ModelAdmin):
     """Admin interface for Case model"""
     
     list_display = [
+        'owner',
         'numero_processo_formatted',
         'titulo',
         'tribunal_badge',
@@ -57,6 +58,7 @@ class CaseAdmin(admin.ModelAdmin):
     ]
     
     list_filter = [
+        'owner',
         'tribunal',
         'status',
         'auto_status',
@@ -90,6 +92,7 @@ class CaseAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Identificação do Processo', {
             'fields': (
+                'owner',
                 'numero_processo',
                 'numero_processo_formatted',
                 'numero_processo_unformatted',

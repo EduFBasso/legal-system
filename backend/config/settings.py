@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     
     # Apps do projeto
+    'apps.accounts',
     'apps.contacts',
     'apps.publications',
     'apps.notifications',
@@ -104,12 +106,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 10,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        'NAME': 'config.password_validators.StrongPasswordValidator',
     },
 ]
 
@@ -150,6 +158,10 @@ CORS_ALLOW_CREDENTIALS = True
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': None,  # Sem paginação - carregar todos os contatos
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
@@ -217,4 +229,11 @@ LEGAL_SYSTEM_SETTINGS = {
     'ENVIRONMENT': config('ENVIRONMENT', default='development'),
     'DEBUG_MODE': DEBUG,
     'LOG_API_REQUESTS': config('LOG_API_REQUESTS', default=False, cast=bool),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
 }

@@ -8,10 +8,12 @@ Django==4.2.28
 django-cors-headers==4.6.0
 django-filter==24.2
 djangorestframework==3.16.1
+djangorestframework-simplejwt==5.5.1
 idna==3.11
 packaging==26.0
 pefile==2024.8.26
 pillow==12.1.1
+PyJWT==2.12.1
 pyinstaller==6.18.0
 pyinstaller-hooks-contrib==2026.0
 python-decouple==3.8

@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count, Prefetch
+from apps.accounts.permissions import is_master_user
 
 
 def _normalize(text):
@@ -50,6 +51,10 @@ class CaseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Case.objects.filter(deleted=False).order_by('-data_ultima_movimentacao')
+        user = self.request.user
+        if user.is_authenticated and not is_master_user(user):
+            qs = qs.filter(Q(owner=user) | Q(owner__isnull=True))
+
         if self.action == 'list':
             qs = qs.prefetch_related(
                 Prefetch('parties', queryset=CaseParty.objects.select_related('contact'))
@@ -128,15 +133,26 @@ class CaseViewSet(viewsets.ModelViewSet):
 
         # Busca normalizada (sem acento) nos nomes das partes
         from apps.contacts.models import Contact
+        contact_queryset = Contact.objects.all()
+        if self.request.user.is_authenticated and not is_master_user(self.request.user):
+            contact_queryset = contact_queryset.filter(Q(owner=self.request.user) | Q(owner__isnull=True))
+
         matching_ids = [
             cid
-            for cid, name in Contact.objects.values_list('id', 'name')
+            for cid, name in contact_queryset.values_list('id', 'name')
             if name and normalized in _normalize(name)
         ]
         if matching_ids:
             q |= Q(parties__contact__id__in=matching_ids)
 
         return queryset.filter(q).distinct()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.is_authenticated:
+            serializer.save(owner=user)
+        else:
+            serializer.save()
 
     def get_serializer_class(self):
         """Use different serializers for list and detail views"""
@@ -248,6 +264,15 @@ class CasePartyViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     ordering = ['-created_at']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return queryset
+        if is_master_user(user):
+            return queryset
+        return queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+
 
 class CaseMovementViewSet(viewsets.ModelViewSet):
     """
@@ -280,6 +305,9 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
         For use in nested routes like /api/cases/{id}/movimentacoes/
         """
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -315,6 +343,9 @@ class CasePrazoViewSet(viewsets.ModelViewSet):
         Optionally filter by movimentacao_id or case_id from URL parameters
         """
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(movimentacao__case__owner=user) | Q(movimentacao__case__owner__isnull=True))
         movimentacao_id = self.request.query_params.get('movimentacao_id')
         case_id = self.request.query_params.get('case_id')
         
@@ -353,6 +384,9 @@ class CaseTaskViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
 
         case_id = self.request.query_params.get('case_id')
         if case_id:
@@ -388,6 +422,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
         For use in nested routes like /api/cases/{id}/payments/
         """
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -417,6 +454,9 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         For use in nested routes like /api/cases/{id}/expenses/
         """
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -442,6 +482,9 @@ class CaseDocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)

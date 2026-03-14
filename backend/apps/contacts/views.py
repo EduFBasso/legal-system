@@ -5,6 +5,8 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
+from apps.accounts.permissions import is_master_user
 from .models import Contact
 from .serializers import (
     ContactListSerializer,
@@ -30,6 +32,15 @@ class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.prefetch_related(
         'case_roles__case'
     ).distinct().order_by('name')
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return queryset
+        if is_master_user(user):
+            return queryset
+        return queryset.filter(Q(owner=user) | Q(owner__isnull=True))
     
     # Filtros e busca
     filter_backends = [
@@ -108,7 +119,13 @@ class ContactViewSet(viewsets.ModelViewSet):
         Hook executado ao criar contato.
         Pode adicionar lógica extra aqui (logs, notificações, etc).
         """
-        contact = serializer.save()
+        user = self.request.user
+        if not user.is_authenticated:
+            contact = serializer.save()
+        elif is_master_user(user):
+            contact = serializer.save(owner=user)
+        else:
+            contact = serializer.save(owner=user)
         # TODO: Emitir evento 'contacts:changed' via WebSocket (futuro)
         return contact
     

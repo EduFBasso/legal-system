@@ -22,6 +22,7 @@ from .api_views import get_system_settings, get_specific_setting
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/auth/', include('apps.accounts.urls')),
     # System Settings: /api/system-settings
     path('api/system-settings/<str:setting_key>', get_specific_setting, name='get_setting'),
     path('api/system-settings', get_system_settings, name='system_settings'),

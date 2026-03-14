@@ -4,16 +4,16 @@ from .models import Publication, SearchHistory
 
 @admin.register(Publication)
 class PublicationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'tribunal', 'numero_processo', 'tipo_comunicacao', 
+    list_display = ['id', 'owner', 'tribunal', 'numero_processo', 'tipo_comunicacao', 
                     'data_disponibilizacao', 'created_at']
-    list_filter = ['tribunal', 'tipo_comunicacao', 'data_disponibilizacao']
+    list_filter = ['owner', 'tribunal', 'tipo_comunicacao', 'data_disponibilizacao']
     search_fields = ['numero_processo', 'texto_completo', 'orgao']
     readonly_fields = ['created_at', 'updated_at']
     date_hierarchy = 'data_disponibilizacao'
     
     fieldsets = (
         ('Identificação', {
-            'fields': ('id_api', 'numero_processo', 'tribunal')
+            'fields': ('owner', 'id_api', 'numero_processo', 'tribunal')
         }),
         ('Tipo e Data', {
             'fields': ('tipo_comunicacao', 'data_disponibilizacao', 'orgao', 'meio')
@@ -33,9 +33,9 @@ class PublicationAdmin(admin.ModelAdmin):
 
 @admin.register(SearchHistory)
 class SearchHistoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'executed_at', 'total_publicacoes', 'total_novas', 
+    list_display = ['id', 'owner', 'executed_at', 'total_publicacoes', 'total_novas', 
                     'tribunais_list', 'periodo']
-    list_filter = ['executed_at']
+    list_filter = ['owner', 'executed_at']
     readonly_fields = ['executed_at']
     date_hierarchy = 'executed_at'
     
@@ -49,7 +49,7 @@ class SearchHistoryAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Parâmetros', {
-            'fields': ('data_inicio', 'data_fim', 'tribunais')
+            'fields': ('owner', 'data_inicio', 'data_fim', 'tribunais')
         }),
         ('Resultados', {
             'fields': ('total_publicacoes', 'total_novas', 'duration_seconds')

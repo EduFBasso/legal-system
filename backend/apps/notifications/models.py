@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 
 class Notification(models.Model):
@@ -28,6 +29,16 @@ class Notification(models.Model):
     ]
     
     # Campos básicos
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_notifications',
+        db_index=True,
+        verbose_name='Dono'
+    )
+
     type = models.CharField(
         max_length=20,
         choices=NOTIFICATION_TYPES,
@@ -98,6 +109,7 @@ class Notification(models.Model):
             models.Index(fields=['-created_at']),
             models.Index(fields=['read']),
             models.Index(fields=['type']),
+            models.Index(fields=['owner', 'read']),
         ]
     
     def __str__(self):

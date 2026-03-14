@@ -11,6 +11,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from apps.accounts.permissions import is_master_user
 
 from services.pje_comunica import PJeComunicaService
 from apps.notifications.models import Notification
@@ -18,9 +19,20 @@ from apps.cases.models import Case, CaseMovement
 from .models import Publication, SearchHistory
 
 
-# Credentials from settings
-OAB_NUMBER = settings.OAB_NUMBER
-ADVOGADA_NOME = settings.ADVOGADA_NOME
+def _get_user_publication_identity(user):
+    profile = getattr(user, 'profile', None)
+    oab_number = (profile.oab_number if profile else '') or settings.OAB_NUMBER
+    advogado_nome = (profile.full_name_oab if profile else '') or settings.ADVOGADA_NOME
+    tribunais = (profile.monitored_tribunais if profile else None) or ['TJSP', 'TRF3', 'TRT2', 'TRT15']
+    return oab_number, advogado_nome, tribunais
+
+
+def _apply_owner_filter(queryset, user, owner_field='owner'):
+    if not user or not user.is_authenticated:
+        return queryset
+    if is_master_user(user):
+        return queryset
+    return queryset.filter(models.Q(**{owner_field: user}) | models.Q(**{f'{owner_field}__isnull': True}))
 
 
 def normalize_string(text):
@@ -112,6 +124,10 @@ def fetch_today_publications(request):
     }
     """
     try:
+        user = request.user
+        owner = user if user.is_authenticated else None
+        oab_number, advogada_nome, tribunais_configurados = _get_user_publication_identity(user)
+
         # Iniciar cronômetro
         start_time = time.time()
         
@@ -120,8 +136,9 @@ def fetch_today_publications(request):
         
         # Busca publicações usando o service
         result = PJeComunicaService.fetch_today_publications(
-            oab=OAB_NUMBER,
-            nome_advogado=ADVOGADA_NOME
+            oab=oab_number,
+            nome_advogado=advogada_nome,
+            tribunais=tribunais_configurados,
         )
         
         # Salvar publicações no banco e criar histórico
@@ -130,29 +147,30 @@ def fetch_today_publications(request):
             publicacoes = result.get('publicacoes', [])
             
             # Salvar cada publicação (deduplicação automática via id_api unique)
-            total_novas = _save_publications_to_db(publicacoes)
+            total_novas = _save_publications_to_db(publicacoes, owner=owner)
             
             # Enriquecer publicações com dados do banco (integration_status, case_id, etc)
-            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes)
+            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes, owner=owner)
             
             # Criar notificações para novas publicações (7 dias retroativos)
-            _create_publication_notifications(publicacoes, retroactive_days=7)
+            _create_publication_notifications(publicacoes, retroactive_days=7, owner=owner)
         
         # Calcular duração
         duration = time.time() - start_time
         
         # Criar histórico de busca
         SearchHistory.objects.create(
+            owner=owner,
             data_inicio=hoje,
             data_fim=hoje,
-            tribunais=['TJSP', 'TRF3', 'TRT2', 'TRT15'],  # Todos os tribunais
+            tribunais=tribunais_configurados,
             total_publicacoes=result.get('total_publicacoes', 0),
             total_novas=total_novas,
             duration_seconds=round(duration, 2),
             search_params={
                 'retroactive_days': 7,
-                'oab': OAB_NUMBER,
-                'nome_advogado': ADVOGADA_NOME,
+                'oab': oab_number,
+                'nome_advogado': advogada_nome,
             }
         )
         
@@ -187,6 +205,10 @@ def search_publications(request):
     Response: Similar to fetch_today_publications
     """
     try:
+        user = request.user
+        owner = user if user.is_authenticated else None
+        oab_number, advogada_nome, tribunais_configurados = _get_user_publication_identity(user)
+
         # Validar parâmetros obrigatórios
         data_inicio = request.query_params.get('data_inicio')
         data_fim = request.query_params.get('data_fim')
@@ -203,7 +225,7 @@ def search_publications(request):
         # Tribunais selecionados (opcional)
         tribunais = request.query_params.getlist('tribunais')
         if not tribunais:
-            tribunais = None  # Usa default do service (todos)
+            tribunais = tribunais_configurados
         
         # Dias retroativos para notificações (padrão: 7 dias)
         retroactive_days = int(request.query_params.get('retroactive_days', 7))
@@ -213,8 +235,8 @@ def search_publications(request):
         
         # Busca publicações usando o service com método genérico
         result = PJeComunicaService.fetch_publications(
-            oab=OAB_NUMBER,
-            nome_advogado=ADVOGADA_NOME,
+            oab=oab_number,
+            nome_advogado=advogada_nome,
             data_inicio=data_inicio,
             data_fim=data_fim,
             tribunais=tribunais
@@ -226,15 +248,16 @@ def search_publications(request):
             publicacoes = result.get('publicacoes', [])
             
             # Salvar cada publicação (deduplicação automática via id_api unique)
-            total_novas = _save_publications_to_db(publicacoes)
+            total_novas = _save_publications_to_db(publicacoes, owner=owner)
             
             # Enriquecer publicações com dados do banco (integration_status, case_id, etc)
-            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes)
+            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes, owner=owner)
             
             # Criar notificações para novas publicações
             _create_publication_notifications(
                 publicacoes,
-                retroactive_days=retroactive_days
+                retroactive_days=retroactive_days,
+                owner=owner,
             )
         
         # Calcular duração
@@ -242,16 +265,17 @@ def search_publications(request):
         
         # Criar histórico de busca
         SearchHistory.objects.create(
+            owner=owner,
             data_inicio=datetime.fromisoformat(data_inicio).date(),
             data_fim=datetime.fromisoformat(data_fim).date(),
-            tribunais=tribunais if tribunais else ['TJSP', 'TRF3', 'TRT2', 'TRT15'],
+            tribunais=tribunais,
             total_publicacoes=result.get('total_publicacoes', 0),
             total_novas=total_novas,
             duration_seconds=round(duration, 2),
             search_params={
                 'retroactive_days': retroactive_days,
-                'oab': OAB_NUMBER,
-                'nome_advogado': ADVOGADA_NOME,
+                'oab': oab_number,
+                'nome_advogado': advogada_nome,
             }
         )
         
@@ -303,7 +327,7 @@ def debug_search(request):
         return Response({'error': str(e)}, status=500)
 
 
-def _create_publication_notifications(publicacoes, retroactive_days=7):
+def _create_publication_notifications(publicacoes, retroactive_days=7, owner=None):
     """
     Helper para criar notificações de novas publicações.
     Cria apenas se não existir notificação para aquela publicação específica
@@ -342,7 +366,10 @@ def _create_publication_notifications(publicacoes, retroactive_days=7):
         notification_exists = Notification.objects.filter(
             type='publication',
             metadata__id_api=pub.get('id_api')
-        ).exists()
+        )
+        if owner is not None:
+            notification_exists = notification_exists.filter(owner=owner)
+        notification_exists = notification_exists.exists()
         
         if notification_exists:
             continue
@@ -362,6 +389,7 @@ def _create_publication_notifications(publicacoes, retroactive_days=7):
         link_oficial = pub.get('link_oficial')  # Link para site oficial
         
         Notification.objects.create(
+            owner=owner,
             type='publication',
             priority=priority,
             title=f'Nova Publicação - {tribunal}',
@@ -379,7 +407,7 @@ def _create_publication_notifications(publicacoes, retroactive_days=7):
         notifications_created += 1
 
 
-def _save_publications_to_db(publicacoes):
+def _save_publications_to_db(publicacoes, owner=None):
     """
     Salva publicações no banco de dados local.
     Retorna quantidade de publicações novas salvas (ignora duplicadas).
@@ -394,6 +422,7 @@ def _save_publications_to_db(publicacoes):
         # Tentar criar (unique constraint previne duplicatas)
         try:
             Publication.objects.create(
+                owner=owner,
                 id_api=id_api,
                 numero_processo=pub.get('numero_processo'),
                 tribunal=pub.get('tribunal', ''),
@@ -418,7 +447,7 @@ def _save_publications_to_db(publicacoes):
     return total_novas
 
 
-def _enrich_publications_with_db_data(publicacoes):
+def _enrich_publications_with_db_data(publicacoes, owner=None):
     """
     Enriquece a lista de publicações com dados do banco de dados.
     Adiciona campos: integration_status, case_id, id (pk do banco).
@@ -434,9 +463,10 @@ def _enrich_publications_with_db_data(publicacoes):
     
     # Buscar todas as publicações do banco por id_api
     id_apis = [pub.get('id_api') for pub in publicacoes if pub.get('id_api')]
-    db_pubs = Publication.objects.filter(
-        id_api__in=id_apis
-    ).values('id', 'id_api', 'integration_status', 'case_id')
+    db_pubs = Publication.objects.filter(id_api__in=id_apis)
+    if owner is not None:
+        db_pubs = db_pubs.filter(owner=owner)
+    db_pubs = db_pubs.values('id', 'id_api', 'integration_status', 'case_id')
     
     # Criar mapa id_api -> dados do banco
     db_map = {pub['id_api']: pub for pub in db_pubs}
@@ -482,7 +512,8 @@ def get_last_search(request):
     }
     """
     try:
-        last_search = SearchHistory.objects.first()  # Ordenado por -executed_at
+        user = request.user
+        last_search = _apply_owner_filter(SearchHistory.objects.all(), user).first()  # Ordenado por -executed_at
         
         if not last_search:
             return Response({
@@ -491,11 +522,11 @@ def get_last_search(request):
             })
         
         # VALIDAÇÃO: Contar quantas publicações ainda existem no banco para esse período
-        current_pubs_count = Publication.objects.filter(
+        current_pubs_count = _apply_owner_filter(Publication.objects.filter(
             tribunal__in=last_search.tribunais,
             data_disponibilizacao__gte=last_search.data_inicio,
             data_disponibilizacao__lte=last_search.data_fim
-        ).count()
+        ), user).count()
         
         # Se não há mais publicações no banco, retornar None (lastSearch inválido)
         if current_pubs_count == 0:
@@ -553,8 +584,9 @@ def retrieve_last_search_publications(request):
     }
     """
     try:
+        user = request.user
         # Buscar última pesquisa
-        last_search = SearchHistory.objects.first()
+        last_search = _apply_owner_filter(SearchHistory.objects.all(), user).first()
         
         if not last_search:
             return Response({
@@ -563,16 +595,16 @@ def retrieve_last_search_publications(request):
             }, status=status.HTTP_404_NOT_FOUND)
         
         # Filtrar publicações do banco de dados
-        publicacoes_db = Publication.objects.filter(
+        publicacoes_db = _apply_owner_filter(Publication.objects.filter(
             tribunal__in=last_search.tribunais,
             data_disponibilizacao__gte=last_search.data_inicio,
             data_disponibilizacao__lte=last_search.data_fim
-        ).order_by('-data_disponibilizacao', '-created_at')
+        ), user).order_by('-data_disponibilizacao', '-created_at')
         
         # Serializar publicações no formato idêntico à API
         publicacoes_json = []
         for pub in publicacoes_db:
-            case_suggestion = _build_case_suggestion(pub.numero_processo)
+            case_suggestion = _build_case_suggestion(pub.numero_processo, user=user)
             publicacoes_json.append({
                 'id_api': pub.id_api,
                 'id': pub.id,
@@ -612,7 +644,7 @@ def retrieve_last_search_publications(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def _build_case_suggestion(numero_processo):
+def _build_case_suggestion(numero_processo, user=None):
     """
     Busca caso existente pelo número do processo para sugerir vinculação.
     """
@@ -621,9 +653,10 @@ def _build_case_suggestion(numero_processo):
     numero_limpo = normalize_processo_numero(numero_processo)
     if not numero_limpo:
         return None
-    case = Case.objects.filter(
-        numero_processo_unformatted=numero_limpo
-    ).first()
+    case_queryset = Case.objects.filter(numero_processo_unformatted=numero_limpo)
+    if user is not None and user.is_authenticated and not is_master_user(user):
+        case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
+    case = case_queryset.first()
     if not case:
         return None
     return {
@@ -711,6 +744,7 @@ def get_pending_publications(request):
     Query params: tribunal, ordering, limit, offset
     """
     try:
+        user = request.user
         tribunal = request.query_params.get('tribunal')
         ordering = request.query_params.get('ordering', '-data_disponibilizacao')
         limit = int(request.query_params.get('limit', 20))
@@ -727,9 +761,9 @@ def get_pending_publications(request):
         if ordering not in allowed_ordering:
             ordering = '-data_disponibilizacao'
 
-        queryset = Publication.objects.filter(
+        queryset = _apply_owner_filter(Publication.objects.filter(
             integration_status='PENDING'
-        )
+        ), user)
 
         if tribunal:
             queryset = queryset.filter(tribunal=tribunal)
@@ -752,7 +786,7 @@ def get_pending_publications(request):
                 'link_oficial': pub.link_oficial,
                 'integration_status': pub.integration_status,
                 'case_id': pub.case_id,
-                'case_suggestion': _build_case_suggestion(pub.numero_processo),
+                'case_suggestion': _build_case_suggestion(pub.numero_processo, user=user),
             })
 
         return Response({
@@ -779,6 +813,7 @@ def get_all_publications(request):
     Query params: tribunal, ordering, limit, offset, integration_status
     """
     try:
+        user = request.user
         tribunal = request.query_params.get('tribunal')
         ordering = request.query_params.get('ordering', '-data_disponibilizacao')
         limit = int(request.query_params.get('limit', 50))
@@ -796,7 +831,7 @@ def get_all_publications(request):
         if ordering not in allowed_ordering:
             ordering = '-data_disponibilizacao'
 
-        queryset = Publication.objects.all()
+        queryset = _apply_owner_filter(Publication.objects.all(), user)
 
         if tribunal:
             queryset = queryset.filter(tribunal=tribunal)
@@ -846,9 +881,9 @@ def get_all_publications(request):
 @api_view(['GET'])
 def get_pending_count(request):
     try:
-        count = Publication.objects.filter(
+        count = _apply_owner_filter(Publication.objects.filter(
             integration_status='PENDING'
-        ).count()
+        ), request.user).count()
         return Response({
             'success': True,
             'count': count
@@ -891,6 +926,7 @@ def get_publications_by_case(request, case_id):
     }
     """
     try:
+        user = request.user
         ordering = request.query_params.get('ordering', '-data_disponibilizacao')
         limit = int(request.query_params.get('limit', 50))
         offset = int(request.query_params.get('offset', 0))
@@ -910,9 +946,9 @@ def get_publications_by_case(request, case_id):
             ordering = '-data_disponibilizacao'
         
         # Buscar publicações do caso
-        queryset = Publication.objects.filter(
+        queryset = _apply_owner_filter(Publication.objects.filter(
             case_id=case_id
-        )
+        ), user)
         
         total = queryset.count()
         queryset = queryset.order_by(ordering)[offset:offset + limit]
@@ -965,6 +1001,7 @@ def integrate_publication(request, id_api):
       (User clicked "Criar Caso" or interacted with notification - so they read it)
     """
     try:
+        user = request.user
         case_id = request.data.get('case_id')
         create_movement = _to_bool(request.data.get('create_movement', False), default=False)
         auto_integrate_related = _to_bool(request.data.get('auto_integrate_related', True), default=True)
@@ -976,8 +1013,16 @@ def integrate_publication(request, id_api):
                 'error': 'case_id é obrigatório'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        publication = Publication.objects.get(id_api=id_api)
-        case = Case.objects.get(id=case_id)
+        publication = _apply_owner_filter(Publication.objects.filter(id_api=id_api), user).first()
+        if not publication:
+            raise Publication.DoesNotExist
+
+        case_queryset = Case.objects.filter(id=case_id)
+        if user.is_authenticated and not is_master_user(user):
+            case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
+        case = case_queryset.first()
+        if not case:
+            raise Case.DoesNotExist
 
         # Rastreabilidade: se o caso ainda não possui origem, registrar esta publicação
         if not case.publicacao_origem_id:
@@ -992,7 +1037,10 @@ def integrate_publication(request, id_api):
                 type='publication',
                 metadata__id_api=id_api,
                 read=False
-            ).first()
+            )
+            if user.is_authenticated and not is_master_user(user):
+                notification = notification.filter(owner=user)
+            notification = notification.first()
             if notification:
                 notification.mark_as_read()
         except Exception as notif_error:
@@ -1014,6 +1062,7 @@ def integrate_publication(request, id_api):
                 candidates = Publication.objects.filter(
                     case__isnull=True,
                     integration_status='PENDING',
+                    owner=publication.owner,
                 ).exclude(id=publication.id)
 
                 for related_pub in candidates:
@@ -1077,7 +1126,10 @@ def create_movement_from_publication(request, id_api):
     permite criar movimentação manualmente de cada publicação.
     """
     try:
-        publication = Publication.objects.get(id_api=id_api)
+        user = request.user
+        publication = _apply_owner_filter(Publication.objects.filter(id_api=id_api), user).first()
+        if not publication:
+            raise Publication.DoesNotExist
         
         if not publication.case:
             return Response({
@@ -1149,15 +1201,16 @@ def batch_integrate_publications(request):
         - auto_integration: Setting do cliente (informado apenas para logging/auditoria)
     """
     try:
+        user = request.user
         search_id = request.data.get('search_id')
         auto_link = request.data.get('auto_link', True)
         create_movement = request.data.get('create_movement', False)
         auto_integration = request.data.get('auto_integration', False)
 
         if search_id:
-            search = SearchHistory.objects.filter(id=search_id).first()
+            search = _apply_owner_filter(SearchHistory.objects.filter(id=search_id), user).first()
         else:
-            search = SearchHistory.objects.first()
+            search = _apply_owner_filter(SearchHistory.objects.all(), user).first()
 
         if not search:
             return Response({
@@ -1165,11 +1218,11 @@ def batch_integrate_publications(request):
                 'error': 'Nenhuma busca encontrada'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        queryset = Publication.objects.filter(
+        queryset = _apply_owner_filter(Publication.objects.filter(
             tribunal__in=search.tribunais,
             data_disponibilizacao__gte=search.data_inicio,
             data_disponibilizacao__lte=search.data_fim
-        ).order_by('-data_disponibilizacao')
+        ), user).order_by('-data_disponibilizacao')
 
         integrated = 0
         pending = 0
@@ -1204,7 +1257,10 @@ def batch_integrate_publications(request):
             if pub.numero_processo:
                 numero_limpo = normalize_processo_numero(pub.numero_processo)
                 if numero_limpo:
-                    case = Case.objects.filter(numero_processo_unformatted=numero_limpo).first()
+                    case_queryset = Case.objects.filter(numero_processo_unformatted=numero_limpo)
+                    if user.is_authenticated and not is_master_user(user):
+                        case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
+                    case = case_queryset.first()
 
             if case:
                 pub.case = case
@@ -1284,6 +1340,7 @@ def get_search_history(request):
     }
     """
     try:
+        user = request.user
         # Parâmetros de paginação
         limit = int(request.query_params.get('limit', 20))
         offset = int(request.query_params.get('offset', 0))
@@ -1301,7 +1358,7 @@ def get_search_history(request):
             ordering = '-executed_at'
         
         # Buscar histórico
-        all_searches = SearchHistory.objects.all()
+        all_searches = _apply_owner_filter(SearchHistory.objects.all(), user)
         
         # Se houver busca por número de processo
         if query:
@@ -1316,14 +1373,14 @@ def get_search_history(request):
             if is_number_search:
                 # Busca por número de processo
                 # Tenta tanto com query original quanto só com dígitos
-                publications = Publication.objects.filter(
+                publications = _apply_owner_filter(Publication.objects.filter(
                     numero_processo__icontains=query
-                )
+                ), user)
                 
                 # Se não encontrou, tentar buscar removendo formatação
                 if not publications.exists() and query_digits and len(query_digits) >= 7:
                     # Buscar publicações cujo número (sem formatação) contém os dígitos
-                    all_publications = Publication.objects.exclude(numero_processo__isnull=True)
+                    all_publications = _apply_owner_filter(Publication.objects.exclude(numero_processo__isnull=True), user)
                     matching_pubs = []
                     
                     for pub in all_publications:
@@ -1338,7 +1395,7 @@ def get_search_history(request):
                 query_normalized = normalize_string(query)
                 
                 # Buscar em todas as publicações e filtrar com normalização
-                all_publications = Publication.objects.all()
+                all_publications = _apply_owner_filter(Publication.objects.all(), user)
                 matching_pubs = []
                 
                 for pub in all_publications:
@@ -1367,10 +1424,10 @@ def get_search_history(request):
                 for pub in publications:
                     # Buscar históricos que incluem essa publicação
                     # Filtrar no Python porque JSONField contains não funciona bem no SQLite
-                    matching_searches = SearchHistory.objects.filter(
+                    matching_searches = _apply_owner_filter(SearchHistory.objects.filter(
                         data_inicio__lte=pub.data_disponibilizacao,
                         data_fim__gte=pub.data_disponibilizacao
-                    )
+                    ), user)
                     
                     # Filtrar por tribunal no Python
                     for search in matching_searches:
@@ -1460,9 +1517,10 @@ def get_search_history_detail(request, search_id):
     }
     """
     try:
+        user = request.user
         # Buscar pesquisa específica
         try:
-            search = SearchHistory.objects.get(id=search_id)
+            search = _apply_owner_filter(SearchHistory.objects.filter(id=search_id), user).get()
         except SearchHistory.DoesNotExist:
             return Response({
                 'success': False,
@@ -1470,11 +1528,11 @@ def get_search_history_detail(request, search_id):
             }, status=status.HTTP_404_NOT_FOUND)
         
         # Buscar publicações relacionadas a esta pesquisa
-        publicacoes_db = Publication.objects.filter(
+        publicacoes_db = _apply_owner_filter(Publication.objects.filter(
             tribunal__in=search.tribunais,
             data_disponibilizacao__gte=search.data_inicio,
             data_disponibilizacao__lte=search.data_fim
-        ).order_by('-data_disponibilizacao', '-created_at')
+        ), user).order_by('-data_disponibilizacao', '-created_at')
         
         # Serializar publicações
         publicacoes_json = []
@@ -1536,8 +1594,10 @@ def delete_search_history(request):
     }
     """
     try:
+        user = request.user
         # Contar registros antes de deletar
-        count = SearchHistory.objects.count()
+        user_searches = _apply_owner_filter(SearchHistory.objects.all(), user)
+        count = user_searches.count()
         
         if count == 0:
             return Response({
@@ -1547,7 +1607,7 @@ def delete_search_history(request):
             })
         
         # Deletar todos os registros
-        SearchHistory.objects.all().delete()
+        user_searches.delete()
         
         return Response({
             'success': True,
@@ -1570,8 +1630,11 @@ def get_publication_by_id(request, id_api):
     Retorna publicação mesmo se estiver deletada (para exibir em notificações antigas).
     """
     try:
+        user = request.user
         # Buscar sem filtro de deleted (notificações antigas podem referenciar deletadas)
-        publication = Publication.objects.get(id_api=id_api)
+        publication = _apply_owner_filter(Publication.objects.filter(id_api=id_api), user).first()
+        if not publication:
+            raise Publication.DoesNotExist
         
         # Serializar no formato da API
         return Response({
@@ -1620,7 +1683,10 @@ def delete_publication(request, id_api):
     }
     """
     try:
-        publication = Publication.objects.get(id_api=id_api)
+        user = request.user
+        publication = _apply_owner_filter(Publication.objects.filter(id_api=id_api), user).first()
+        if not publication:
+            raise Publication.DoesNotExist
 
         has_linked_case = False
         if publication.case_id:
@@ -1641,7 +1707,10 @@ def delete_publication(request, id_api):
             type='publication',
             metadata__id_api=id_api,
             read=False
-        ).delete()[0]
+        )
+        if user.is_authenticated and not is_master_user(user):
+            notifications_deleted = notifications_deleted.filter(owner=user)
+        notifications_deleted = notifications_deleted.delete()[0]
         
         # Agora deletar a publicação (CASCADE delete applied)
         publication.delete()
@@ -1684,6 +1753,7 @@ def delete_multiple_publications(request):
     }
     """
     try:
+        user = request.user
         publication_ids = request.data.get('publication_ids', [])
         
         if not publication_ids:
@@ -1692,7 +1762,7 @@ def delete_multiple_publications(request):
                 'message': 'Nenhuma publicação especificada'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        queryset = Publication.objects.filter(id_api__in=publication_ids)
+        queryset = _apply_owner_filter(Publication.objects.filter(id_api__in=publication_ids), user)
 
         protected_ids = []
         deletable_ids = []
@@ -1712,16 +1782,19 @@ def delete_multiple_publications(request):
         # HARD DELETE: Deletar notificações não lidas primeiro
         notifications_deleted = 0
         for pub_id in deletable_ids:
-            notifications_deleted += Notification.objects.filter(
+            notification_qs = Notification.objects.filter(
                 type='publication',
                 metadata__id_api=pub_id,
                 read=False
-            ).delete()[0]
+            )
+            if user.is_authenticated and not is_master_user(user):
+                notification_qs = notification_qs.filter(owner=user)
+            notifications_deleted += notification_qs.delete()[0]
         
         # Agora deletar as publicações
-        deleted_count = Publication.objects.filter(
+        deleted_count = _apply_owner_filter(Publication.objects.filter(
             id_api__in=deletable_ids
-        ).delete()[0]
+        ), user).delete()[0]
         
         return Response({
             'success': True,
@@ -1758,31 +1831,35 @@ def delete_all_publications(request):
     }
     """
     try:
+        user = request.user
         linked_case_pub_ids = set(
-            Publication.objects.filter(case__isnull=False)
+            _apply_owner_filter(Publication.objects.filter(case__isnull=False), user)
             .values_list('id', flat=True)
         )
         linked_origin_pub_ids = set(
-            Publication.objects.filter(casos_criados__isnull=False)
+            _apply_owner_filter(Publication.objects.filter(casos_criados__isnull=False), user)
             .values_list('id', flat=True)
         )
         protected_pub_ids = linked_case_pub_ids | linked_origin_pub_ids
 
         # HARD DELETE: Deletar notificações não lidas de publicações não protegidas
-        deletable_pubs = Publication.objects.exclude(id__in=protected_pub_ids)
+        deletable_pubs = _apply_owner_filter(Publication.objects.exclude(id__in=protected_pub_ids), user)
         notifications_deleted = 0
         for pub in deletable_pubs:
-            notifications_deleted += Notification.objects.filter(
+            notification_qs = Notification.objects.filter(
                 type='publication',
                 metadata__id_api=pub.id_api,
-                read=False
-            ).delete()[0]
+                read=False,
+            )
+            if user.is_authenticated and not is_master_user(user):
+                notification_qs = notification_qs.filter(owner=user)
+            notifications_deleted += notification_qs.delete()[0]
         
         # Agora deletar as publicações
-        deleted_count = Publication.objects.exclude(id__in=protected_pub_ids).delete()[0]
+        deleted_count = _apply_owner_filter(Publication.objects.exclude(id__in=protected_pub_ids), user).delete()[0]
         
         # HARD DELETE: Limpar histórico (sem publicações visíveis, histórico não faz sentido)
-        history_deleted = SearchHistory.objects.all().delete()[0]
+        history_deleted = _apply_owner_filter(SearchHistory.objects.all(), user).delete()[0]
         
         return Response({
             'success': True,

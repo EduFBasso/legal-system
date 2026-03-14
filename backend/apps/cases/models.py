@@ -12,7 +12,6 @@ class Case(models.Model):
     # ========== IDENTIFICAÇÃO ==========
     numero_processo = models.CharField(
         max_length=25,
-        unique=True,
         db_index=True,
         validators=[
             RegexValidator(
@@ -73,6 +72,16 @@ class Case(models.Model):
     )
 
     # ========== RELACIONAMENTOS ==========
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_cases',
+        db_index=True,
+        help_text='Responsável pelo escopo deste processo'
+    )
+
     # ManyToMany com Contacts (partes no processo)
     clients = models.ManyToManyField(
         'contacts.Contact',
@@ -273,6 +282,13 @@ class Case(models.Model):
             models.Index(fields=['-data_ultima_movimentacao']),
             models.Index(fields=['numero_processo_unformatted']),
             models.Index(fields=['deleted', '-data_ultima_movimentacao']),
+            models.Index(fields=['owner', 'deleted', '-data_ultima_movimentacao']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['owner', 'numero_processo'],
+                name='unique_case_numero_per_owner'
+            ),
         ]
 
     # ========== PROPERTIES ==========

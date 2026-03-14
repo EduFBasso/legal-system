@@ -4,15 +4,15 @@ from .models import Notification
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'type', 'priority', 'title', 'read', 'created_at']
-    list_filter = ['type', 'priority', 'read', 'created_at']
+    list_display = ['id', 'owner', 'type', 'priority', 'title', 'read', 'created_at']
+    list_filter = ['owner', 'type', 'priority', 'read', 'created_at']
     search_fields = ['title', 'message']
     readonly_fields = ['created_at', 'updated_at', 'read_at']
     ordering = ['-created_at']
     
     fieldsets = (
         ('Informações Básicas', {
-            'fields': ('type', 'priority', 'title', 'message')
+            'fields': ('owner', 'type', 'priority', 'title', 'message')
         }),
         ('Ação', {
             'fields': ('link', 'metadata')

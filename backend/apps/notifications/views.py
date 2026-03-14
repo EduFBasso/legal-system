@@ -3,6 +3,8 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Q
+from apps.accounts.permissions import is_master_user
 from .models import Notification
 from .serializers import (
     NotificationSerializer,
@@ -29,11 +31,27 @@ class NotificationViewSet(viewsets.ModelViewSet):
     
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return queryset
+        if is_master_user(user):
+            return queryset
+        return queryset.filter(Q(owner=user) | Q(owner__isnull=True))
     
     def get_serializer_class(self):
         if self.action == 'create':
             return NotificationCreateSerializer
         return NotificationSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.is_authenticated:
+            serializer.save(owner=user)
+        else:
+            serializer.save()
     
     @action(detail=False, methods=['get'])
     def unread(self, request):
@@ -176,6 +194,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         """
         from apps.cases.models import CaseMovement
         
+        user = request.user
         today = timezone.now().date()
         future_limit = today + timedelta(days=15)
         
@@ -186,6 +205,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
             data_limite_prazo__gte=today,
             data_limite_prazo__lte=future_limit
         ).select_related('case').order_by('data_limite_prazo')
+        if user.is_authenticated and not is_master_user(user):
+            movements_with_deadlines = movements_with_deadlines.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
         
         created_count = 0
         skipped_count = 0
@@ -224,6 +245,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
             
             # Criar notificação
             notification = Notification.objects.create(
+                owner=movement.case.owner,
                 type='deadline',
                 priority=priority,
                 title=f'⏰ Prazo vence {priority_text}',
@@ -276,6 +298,7 @@ def create_test_notification(request):
         now_local = timezone.localtime(now)
 
         notification = Notification.objects.create(
+            owner=request.user if request.user.is_authenticated else None,
             type='process',
             priority='high',
             title='⚠ Processo sem publicação há 95 dias',
@@ -301,6 +324,7 @@ def create_test_notification(request):
         # Usar timezone.localtime() para converter para timezone configurado
         now_local = timezone.localtime(timezone.now())
         notification = Notification.objects.create(
+            owner=request.user if request.user.is_authenticated else None,
             type='publication',
             priority='medium',
             title='Notificação de Teste - Publicação',
