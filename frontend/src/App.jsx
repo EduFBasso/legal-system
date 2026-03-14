@@ -20,6 +20,7 @@ import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
+import MasterPage from './pages/MasterPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
 import { useAuth } from './contexts/AuthContext';
@@ -27,7 +28,7 @@ import './App.css';
 import './styles/highlight.css'; // Sistema de destaque reutilizável
 
 function App() {
-  const { isAuthenticated, showNotLoggedMessage } = useAuth();
+  const { isAuthenticated, showNotLoggedMessage, user } = useAuth();
 
   // Initialize task synchronization across tabs
   useEffect(() => {
@@ -77,6 +78,10 @@ function App() {
                         <Route path="/search-history" element={<SearchHistoryPage />} />
                         <Route path="/notifications" element={<NotificationsPage />} />
                         <Route path="/deadlines" element={<DeadlinesPage />} />
+                        <Route
+                          path="/master"
+                          element={user?.role === 'MASTER' ? <MasterPage /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
+                        />
                       </Routes>
                     ) : (
                       <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>
