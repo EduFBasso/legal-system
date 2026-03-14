@@ -1,0 +1,34 @@
+[Unit]
+Description=Legal System — Backend Django (Gunicorn)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+# Ajuste o usuário e o caminho conforme o servidor
+User=legal
+Group=legal
+WorkingDirectory=/opt/legal-system/backend
+
+# Carrega as variáveis de ambiente do .env
+EnvironmentFile=/opt/legal-system/backend/.env
+
+# Ativa o virtualenv e inicia o gunicorn
+ExecStart=/opt/legal-system/.venv/bin/gunicorn \
+    -c /opt/legal-system/backend/gunicorn.conf.py \
+    config.wsgi:application
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5
+
+# Limites de segurança
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/legal-system/backend/storage
+
+[Install]
+WantedBy=multi-user.target
