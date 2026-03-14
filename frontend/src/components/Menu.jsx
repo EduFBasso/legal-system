@@ -8,12 +8,42 @@ import { subscribeToTaskUpdates } from '../services/taskSyncService';
 import SettingsModal from './SettingsModal';
 import './Menu.css';
 
-export default function Menu() {
+export default function Menu({ isAuthenticated, onBlockedAction }) {
   const [pendingCount, setPendingCount] = useState(0);
   const [scheduledTasksCount, setScheduledTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  const renderMenuLink = ({ to, end = true, icon, label, badge = null }) => {
+    if (!isAuthenticated) {
+      return (
+        <button
+          type="button"
+          className="menu-disabled-link"
+          onClick={onBlockedAction}
+          title="Você não está logado"
+        >
+          <span className="menu-icon">{icon}</span>
+          <span className="menu-label">{label}</span>
+          {badge}
+        </button>
+      );
+    }
+
+    return (
+      <NavLink to={to} end={end} className={({ isActive }) => isActive ? 'active' : ''}>
+        <span className="menu-icon">{icon}</span>
+        <span className="menu-label">{label}</span>
+        {badge}
+      </NavLink>
+    );
+  };
+
   useEffect(() => {
+    if (!isAuthenticated) {
+      setPendingCount(0);
+      return;
+    }
+
     const loadPendingCount = async () => {
       try {
         const result = await publicationsService.getPendingCount();
@@ -50,9 +80,14 @@ export default function Menu() {
       window.removeEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
       window.removeEventListener('focus', handleWindowFocus);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setScheduledTasksCount(0);
+      return;
+    }
+
     const loadScheduledTasksCount = async () => {
       try {
         const tasks = await caseTasksService.getAllTasks();
@@ -87,93 +122,52 @@ export default function Menu() {
       }
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [isAuthenticated]);
   
   return (
     <>
       <nav className="app-menu">
         <ul className="menu-list">
         <li className="menu-item">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">🏠</span>
-            <span className="menu-label">Dashboard</span>
-          </NavLink>
+          {renderMenuLink({ to: '/', icon: '🏠', label: 'Dashboard' })}
         </li>
         <li className="menu-item">
-          <NavLink
-            to="/cases"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">⚖️</span>
-            <span className="menu-label">Processos</span>
-          </NavLink>
+          {renderMenuLink({ to: '/cases', icon: '⚖️', label: 'Processos' })}
         </li>
 
         <li className="menu-group-spacer" aria-hidden="true" />
 
         <li className="menu-item">
-          <NavLink
-            to="/publications"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">🔍</span>
-            <span className="menu-label">Buscar Publicações</span>
-          </NavLink>
+          {renderMenuLink({ to: '/publications', icon: '🔍', label: 'Buscar Publicações' })}
         </li>
         <li className="menu-item">
-          <NavLink
-            to="/search-history"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">📜</span>
-            <span className="menu-label">Histórico de Buscas</span>
-          </NavLink>
+          {renderMenuLink({ to: '/search-history', icon: '📜', label: 'Histórico de Buscas' })}
         </li>
         <li className="menu-item">
-          <NavLink
-            to="/publications/all"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">📚</span>
-            <span className="menu-label">Todas Publicações</span>
-          </NavLink>
+          {renderMenuLink({ to: '/publications/all', icon: '📚', label: 'Todas Publicações' })}
         </li>
         <li className="menu-item">
-          <NavLink
-            to="/publications/pending"
-            end
-            className={({ isActive }) => isActive ? 'active' : ''}
-          >
-            <span className="menu-icon">⏳</span>
-            <span className="menu-label">Não Vinculadas</span>
-            {pendingCount > 0 && (
+          {renderMenuLink({
+            to: '/publications/pending',
+            icon: '⏳',
+            label: 'Não Vinculadas',
+            badge: pendingCount > 0 ? (
               <span className="menu-count-badge menu-count-badge--pending">{pendingCount}</span>
-            )}
-          </NavLink>
+            ) : null,
+          })}
         </li>
 
         <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
 
           <li className="menu-item">
-            <NavLink
-              to="/deadlines"
-              end
-              className={({ isActive }) => isActive ? 'active' : ''}
-            >
-              <span className="menu-icon">⏰</span>
-              <span className="menu-label">Tarefas Agendadas</span>
-              {scheduledTasksCount > 0 && (
+            {renderMenuLink({
+              to: '/deadlines',
+              icon: '⏰',
+              label: 'Tarefas Agendadas',
+              badge: scheduledTasksCount > 0 ? (
                 <span className="menu-count-badge menu-count-badge--tasks">{scheduledTasksCount}</span>
-              )}
-            </NavLink>
+              ) : null,
+            })}
           </li>
 
           <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
@@ -182,7 +176,13 @@ export default function Menu() {
             <button
               type="button"
               className="menu-action-button"
-              onClick={() => setIsSettingsOpen(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  onBlockedAction();
+                  return;
+                }
+                setIsSettingsOpen(true);
+              }}
               title="Configurações"
             >
               <span className="menu-icon">⚙️</span>

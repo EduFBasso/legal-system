@@ -10,7 +10,21 @@
  * - Retry logic (future)
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
+const AUTH_STORAGE_KEY = 'legal_system_auth';
+
+export function getStoredAuth() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getAuthToken() {
+  return getStoredAuth()?.access || null;
+}
 
 /**
  * Generic API fetch wrapper with error handling
@@ -47,14 +61,17 @@ const API_BASE_URL = 'http://127.0.0.1:8000/api';
  */
 export async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
+  const token = getAuthToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
   
   try {
     const response = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
 
     // Handle HTTP errors (4xx, 5xx)
@@ -74,7 +91,13 @@ export async function apiFetch(endpoint, options = {}) {
         throw new Error(errors || `API Error: ${response.status}`);
       }
       
-      throw new Error(errorData.detail || `API Error: ${response.status}`);
+      const detail = errorData.detail || `API Error: ${response.status}`;
+
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+
+      throw new Error(detail);
     }
 
     // 204 No Content (DELETE) returns null

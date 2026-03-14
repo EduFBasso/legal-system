@@ -22,10 +22,13 @@ import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
+import { useAuth } from './contexts/AuthContext';
 import './App.css';
 import './styles/highlight.css'; // Sistema de destaque reutilizável
 
 function App() {
+  const { isAuthenticated, showNotLoggedMessage } = useAuth();
+
   // Initialize task synchronization across tabs
   useEffect(() => {
     initTaskSync(taskSyncBroadcast);
@@ -38,11 +41,20 @@ function App() {
         <PublicationsProvider>
           <Routes>
             {/* Rotas dedicadas para processos (full width, sem sidebar) */}
-            <Route path="/cases/new" element={<CaseDetailPage />} />
-            <Route path="/cases/:id" element={<CaseDetailPage />} />
+            <Route
+              path="/cases/new"
+              element={isAuthenticated ? <CaseDetailPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+            />
+            <Route
+              path="/cases/:id"
+              element={isAuthenticated ? <CaseDetailPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+            />
             
             {/* Rota de detalhes de publicação em nova janela */}
-            <Route path="/publications/:idApi/details" element={<PublicationDetailsPage />} />
+            <Route
+              path="/publications/:idApi/details"
+              element={isAuthenticated ? <PublicationDetailsPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+            />
 
             {/* Rotas normais com layout padrão */}
             <Route path="/*" element={
@@ -51,37 +63,47 @@ function App() {
                 {/* <Breadcrumb /> */}
                 
                 <div className="app-layout">
-                  <Menu />
+                  <Menu isAuthenticated={isAuthenticated} onBlockedAction={showNotLoggedMessage} />
                   
                   <MainContent>
-                    <Routes>
-                      <Route path="/" element={<ContactsPage />} />
-                      <Route path="/contacts" element={<ContactsPage />} />
-                      <Route path="/publications" element={<PublicationsPage />} />
-                      <Route path="/publications/all" element={<AllPublicationsPage />} />
-                      <Route path="/publications/pending" element={<PendingPublicationsPage />} />
-                      <Route path="/cases" element={<CasesPage />} />
-                      <Route path="/search-history" element={<SearchHistoryPage />} />
-                      <Route path="/notifications" element={<NotificationsPage />} />
-                      <Route path="/deadlines" element={<DeadlinesPage />} />
-                    </Routes>
+                    {isAuthenticated ? (
+                      <Routes>
+                        <Route path="/" element={<ContactsPage />} />
+                        <Route path="/contacts" element={<ContactsPage />} />
+                        <Route path="/publications" element={<PublicationsPage />} />
+                        <Route path="/publications/all" element={<AllPublicationsPage />} />
+                        <Route path="/publications/pending" element={<PendingPublicationsPage />} />
+                        <Route path="/cases" element={<CasesPage />} />
+                        <Route path="/search-history" element={<SearchHistoryPage />} />
+                        <Route path="/notifications" element={<NotificationsPage />} />
+                        <Route path="/deadlines" element={<DeadlinesPage />} />
+                      </Routes>
+                    ) : (
+                      <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>
+                    )}
                   </MainContent>
               
               <Sidebar>
-                <h2>Controles</h2>
-                
-                <div className="sidebar-section">
-                  <h3>📰 Publicações</h3>
-                  <PublicationsSummary />
-                </div>
+                {isAuthenticated ? (
+                  <>
+                    <h2>Controles</h2>
 
-                <div className="sidebar-section">
-                  <h3 className="sidebar-section-title">
-                    <BellRing size={18} className="sidebar-section-title-icon" />
-                    <span>Notificações</span>
-                  </h3>
-                  <NotificationsSummary />
-                </div>
+                    <div className="sidebar-section">
+                      <h3>📰 Publicações</h3>
+                      <PublicationsSummary />
+                    </div>
+
+                    <div className="sidebar-section">
+                      <h3 className="sidebar-section-title">
+                        <BellRing size={18} className="sidebar-section-title-icon" />
+                        <span>Notificações</span>
+                      </h3>
+                      <NotificationsSummary />
+                    </div>
+                  </>
+                ) : (
+                  <div className="not-logged-sidebar">Você não está logado. Os controles ficam disponíveis após o login.</div>
+                )}
               </Sidebar>
             </div>
           </div>

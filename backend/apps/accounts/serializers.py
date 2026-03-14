@@ -1,7 +1,12 @@
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import get_user_model
 
 from .models import UserProfile
+
+
+User = get_user_model()
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -17,6 +22,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class LoginTokenSerializer(TokenObtainPairSerializer):
+    email = serializers.EmailField(required=False)
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -24,7 +31,29 @@ class LoginTokenSerializer(TokenObtainPairSerializer):
         token['role'] = profile.role if profile else 'ADVOGADO'
         return token
 
+    def _resolve_user_from_identifier(self, attrs):
+        email = attrs.get('email')
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        if not password:
+            raise AuthenticationFailed('Senha é obrigatória.')
+
+        if email:
+            user = User.objects.filter(email__iexact=email).first()
+            if not user:
+                raise AuthenticationFailed('Credenciais inválidas.')
+
+            attrs['username'] = user.username
+            return attrs
+
+        if username:
+            return attrs
+
+        raise AuthenticationFailed('Informe email ou username para entrar.')
+
     def validate(self, attrs):
+        attrs = self._resolve_user_from_identifier(attrs)
         data = super().validate(attrs)
         profile = getattr(self.user, 'profile', None)
         data['user'] = {

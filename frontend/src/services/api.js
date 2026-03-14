@@ -1,3 +1,5 @@
+import { apiFetch, getApiBaseUrl, getAuthToken } from '../utils/apiFetch';
+
 // src/services/api.js
 /**
  * @fileoverview API client para comunicação com backend Django
@@ -16,44 +18,6 @@
  * const contact = await contactsAPI.getById(1);
  * const newContact = await contactsAPI.create({ name: 'João Silva', ... });
  */
-
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
-/**
- * Wrapper genérico para chamadas fetch com tratamento de erros
- * @private
- * @param {string} endpoint - Endpoint da API (ex: '/contacts/')
- * @param {Object} options - Opções do fetch (method, headers, body, etc)
- * @returns {Promise<Object|null>} Dados da resposta ou null se 204
- * @throws {Error} Se resposta não for ok (status 4xx, 5xx)
- */
-async function apiFetch(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
-    }
-
-    // DELETE returns 204 No Content (no body)
-    if (response.status === 204) {
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API Fetch Error:', error);
-    throw error;
-  }
-}
 
 /**
  * API de Contatos - CRUD completo
@@ -163,9 +127,11 @@ export const contactsAPI = {
     const formData = new FormData();
     formData.append('photo', photoFile);
 
-    const url = `${API_BASE_URL}/contacts/${id}/upload-photo/`;
+    const token = getAuthToken();
+    const url = `${getApiBaseUrl()}/contacts/${id}/upload-photo/`;
     const response = await fetch(url, {
       method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       body: formData,
     });
 

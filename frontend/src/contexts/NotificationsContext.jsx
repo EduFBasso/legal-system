@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback } from 'react';
+import { getAuthToken } from '../utils/apiFetch';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
 const POLL_INTERVAL = 30000; // 30 segundos
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -13,6 +14,15 @@ export function NotificationsProvider({ children }) {
   const [error, setError] = useState(null);
   const [permission, setPermission] = useState('default');
   const [shownNotifications, setShownNotifications] = useState(new Set()); // IDs já exibidas
+
+  const buildAuthHeaders = (json = false) => {
+    const token = getAuthToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (json) {
+      headers['Content-Type'] = 'application/json';
+    }
+    return headers;
+  };
 
   // Solicitar permissão para Web Notifications
   useEffect(() => {
@@ -62,7 +72,8 @@ export function NotificationsProvider({ children }) {
       // Marcar como lida no backend
       try {
         await fetch(`${API_BASE_URL}/notifications/${notification.id}/toggle_read/`, {
-          method: 'POST'
+          method: 'POST',
+          headers: buildAuthHeaders(),
         });
         setNotifications(prev => 
           prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
@@ -83,7 +94,14 @@ export function NotificationsProvider({ children }) {
   const fetchUnreadNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/notifications/unread/`);
+      if (!getAuthToken()) {
+        setUnreadCount(0);
+        setNotifications([]);
+        return;
+      }
+      const response = await fetch(`${API_BASE_URL}/notifications/unread/`, {
+        headers: buildAuthHeaders(),
+      });
       const data = await response.json();
       
       if (response.ok) {
@@ -145,7 +163,9 @@ export function NotificationsProvider({ children }) {
   const fetchAllNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/notifications/`);
+      const response = await fetch(`${API_BASE_URL}/notifications/`, {
+        headers: buildAuthHeaders(),
+      });
       const data = await response.json();
       
       if (response.ok) {
@@ -171,7 +191,7 @@ export function NotificationsProvider({ children }) {
     try {
       const response = await fetch(
         `${API_BASE_URL}/notifications/${notificationId}/toggle_read/`,
-        { method: 'POST' }
+        { method: 'POST', headers: buildAuthHeaders() }
       );
       
       if (response.ok) {
@@ -206,7 +226,7 @@ export function NotificationsProvider({ children }) {
     try {
       const response = await fetch(
         `${API_BASE_URL}/notifications/mark_all_read/`,
-        { method: 'POST' }
+        { method: 'POST', headers: buildAuthHeaders() }
       );
       
       if (response.ok) {
@@ -229,7 +249,8 @@ export function NotificationsProvider({ children }) {
         : `${API_BASE_URL}/notifications/test/`;
 
       const response = await fetch(endpoint, {
-        method: 'POST'
+        method: 'POST',
+        headers: buildAuthHeaders(),
       });
       
       if (response.ok) {
@@ -253,7 +274,7 @@ export function NotificationsProvider({ children }) {
     try {
       const response = await fetch(
         `${API_BASE_URL}/notifications/${notificationId}/`,
-        { method: 'DELETE' }
+        { method: 'DELETE', headers: buildAuthHeaders() }
       );
       
       if (response.ok || response.status === 204) {
@@ -276,7 +297,7 @@ export function NotificationsProvider({ children }) {
         `${API_BASE_URL}/notifications/delete_multiple/`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildAuthHeaders(true),
           body: JSON.stringify({ notification_ids: notificationIds })
         }
       );
@@ -307,7 +328,7 @@ export function NotificationsProvider({ children }) {
     try {
       const response = await fetch(
         `${API_BASE_URL}/notifications/delete_all/`,
-        { method: 'POST' }
+        { method: 'POST', headers: buildAuthHeaders() }
       );
       
       const data = await response.json();
@@ -336,6 +357,12 @@ export function NotificationsProvider({ children }) {
 
   // Polling: Buscar notificações a cada 30 segundos
   useEffect(() => {
+    if (!getAuthToken()) {
+      setUnreadCount(0);
+      setNotifications([]);
+      return;
+    }
+
     // Buscar imediatamente
     fetchUnreadNotifications();
     
@@ -350,6 +377,10 @@ export function NotificationsProvider({ children }) {
   // Atualizar notificações ao finalizar busca de publicações
   // Inclui retries curtos para cobrir criação assíncrona no backend
   useEffect(() => {
+    if (!getAuthToken()) {
+      return;
+    }
+
     const handlePublicationsSearchCompleted = () => {
       fetchUnreadNotifications();
 
