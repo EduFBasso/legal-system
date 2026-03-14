@@ -21,7 +21,13 @@ export default function Header() {
     showNotLoggedMessage,
   } = useAuth();
 
-  const displayName = user?.full_name_oab || user?.email || 'Advogada';
+  const isMasterUser = user?.role === 'MASTER';
+  const masterName = user?.full_name_oab?.trim() || user?.first_name?.trim() || user?.username || 'Advogada';
+  const regularName = user?.first_name?.trim() || user?.username || 'Advogada';
+  const oabLabel = user?.oab_number ? `OAB N° ${user.oab_number}` : '';
+  const displayName = isMasterUser
+    ? `M - ${masterName}${oabLabel ? ` ${oabLabel}` : ''}`.trim()
+    : `${regularName}${oabLabel ? ` ${oabLabel}` : ''}`.trim();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -32,21 +38,33 @@ export default function Header() {
     <header className="app-header">
       <div className="header-logo">
         <h1>⚖️ Sistema Jurídico</h1>
+        {isAuthenticated ? (
+          <Link
+            to="/notifications"
+            className="btn-notifications"
+            title="Notificações"
+            aria-label="Notificações"
+          >
+            🔔
+            {unreadCount > 0 && (
+              <span className="header-badge">{unreadCount}</span>
+            )}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className="btn-notifications"
+            title="Notificações"
+            onClick={showNotLoggedMessage}
+            aria-label="Notificações"
+          >
+            🔔
+          </button>
+        )}
       </div>
       <div className="header-user">
         {isAuthenticated ? (
           <>
-            <Link
-              to="/notifications"
-              className="btn-notifications"
-              title="Notificações"
-            >
-              🔔
-              {unreadCount > 0 && (
-                <span className="header-badge">{unreadCount}</span>
-              )}
-            </Link>
-
             <span className="user-name">{displayName}</span>
 
             <button type="button" className="btn-auth-action" onClick={logout}>
@@ -83,15 +101,6 @@ export default function Header() {
 
             <button type="submit" className="btn-auth-action" disabled={isLoading}>
               {isLoading ? 'Entrando...' : 'Entrar'}
-            </button>
-
-            <button
-              type="button"
-              className="btn-notifications"
-              title="Notificações"
-              onClick={showNotLoggedMessage}
-            >
-              🔔
             </button>
 
             {error ? <span className="header-login-error">{error}</span> : null}

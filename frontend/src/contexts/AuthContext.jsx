@@ -40,6 +40,10 @@ function mergeLawyers(existing, incoming) {
   return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
+function normalizeLawyers(incoming) {
+  return mergeLawyers([], incoming);
+}
+
 export function AuthProvider({ children }) {
   const [auth, setAuth] = useState(() => loadStoredAuth());
   const [lawyers, setLawyers] = useState(() => {
@@ -72,7 +76,7 @@ export function AuthProvider({ children }) {
       if (!response.ok) return;
       const data = await response.json();
       const serverLawyers = Array.isArray(data?.results) ? data.results : [];
-      setLawyers((prev) => mergeLawyers(prev, serverLawyers));
+      setLawyers(normalizeLawyers(serverLawyers));
     } catch {
       // silêncio proposital: fallback para dados locais
     }
@@ -121,11 +125,14 @@ export function AuthProvider({ children }) {
         user: data.user,
       };
 
+      const firstName = data.user?.first_name?.trim() || data.user?.username || selectedEmail;
+      const labelName = `${firstName}${data.user?.oab_number ? ` ${data.user.oab_number}` : ''}`.trim();
+
       setAuth(nextAuth);
       setPassword('');
       setLawyers((prev) => mergeLawyers(prev, [{
         email: data.user?.email || selectedEmail,
-        name: data.user?.full_name_oab || data.user?.email || selectedEmail,
+        name: labelName,
         role: data.user?.role || 'ADVOGADO',
       }]));
       return true;

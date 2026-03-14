@@ -3,7 +3,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 
 from .permissions import is_master_user
 from .serializers import LoginTokenSerializer, UserProfileSerializer
@@ -45,16 +44,19 @@ def lawyers_for_login(request):
         User.objects
         .select_related('profile')
         .filter(is_active=True)
-        .filter(Q(profile__is_active=True) | Q(profile__isnull=True))
+        .filter(is_superuser=False)
+        .filter(profile__is_active=True)
         .order_by('first_name', 'last_name', 'email', 'username')
     )
 
     results = []
     for user in users:
         profile = getattr(user, 'profile', None)
+        first_name = (user.first_name or user.username or '').strip()
+        oab_number = (profile.oab_number if profile else '') or ''
+        label_name = f"{first_name} {oab_number}".strip()
         display_name = (
-            (profile.full_name_oab if profile else '')
-            or f"{user.first_name} {user.last_name}".strip()
+            label_name
             or user.email
             or user.username
         )

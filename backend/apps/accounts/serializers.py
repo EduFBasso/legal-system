@@ -22,7 +22,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class LoginTokenSerializer(TokenObtainPairSerializer):
+    username = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'username' in self.fields:
+            self.fields['username'].required = False
+            self.fields['username'].allow_blank = True
 
     @classmethod
     def get_token(cls, user):
@@ -44,10 +51,16 @@ class LoginTokenSerializer(TokenObtainPairSerializer):
             if not user:
                 raise AuthenticationFailed('Credenciais inválidas.')
 
+            if user.is_superuser:
+                raise AuthenticationFailed('Usuário técnico não pode logar pelo sistema. Use um usuário MASTER.')
+
             attrs['username'] = user.username
             return attrs
 
         if username:
+            user = User.objects.filter(username=username).first()
+            if user and user.is_superuser:
+                raise AuthenticationFailed('Usuário técnico não pode logar pelo sistema. Use um usuário MASTER.')
             return attrs
 
         raise AuthenticationFailed('Informe email ou username para entrar.')

@@ -20,6 +20,12 @@
   letter-spacing: 0.5px;
 }
 
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .header-user {
   display: flex;
   align-items: center;
