@@ -3,9 +3,16 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
-from .permissions import is_master_user
-from .serializers import LoginTokenSerializer, UserProfileSerializer
+from .permissions import IsMasterPermission, is_master_user
+from .serializers import (
+    LoginTokenSerializer,
+    TeamMemberCreateSerializer,
+    TeamMemberSerializer,
+    TeamMemberUpdateSerializer,
+    UserProfileSerializer,
+)
 
 
 User = get_user_model()
@@ -73,3 +80,102 @@ def lawyers_for_login(request):
         })
 
     return Response({'results': results})
+
+
+def _team_queryset(include_inactive=False, role=None):
+    queryset = (
+        User.objects
+        .select_related('profile')
+        .filter(is_superuser=False)
+        .filter(profile__isnull=False)
+        .order_by('first_name', 'last_name', 'email', 'username')
+    )
+
+    if not include_inactive:
+        queryset = queryset.filter(is_active=True, profile__is_active=True)
+
+    if role in ('MASTER', 'ADVOGADO', 'ESTAGIARIO'):
+        queryset = queryset.filter(profile__role=role)
+
+    return queryset
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated, IsMasterPermission])
+def team_members(request):
+    if request.method == 'GET':
+        include_inactive = request.query_params.get('include_inactive', 'false').lower() in ('1', 'true', 'yes')
+        role = request.query_params.get('role')
+
+        users = _team_queryset(include_inactive=include_inactive, role=role)
+        results = [TeamMemberSerializer.from_user(user) for user in users]
+        serializer = TeamMemberSerializer(results, many=True)
+        return Response({'results': serializer.data})
+
+    serializer = TeamMemberCreateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = serializer.save()
+    output = TeamMemberSerializer(TeamMemberSerializer.from_user(user))
+    return Response(output.data, status=201)
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated, IsMasterPermission])
+def team_member_update(request, user_id):
+    user = get_object_or_404(
+        User.objects.select_related('profile').filter(is_superuser=False),
+        pk=user_id,
+    )
+
+    serializer = TeamMemberUpdateSerializer(
+        data=request.data,
+        partial=True,
+        context={'user': user},
+    )
+    serializer.is_valid(raise_exception=True)
+    updated_user = serializer.update(user, serializer.validated_data)
+    output = TeamMemberSerializer(TeamMemberSerializer.from_user(updated_user))
+    return Response(output.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsMasterPermission])
+def team_member_deactivate(request, user_id):
+    user = get_object_or_404(
+        User.objects.select_related('profile').filter(is_superuser=False),
+        pk=user_id,
+    )
+
+    if request.user.pk == user.pk:
+        return Response({'detail': 'Você não pode desativar o próprio usuário MASTER em uso.'}, status=400)
+
+    user.is_active = False
+    user.save(update_fields=['is_active'])
+
+    profile = getattr(user, 'profile', None)
+    if profile:
+        profile.is_active = False
+        profile.save(update_fields=['is_active'])
+
+    output = TeamMemberSerializer(TeamMemberSerializer.from_user(user))
+    return Response(output.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsMasterPermission])
+def team_member_reactivate(request, user_id):
+    user = get_object_or_404(
+        User.objects.select_related('profile').filter(is_superuser=False),
+        pk=user_id,
+    )
+
+    user.is_active = True
+    user.save(update_fields=['is_active'])
+
+    profile = getattr(user, 'profile', None)
+    if profile:
+        profile.is_active = True
+        profile.save(update_fields=['is_active'])
+
+    output = TeamMemberSerializer(TeamMemberSerializer.from_user(user))
+    return Response(output.data)
