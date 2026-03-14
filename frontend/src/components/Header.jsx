@@ -26,7 +26,7 @@ export default function Header() {
   const regularName = user?.first_name?.trim() || user?.username || 'Advogada';
   const oabLabel = user?.oab_number ? `OAB N° ${user.oab_number}` : '';
   const displayName = isMasterUser
-    ? `M - ${masterName}${oabLabel ? ` ${oabLabel}` : ''}`.trim()
+    ? `${masterName}${oabLabel ? ` ${oabLabel}` : ''}`.trim()
     : `${regularName}${oabLabel ? ` ${oabLabel}` : ''}`.trim();
 
   const handleSubmit = async (event) => {
