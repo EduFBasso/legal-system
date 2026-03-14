@@ -26,6 +26,15 @@ const EMPTY_FORM = {
   oab_number: '',
 };
 
+const MASTER_SCOPE_STORAGE_KEY = 'master_selected_member_scope';
+
+const MASTER_TABS = {
+  EQUIPE: 'EQUIPE',
+  CONTATOS: 'CONTATOS',
+  PROCESSOS: 'PROCESSOS',
+  TAREFAS: 'TAREFAS',
+};
+
 export default function MasterPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -34,6 +43,8 @@ export default function MasterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [includeInactive, setIncludeInactive] = useState(false);
+  const [activeTab, setActiveTab] = useState(MASTER_TABS.EQUIPE);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
 
   // Modal de criação
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -67,6 +78,20 @@ export default function MasterPage() {
   useEffect(() => {
     loadMembers();
   }, [loadMembers]);
+
+  useEffect(() => {
+    if (!members.length) return;
+    const hasSelected = members.some((m) => String(m.id) === String(selectedMemberId));
+    if (selectedMemberId && hasSelected) return;
+
+    const preferred = members.find((m) => m.profile_is_active && m.role !== 'MASTER')
+      || members.find((m) => m.profile_is_active)
+      || members[0];
+
+    if (preferred) {
+      setSelectedMemberId(String(preferred.id));
+    }
+  }, [members, selectedMemberId]);
 
   const showFeedback = (text, type = 'success') => {
     setFeedback({ text, type });
@@ -135,6 +160,27 @@ export default function MasterPage() {
 
   const activeMembers = members.filter((m) => m.profile_is_active);
   const inactiveMembers = members.filter((m) => !m.profile_is_active);
+  const selectedMember = members.find((m) => String(m.id) === String(selectedMemberId)) || null;
+
+  const navigateWithScope = (basePath) => {
+    if (!selectedMember) {
+      showFeedback('Selecione um membro da equipe para continuar.', 'error');
+      return;
+    }
+
+    const scope = {
+      id: selectedMember.id,
+      username: selectedMember.username,
+      role: selectedMember.role,
+      full_name_oab: selectedMember.full_name_oab,
+      email: selectedMember.email,
+      created_at: new Date().toISOString(),
+    };
+
+    localStorage.setItem(MASTER_SCOPE_STORAGE_KEY, JSON.stringify(scope));
+    const separator = basePath.includes('?') ? '&' : '?';
+    navigate(`${basePath}${separator}teamMemberId=${selectedMember.id}&masterView=1`);
+  };
 
   return (
     <div className="master-page">
@@ -144,6 +190,36 @@ export default function MasterPage() {
           <h1 className="master-page-title">Painel Master</h1>
         </div>
         <p className="master-page-subtitle">Gerenciamento da equipe do escritório</p>
+        <div className="master-tabs" role="tablist" aria-label="Seções do painel master">
+          <button
+            type="button"
+            className={`master-tab ${activeTab === MASTER_TABS.EQUIPE ? 'master-tab--active' : ''}`}
+            onClick={() => setActiveTab(MASTER_TABS.EQUIPE)}
+          >
+            Equipe
+          </button>
+          <button
+            type="button"
+            className={`master-tab ${activeTab === MASTER_TABS.CONTATOS ? 'master-tab--active' : ''}`}
+            onClick={() => setActiveTab(MASTER_TABS.CONTATOS)}
+          >
+            Contatos
+          </button>
+          <button
+            type="button"
+            className={`master-tab ${activeTab === MASTER_TABS.PROCESSOS ? 'master-tab--active' : ''}`}
+            onClick={() => setActiveTab(MASTER_TABS.PROCESSOS)}
+          >
+            Processos
+          </button>
+          <button
+            type="button"
+            className={`master-tab ${activeTab === MASTER_TABS.TAREFAS ? 'master-tab--active' : ''}`}
+            onClick={() => setActiveTab(MASTER_TABS.TAREFAS)}
+          >
+            Tarefas
+          </button>
+        </div>
       </div>
 
       {feedback.text && (
@@ -152,6 +228,7 @@ export default function MasterPage() {
         </div>
       )}
 
+      {activeTab === MASTER_TABS.EQUIPE && (
       <section className="master-section">
         <div className="master-section-header">
           <h2 className="master-section-title">👥 Equipe</h2>
@@ -202,6 +279,46 @@ export default function MasterPage() {
           </>
         )}
       </section>
+      )}
+
+      {activeTab === MASTER_TABS.CONTATOS && (
+        <MasterNavigationPanel
+          title="📇 Contatos"
+          members={activeMembers}
+          selectedMemberId={selectedMemberId}
+          setSelectedMemberId={setSelectedMemberId}
+          selectedMember={selectedMember}
+          helper="Abra a tela de contatos com o membro selecionado como escopo de visualização do Master."
+          actionLabel="Abrir Contatos"
+          onNavigate={() => navigateWithScope('/contacts')}
+        />
+      )}
+
+      {activeTab === MASTER_TABS.PROCESSOS && (
+        <MasterNavigationPanel
+          title="⚖️ Processos"
+          members={activeMembers}
+          selectedMemberId={selectedMemberId}
+          setSelectedMemberId={setSelectedMemberId}
+          selectedMember={selectedMember}
+          helper="Abra a tela de processos com o membro selecionado como escopo de visualização do Master."
+          actionLabel="Abrir Processos"
+          onNavigate={() => navigateWithScope('/cases')}
+        />
+      )}
+
+      {activeTab === MASTER_TABS.TAREFAS && (
+        <MasterNavigationPanel
+          title="⏰ Tarefas"
+          members={activeMembers}
+          selectedMemberId={selectedMemberId}
+          setSelectedMemberId={setSelectedMemberId}
+          selectedMember={selectedMember}
+          helper="Abra a tela de tarefas agendadas com o membro selecionado como escopo de visualização do Master."
+          actionLabel="Abrir Tarefas"
+          onNavigate={() => navigateWithScope('/deadlines')}
+        />
+      )}
 
       {/* Modal de criação */}
       <Modal
@@ -307,6 +424,62 @@ export default function MasterPage() {
         </form>
       </Modal>
     </div>
+  );
+}
+
+function MasterNavigationPanel({
+  title,
+  members,
+  selectedMemberId,
+  setSelectedMemberId,
+  selectedMember,
+  helper,
+  actionLabel,
+  onNavigate,
+}) {
+  return (
+    <section className="master-section">
+      <div className="master-section-header">
+        <h2 className="master-section-title">{title}</h2>
+      </div>
+
+      <div className="master-scope-row">
+        <div className="master-scope-field">
+          <label htmlFor="master-member-scope">Membro da equipe</label>
+          <select
+            id="master-member-scope"
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+          >
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.full_name_oab || member.username} ({ROLE_LABELS[member.role] || member.role})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <p className="master-scope-helper">{helper}</p>
+
+      {selectedMember && (
+        <p className="master-scope-preview">
+          Selecionado: <strong>{selectedMember.full_name_oab || selectedMember.username}</strong>
+          {selectedMember.oab_number ? ` • OAB ${selectedMember.oab_number}` : ''}
+        </p>
+      )}
+
+      <div className="master-scope-actions">
+        <button
+          type="button"
+          className="master-btn master-btn--primary"
+          onClick={onNavigate}
+          disabled={!selectedMember}
+        >
+          {actionLabel}
+        </button>
+      </div>
+    </section>
   );
 }
 
