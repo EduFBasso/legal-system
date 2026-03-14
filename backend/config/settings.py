@@ -252,9 +252,12 @@ LEGAL_SYSTEM_SETTINGS = {
     'LOG_API_REQUESTS': config('LOG_API_REQUESTS', default=False, cast=bool),
 }
 
+JWT_ACCESS_TOKEN_HOURS = config('JWT_ACCESS_TOKEN_HOURS', default=8, cast=float)
+JWT_REFRESH_TOKEN_HOURS = config('JWT_REFRESH_TOKEN_HOURS', default=168, cast=float)
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=max(JWT_ACCESS_TOKEN_HOURS, 0.1)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=max(JWT_REFRESH_TOKEN_HOURS, 1)),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
 }
