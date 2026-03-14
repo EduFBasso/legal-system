@@ -55,6 +55,42 @@ def normalize_processo_numero(numero_processo):
     return ''.join(char for char in str(numero_processo) if char.isdigit())
 
 
+def _find_case_by_numero_processo(numero_processo, user=None):
+    """
+    Busca um caso pelo número do processo com fallback robusto.
+
+    Ordem de tentativa:
+    1) Match exato em numero_processo_unformatted (mais eficiente)
+    2) Match exato em numero_processo (formatado)
+    3) Fallback em Python normalizando ambos os formatos
+
+    O fallback cobre casos legados/manuais onde numero_processo_unformatted
+    possa estar vazio ou inconsistente.
+    """
+    numero_limpo = normalize_processo_numero(numero_processo)
+    if not numero_limpo:
+        return None
+
+    case_queryset = Case.objects.all()
+    if user is not None and user.is_authenticated and not is_master_user(user):
+        case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
+
+    case = case_queryset.filter(numero_processo_unformatted=numero_limpo).first()
+    if case:
+        return case
+
+    case = case_queryset.filter(numero_processo=numero_processo).first()
+    if case:
+        return case
+
+    for candidate in case_queryset.only('id', 'numero_processo', 'numero_processo_unformatted', 'titulo'):
+        candidate_numero = candidate.numero_processo_unformatted or candidate.numero_processo
+        if normalize_processo_numero(candidate_numero) == numero_limpo:
+            return candidate
+
+    return None
+
+
 def _to_bool(value, default=False):
     """Converte valores de request para boolean de forma previsível."""
     if value is None:
@@ -650,13 +686,7 @@ def _build_case_suggestion(numero_processo, user=None):
     """
     if not numero_processo:
         return None
-    numero_limpo = normalize_processo_numero(numero_processo)
-    if not numero_limpo:
-        return None
-    case_queryset = Case.objects.filter(numero_processo_unformatted=numero_limpo)
-    if user is not None and user.is_authenticated and not is_master_user(user):
-        case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
-    case = case_queryset.first()
+    case = _find_case_by_numero_processo(numero_processo, user=user)
     if not case:
         return None
     return {
@@ -1255,12 +1285,7 @@ def batch_integrate_publications(request):
 
             case = None
             if pub.numero_processo:
-                numero_limpo = normalize_processo_numero(pub.numero_processo)
-                if numero_limpo:
-                    case_queryset = Case.objects.filter(numero_processo_unformatted=numero_limpo)
-                    if user.is_authenticated and not is_master_user(user):
-                        case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
-                    case = case_queryset.first()
+                case = _find_case_by_numero_processo(pub.numero_processo, user=user)
 
             if case:
                 pub.case = case
