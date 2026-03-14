@@ -10,7 +10,9 @@ import { apiFetch } from '@/utils/apiFetch.js';
  * @returns {Promise<Array>} Array of case parties
  */
 export async function getPartiesByCase(caseId) {
-  return await apiFetch(`/case-parties/?case=${caseId}`);
+  return await apiFetch(`/case-parties/?case=${caseId}`, {
+    cache: 'no-store',
+  });
 }
 
 /**

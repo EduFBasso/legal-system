@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import caseMovementsService from '../services/caseMovementsService';
 import caseTasksService from '../services/caseTasksService';
 import publicationsService from '../services/publicationsService';
@@ -17,6 +17,7 @@ export function useMovementsAndTasks(id, systemSettings, showToast) {
   // Movimentações
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
+  const loadMovimentacoesRequestId = useRef(0);
 
   // Tasks
   const [tasks, setTasks] = useState([]);
@@ -31,16 +32,21 @@ export function useMovementsAndTasks(id, systemSettings, showToast) {
    */
   const loadMovimentacoes = useCallback(async () => {
     if (!id) return;
-    
+
+    const requestId = ++loadMovimentacoesRequestId.current;
     setLoadingMovimentacoes(true);
     try {
       const data = await caseMovementsService.getMovementsByCase(id);
+      if (requestId !== loadMovimentacoesRequestId.current) return; // resposta obsoleta
       setMovimentacoes(data);
     } catch (error) {
+      if (requestId !== loadMovimentacoesRequestId.current) return;
       console.error('Error loading movimentacoes:', error);
       showToast('Erro ao carregar movimentações', 'error');
     } finally {
-      setLoadingMovimentacoes(false);
+      if (requestId === loadMovimentacoesRequestId.current) {
+        setLoadingMovimentacoes(false);
+      }
     }
   }, [id, showToast]);
 

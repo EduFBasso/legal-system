@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import casePartiesService from '../services/casePartiesService';
 
 /**
@@ -14,6 +14,9 @@ export function usePartyManagement(id, showToast, initialParties = []) {
   // Estado de partes
   const [parties, setParties] = useState(initialParties);
   const [loadingParties, setLoadingParties] = useState(false);
+
+  // Contador para evitar sobrescrita de estado por respostas obsoletas (race condition / StrictMode)
+  const loadPartiesRequestId = useRef(0);
 
   // Modal de adicionar parte
   const [showAddPartyModal, setShowAddPartyModal] = useState(false);
@@ -56,18 +59,32 @@ export function usePartyManagement(id, showToast, initialParties = []) {
    */
   const loadParties = useCallback(async () => {
     if (!id) return;
-    
+
+    const requestId = ++loadPartiesRequestId.current;
     setLoadingParties(true);
     try {
       const data = await casePartiesService.getPartiesByCase(id);
+      if (requestId !== loadPartiesRequestId.current) return; // resposta obsoleta
       setParties(data);
     } catch (error) {
+      if (requestId !== loadPartiesRequestId.current) return;
       console.error('Error loading parties:', error);
       showToast('Erro ao carregar partes do processo', 'error');
     } finally {
-      setLoadingParties(false);
+      if (requestId === loadPartiesRequestId.current) {
+        setLoadingParties(false);
+      }
     }
   }, [id, showToast]);
+
+  // Quando o ID do caso muda, zera as partes exibidas e recarrega
+  useEffect(() => {
+    setParties([]);
+    if (id) {
+      loadParties();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   /**
    * Salvar nova parte
