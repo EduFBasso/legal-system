@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import casesService from '../services/casesService';
 import CaseCard from '../components/CaseCard';
 import Toast from '../components/common/Toast';
@@ -10,7 +10,6 @@ import './CasesPage.css';
  * Cases Page - Manage legal cases/processes
  */
 export default function CasesPage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const debounceTimerRef = useRef(null);
   const [cases, setCases] = useState([]);
@@ -145,8 +144,8 @@ export default function CasesPage() {
         return;
       }
 
-      // Navigate to existing case detail page
-      navigate(`/cases/${caseItem.id}`);
+      // Open existing case detail page in new window/tab
+      window.open(`/cases/${caseItem.id}`, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
     } else {
       // Open new case page in new window
       window.open('/cases/new', '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');

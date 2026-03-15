@@ -26,7 +26,10 @@ export default function SelectContactModal({
       const data = await getAllContacts(params);
       setContacts(data);
     } catch (err) {
-      setError('Erro ao carregar contatos');
+      const isUnauthorized = err?.status === 401;
+      setError(isUnauthorized
+        ? 'Sessão expirada. Faça login novamente para carregar os contatos.'
+        : 'Erro ao carregar contatos');
       console.error('Load contacts error:', err);
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { formatDate, formatCurrency } from '../utils/formatters';
@@ -110,7 +110,7 @@ function CaseDetailPage() {
   );
 
   // Auto-save financial data (debounce 800ms + só campos alterados)
-  const { isSaving: autoSavingFinancial } = useAutoSave(
+  const { isSaving: autoSavingFinancial, forceSave: forceSaveFinancial } = useAutoSave(
     financial.buildFinancialPayload(),
     async (changedFields) => {
       const { default: casesService } = await import('../services/casesService');
@@ -122,6 +122,52 @@ function CaseDetailPage() {
       getChangedFields: financial.getChangedFinancialFields,
     }
   );
+
+  const previousSectionRef = useRef(navigation.activeSection);
+
+  useEffect(() => {
+    const previousSection = previousSectionRef.current;
+    const currentSection = navigation.activeSection;
+
+    if (
+      id &&
+      previousSection === 'financeiro' &&
+      currentSection !== 'financeiro' &&
+      !caseCore.saving
+    ) {
+      forceSaveFinancial().catch((error) => {
+        console.error('Erro ao forçar auto-save ao sair da aba Financeiro:', error);
+      });
+    }
+
+    previousSectionRef.current = currentSection;
+  }, [id, navigation.activeSection, caseCore.saving, forceSaveFinancial]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const flushFinancialDraft = () => {
+      if (navigation.activeSection !== 'financeiro' || caseCore.saving) return;
+
+      forceSaveFinancial().catch((error) => {
+        console.error('Erro ao forçar auto-save com página oculta:', error);
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushFinancialDraft();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', flushFinancialDraft);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', flushFinancialDraft);
+    };
+  }, [id, navigation.activeSection, caseCore.saving, forceSaveFinancial]);
 
   /**
    * Load system settings on mount
@@ -216,6 +262,56 @@ function CaseDetailPage() {
     movements.loadTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation.activeSection, id]);
+
+  /**
+   * Recarregar dados base do caso ao entrar na aba Financeiro
+   * para refletir edições feitas em outro dispositivo.
+   */
+  useEffect(() => {
+    if (navigation.activeSection !== 'financeiro' || !id) {
+      return;
+    }
+
+    if (caseCore.saving || autoSavingFinancial) {
+      return;
+    }
+
+    caseCore.loadCaseData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation.activeSection, id]);
+
+  /**
+   * Quando a aba Financeiro estiver aberta, recarrega ao voltar foco
+   * para sincronizar alterações externas sem precisar Ctrl+R.
+   */
+  useEffect(() => {
+    if (navigation.activeSection !== 'financeiro' || !id) {
+      return;
+    }
+
+    const refreshFinanceiroData = () => {
+      if (caseCore.saving || autoSavingFinancial) {
+        return;
+      }
+
+      caseCore.loadCaseData();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshFinanceiroData();
+      }
+    };
+
+    window.addEventListener('focus', refreshFinanceiroData);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshFinanceiroData);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation.activeSection, id, caseCore.saving, autoSavingFinancial]);
 
   /**
    * Quando a aba de movimentações estiver aberta, recarrega ao voltar foco

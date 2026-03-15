@@ -44,7 +44,11 @@ export function useModalsAndNotifications(onContactCreated, onContactUpdated) {
       setContacts(data);
     } catch (error) {
       console.error('Error loading contacts:', error);
-      showToast('Erro ao carregar contatos', 'error');
+      if (error?.status === 401) {
+        showToast('Sessão expirada. Faça login novamente.', 'warning');
+      } else {
+        showToast('Erro ao carregar contatos', 'error');
+      }
     }
   }, [showToast]);
 

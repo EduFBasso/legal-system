@@ -88,7 +88,11 @@ export default function ContactsPage() {
       const data = await contactsAPI.getAll(params);
       setContacts(data);
     } catch (err) {
-      setError('Erro ao carregar contatos. Verifique se o backend está rodando.');
+      if (err?.status === 401) {
+        setError('Sessão expirada. Faça login novamente para carregar os contatos.');
+      } else {
+        setError('Erro ao carregar contatos. Verifique se o backend está rodando.');
+      }
       console.error('Load contacts error:', err);
     } finally {
       setLoading(false);

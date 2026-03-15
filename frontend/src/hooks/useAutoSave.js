@@ -30,14 +30,60 @@ export function useAutoSave(data, onSave, options = {}) {
   const lastSavedDataRef = useRef(null);
   const initializedRef = useRef(false);
 
+  const computeDataToSave = (currentData, lastSavedDataStr) => {
+    let dataToSave = currentData;
+
+    if (getChangedFields && lastSavedDataStr) {
+      try {
+        const lastData = JSON.parse(lastSavedDataStr);
+        dataToSave = getChangedFields(currentData, lastData);
+
+        if (Object.keys(dataToSave).length === 0) {
+          return null;
+        }
+      } catch (error) {
+        console.warn('Error calculating changed fields:', error);
+      }
+    }
+
+    return dataToSave;
+  };
+
   // Force save function (útil para casos especiais)
   const forceSave = async () => {
     if (!enabled || !onSave) return;
+
+    const currentDataStr = JSON.stringify(data);
+
+    if (!initializedRef.current) {
+      lastSavedDataRef.current = currentDataStr;
+      initializedRef.current = true;
+      return;
+    }
+
+    if (currentDataStr === lastSavedDataRef.current) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    const dataToSave = computeDataToSave(data, lastSavedDataRef.current);
+    if (dataToSave === null) {
+      lastSavedDataRef.current = currentDataStr;
+      return;
+    }
     
     setIsSaving(true);
     try {
-      await onSave(data);
-      lastSavedDataRef.current = JSON.stringify(data);
+      await onSave(dataToSave);
+      lastSavedDataRef.current = currentDataStr;
     } catch (error) {
       console.error('Error in forceSave:', error);
       throw error;
@@ -70,21 +116,9 @@ export function useAutoSave(data, onSave, options = {}) {
       clearTimeout(timerRef.current);
     }
 
-    // Calcular campos mudados se função foi fornecida
-    let dataToSave = data;
-    if (getChangedFields && lastSavedDataRef.current) {
-      try {
-        const lastData = JSON.parse(lastSavedDataRef.current);
-        dataToSave = getChangedFields(data, lastData);
-        
-        // Se nenhum campo mudou significativamente, não salva
-        if (Object.keys(dataToSave).length === 0) {
-          return;
-        }
-      } catch (error) {
-        console.warn('Error calculating changed fields:', error);
-        // Continua com data completo em caso de erro
-      }
+    const dataToSave = computeDataToSave(data, lastSavedDataRef.current);
+    if (dataToSave === null) {
+      return;
     }
 
     // Agendar save com debounce

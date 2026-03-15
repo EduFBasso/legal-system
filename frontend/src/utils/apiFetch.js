@@ -88,7 +88,9 @@ export async function apiFetch(endpoint, options = {}) {
             return `${field}: ${msg}`;
           })
           .join('\n');
-        throw new Error(errors || `API Error: ${response.status}`);
+        const apiError = new Error(errors || `API Error: ${response.status}`);
+        apiError.status = response.status;
+        throw apiError;
       }
       
       const detail = errorData.detail || `API Error: ${response.status}`;
@@ -97,7 +99,9 @@ export async function apiFetch(endpoint, options = {}) {
         window.dispatchEvent(new CustomEvent('auth:unauthorized'));
       }
 
-      throw new Error(detail);
+      const apiError = new Error(detail);
+      apiError.status = response.status;
+      throw apiError;
     }
 
     // 204 No Content (DELETE) returns null
