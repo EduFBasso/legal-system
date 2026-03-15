@@ -1054,11 +1054,6 @@ def integrate_publication(request, id_api):
         if not case:
             raise Case.DoesNotExist
 
-        # Rastreabilidade: se o caso ainda não possui origem, registrar esta publicação
-        if not case.publicacao_origem_id:
-            case.publicacao_origem = publication
-            case.save(update_fields=['publicacao_origem', 'updated_at'])
-
         _integrate_publication_to_case(publication, case, notes=notes)
 
         # Mark corresponding notification as read (user interacted with publication)
@@ -1676,6 +1671,9 @@ def get_publication_by_id(request, id_api):
                 'texto_resumo': publication.texto_resumo,
                 'link_oficial': publication.link_oficial,
                 'hash_pub': publication.hash_pub,
+                'integration_status': publication.integration_status,
+                'case_id': publication.case_id,
+                'case_suggestion': _build_case_suggestion(publication.numero_processo, user=user),
                 'created_at': publication.created_at.isoformat(),
             }
         })

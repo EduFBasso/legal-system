@@ -277,7 +277,36 @@ export default function PublicationsPage() {
    * Handler para criar novo caso a partir de uma publicação
    */
   const handleCreateCaseSingle = async (pub) => {
-    window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+    try {
+      const latest = await publicationsService.getPublicationById(pub.id_api);
+      const latestPublication = latest?.publication;
+      const linkedCaseId = latestPublication?.case_id;
+      const suggestedCaseId = latestPublication?.case_suggestion?.id;
+
+      if (linkedCaseId) {
+        showToast(`✅ Publicação já vinculada ao caso #${linkedCaseId}`, 'success');
+        window.open(`/cases/${linkedCaseId}`, '_blank', 'noopener,noreferrer');
+        await loadLastSearch();
+        return;
+      }
+
+      if (suggestedCaseId) {
+        const result = await publicationsService.integratePublication(pub.id_api, {
+          caseId: suggestedCaseId,
+          createMovement: true,
+        });
+
+        if (result.success) {
+          showToast(`✅ Publicação vinculada ao caso #${suggestedCaseId}`, 'success');
+          await loadLastSearch();
+          return;
+        }
+      }
+
+      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+    } catch {
+      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleDeleteAll = async () => {

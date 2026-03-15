@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Edit2, Save, X, Trash2, UserPlus, Plus } from 'lucide-react';
-import { formatDate } from '../../utils/formatters';
+import { formatDate, maskNumeroProcesso } from '../../utils/formatters';
 import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
 import EditableDetailField from '../EditableDetailField';
@@ -37,6 +37,8 @@ function InformacaoTab({
   tipoAcaoOptions = [],
   onInputChange = () => {},
 }) {
+  const hasPublicationOrigin = Boolean(formData.publicacao_origem && (formData.publicacao_origem_tipo || formData.publicacao_origem_data));
+
   const handleOpenMovimentacoesFromOrigem = () => {
     if (typeof onOpenOrigemMovimentacao === 'function') {
       onOpenOrigemMovimentacao();
@@ -72,20 +74,14 @@ function InformacaoTab({
     const consultaLinks = generateAllConsultaLinks(simulatedPublication);
 
     const handleConsultarProcesso = (url) => {
-      if (!formData.numero_processo) return;
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
 
-      // Copiar automaticamente o número do processo
-      navigator.clipboard.writeText(formData.numero_processo).then(() => {
-        // Abrir link
-        if (url) {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
-      }).catch(err => {
+      if (!formData.numero_processo || !navigator.clipboard?.writeText) return;
+
+      navigator.clipboard.writeText(formData.numero_processo).catch(err => {
         console.error('Erro ao copiar:', err);
-        // Mesmo com erro, abre o link
-        if (url) {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
       });
     };
 
@@ -166,9 +162,10 @@ function InformacaoTab({
                       <input
                         type="text"
                         value={formData.numero_processo || ''}
-                        onChange={(e) => handleInputChange('numero_processo', e.target.value)}
+                        onChange={(e) => handleInputChange('numero_processo', maskNumeroProcesso(e.target.value))}
                         placeholder="0000000-00.0000.0.00.0000"
                         className="detail-input detail-input-large"
+                        maxLength={25}
                       />
                     </>
                   )}
@@ -466,49 +463,45 @@ function InformacaoTab({
             </div>
 
             {/* Observações */}
-            {(formData.observacoes || formData.publicacao_origem) && (
-              <div className="details-group">
-                <h3 className="details-group-title">📝 Observações</h3>
-                <div className="details-content">
-                  {formData.publicacao_origem && (
-                    <div className="observacoes-origem-box">
-                      <div className="observacoes-origem-row">
-                        <button
-                          type="button"
-                          className="observacoes-origem-link"
-                          onClick={handleOpenMovimentacoesFromOrigem}
-                          title="Abrir aba Movimentações em nova janela"
-                        >
-                          🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
-                        </button>
-                        <div className="observacoes-origem-actions">
-                          {/* Botões de Consulta */}
-                          {renderProcessConsultaButtons({ wrap: false })}
-                        </div>
+            <div className="details-group">
+              <h3 className="details-group-title">📝 Observações</h3>
+              <div className="details-content">
+                {hasPublicationOrigin && (
+                  <div className="observacoes-origem-box">
+                    <div className="observacoes-origem-row">
+                      <button
+                        type="button"
+                        className="observacoes-origem-link"
+                        onClick={handleOpenMovimentacoesFromOrigem}
+                        title="Abrir aba Movimentações em nova janela"
+                      >
+                        🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
+                      </button>
+                      <div className="observacoes-origem-actions">
+                        {/* Botões de Consulta */}
+                        {renderProcessConsultaButtons({ wrap: false })}
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {!isEditing ? (
-                    formData.observacoes ? (
-                      <div className="detail-item full">
-                        <p className="detail-value">{formData.observacoes}</p>
-                      </div>
-                    ) : null
-                  ) : (
-                    <EditableDetailField
-                      label="Observações"
-                      value={formData.observacoes}
-                      isEditing={isEditing}
-                      type="textarea"
-                      onChange={(value) => handleInputChange('observacoes', value)}
-                      placeholder="Observações sobre o processo..."
-                      rows={4}
-                    />
-                  )}
-                </div>
+                {!isEditing ? (
+                  <div className="detail-item full">
+                    <p className="detail-value">{formData.observacoes || '-'}</p>
+                  </div>
+                ) : (
+                  <EditableDetailField
+                    label="Observações"
+                    value={formData.observacoes}
+                    isEditing={isEditing}
+                    type="textarea"
+                    onChange={(value) => handleInputChange('observacoes', value)}
+                    placeholder="Observações sobre o processo..."
+                    rows={4}
+                  />
+                )}
               </div>
-            )}
+            </div>
         </div>
         
         {/* Botões de Ação - Modo Edição */}

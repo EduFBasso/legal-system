@@ -328,12 +328,39 @@ export function formatPhone(value) {
 }
 
 /**
+ * Apply progressive CNJ mask to a processo number while typing.
+ * Format: NNNNNNN-DD.AAAA.J.TT.OOOO (20 digits total)
+ *
+ * @param {string} value - Raw input (digits and/or separators)
+ * @returns {string} Masked string up to full CNJ format
+ *
+ * @example
+ * maskNumeroProcesso('0001234') // "0001234"
+ * maskNumeroProcesso('000123456') // "0001234-56"
+ * maskNumeroProcesso('00012345620248') // "0001234-56.2024.8"
+ * maskNumeroProcesso('0001234562024826') // "0001234-56.2024.8.26"
+ * maskNumeroProcesso('00012345620248260001') // "0001234-56.2024.8.26.0001"
+ */
+export function maskNumeroProcesso(value) {
+  if (!value) return '';
+
+  const digits = String(value).replace(/\D/g, '').slice(0, 20);
+
+  if (digits.length <= 7) return digits;
+  if (digits.length <= 9)  return `${digits.slice(0, 7)}-${digits.slice(7)}`;
+  if (digits.length <= 13) return `${digits.slice(0, 7)}-${digits.slice(7, 9)}.${digits.slice(9)}`;
+  if (digits.length <= 14) return `${digits.slice(0, 7)}-${digits.slice(7, 9)}.${digits.slice(9, 13)}.${digits.slice(13)}`;
+  if (digits.length <= 16) return `${digits.slice(0, 7)}-${digits.slice(7, 9)}.${digits.slice(9, 13)}.${digits.slice(13, 14)}.${digits.slice(14)}`;
+  return `${digits.slice(0, 7)}-${digits.slice(7, 9)}.${digits.slice(9, 13)}.${digits.slice(13, 14)}.${digits.slice(14, 16)}.${digits.slice(16)}`;
+}
+
+/**
  * Format document (CPF or CNPJ based on length)
- * 
+ *
  * @param {string} value - Document string
  * @param {string} personType - 'PF' for CPF or 'PJ' for CNPJ
  * @returns {string} Formatted document
- * 
+ *
  * @example
  * formatDocument('12345678900', 'PF') // "123.456.789-00"
  * formatDocument('12345678000191', 'PJ') // "12.345.678/0001-91"
@@ -361,4 +388,5 @@ export default {
   formatCNPJ,
   formatPhone,
   formatDocument,
+  maskNumeroProcesso,
 };

@@ -8,7 +8,9 @@ import { apiFetch } from '@/utils/apiFetch.js';
  * Get all movements for a specific case
  */
 export const getMovementsByCase = async (caseId) => {
-  return await apiFetch(`/case-movements/?case_id=${caseId}`);
+  return await apiFetch(`/case-movements/?case_id=${caseId}`, {
+    cache: 'no-store',
+  });
 };
 
 /**

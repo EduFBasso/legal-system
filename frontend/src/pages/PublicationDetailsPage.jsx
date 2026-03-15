@@ -49,22 +49,16 @@ export default function PublicationDetailsPage() {
   }, [idApi]);
 
   const handleConsultarProcesso = (url) => {
-    if (!publication?.numero_processo) {
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    if (!publication?.numero_processo || !navigator.clipboard?.writeText) {
       return;
     }
 
-    navigator.clipboard.writeText(publication.numero_processo).then(() => {
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
-    }).catch(err => {
+    navigator.clipboard.writeText(publication.numero_processo).catch(err => {
       console.error('Erro ao copiar:', err);
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
     });
   };
 

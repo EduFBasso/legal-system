@@ -148,6 +148,48 @@ export function generateAllConsultaLinks(publication) {
   return result;
 }
 
+function copyTextFallback(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '-9999px';
+  textarea.style.left = '-9999px';
+  textarea.style.opacity = '0';
+
+  document.body.appendChild(textarea);
+
+  // iOS Safari precisa de seleção explícita.
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+  } catch (error) {
+    console.error('Erro no fallback de cópia:', error);
+  }
+
+  document.body.removeChild(textarea);
+  return copied;
+}
+
+async function copyTextWithBestEffort(text) {
+  if (!text) return false;
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      console.error('Erro ao copiar com Clipboard API, tentando fallback:', error);
+    }
+  }
+
+  return copyTextFallback(text);
+}
+
 /**
  * Abre link e copia número do processo automaticamente
  * @param {string} url - URL a abrir
@@ -155,26 +197,50 @@ export function generateAllConsultaLinks(publication) {
  * @param {HTMLElement} buttonElement - Elemento do botão (para feedback visual)
  */
 export function openConsultaWithCopy(url, numeroProcesso, buttonElement) {
-  if (!url || !numeroProcesso) return;
-  
-  // Copiar número para clipboard
-  navigator.clipboard.writeText(numeroProcesso).then(() => {
-    // Feedback visual no botão
-    const originalHTML = buttonElement.innerHTML;
-    buttonElement.innerHTML = '✅ Copiado!';
+  if (!url) return;
+
+  // Pré-abre uma aba no gesto do usuário para evitar bloqueio de popup no iPad/Safari.
+  const popup = window.open('', '_blank', 'noopener,noreferrer');
+
+  const originalHTML = buttonElement?.innerHTML;
+  if (buttonElement && document.contains(buttonElement)) {
+    buttonElement.innerHTML = numeroProcesso ? '⏳ Copiando...' : '↗ Abrindo...';
     buttonElement.disabled = true;
-    
-    // Abrir link
-    window.open(url, '_blank', 'noopener,noreferrer');
-    
-    // Restaurar botão após 2s
-    setTimeout(() => {
-      buttonElement.innerHTML = originalHTML;
-      buttonElement.disabled = false;
-    }, 2000);
-  }).catch(err => {
-    console.error('Erro ao copiar:', err);
-    // Mesmo com erro, abre o link
-    window.open(url, '_blank', 'noopener,noreferrer');
-  });
+  }
+
+  Promise.resolve()
+    .then(async () => {
+      const copied = numeroProcesso ? await copyTextWithBestEffort(numeroProcesso) : false;
+
+      if (popup && !popup.closed) {
+        popup.location.href = url;
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+
+      if (buttonElement && document.contains(buttonElement)) {
+        buttonElement.innerHTML = copied ? '✅ Copiado!' : '↗ Aberto';
+      }
+    })
+    .catch((error) => {
+      console.error('Erro ao abrir consulta processual:', error);
+      if (popup && !popup.closed) {
+        popup.location.href = url;
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+
+      if (buttonElement && document.contains(buttonElement)) {
+        buttonElement.innerHTML = '↗ Aberto';
+      }
+    })
+    .finally(() => {
+      if (!buttonElement || !document.contains(buttonElement)) return;
+
+      setTimeout(() => {
+        if (!buttonElement || !document.contains(buttonElement)) return;
+        buttonElement.innerHTML = originalHTML;
+        buttonElement.disabled = false;
+      }, 2000);
+    });
 }

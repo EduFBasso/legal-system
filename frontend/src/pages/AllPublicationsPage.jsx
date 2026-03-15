@@ -88,7 +88,39 @@ export default function AllPublicationsPage() {
   };
 
   const handleCreateCase = async (pub) => {
-    window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+    setIntegrating(pub.id_api);
+    try {
+      const latest = await publicationsService.getPublicationById(pub.id_api);
+      const latestPublication = latest?.publication;
+      const linkedCaseId = latestPublication?.case_id;
+      const suggestedCaseId = latestPublication?.case_suggestion?.id;
+
+      if (linkedCaseId) {
+        setToast({ message: `✅ Publicação já vinculada ao caso #${linkedCaseId}`, type: 'success' });
+        window.open(`/cases/${linkedCaseId}`, '_blank', 'noopener,noreferrer');
+        await loadAllPublications();
+        return;
+      }
+
+      if (suggestedCaseId) {
+        const result = await publicationsService.integratePublication(pub.id_api, {
+          caseId: suggestedCaseId,
+          createMovement: true,
+        });
+
+        if (result.success) {
+          setToast({ message: `✅ Publicação vinculada ao caso #${suggestedCaseId}`, type: 'success' });
+          await loadAllPublications();
+          return;
+        }
+      }
+
+      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+    } catch {
+      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+    } finally {
+      setIntegrating(null);
+    }
   };
 
   const handleOpenPublicationDetails = (pub) => {

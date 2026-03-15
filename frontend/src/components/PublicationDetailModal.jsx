@@ -13,34 +13,26 @@ export default function PublicationDetailModal({ publication, onClose }) {
 
   const handleConsultarProcesso = (e, url) => {
     e.preventDefault();
-    // Copiar automaticamente o número do processo
-    if (publication.numero_processo) {
-      navigator.clipboard.writeText(publication.numero_processo).then(() => {
-        // Mostrar feedback visual no botão
-        const btn = e.currentTarget;
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '✅ Copiado! Abrindo...';
-        
-        // Abrir link
-        if (url) {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
-        
-        // Restaurar texto original
-        setTimeout(() => {
-          btn.innerHTML = originalHTML;
-        }, 2000);
-      }).catch(err => {
-        console.error('Erro ao copiar:', err);
-        // Mesmo com erro, abre o link
-        if (url) {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
-      });
-    } else if (url) {
-      // Se não tem número, só abre o link
+    const btn = e.currentTarget;
+
+    if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
+
+    if (!publication.numero_processo || !navigator.clipboard?.writeText) {
+      return;
+    }
+
+    navigator.clipboard.writeText(publication.numero_processo).then(() => {
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '✅ Copiado!';
+
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+      }, 2000);
+    }).catch(err => {
+      console.error('Erro ao copiar:', err);
+    });
   };
 
   const handleCopyProcesso = (e) => {

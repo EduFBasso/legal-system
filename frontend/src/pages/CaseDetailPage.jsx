@@ -204,6 +204,50 @@ function CaseDetailPage() {
   }, [navigation.activeSection]);
 
   /**
+   * Recarregar movimentações/tarefas ao entrar na aba de movimentações
+   * para reduzir chance de dados defasados quando houve integração em outro dispositivo.
+   */
+  useEffect(() => {
+    if (navigation.activeSection !== 'movimentacoes' || !id) {
+      return;
+    }
+
+    movements.loadMovimentacoes();
+    movements.loadTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation.activeSection, id]);
+
+  /**
+   * Quando a aba de movimentações estiver aberta, recarrega ao voltar foco
+   * (ex.: usuário alternou iPad/PC e retornou para esta janela).
+   */
+  useEffect(() => {
+    if (navigation.activeSection !== 'movimentacoes' || !id) {
+      return;
+    }
+
+    const refreshMovementsAndTasks = () => {
+      movements.loadMovimentacoes();
+      movements.loadTasks();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshMovementsAndTasks();
+      }
+    };
+
+    window.addEventListener('focus', refreshMovementsAndTasks);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshMovementsAndTasks);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation.activeSection, id]);
+
+  /**
    * Callback quando caso é criado
    */
   function handleCaseCreated(caseId) {
