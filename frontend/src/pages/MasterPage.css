@@ -710,69 +710,140 @@
   margin: 0.4rem 0 0 0;
 }
 
-/* Passo 3 – transferência */
-.substituir-transfer-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.substituir-transfer-sub {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin: 0;
-}
-
-.substituir-transfer-list {
+/* Passo 3 – transferência automática */
+.substituir-auto-block {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.substituir-auto-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #15803d;
+  margin: 0;
+}
+
+.substituir-auto-sub {
+  font-size: 0.82rem;
+  color: #166534;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.substituir-auto-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
 }
 
-.substituir-transfer-item {
+@media (max-width: 600px) {
+  .substituir-auto-items { grid-template-columns: 1fr; }
+}
+
+.substituir-auto-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  cursor: pointer;
+  gap: 0.5rem;
   background: #fff;
-  transition: background 0.12s;
+  border: 1px solid #dcfce7;
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
 }
 
-.substituir-transfer-item:hover {
-  background: #f8fafc;
-}
-
-.substituir-transfer-item input[type="checkbox"] {
-  accent-color: #1e3a5f;
-  width: 16px;
-  height: 16px;
+.substituir-auto-icon {
+  font-size: 1rem;
   flex-shrink: 0;
-  margin-top: 2px;
-  cursor: pointer;
+  line-height: 1.4;
 }
 
-.substituir-transfer-item--muted {
-  opacity: 0.7;
-  border-style: dashed;
-}
-
-.substituir-transfer-item-label {
+.substituir-auto-label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: #1e293b;
 }
 
-.substituir-transfer-item-count {
+.substituir-auto-count {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: #64748b;
   margin-top: 0.1rem;
 }
+
+.substituir-auto-urgent {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.substituir-auto-note {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0;
+  border-top: 1px solid #dcfce7;
+  padding-top: 0.6rem;
+}
+
+/* Audit log preview */
+.substituir-audit-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.substituir-audit-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.substituir-audit-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+}
+
+.substituir-audit-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.substituir-audit-key {
+  color: #94a3b8;
+  min-width: 130px;
+  flex-shrink: 0;
+}
+
+.substituir-audit-value {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.substituir-audit-pending {
+  color: #d97706;
+}
+
+/* ── Remover estilos de checkboxes de transferência (não usados) ── */
+.substituir-transfer-title,
+.substituir-transfer-sub,
+.substituir-transfer-list,
+.substituir-transfer-item,
+.substituir-transfer-item-label,
+.substituir-transfer-item-count { display: none; }
 
 /* Confirmação */
 .substituir-confirm-block {

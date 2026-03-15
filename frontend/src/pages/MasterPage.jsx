@@ -67,13 +67,6 @@ export default function MasterPage() {
   const [replaceNewMode, setReplaceNewMode] = useState('criar'); // 'criar' | 'reativar'
   const [replaceForm, setReplaceForm] = useState(EMPTY_FORM);
   const [replaceSelectedInactiveId, setReplaceSelectedInactiveId] = useState('');
-  const [replaceTransfer, setReplaceTransfer] = useState({
-    processos_ativos: true,
-    tarefas_pendentes: true,
-    contatos: true,
-    honorarios: true,
-    processos_encerrados: false,
-  });
   const [replaceConfirmed, setReplaceConfirmed] = useState(false);
 
   // Guard: somente MASTER acessa
@@ -207,13 +200,6 @@ export default function MasterPage() {
     setReplaceNewMode('criar');
     setReplaceForm(EMPTY_FORM);
     setReplaceSelectedInactiveId('');
-    setReplaceTransfer({
-      processos_ativos: true,
-      tarefas_pendentes: true,
-      contatos: true,
-      honorarios: true,
-      processos_encerrados: false,
-    });
     setReplaceConfirmed(false);
     setIsReplaceOpen(true);
   };
@@ -595,8 +581,6 @@ export default function MasterPage() {
           inactiveMembers={inactiveMembers}
           replaceSelectedInactiveId={replaceSelectedInactiveId}
           setReplaceSelectedInactiveId={setReplaceSelectedInactiveId}
-          transfer={replaceTransfer}
-          setTransfer={setReplaceTransfer}
           confirmed={replaceConfirmed}
           setConfirmed={setReplaceConfirmed}
           onExecute={handleReplaceExecute}
@@ -768,7 +752,6 @@ function SubstituirModal({
   replaceForm, setReplaceForm,
   inactiveMembers,
   replaceSelectedInactiveId, setReplaceSelectedInactiveId,
-  transfer, setTransfer,
   confirmed, setConfirmed,
   onExecute, onCancel,
 }) {
@@ -779,9 +762,16 @@ function SubstituirModal({
     setReplaceForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleTransferChange = (key) => {
-    setTransfer((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+  const now = new Date();
+  const auditTimestamp = now.toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+
+  const substitutoName = newMode === 'criar'
+    ? (replaceForm.full_name_oab.trim() || '(sem nome)')
+    : (inactiveMembers.find((m) => String(m.id) === replaceSelectedInactiveId)?.full_name_oab ||
+       inactiveMembers.find((m) => String(m.id) === replaceSelectedInactiveId)?.username || '(reativado)');
 
   const canProceedStep2 = newMode === 'criar'
     ? replaceForm.full_name_oab.trim() && replaceForm.email.trim() && replaceForm.username.trim()
@@ -800,7 +790,7 @@ function SubstituirModal({
         {[
           { n: 1, label: 'Confirmar saída' },
           { n: 2, label: 'Cadastrar substituto' },
-          { n: 3, label: 'Transferir carteira' },
+          { n: 3, label: 'Confirmar e registrar' },
         ].map(({ n, label }) => (
           <div key={n} className={`substituir-step ${step === n ? 'substituir-step--active' : ''} ${step > n ? 'substituir-step--done' : ''}`}>
             <span className="substituir-step-num">{step > n ? '✓' : n}</span>
@@ -971,74 +961,95 @@ function SubstituirModal({
         </div>
       )}
 
-      {/* ── Passo 3: Configurar transferência ── */}
+      {/* ── Passo 3: Confirmar e registrar ── */}
       {step === 3 && (
         <div className="substituir-body">
-          <h3 className="substituir-transfer-title">O que transferir para o substituto?</h3>
-          <p className="substituir-transfer-sub">
-            Itens não transferidos permanecem vinculados a{' '}
-            <strong>{target?.full_name_oab || target?.username}</strong>{' '}
-            de forma histórica (somente leitura).
-          </p>
 
-          <div className="substituir-transfer-list">
-            <label className="substituir-transfer-item">
-              <input type="checkbox" checked={transfer.processos_ativos}
-                onChange={() => handleTransferChange('processos_ativos')} />
-              <div>
-                <span className="substituir-transfer-item-label">Processos ativos</span>
-                <span className="substituir-transfer-item-count">{carteira.processos_ativos} processos</span>
+          {/* Resumo da transferência — tudo automático */}
+          <div className="substituir-auto-block">
+            <p className="substituir-auto-title">Toda a carteira ativa será transferida automaticamente</p>
+            <p className="substituir-auto-sub">
+              Compromissos em andamento não podem ser interrompidos. O substituto assume imediatamente
+              todos os itens abaixo, inclusive audiências e prazos já agendados para hoje.
+            </p>
+            <div className="substituir-auto-items">
+              <div className="substituir-auto-item">
+                <span className="substituir-auto-icon">⚖️</span>
+                <div>
+                  <span className="substituir-auto-label">Processos ativos</span>
+                  <span className="substituir-auto-count">{carteira.processos_ativos} processos</span>
+                </div>
               </div>
-            </label>
+              <div className="substituir-auto-item">
+                <span className="substituir-auto-icon">📌</span>
+                <div>
+                  <span className="substituir-auto-label">Tarefas, audiências e prazos</span>
+                  <span className="substituir-auto-count">
+                    {carteira.tarefas_pendentes} pendentes
+                    {carteira.tarefas_urgentes > 0 && <> · <span className="substituir-auto-urgent">{carteira.tarefas_urgentes} urgentes</span></>}
+                  </span>
+                </div>
+              </div>
+              <div className="substituir-auto-item">
+                <span className="substituir-auto-icon">📧</span>
+                <div>
+                  <span className="substituir-auto-label">Contatos vinculados</span>
+                  <span className="substituir-auto-count">{carteira.contatos_vinculados} contatos</span>
+                </div>
+              </div>
+              <div className="substituir-auto-item">
+                <span className="substituir-auto-icon">💰</span>
+                <div>
+                  <span className="substituir-auto-label">Honorários em aberto</span>
+                  <span className="substituir-auto-count">{fmt(carteira.honorarios_aberto)}</span>
+                </div>
+              </div>
+            </div>
+            <p className="substituir-auto-note">
+              📚 Processos encerrados e histórico de ações permanecem registrados no perfil de{' '}
+              <strong>{target?.full_name_oab || target?.username}</strong> para fins de auditoria.
+            </p>
+          </div>
 
-            <label className="substituir-transfer-item">
-              <input type="checkbox" checked={transfer.tarefas_pendentes}
-                onChange={() => handleTransferChange('tarefas_pendentes')} />
-              <div>
-                <span className="substituir-transfer-item-label">Tarefas pendentes e urgentes</span>
-                <span className="substituir-transfer-item-count">
-                  {carteira.tarefas_pendentes} pendentes · {carteira.tarefas_urgentes} urgentes
+          {/* Prévia do registro de auditoria */}
+          <div className="substituir-audit-block">
+            <p className="substituir-audit-title">🔒 Registro de auditoria que será gerado</p>
+            <div className="substituir-audit-log">
+              <div className="substituir-audit-row">
+                <span className="substituir-audit-key">Data / Hora</span>
+                <span className="substituir-audit-value">{auditTimestamp}</span>
+              </div>
+              <div className="substituir-audit-row">
+                <span className="substituir-audit-key">Executado por</span>
+                <span className="substituir-audit-value">Master (você)</span>
+              </div>
+              <div className="substituir-audit-row">
+                <span className="substituir-audit-key">Advogado(a) saída</span>
+                <span className="substituir-audit-value">{target?.full_name_oab || target?.username}</span>
+              </div>
+              <div className="substituir-audit-row">
+                <span className="substituir-audit-key">Substituto(a)</span>
+                <span className="substituir-audit-value">{substitutoName}</span>
+              </div>
+              <div className="substituir-audit-row">
+                <span className="substituir-audit-key">Itens transferidos</span>
+                <span className="substituir-audit-value">
+                  {carteira.processos_ativos} processos · {carteira.tarefas_pendentes + carteira.tarefas_urgentes} tarefas · {carteira.contatos_vinculados} contatos
                 </span>
               </div>
-            </label>
-
-            <label className="substituir-transfer-item">
-              <input type="checkbox" checked={transfer.contatos}
-                onChange={() => handleTransferChange('contatos')} />
-              <div>
-                <span className="substituir-transfer-item-label">Contatos vinculados</span>
-                <span className="substituir-transfer-item-count">{carteira.contatos_vinculados} contatos</span>
+              <div className="substituir-audit-row">
+                <span className="substituir-audit-key">Status</span>
+                <span className="substituir-audit-value substituir-audit-pending">⏳ pendente (prótipo)</span>
               </div>
-            </label>
-
-            <label className="substituir-transfer-item">
-              <input type="checkbox" checked={transfer.honorarios}
-                onChange={() => handleTransferChange('honorarios')} />
-              <div>
-                <span className="substituir-transfer-item-label">Honorários em aberto</span>
-                <span className="substituir-transfer-item-count">{fmt(carteira.honorarios_aberto)}</span>
-              </div>
-            </label>
-
-            <label className="substituir-transfer-item substituir-transfer-item--muted">
-              <input type="checkbox" checked={transfer.processos_encerrados}
-                onChange={() => handleTransferChange('processos_encerrados')} />
-              <div>
-                <span className="substituir-transfer-item-label">Processos encerrados</span>
-                <span className="substituir-transfer-item-count">
-                  {carteira.processos_encerrados} processos · ⚠️ Não recomendado — preserva auditoria histórica
-                </span>
-              </div>
-            </label>
+            </div>
           </div>
 
           <div className="substituir-confirm-block">
             <label className="substituir-confirm-label">
               <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
               <span>
-                Entendo que esta operação desativa{' '}
-                <strong>{target?.full_name_oab || target?.username}</strong>,
-                transfere os itens selecionados ao substituto e{' '}
+                Confirmo a substituição de <strong>{target?.full_name_oab || target?.username}</strong>{' '}
+                por <strong>{substitutoName}</strong>. Esta ação será registrada com meu usuário Master e{' '}
                 <strong>não pode ser desfeita automaticamente</strong>.
               </span>
             </label>
