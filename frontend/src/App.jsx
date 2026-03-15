@@ -58,6 +58,21 @@ function App() {
               element={isAuthenticated ? <PublicationDetailsPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
             />
 
+            {/* Painel administrativo Master (full width, sem sidebars) */}
+            <Route
+              path="/painel-master"
+              element={isAuthenticated
+                ? (user?.role === 'MASTER'
+                    ? (
+                      <div className="app-container">
+                        <Header />
+                        <MasterDashboardPage />
+                      </div>
+                    )
+                    : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>)
+                : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+            />
+
             {/* Rotas normais com layout padrão */}
             <Route path="/*" element={
               <div className="app-container">
@@ -82,10 +97,6 @@ function App() {
                         <Route
                           path="/master"
                           element={user?.role === 'MASTER' ? <MasterPage /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
-                        />
-                        <Route
-                          path="/painel-master"
-                          element={user?.role === 'MASTER' ? <MasterDashboardPage /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
                         />
                       </Routes>
                     ) : (

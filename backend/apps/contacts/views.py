@@ -5,6 +5,7 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth import get_user_model
 from django.db.models import Q
 from apps.accounts.permissions import is_master_user
 from .models import Contact
@@ -32,15 +33,44 @@ class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.prefetch_related(
         'case_roles__case'
     ).distinct().order_by('name')
+    UserModel = get_user_model()
+
+    def _get_master_scope_user(self):
+        user = self.request.user
+        if not user.is_authenticated or not is_master_user(user):
+            return None
+
+        team_member_id = self.request.query_params.get('team_member_id')
+        if not team_member_id:
+            return None
+
+        try:
+            return self.UserModel.objects.filter(id=int(team_member_id), is_active=True).first()
+        except (TypeError, ValueError):
+            return None
 
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
         if not user.is_authenticated:
             return queryset
-        if is_master_user(user):
-            return queryset
-        return queryset.filter(Q(owner=user) | Q(owner__isnull=True))
+
+        scope_user = self._get_master_scope_user()
+        if scope_user is not None:
+            queryset = queryset.filter(Q(owner=scope_user) | Q(owner__isnull=True))
+        elif is_master_user(user):
+            queryset = queryset
+        else:
+            queryset = queryset.filter(Q(owner=user) | Q(owner__isnull=True))
+
+        data_inicio = self.request.query_params.get('data_inicio')
+        data_fim = self.request.query_params.get('data_fim')
+        if data_inicio:
+            queryset = queryset.filter(updated_at__date__gte=data_inicio)
+        if data_fim:
+            queryset = queryset.filter(updated_at__date__lte=data_fim)
+
+        return queryset
     
     # Filtros e busca
     filter_backends = [
