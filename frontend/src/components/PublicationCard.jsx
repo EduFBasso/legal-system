@@ -1,4 +1,4 @@
-import { generateAllConsultaLinks } from '../utils/consultaLinksHelper';
+import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import './PublicationCard.css';
 
 export default function PublicationCard({ 
@@ -59,12 +59,6 @@ export default function PublicationCard({
     };
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR');
-  };
-
   // Remove tags HTML e retorna texto limpo para o resumo
   const stripHTML = (html) => {
     if (!html) return '';
@@ -106,30 +100,7 @@ export default function PublicationCard({
 
   const handleConsultarProcesso = (e, url) => {
     e.stopPropagation();
-    const btn = e.currentTarget;
-
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-
-    if (!publication.numero_processo || !navigator.clipboard?.writeText) {
-      return;
-    }
-
-    navigator.clipboard.writeText(publication.numero_processo).then(() => {
-      if (btn && document.contains(btn)) {
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '✅ Copiado!';
-
-        setTimeout(() => {
-          if (btn && document.contains(btn)) {
-            btn.innerHTML = originalHTML;
-          }
-        }, 2000);
-      }
-    }).catch(err => {
-      console.error('Erro ao copiar:', err);
-    });
+    openConsultaWithCopy(url, publication.numero_processo, e.currentTarget);
   };
 
   // Obter todos os links de consulta disponíveis

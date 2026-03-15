@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Hook genérico para auto-save com debounce
@@ -30,7 +30,7 @@ export function useAutoSave(data, onSave, options = {}) {
   const lastSavedDataRef = useRef(null);
   const initializedRef = useRef(false);
 
-  const computeDataToSave = (currentData, lastSavedDataStr) => {
+  const computeDataToSave = useCallback((currentData, lastSavedDataStr) => {
     let dataToSave = currentData;
 
     if (getChangedFields && lastSavedDataStr) {
@@ -47,7 +47,7 @@ export function useAutoSave(data, onSave, options = {}) {
     }
 
     return dataToSave;
-  };
+  }, [getChangedFields]);
 
   // Force save function (útil para casos especiais)
   const forceSave = async () => {
@@ -140,7 +140,7 @@ export function useAutoSave(data, onSave, options = {}) {
         clearTimeout(timerRef.current);
       }
     };
-  }, [data, onSave, delay, enabled, getChangedFields]);
+  }, [data, onSave, delay, enabled, computeDataToSave]);
 
   return {
     isSaving,

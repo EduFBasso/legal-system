@@ -47,7 +47,7 @@ export default function DeadlinesPage() {
     // Atualizar a cada 2 minutos
     const interval = setInterval(fetchAllTasks, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchAllTasks]);
 
   /**
    * Sincroniza atualizações de tarefas entre abas do navegador
@@ -75,14 +75,6 @@ export default function DeadlinesPage() {
    */
   const getMovementLinkUrl = (caseId, movementId, taskId) => {
     return `/cases/${caseId}?tab=movements&focusMovement=${movementId}&focusTask=${taskId}`;
-  };
-
-  /**
-   * Handler para clique no link de movimentação
-   * Seleciona o cartão com cor de urgência padrão (não bloqueia interação)
-   */
-  const handleMovementLinkClick = (taskId) => {
-    setSelectedTaskId(taskId);
   };
 
   /**

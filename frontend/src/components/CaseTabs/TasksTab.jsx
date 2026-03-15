@@ -28,9 +28,6 @@ import './TasksTab.css';
  */
 export default function TasksTab({
   caseId = null,
-  caseData = null,
-  tasks: _externalTasks = [],     // recebido do pai mas não usado diretamente
-  setTasks: _setParentTasks = () => {},  // mantido por compatibilidade, não usar
   formatDate = (date) => date ? new Date(date).toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—',
   onRefreshTasks = () => {},
 }) {

@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import publicationsService from '../services/publicationsService';
-import { generateAllConsultaLinks } from '../utils/consultaLinksHelper';
+import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import './PublicationDetailsPage.css';
 
 console.log('📦 PublicationsService importado:', publicationsService);
@@ -48,18 +48,9 @@ export default function PublicationDetailsPage() {
     }
   }, [idApi]);
 
-  const handleConsultarProcesso = (url) => {
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-
-    if (!publication?.numero_processo || !navigator.clipboard?.writeText) {
-      return;
-    }
-
-    navigator.clipboard.writeText(publication.numero_processo).catch(err => {
-      console.error('Erro ao copiar:', err);
-    });
+  const handleConsultarProcesso = (e, url) => {
+    e.preventDefault();
+    openConsultaWithCopy(url, publication?.numero_processo, e.currentTarget);
   };
 
   const handleCreateCase = () => {
@@ -255,7 +246,7 @@ export default function PublicationDetailsPage() {
             {consultaLinks.linkOficial && (
               <button 
                 className="btn btn-primary"
-                onClick={() => handleConsultarProcesso(consultaLinks.linkOficial)}
+                onClick={(e) => handleConsultarProcesso(e, consultaLinks.linkOficial)}
                 title="Copia o número e abre o portal do tribunal"
               >
                 🔍 {publication.tribunal || 'Consultar'} Oficial
@@ -266,7 +257,7 @@ export default function PublicationDetailsPage() {
               <button 
                 key={index}
                 className="btn btn-secondary"
-                onClick={() => handleConsultarProcesso(system.url)}
+                onClick={(e) => handleConsultarProcesso(e, system.url)}
                 title={system.description}
               >
                 {system.icon} {system.shortName}

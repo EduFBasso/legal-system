@@ -25,7 +25,11 @@ export default function DateInputMasked({
 
   // Sincronizar displayValue com value prop
   useEffect(() => {
-    setDisplayValue(formatForDisplay(value));
+    const timerId = window.setTimeout(() => {
+      setDisplayValue(formatForDisplay(value));
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
   }, [value]);
 
   // Converter DD/MM/YYYY para YYYY-MM-DD para onChange

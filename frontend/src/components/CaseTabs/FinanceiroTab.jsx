@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { formatDate, formatCurrencyValue, parseCurrencyValue } from '../../utils/formatters';
 import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
 import EmptyState from '../common/EmptyState';
@@ -128,7 +128,7 @@ function FinanceiroTab({
   const [honorarioValorHora, setHonorarioValorHora] = useState('');
   const [honorarioQtdHoras, setHonorarioQtdHoras] = useState('');
 
-  const buildInitialChecks = () => {
+  const buildInitialChecks = useCallback(() => {
     const percentualPreenchido = participacaoPercentual !== '' && !Number.isNaN(parseFloat(participacaoPercentual));
     const valorFixoPreenchido = participacaoValorFixo !== '' && parseCurrencyValue(participacaoValorFixo) > 0;
 
@@ -137,19 +137,28 @@ function FinanceiroTab({
       valorFixo: valorFixoPreenchido || participacaoTipo === 'fixed',
       honorarios: parseCurrencyValue(formData.attorney_fee_amount || '') > 0,
     };
-  };
+  }, [participacaoPercentual, participacaoValorFixo, participacaoTipo, parseCurrencyValue, formData.attorney_fee_amount]);
 
   const [participacaoChecks, setParticipacaoChecks] = useState(buildInitialChecks);
   const [manualCheckControl, setManualCheckControl] = useState(false);
 
   useEffect(() => {
-    setManualCheckControl(false);
+    const timerId = window.setTimeout(() => {
+      setManualCheckControl(false);
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
   }, [id]);
 
   useEffect(() => {
     if (manualCheckControl) return;
-    setParticipacaoChecks(buildInitialChecks());
-  }, [manualCheckControl, participacaoTipo, participacaoPercentual, participacaoValorFixo, formData.attorney_fee_amount]);
+
+    const timerId = window.setTimeout(() => {
+      setParticipacaoChecks(buildInitialChecks());
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
+  }, [manualCheckControl, buildInitialChecks]);
 
   const valorCausa = parseCurrencyValue(formData.valor_causa);
   const percentualValue = parseFloat(participacaoPercentual) || 0;

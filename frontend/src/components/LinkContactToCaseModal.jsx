@@ -16,14 +16,7 @@ export default function LinkContactToCaseModal({
   const [selectedCaseId, setSelectedCaseId] = useState('');
   const [error, setError] = useState(null);
 
-  // Load available cases
-  useEffect(() => {
-    if (isOpen) {
-      loadCases();
-    }
-  }, [isOpen]);
-
-  const loadCases = async () => {
+  async function loadCases() {
     try {
       const data = await casesService.getAll();
       
@@ -35,7 +28,20 @@ export default function LinkContactToCaseModal({
       console.error('[LinkContactToCaseModal] Error loading cases:', err);
       setError('Erro ao carregar processos: ' + err.message);
     }
-  };
+  }
+
+  // Load available cases
+  useEffect(() => {
+    if (isOpen) {
+      const timerId = window.setTimeout(() => {
+        loadCases();
+      }, 0);
+
+      return () => window.clearTimeout(timerId);
+    }
+
+    return undefined;
+  }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

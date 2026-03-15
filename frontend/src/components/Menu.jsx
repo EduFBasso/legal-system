@@ -43,7 +43,6 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setPendingCount(0);
       return;
     }
 
@@ -87,7 +86,6 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setScheduledTasksCount(0);
       return;
     }
 
@@ -154,7 +152,7 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
             to: '/publications/pending',
             icon: '⏳',
             label: 'Não Vinculadas',
-            badge: pendingCount > 0 ? (
+            badge: isAuthenticated && pendingCount > 0 ? (
               <span className="menu-count-badge menu-count-badge--pending">{pendingCount}</span>
             ) : null,
           })}
@@ -167,7 +165,7 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
               to: '/deadlines',
               icon: '⏰',
               label: 'Tarefas Agendadas',
-              badge: scheduledTasksCount > 0 ? (
+              badge: isAuthenticated && scheduledTasksCount > 0 ? (
                 <span className="menu-count-badge menu-count-badge--tasks">{scheduledTasksCount}</span>
               ) : null,
             })}

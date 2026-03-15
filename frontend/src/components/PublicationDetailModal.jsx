@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { generateAllConsultaLinks } from '../utils/consultaLinksHelper';
+import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import './PublicationDetailModal.css';
 
 export default function PublicationDetailModal({ publication, onClose }) {
@@ -13,26 +13,7 @@ export default function PublicationDetailModal({ publication, onClose }) {
 
   const handleConsultarProcesso = (e, url) => {
     e.preventDefault();
-    const btn = e.currentTarget;
-
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-
-    if (!publication.numero_processo || !navigator.clipboard?.writeText) {
-      return;
-    }
-
-    navigator.clipboard.writeText(publication.numero_processo).then(() => {
-      const originalHTML = btn.innerHTML;
-      btn.innerHTML = '✅ Copiado!';
-
-      setTimeout(() => {
-        btn.innerHTML = originalHTML;
-      }, 2000);
-    }).catch(err => {
-      console.error('Erro ao copiar:', err);
-    });
+    openConsultaWithCopy(url, publication.numero_processo, e.currentTarget);
   };
 
   const handleCopyProcesso = (e) => {

@@ -44,9 +44,15 @@ export default function CurrencyInput({
   // Sincronizar display com value externo quando NÃO está focado
   useEffect(() => {
     if (!isFocused && prevValueRef.current !== value) {
-      setDisplayValue(formatCurrency(value));
+      const timerId = window.setTimeout(() => {
+        setDisplayValue(formatCurrency(value));
+      }, 0);
       prevValueRef.current = value;
+
+      return () => window.clearTimeout(timerId);
     }
+
+    return undefined;
   }, [value, isFocused]);
 
   const handleFocus = () => {

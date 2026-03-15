@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { useHighlight } from '../hooks/useHighlight';
@@ -11,7 +11,6 @@ import './NotificationsSummary.css';
 export default function NotificationsSummary() {
   const navigate = useNavigate();
   const { notifications, fetchUnreadNotifications, markAsRead } = useNotifications();
-  const [staleNotifications, setStaleNotifications] = useState([]);
   
   // Sistema de destaque unificado - usando hook customizado
   const highlight = useHighlight({ 
@@ -25,8 +24,8 @@ export default function NotificationsSummary() {
   }, [fetchUnreadNotifications]);
 
   // Buscar apenas notificacoes de processo 90+ dias (bloco dourado condicional)
-  useEffect(() => {
-    const stale = notifications
+  const staleAlertItems = useMemo(() => (
+    notifications
       .filter((notification) =>
         !notification.read &&
         notification.type === 'process' &&
@@ -39,10 +38,8 @@ export default function NotificationsSummary() {
         days: notification.metadata?.days_without_activity || 90,
         link: notification.link || '/cases',
         notificationId: notification.id,
-      }));
-
-    setStaleNotifications(stale);
-  }, [notifications]);
+      }))
+  ), [notifications]);
 
   // Pegar apenas as 3 publicacoes nao lidas mais recentes
   const recentUnread = notifications
@@ -63,22 +60,6 @@ export default function NotificationsSummary() {
     // Navegar para a página de notificações
     navigate('/notifications');
   };
-
-  const getTypeIcon = (type) => {
-    const icons = {
-      publication: '📰',
-      deadline: '⏰',
-      process: '⚖️',
-      system: '💻',
-    };
-    return icons[type] || '🔔';
-  };
-
-  const getPriorityClass = (priority) => {
-    return priority === 'urgent' || priority === 'high' ? 'high-priority' : '';
-  };
-
-  const staleAlertItems = staleNotifications;
 
   const handleStaleAlertClick = async (item) => {
     if (item.notificationId) {
