@@ -21,6 +21,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
 import MasterPage from './pages/MasterPage';
+import MasterDashboardPage from './pages/MasterDashboardPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
 import { useAuth } from './contexts/AuthContext';
@@ -81,6 +82,10 @@ function App() {
                         <Route
                           path="/master"
                           element={user?.role === 'MASTER' ? <MasterPage /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
+                        />
+                        <Route
+                          path="/painel-master"
+                          element={user?.role === 'MASTER' ? <MasterDashboardPage /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
                         />
                       </Routes>
                     ) : (

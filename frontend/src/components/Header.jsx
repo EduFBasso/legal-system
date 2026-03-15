@@ -72,6 +72,16 @@ export default function Header() {
       <div className="header-user">
         {isAuthenticated ? (
           <>
+            {isMasterUser && (
+              <Link
+                to="/painel-master"
+                className="btn-notifications btn-master-panel"
+                title="Painel Administrativo"
+                aria-label="Painel Administrativo Master"
+              >
+                🔑
+              </Link>
+            )}
             <span className="user-name">{displayName}</span>
 
             <button type="button" className="btn-auth-action" onClick={logout}>

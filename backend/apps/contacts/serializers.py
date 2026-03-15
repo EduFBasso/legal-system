@@ -2,6 +2,8 @@
 Serializers para API REST do app de contatos.
 """
 from rest_framework import serializers
+from django.db.models import Q
+from apps.accounts.permissions import is_master_user
 from .models import Contact
 
 
@@ -59,15 +61,26 @@ class ContactListSerializer(serializers.ModelSerializer):
         Verifica se este contato é cliente em algum processo.
         Usado para determinar se pode editar/deletar em /contacts.
         """
-        return obj.case_roles.filter(is_client=True).exists()
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        queryset = obj.case_roles.filter(is_client=True, case__deleted=False)
+        if user and user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+
+        return queryset.exists()
     
     def get_linked_cases(self, obj):
         """
         Retorna lista de processos vinculados a este contato (versão resumida para cards).
         """
-        from apps.cases.models import CaseParty
-        
-        case_parties = obj.case_roles.select_related('case').all()
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        case_parties = obj.case_roles.select_related('case').filter(case__deleted=False)
+        if user and user.is_authenticated and not is_master_user(user):
+            case_parties = case_parties.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+
         return [
             {
                 'id': cp.id,  # ID do CaseParty (não do Case!)
@@ -158,16 +171,27 @@ class ContactDetailSerializer(serializers.ModelSerializer):
         Se False = Apenas testemunha/parte → READ-ONLY em /contacts
         Se True = Cliente → Pode editar/deletar em /contacts
         """
-        return obj.case_roles.filter(is_client=True).exists()
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        queryset = obj.case_roles.filter(is_client=True, case__deleted=False)
+        if user and user.is_authenticated and not is_master_user(user):
+            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+
+        return queryset.exists()
     
     def get_linked_cases(self, obj):
         """
         Retorna lista de processos vinculados a este contato.
         Cada processo inclui: id, número, papel (role) e se é cliente.
         """
-        from apps.cases.models import CaseParty
-        
-        case_parties = obj.case_roles.select_related('case').all()
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        case_parties = obj.case_roles.select_related('case').filter(case__deleted=False)
+        if user and user.is_authenticated and not is_master_user(user):
+            case_parties = case_parties.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+
         return [
             {
                 'id': cp.id,  # ID do CaseParty (não do Case!)
