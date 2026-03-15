@@ -80,4 +80,9 @@ pub_fetcher/
 tools/sqlite3.exe
 
 docs/legacy/
-clinic-system/
+logs/
+nssm-2.24/
+nssm.zip
+backend_service.cmd
+frontend_service.cmd
+
