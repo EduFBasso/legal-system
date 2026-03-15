@@ -200,7 +200,30 @@ export function openConsultaWithCopy(url, numeroProcesso, buttonElement) {
   if (!url) return;
 
   // Pré-abre uma aba no gesto do usuário para evitar bloqueio de popup no iPad/Safari.
-  const popup = window.open('', '_blank', 'noopener,noreferrer');
+  // Não usar noopener/noreferrer aqui: alguns navegadores retornam null e a aba fica em branco.
+  const popup = window.open('about:blank', '_blank');
+
+  if (popup) {
+    try {
+      popup.opener = null;
+    } catch (error) {
+      console.error('Não foi possível limpar opener da janela de consulta:', error);
+    }
+  }
+
+  const navigateToUrl = () => {
+    if (popup && !popup.closed) {
+      try {
+        popup.location.replace(url);
+      } catch (error) {
+        console.error('Falha ao navegar na aba pré-aberta, tentando fallback:', error);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const originalHTML = buttonElement?.innerHTML;
   if (buttonElement && document.contains(buttonElement)) {
@@ -211,12 +234,7 @@ export function openConsultaWithCopy(url, numeroProcesso, buttonElement) {
   Promise.resolve()
     .then(async () => {
       const copied = numeroProcesso ? await copyTextWithBestEffort(numeroProcesso) : false;
-
-      if (popup && !popup.closed) {
-        popup.location.href = url;
-      } else {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
+      navigateToUrl();
 
       if (buttonElement && document.contains(buttonElement)) {
         buttonElement.innerHTML = copied ? '✅ Copiado!' : '↗ Aberto';
@@ -224,11 +242,7 @@ export function openConsultaWithCopy(url, numeroProcesso, buttonElement) {
     })
     .catch((error) => {
       console.error('Erro ao abrir consulta processual:', error);
-      if (popup && !popup.closed) {
-        popup.location.href = url;
-      } else {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
+      navigateToUrl();
 
       if (buttonElement && document.contains(buttonElement)) {
         buttonElement.innerHTML = '↗ Aberto';

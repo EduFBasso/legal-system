@@ -39,71 +39,96 @@ export default function TaskForm({
   const isSaving = isLoading || isSubmitting;
   const canSubmit = !isSaving && formData.titulo.trim();
 
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '0.3rem',
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: '0.875rem'
+  };
+
   return (
     <div style={{
       padding: '0.75rem',
       background: caseTheme.taskInline.container,
       border: `1px solid ${caseTheme.darkBorder}`,
       borderRadius: '6px',
-      marginBottom: '0.75rem'
+      marginBottom: '0.75rem',
     }}>
       {/* Título */}
-      <input
-        type="text"
-        placeholder="Título da tarefa *"
-        value={formData.titulo}
-        onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
-        style={{
-          width: '100%',
-          padding: '0.5rem',
-          border: `1px solid ${caseTheme.darkBorder}`,
-          borderRadius: '4px',
-          fontSize: '1.05rem',
-          marginBottom: '0.5rem',
-          background: caseTheme.form.input.background,
-          color: '#1F2937',
-          fontWeight: '500'
-        }}
-      />
-
-      {/* Descrição */}
-      <textarea
-        placeholder="Descrição (opcional)"
-        value={formData.descricao}
-        onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-        rows={2}
-        style={{
-          width: '100%',
-          padding: '0.5rem',
-          border: `1px solid ${caseTheme.darkBorder}`,
-          borderRadius: '4px',
-          fontSize: '1rem',
-          marginBottom: '0.5rem',
-          resize: 'vertical',
-          background: caseTheme.form.input.background,
-          color: '#1F2937',
-          fontWeight: '500'
-        }}
-      />
-
-      {/* Data Limite */}
       <div style={{ marginBottom: '0.5rem' }}>
+        <label style={labelStyle}>Título *</label>
         <input
-          type="date"
-          placeholder="Data de vencimento"
-          value={formData.data_vencimento}
-          onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+          type="text"
+          placeholder="Ex: Protocolar petição"
+          value={formData.titulo}
+          onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
           style={{
             width: '100%',
             padding: '0.5rem',
             border: `1px solid ${caseTheme.darkBorder}`,
             borderRadius: '4px',
-            fontSize: '0.975rem',
+            fontSize: '1.05rem',
             background: caseTheme.form.input.background,
             color: '#1F2937',
-            fontWeight: '500'
+            fontWeight: '500',
+            boxSizing: 'border-box'
           }}
         />
+      </div>
+
+      {/* Descrição */}
+      <div style={{ marginBottom: '0.5rem' }}>
+        <label style={labelStyle}>Descrição (opcional)</label>
+        <textarea
+          placeholder="Detalhes da tarefa..."
+          value={formData.descricao}
+          onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+          rows={2}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            border: `1px solid ${caseTheme.darkBorder}`,
+            borderRadius: '4px',
+            fontSize: '1rem',
+            resize: 'vertical',
+            background: caseTheme.form.input.background,
+            color: '#1F2937',
+            fontWeight: '500',
+            boxSizing: 'border-box'
+          }}
+        />
+      </div>
+
+      {/* Data de Vencimento */}
+      <div style={{ marginBottom: '0.5rem' }}>
+        <label style={labelStyle}>Data de vencimento</label>
+        <div style={{
+          marginBottom: '0.35rem',
+          color: '#6B7280',
+          fontSize: '0.8125rem'
+        }}>
+          Toque para selecionar uma data
+        </div>
+        <div style={{ display: 'flex' }}>
+          <input
+            type="date"
+            value={formData.data_vencimento}
+            onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: '0.5rem',
+              border: `1px solid ${caseTheme.darkBorder}`,
+              borderRadius: '4px',
+              fontSize: '0.975rem',
+              background: caseTheme.form.input.background,
+              color: '#1F2937',
+              fontWeight: '500',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
       </div>
 
       {/* Botões de Ação */}
