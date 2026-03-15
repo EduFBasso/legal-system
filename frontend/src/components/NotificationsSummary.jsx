@@ -107,20 +107,12 @@ export default function NotificationsSummary() {
     }
 
     const processNumber = notification.metadata?.numero_processo;
-    const tribunal = notification.metadata?.tribunal;
 
-    if (!processNumber && !tribunal) {
+    if (!processNumber) {
       return notification.title;
     }
 
-    const processPrefix = processNumber?.split('-')[0]?.trim();
-    const tribunalLabel = tribunal ? ` ${tribunal}` : '';
-
-    if (!processPrefix) {
-      return `Publicação -${tribunalLabel}`.trim();
-    }
-
-    return `Pub. N° ${processPrefix}-...${tribunalLabel}`.trim();
+    return `Proc. ${processNumber}`;
   };
 
   // Contar total de notificações não lidas (publicações + alertas 90+)

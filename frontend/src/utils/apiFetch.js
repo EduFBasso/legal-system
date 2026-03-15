@@ -79,12 +79,44 @@ export async function apiFetch(endpoint, options = {}) {
       // Try to parse error response
       const errorData = await response.json().catch(() => ({}));
       console.error('API Error Response:', errorData);
+
+      // 401: sessão/token inválido ou expirado
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+
+        const apiError = new Error('Sessão expirada. Faça login novamente.');
+        apiError.status = response.status;
+        apiError.code = errorData?.code || 'token_not_valid';
+        throw apiError;
+      }
+
+      const formatErrorValue = (value) => {
+        if (Array.isArray(value)) {
+          return value.map(formatErrorValue).join(', ');
+        }
+
+        if (value && typeof value === 'object') {
+          if (typeof value.message === 'string') {
+            return value.message;
+          }
+
+          if (typeof value.detail === 'string') {
+            return value.detail;
+          }
+
+          return Object.entries(value)
+            .map(([k, v]) => `${k}: ${formatErrorValue(v)}`)
+            .join('; ');
+        }
+
+        return String(value ?? '');
+      };
       
       // Format validation errors from Django
       if (errorData && typeof errorData === 'object') {
         const errors = Object.entries(errorData)
           .map(([field, messages]) => {
-            const msg = Array.isArray(messages) ? messages.join(', ') : messages;
+            const msg = formatErrorValue(messages);
             return `${field}: ${msg}`;
           })
           .join('\n');
@@ -94,10 +126,6 @@ export async function apiFetch(endpoint, options = {}) {
       }
       
       const detail = errorData.detail || `API Error: ${response.status}`;
-
-      if (response.status === 401) {
-        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-      }
 
       const apiError = new Error(detail);
       apiError.status = response.status;

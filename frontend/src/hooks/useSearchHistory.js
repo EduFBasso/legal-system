@@ -31,6 +31,17 @@ export function useSearchHistory() {
   // Estado para limpeza do histórico
   const [isClearing, setIsClearing] = useState(false);
 
+  const getFriendlyErrorMessage = useCallback((err, fallbackMessage) => {
+    const rawMessage = String(err?.message || '');
+    const isUnauthorized = err?.status === 401 || rawMessage.includes('token_not_valid');
+
+    if (isUnauthorized) {
+      return 'Sessão expirada. Faça login novamente para acessar o histórico de buscas.';
+    }
+
+    return rawMessage || fallbackMessage;
+  }, []);
+
   /**
    * Carrega lista de buscas do histórico
    */
@@ -60,12 +71,12 @@ export function useSearchHistory() {
       }
     } catch (err) {
       console.error('Erro ao carregar histórico:', err);
-      setError(err.message);
+      setError(getFriendlyErrorMessage(err, 'Erro ao carregar histórico'));
       setSearches([]);
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit, pagination.offset, ordering]);
+  }, [pagination.limit, pagination.offset, ordering, getFriendlyErrorMessage]);
 
   /**
    * Carrega detalhes de uma busca específica
@@ -85,13 +96,13 @@ export function useSearchHistory() {
       }
     } catch (err) {
       console.error('Erro ao carregar detalhes:', err);
-      setError(err.message);
+      setError(getFriendlyErrorMessage(err, 'Erro ao carregar detalhes'));
       setSelectedSearch(null);
       setSelectedPublications([]);
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [getFriendlyErrorMessage]);
 
   /**
    * Navega para próxima página
@@ -179,12 +190,12 @@ export function useSearchHistory() {
       }
     } catch (err) {
       console.error('Erro ao limpar histórico:', err);
-      setError(err.message);
+      setError(getFriendlyErrorMessage(err, 'Erro ao limpar histórico'));
       throw err;
     } finally {
       setIsClearing(false);
     }
-  }, []);
+  }, [getFriendlyErrorMessage]);
 
   // Carregar histórico ao montar o componente ou quando ordenação mudar
   useEffect(() => {
@@ -213,13 +224,13 @@ export function useSearchHistory() {
     })
     .catch(err => {
       console.error('Erro ao carregar histórico:', err);
-      setError(err.message);
+      setError(getFriendlyErrorMessage(err, 'Erro ao carregar histórico'));
       setSearches([]);
     })
     .finally(() => {
       setLoading(false);
     });
-  }, [ordering, pagination.limit]);
+  }, [ordering, pagination.limit, getFriendlyErrorMessage]);
 
   return {
     // Estado

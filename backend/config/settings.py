@@ -252,7 +252,7 @@ LEGAL_SYSTEM_SETTINGS = {
     'LOG_API_REQUESTS': config('LOG_API_REQUESTS', default=False, cast=bool),
 }
 
-JWT_ACCESS_TOKEN_HOURS = config('JWT_ACCESS_TOKEN_HOURS', default=0.5, cast=float)
+JWT_ACCESS_TOKEN_HOURS = config('JWT_ACCESS_TOKEN_HOURS', default=8, cast=float)
 JWT_REFRESH_TOKEN_HOURS = config('JWT_REFRESH_TOKEN_HOURS', default=168, cast=float)
 
 SIMPLE_JWT = {
