@@ -21,13 +21,20 @@ export default function Header() {
     showNotLoggedMessage,
   } = useAuth();
 
+  const getFirstName = (value) => {
+    const normalized = String(value || '').trim();
+    if (!normalized) return '';
+    return normalized.split(/\s+/)[0] || '';
+  };
+
   const isMasterUser = user?.role === 'MASTER';
-  const masterName = user?.full_name_oab?.trim() || user?.first_name?.trim() || user?.username || 'Advogada';
-  const regularName = user?.first_name?.trim() || user?.username || 'Advogada';
+  const masterName = getFirstName(user?.full_name_oab) || getFirstName(user?.first_name) || getFirstName(user?.username) || 'Advogada';
+  const regularName = getFirstName(user?.first_name) || getFirstName(user?.username) || 'Advogada';
   const oabLabel = user?.oab_number ? `OAB N° ${user.oab_number}` : '';
+  const professionalPrefix = 'Dr(a).';
   const displayName = isMasterUser
-    ? `${masterName}${oabLabel ? ` ${oabLabel}` : ''}`.trim()
-    : `${regularName}${oabLabel ? ` ${oabLabel}` : ''}`.trim();
+    ? `${professionalPrefix} ${masterName}${oabLabel ? ` ${oabLabel}` : ''}`.trim()
+    : `${professionalPrefix} ${regularName}${oabLabel ? ` ${oabLabel}` : ''}`.trim();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
