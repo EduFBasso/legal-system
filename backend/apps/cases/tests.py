@@ -7,8 +7,9 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import timedelta
+from apps.accounts.models import UserProfile
 from apps.contacts.models import Contact
-from apps.cases.models import Case, CaseParty, CaseMovement
+from apps.cases.models import Case, CaseParty, CaseMovement, CaseTask
 
 
 class CaseModelTest(TestCase):
@@ -274,6 +275,7 @@ class CaseAPITest(APITestCase):
             comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date() - timedelta(days=30),
+            owner=self.user,
         )
         
         self.case2 = Case.objects.create(
@@ -283,6 +285,7 @@ class CaseAPITest(APITestCase):
             comarca='Brasília',
             status='INATIVO',
             data_distribuicao=timezone.now().date() - timedelta(days=60),
+            owner=self.user,
         )
     
     def test_list_cases(self):
@@ -493,6 +496,7 @@ class CasePartyAPITest(APITestCase):
             comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
+            owner=self.user,
         )
     
     def test_create_case_party(self):
@@ -876,6 +880,86 @@ class DeadlineNotificationTest(APITestCase):
         self.assertEqual(notif_urgentissimo.priority, 'urgent')
         self.assertEqual(notif_urgente.priority, 'high')
         self.assertEqual(notif_normal.priority, 'medium')
+
+
+class OwnerScopeRegressionTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='advogado_scope', password='testpass123')
+        self.user.profile.role = UserProfile.ROLE_ADVOGADO
+        self.user.profile.save()
+        self.client.force_authenticate(user=self.user)
+
+        self.master = User.objects.create_user(username='master_scope', password='testpass123')
+        self.master.profile.role = UserProfile.ROLE_MASTER
+        self.master.profile.save()
+
+        self.user_case = Case.objects.create(
+            numero_processo='1000001-23.2026.8.26.0100',
+            titulo='Caso do usuário',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.user,
+        )
+        self.master_case = Case.objects.create(
+            numero_processo='1000002-23.2026.8.26.0100',
+            titulo='Caso do master',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.master,
+        )
+        self.ownerless_case = Case.objects.create(
+            numero_processo='1000003-23.2026.8.26.0100',
+            titulo='Caso sem dono',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+
+    def test_case_tasks_endpoint_excludes_other_owners_and_ownerless(self):
+        CaseTask.objects.create(case=self.user_case, titulo='Tarefa do usuário', status='PENDENTE')
+        CaseTask.objects.create(case=self.master_case, titulo='Tarefa do master', status='PENDENTE')
+        CaseTask.objects.create(case=self.ownerless_case, titulo='Tarefa sem dono', status='PENDENTE')
+
+        response = self.client.get('/api/case-tasks/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['titulo'], 'Tarefa do usuário')
+
+    def test_notifications_unread_endpoint_excludes_other_owners_and_ownerless(self):
+        from apps.notifications.models import Notification
+
+        Notification.objects.create(
+            owner=self.user,
+            type='publication',
+            priority='medium',
+            title='Notificação do usuário',
+            message='Mensagem do usuário',
+        )
+        Notification.objects.create(
+            owner=self.master,
+            type='publication',
+            priority='medium',
+            title='Notificação do master',
+            message='Mensagem do master',
+        )
+        Notification.objects.create(
+            type='publication',
+            priority='medium',
+            title='Notificação sem dono',
+            message='Mensagem sem dono',
+        )
+
+        response = self.client.get('/api/notifications/unread/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(len(response.data['notifications']), 1)
+        self.assertEqual(response.data['notifications'][0]['title'], 'Notificação do usuário')
 
 
 # Test Summary:

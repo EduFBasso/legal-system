@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 
 
+from apps.organizations.models import Organization
+
 class UserProfile(models.Model):
     ROLE_MASTER = 'MASTER'
     ROLE_ADVOGADO = 'ADVOGADO'
@@ -17,6 +19,14 @@ class UserProfile(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='profile'
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='users',
+        help_text='Organização (tenant) deste usuário'
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_ADVOGADO)
     full_name_oab = models.CharField(

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     
     # Apps do projeto
     'apps.accounts',
+    'apps.organizations',
     'apps.contacts',
     'apps.publications',
     'apps.notifications',

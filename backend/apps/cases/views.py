@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count, Prefetch
 from apps.accounts.permissions import is_master_user
+from apps.accounts.tenant_scope import get_user_organization, filter_by_user_organization
 
 
 def _normalize(text):
@@ -52,8 +53,10 @@ class CaseViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Case.objects.filter(deleted=False).order_by('-data_ultima_movimentacao')
         user = self.request.user
+        if user.is_authenticated:
+            qs = filter_by_user_organization(qs, user)
         if user.is_authenticated and not is_master_user(user):
-            qs = qs.filter(Q(owner=user) | Q(owner__isnull=True))
+            qs = qs.filter(owner=user)
 
         if self.action == 'list':
             qs = qs.prefetch_related(
@@ -134,8 +137,8 @@ class CaseViewSet(viewsets.ModelViewSet):
         # Busca normalizada (sem acento) nos nomes das partes
         from apps.contacts.models import Contact
         contact_queryset = Contact.objects.all()
-        if self.request.user.is_authenticated and not is_master_user(self.request.user):
-            contact_queryset = contact_queryset.filter(Q(owner=self.request.user) | Q(owner__isnull=True))
+        if self.request.user.is_authenticated:
+            contact_queryset = filter_by_user_organization(contact_queryset, self.request.user)
 
         matching_ids = [
             cid
@@ -150,7 +153,7 @@ class CaseViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if user.is_authenticated:
-            serializer.save(owner=user)
+            serializer.save(owner=user, organization=get_user_organization(user))
         else:
             serializer.save()
 
@@ -269,9 +272,10 @@ class CasePartyViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return queryset
+        queryset = filter_by_user_organization(queryset, user, 'case__organization')
         if is_master_user(user):
             return queryset
-        return queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+        return queryset.filter(case__owner=user)
 
 
 class CaseMovementViewSet(viewsets.ModelViewSet):
@@ -306,8 +310,10 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         user = self.request.user
+        if user.is_authenticated:
+            queryset = filter_by_user_organization(queryset, user, 'case__organization')
         if user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            queryset = queryset.filter(case__owner=user)
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -344,8 +350,10 @@ class CasePrazoViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         user = self.request.user
+        if user.is_authenticated:
+            queryset = filter_by_user_organization(queryset, user, 'movimentacao__case__organization')
         if user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(movimentacao__case__owner=user) | Q(movimentacao__case__owner__isnull=True))
+            queryset = queryset.filter(movimentacao__case__owner=user)
         movimentacao_id = self.request.query_params.get('movimentacao_id')
         case_id = self.request.query_params.get('case_id')
         
@@ -385,8 +393,10 @@ class CaseTaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
+        if user.is_authenticated:
+            queryset = filter_by_user_organization(queryset, user, 'case__organization')
         if user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            queryset = queryset.filter(case__owner=user)
 
         case_id = self.request.query_params.get('case_id')
         if case_id:
@@ -423,8 +433,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         user = self.request.user
+        if user.is_authenticated:
+            queryset = filter_by_user_organization(queryset, user, 'case__organization')
         if user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            queryset = queryset.filter(case__owner=user)
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -455,8 +467,10 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         user = self.request.user
+        if user.is_authenticated:
+            queryset = filter_by_user_organization(queryset, user, 'case__organization')
         if user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            queryset = queryset.filter(case__owner=user)
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -483,8 +497,10 @@ class CaseDocumentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
+        if user.is_authenticated:
+            queryset = filter_by_user_organization(queryset, user, 'case__organization')
         if user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            queryset = queryset.filter(case__owner=user)
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)

@@ -2,12 +2,13 @@
 Views REST API para o app de contatos.
 """
 from rest_framework import viewsets, filters, status
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from apps.accounts.permissions import is_master_user
+from apps.accounts.tenant_scope import get_user_organization, filter_by_user_organization
 from .models import Contact
 from .serializers import (
     ContactListSerializer,
@@ -35,9 +36,19 @@ class ContactViewSet(viewsets.ModelViewSet):
     ).distinct().order_by('name')
     UserModel = get_user_model()
 
+    def _has_master_team_scope(self):
+        user = self.request.user
+        if not user.is_authenticated or not is_master_user(user):
+            return False
+
+        return self.request.query_params.get('team_scope') == 'all'
+
     def _get_master_scope_user(self):
         user = self.request.user
         if not user.is_authenticated or not is_master_user(user):
+            return None
+
+        if self._has_master_team_scope():
             return None
 
         team_member_id = self.request.query_params.get('team_member_id')
@@ -45,7 +56,11 @@ class ContactViewSet(viewsets.ModelViewSet):
             return None
 
         try:
-            return self.UserModel.objects.filter(id=int(team_member_id), is_active=True).first()
+            target_qs = self.UserModel.objects.filter(id=int(team_member_id), is_active=True)
+            organization = get_user_organization(user)
+            if organization is not None:
+                target_qs = target_qs.filter(profile__organization=organization)
+            return target_qs.first()
         except (TypeError, ValueError):
             return None
 
@@ -66,13 +81,19 @@ class ContactViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return queryset
 
+        queryset = filter_by_user_organization(queryset, user)
+
         scope_user = self._get_master_scope_user()
         if scope_user is not None:
-            queryset = queryset.filter(Q(owner=scope_user) | Q(owner__isnull=True))
+            queryset = queryset.filter(owner=scope_user)
         elif is_master_user(user):
-            queryset = queryset
+            if self._has_master_team_scope():
+                queryset = queryset
+            else:
+                # Master vê seus próprios contatos + contatos legados sem owner (owner=NULL)
+                queryset = queryset.filter(Q(owner=user) | Q(owner__isnull=True))
         else:
-            queryset = queryset.filter(Q(owner=user) | Q(owner__isnull=True))
+            queryset = queryset.filter(owner=user)
 
         data_inicio = self.request.query_params.get('data_inicio')
         data_fim = self.request.query_params.get('data_fim')
@@ -132,10 +153,11 @@ class ContactViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         owner = self._resolve_contact_owner_for_create()
+        organization = get_user_organization(owner or request.user)
         if owner is not None:
-            contact = serializer.save(owner=owner)
+            contact = serializer.save(owner=owner, organization=organization)
         else:
-            contact = serializer.save()
+            contact = serializer.save(organization=organization)
         
         # Retorna usando ContactDetailSerializer (com campos calculados)
         detail_serializer = ContactDetailSerializer(contact, context={'request': request})
@@ -165,10 +187,11 @@ class ContactViewSet(viewsets.ModelViewSet):
         Pode adicionar lógica extra aqui (logs, notificações, etc).
         """
         owner = self._resolve_contact_owner_for_create()
+        organization = get_user_organization(owner or self.request.user)
         if owner is None:
-            contact = serializer.save()
+            contact = serializer.save(organization=organization)
         else:
-            contact = serializer.save(owner=owner)
+            contact = serializer.save(owner=owner, organization=organization)
         # TODO: Emitir evento 'contacts:changed' via WebSocket (futuro)
         return contact
     

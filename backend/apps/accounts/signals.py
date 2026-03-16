@@ -3,12 +3,14 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from .models import UserProfile
+from apps.organizations.models import Organization
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_profile_for_user(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        default_org, _ = Organization.objects.get_or_create(name='Escritório Principal')
+        UserProfile.objects.create(user=instance, organization=default_org)
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
