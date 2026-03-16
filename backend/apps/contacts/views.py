@@ -49,6 +49,17 @@ class ContactViewSet(viewsets.ModelViewSet):
         except (TypeError, ValueError):
             return None
 
+    def _resolve_contact_owner_for_create(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return None
+
+        scope_user = self._get_master_scope_user()
+        if scope_user is not None:
+            return scope_user
+
+        return user
+
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
@@ -120,7 +131,11 @@ class ContactViewSet(viewsets.ModelViewSet):
         # Valida e cria usando ContactCreateUpdateSerializer
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        contact = serializer.save()
+        owner = self._resolve_contact_owner_for_create()
+        if owner is not None:
+            contact = serializer.save(owner=owner)
+        else:
+            contact = serializer.save()
         
         # Retorna usando ContactDetailSerializer (com campos calculados)
         detail_serializer = ContactDetailSerializer(contact, context={'request': request})
@@ -149,13 +164,11 @@ class ContactViewSet(viewsets.ModelViewSet):
         Hook executado ao criar contato.
         Pode adicionar lógica extra aqui (logs, notificações, etc).
         """
-        user = self.request.user
-        if not user.is_authenticated:
+        owner = self._resolve_contact_owner_for_create()
+        if owner is None:
             contact = serializer.save()
-        elif is_master_user(user):
-            contact = serializer.save(owner=user)
         else:
-            contact = serializer.save(owner=user)
+            contact = serializer.save(owner=owner)
         # TODO: Emitir evento 'contacts:changed' via WebSocket (futuro)
         return contact
     

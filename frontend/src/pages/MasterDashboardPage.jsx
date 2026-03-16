@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ContactCard from '../components/ContactCard';
 import contactsAPI from '../services/api';
@@ -35,6 +36,7 @@ function formatCurrency(value) {
 
 export default function MasterDashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const today = getTodayIsoDate();
   const [selectedLawyer, setSelectedLawyer] = useState('all');
@@ -102,9 +104,20 @@ export default function MasterDashboardPage() {
               Etapa 1 (protótipo): filtro principal por advogado, data inicial e data final.
             </p>
           </div>
-          <button className="master-admin-btn-add" type="button">
-            + Adicionar Novo Membro
-          </button>
+          <div className="master-admin-header-actions">
+            <button className="master-admin-btn-add" type="button">
+              + Adicionar Novo Membro
+            </button>
+            <button
+              className="master-admin-btn-close"
+              type="button"
+              onClick={() => navigate('/')}
+              aria-label="Fechar painel administrativo"
+              title="Fechar painel"
+            >
+              ✕
+            </button>
+          </div>
         </header>
 
         <div className="master-admin-filters-grid">
