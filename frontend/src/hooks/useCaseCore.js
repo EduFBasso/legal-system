@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import casesService from '../services/casesService';
 import publicationsService from '../services/publicationsService';
 import { notifyPublicationSync } from '../services/publicationSync';
+import { useSettings } from '../contexts/SettingsContext';
 
 /**
  * useCaseCore
@@ -23,6 +24,8 @@ export function useCaseCore(
   onCaseCreated,
   onCaseDeleted,
 ) {
+  const { settings } = useSettings();
+
   // Estado principal do caso
   const [caseData, setCaseData] = useState(null);
   const [formData, setFormData] = useState({});
@@ -173,11 +176,12 @@ export function useCaseCore(
       if (!id) {
         // Criar novo caso
         const created = await casesService.create(cleanedData);
+        let publicationIntegrationSkipped = false;
 
         let failedParties = 0;
         for (const party of parties) {
           try {
-            const { casePartiesService } = await import('../services/casePartiesService');
+            const { default: casePartiesService } = await import('../services/casePartiesService');
             await casePartiesService.createParty({
               case: created.id,
               contact: party.contact,
@@ -192,31 +196,37 @@ export function useCaseCore(
         }
 
         const pubId = sourcePublication?.id_api || publicationId;
-        const shouldCreateMovement = systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
+        const shouldAutoIntegratePublication = settings?.autoIntegration ?? false;
+        const shouldCreateMovement = shouldAutoIntegratePublication
+          && systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
 
         if (pubId) {
-          try {
-            const integrationResult = await publicationsService.integratePublication(pubId, {
-              caseId: created.id,
-              createMovement: shouldCreateMovement,
-            });
+          if (shouldAutoIntegratePublication) {
+            try {
+              const integrationResult = await publicationsService.integratePublication(pubId, {
+                caseId: created.id,
+                createMovement: shouldCreateMovement,
+              });
 
-            if (shouldCreateMovement && integrationResult?.movement_created !== true) {
-              try {
-                await publicationsService.createMovementFromPublication(pubId);
-              } catch (fallbackError) {
-                console.warn('Fallback de criação de movimentação falhou:', fallbackError);
+              if (shouldCreateMovement && integrationResult?.movement_created !== true) {
+                try {
+                  await publicationsService.createMovementFromPublication(pubId);
+                } catch (fallbackError) {
+                  console.warn('Fallback de criação de movimentação falhou:', fallbackError);
+                }
               }
-            }
 
-            notifyPublicationSync({
-              type: 'PUBLICATION_INTEGRATED',
-              idApi: Number(pubId),
-              caseId: created.id,
-            });
-          } catch (integrationError) {
-            console.error('Error integrating source publication:', integrationError);
-            showToast('Processo criado, mas houve falha ao vincular a publicação automaticamente', 'warning');
+              notifyPublicationSync({
+                type: 'PUBLICATION_INTEGRATED',
+                idApi: Number(pubId),
+                caseId: created.id,
+              });
+            } catch (integrationError) {
+              console.error('Error integrating source publication:', integrationError);
+              showToast('Processo criado, mas houve falha ao vincular a publicação automaticamente', 'warning');
+            }
+          } else {
+            publicationIntegrationSkipped = true;
           }
         }
 
@@ -230,6 +240,8 @@ export function useCaseCore(
 
         if (failedParties > 0) {
           showToast(`Processo criado! ${failedParties} parte(s) não foram vinculadas`, 'warning');
+        } else if (publicationIntegrationSkipped) {
+          showToast('Processo criado com sucesso! Publicação mantida como não vinculada (integração automática desativada).', 'success');
         } else {
           showToast('Processo criado com sucesso!', 'success');
         }
