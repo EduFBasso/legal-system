@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
+from apps.organizations.models import Organization
 
 
 class Notification(models.Model):
@@ -37,6 +38,16 @@ class Notification(models.Model):
         related_name='owned_notifications',
         db_index=True,
         verbose_name='Dono'
+    )
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notifications',
+        verbose_name='Organização',
+        help_text='Organização (tenant) desta notificação'
     )
 
     type = models.CharField(
@@ -114,6 +125,18 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"{self.get_type_display()} - {self.title}"
+
+    def save(self, *args, **kwargs):
+        if self.organization_id is None:
+            if self.owner_id is not None:
+                profile = getattr(self.owner, 'profile', None)
+                if profile and profile.organization_id is not None:
+                    self.organization_id = profile.organization_id
+
+            if self.organization_id is None:
+                default_org, _ = Organization.objects.get_or_create(name='Escritório Principal')
+                self.organization = default_org
+        super().save(*args, **kwargs)
     
     def mark_as_read(self):
         """Marca notificação como lida."""

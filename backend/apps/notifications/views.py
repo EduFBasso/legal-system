@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Q
 from apps.accounts.permissions import is_master_user
+from apps.accounts.tenant_scope import get_user_organization, filter_by_user_organization
 from .models import Notification
 from .serializers import (
     NotificationSerializer,
@@ -37,9 +38,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return queryset
+        queryset = filter_by_user_organization(queryset, user)
         if is_master_user(user):
             return queryset
-        return queryset.filter(Q(owner=user) | Q(owner__isnull=True))
+        return queryset.filter(owner=user)
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -48,15 +50,16 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
+        organization = get_user_organization(user)
         if user.is_authenticated:
-            serializer.save(owner=user)
+            serializer.save(owner=user, organization=organization)
         else:
             serializer.save()
     
     @action(detail=False, methods=['get'])
     def unread(self, request):
         """Retorna apenas notificações não lidas."""
-        unread_notifications = self.queryset.filter(read=False)
+        unread_notifications = self.get_queryset().filter(read=False)
         serializer = self.get_serializer(unread_notifications, many=True)
         return Response({
             'count': unread_notifications.count(),
@@ -66,18 +69,19 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """Retorna estatísticas de notificações."""
-        total = self.queryset.count()
-        unread = self.queryset.filter(read=False).count()
+        queryset = self.get_queryset()
+        total = queryset.count()
+        unread = queryset.filter(read=False).count()
         
         by_type = {}
-        for notification in self.queryset.filter(read=False):
+        for notification in queryset.filter(read=False):
             type_key = notification.type
             if type_key not in by_type:
                 by_type[type_key] = 0
             by_type[type_key] += 1
         
         by_priority = {}
-        for notification in self.queryset.filter(read=False):
+        for notification in queryset.filter(read=False):
             priority_key = notification.priority
             if priority_key not in by_priority:
                 by_priority[priority_key] = 0
@@ -98,12 +102,13 @@ class NotificationViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         
         notification_ids = serializer.validated_data.get('notification_ids', [])
+        queryset = self.get_queryset()
         
         if notification_ids:
-            notifications = self.queryset.filter(id__in=notification_ids, read=False)
+            notifications = queryset.filter(id__in=notification_ids, read=False)
         else:
             # Se não especificar IDs, marca todas como lidas
-            notifications = self.queryset.filter(read=False)
+            notifications = queryset.filter(read=False)
         
         count = 0
         for notification in notifications:
@@ -119,7 +124,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def mark_all_read(self, request):
         """Marca todas as notificações como lidas."""
-        unread = self.queryset.filter(read=False)
+        unread = self.get_queryset().filter(read=False)
         count = 0
         
         for notification in unread:
@@ -161,7 +166,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
                 'message': 'Nenhuma notificação especificada'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        deleted_count = self.queryset.filter(id__in=notification_ids).delete()[0]
+        deleted_count = self.get_queryset().filter(id__in=notification_ids).delete()[0]
         
         return Response({
             'success': True,
@@ -172,7 +177,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def delete_all(self, request):
         """Deleta todas as notificações."""
-        deleted_count = self.queryset.all().delete()[0]
+        deleted_count = self.get_queryset().all().delete()[0]
         
         return Response({
             'success': True,
@@ -205,8 +210,14 @@ class NotificationViewSet(viewsets.ModelViewSet):
             data_limite_prazo__gte=today,
             data_limite_prazo__lte=future_limit
         ).select_related('case').order_by('data_limite_prazo')
-        if user.is_authenticated and not is_master_user(user):
-            movements_with_deadlines = movements_with_deadlines.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+        if user.is_authenticated:
+            organization = get_user_organization(user)
+            if organization is None:
+                movements_with_deadlines = movements_with_deadlines.none()
+            else:
+                movements_with_deadlines = movements_with_deadlines.filter(case__organization=organization)
+                if not is_master_user(user):
+                    movements_with_deadlines = movements_with_deadlines.filter(case__owner=user)
         
         created_count = 0
         skipped_count = 0

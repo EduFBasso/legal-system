@@ -32,7 +32,7 @@ def _apply_owner_filter(queryset, user, owner_field='owner'):
         return queryset
     if is_master_user(user):
         return queryset
-    return queryset.filter(models.Q(**{owner_field: user}) | models.Q(**{f'{owner_field}__isnull': True}))
+    return queryset.filter(**{owner_field: user})
 
 
 def normalize_string(text):

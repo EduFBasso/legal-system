@@ -4,6 +4,8 @@ from django.core.validators import RegexValidator
 from django.conf import settings
 
 
+from apps.organizations.models import Organization
+
 class Case(models.Model):
     """
     Processo judicial - núcleo central do sistema.
@@ -53,6 +55,14 @@ class Case(models.Model):
         blank=True,
         default='',
         help_text='Vara/Turma/Câmara'
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cases',
+        help_text='Organização (tenant) deste processo'
     )
 
     tipo_acao = models.CharField(
@@ -375,6 +385,16 @@ class Case(models.Model):
         return self.numero_processo
 
     def save(self, *args, **kwargs):
+        if self.organization_id is None:
+            if self.owner_id is not None:
+                profile = getattr(self.owner, 'profile', None)
+                if profile and profile.organization_id is not None:
+                    self.organization_id = profile.organization_id
+
+            if self.organization_id is None:
+                default_org, _ = Organization.objects.get_or_create(name='Escritório Principal')
+                self.organization = default_org
+
         # Auto-preencher numero_processo_unformatted
         if self.numero_processo:
             self.numero_processo_unformatted = ''.join(filter(str.isdigit, self.numero_processo))

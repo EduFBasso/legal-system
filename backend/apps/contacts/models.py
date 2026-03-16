@@ -6,6 +6,8 @@ from django.core.validators import RegexValidator
 from django.conf import settings
 
 
+from apps.organizations.models import Organization
+
 class Contact(models.Model):
     """
     Representa um contato (pessoa física ou jurídica).
@@ -38,6 +40,14 @@ class Contact(models.Model):
         related_name='owned_contacts',
         db_index=True,
         help_text='Responsável pelo escopo deste contato'
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='contacts',
+        help_text='Organização (tenant) deste contato'
     )
     
     # Nome Fantasia (apenas para PJ)
@@ -105,6 +115,18 @@ class Contact(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.get_person_type_display()})"
+
+    def save(self, *args, **kwargs):
+        if self.organization_id is None:
+            if self.owner_id is not None:
+                profile = getattr(self.owner, 'profile', None)
+                if profile and profile.organization_id is not None:
+                    self.organization_id = profile.organization_id
+
+            if self.organization_id is None:
+                default_org, _ = Organization.objects.get_or_create(name='Escritório Principal')
+                self.organization = default_org
+        super().save(*args, **kwargs)
     
     # === Properties para lógica de exibição no mini-card ===
     

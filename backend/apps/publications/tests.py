@@ -1,11 +1,72 @@
 from datetime import date, timedelta
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.test import APIClient
 
+from apps.accounts.models import UserProfile
 from apps.cases.models import Case, CaseMovement
 from apps.publications.models import Publication, SearchHistory
 from apps.publications.views import _create_movement_from_publication, _extract_prazo_days
+
+
+class PublicationOwnershipFilterTests(TestCase):
+	def setUp(self):
+		self.client = APIClient()
+		self.user = User.objects.create_user(username='advogado', password='testpass123')
+		self.user.profile.role = UserProfile.ROLE_ADVOGADO
+		self.user.profile.save()
+		self.client.force_authenticate(user=self.user)
+
+		self.user_search = SearchHistory.objects.create(
+			owner=self.user,
+			data_inicio=date(2026, 3, 1),
+			data_fim=date(2026, 3, 1),
+			tribunais=['TJSP'],
+			total_publicacoes=1,
+			total_novas=1,
+		)
+		SearchHistory.objects.create(
+			data_inicio=date(2026, 3, 2),
+			data_fim=date(2026, 3, 2),
+			tribunais=['TJSP'],
+			total_publicacoes=5,
+			total_novas=5,
+		)
+
+		Publication.objects.create(
+			owner=self.user,
+			id_api=910000001,
+			numero_processo='0000001-23.2026.8.26.0100',
+			tribunal='TJSP',
+			tipo_comunicacao='Intimação',
+			data_disponibilizacao=date(2026, 3, 1),
+			orgao='1ª Vara',
+			meio='D',
+			texto_resumo='Publicação do usuário',
+			texto_completo='Texto da publicação do usuário.',
+		)
+		Publication.objects.create(
+			id_api=910000002,
+			numero_processo='0000002-23.2026.8.26.0100',
+			tribunal='TJSP',
+			tipo_comunicacao='Intimação',
+			data_disponibilizacao=date(2026, 3, 2),
+			orgao='2ª Vara',
+			meio='D',
+			texto_resumo='Publicação sem dono',
+			texto_completo='Texto da publicação sem dono.',
+		)
+
+	def test_last_search_ignores_ownerless_records_for_non_master(self):
+		response = self.client.get(reverse('publications:last_search'))
+
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertTrue(payload['success'])
+		self.assertEqual(payload['last_search']['id'], self.user_search.id)
+		self.assertEqual(payload['last_search']['total_publicacoes'], 1)
 
 
 class PublicationMovementDeadlineTests(TestCase):
