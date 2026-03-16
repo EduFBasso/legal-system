@@ -2,10 +2,15 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 
+from apps.accounts.models import UserProfile
 from apps.cases.models import Case, CaseMovement
 from apps.publications.models import Publication, SearchHistory
-from apps.publications.views import _create_movement_from_publication, _extract_prazo_days
+from apps.publications.views import _build_case_suggestion, _create_movement_from_publication, _extract_prazo_days
+
+
+User = get_user_model()
 
 
 class PublicationMovementDeadlineTests(TestCase):
@@ -237,3 +242,49 @@ class PublicationBatchIntegrateManualCaseFallbackTests(TestCase):
 		self.pub.refresh_from_db()
 		self.assertEqual(self.pub.integration_status, 'INTEGRATED')
 		self.assertEqual(self.pub.case_id, self.case.id)
+
+
+class PublicationCaseSuggestionScopeTests(TestCase):
+	def setUp(self):
+		self.master = User.objects.create_user(username='master_scope', password='123456', email='master_scope@example.com')
+		master_profile = self.master.profile
+		master_profile.role = UserProfile.ROLE_MASTER
+		master_profile.full_name_oab = 'Master Scope'
+		master_profile.oab_number = 'OAB 1000'
+		master_profile.save(update_fields=['role', 'full_name_oab', 'oab_number'])
+
+		self.advogado = User.objects.create_user(username='adv_scope', password='123456', email='adv_scope@example.com')
+		adv_profile = self.advogado.profile
+		adv_profile.role = UserProfile.ROLE_ADVOGADO
+		adv_profile.full_name_oab = 'Adv Scope'
+		adv_profile.oab_number = 'OAB 2000'
+		adv_profile.save(update_fields=['role', 'full_name_oab', 'oab_number'])
+
+	def test_master_does_not_get_case_suggestion_from_other_lawyer_case(self):
+		Case.objects.create(
+			numero_processo='1000000-00.2026.8.26.0001',
+			titulo='Caso do advogado',
+			tribunal='TJSP',
+			comarca='São Paulo',
+			status='ATIVO',
+			owner=self.advogado,
+		)
+
+		suggestion = _build_case_suggestion('1000000-00.2026.8.26.0001', user=self.master)
+
+		self.assertIsNone(suggestion)
+
+	def test_master_gets_case_suggestion_for_own_case(self):
+		case = Case.objects.create(
+			numero_processo='2000000-00.2026.8.26.0001',
+			titulo='Caso do master',
+			tribunal='TJSP',
+			comarca='São Paulo',
+			status='ATIVO',
+			owner=self.master,
+		)
+
+		suggestion = _build_case_suggestion('2000000-00.2026.8.26.0001', user=self.master)
+
+		self.assertIsNotNone(suggestion)
+		self.assertEqual(suggestion['id'], case.id)

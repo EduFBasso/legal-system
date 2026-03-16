@@ -32,7 +32,7 @@ def _apply_owner_filter(queryset, user, owner_field='owner'):
     if not user or not user.is_authenticated:
         return queryset
     if is_master_user(user):
-        return queryset
+        return queryset.filter(build_owner_scope_q(user, owner_field=owner_field, include_ownerless=False))
     return queryset.filter(build_owner_scope_q(user, owner_field=owner_field, include_ownerless=False))
 
 
@@ -73,8 +73,11 @@ def _find_case_by_numero_processo(numero_processo, user=None):
         return None
 
     case_queryset = Case.objects.all()
-    if user is not None and user.is_authenticated and not is_master_user(user):
-        case_queryset = case_queryset.filter(build_owner_scope_q(user, include_ownerless=True))
+    if user is not None and user.is_authenticated:
+        if is_master_user(user):
+            case_queryset = case_queryset.filter(build_owner_scope_q(user, include_ownerless=False))
+        else:
+            case_queryset = case_queryset.filter(build_owner_scope_q(user, include_ownerless=True))
 
     case = case_queryset.filter(numero_processo_unformatted=numero_limpo).first()
     if case:
@@ -1049,8 +1052,11 @@ def integrate_publication(request, id_api):
             raise Publication.DoesNotExist
 
         case_queryset = Case.objects.filter(id=case_id)
-        if user.is_authenticated and not is_master_user(user):
-            case_queryset = apply_user_owned_or_shared(case_queryset, user)
+        if user.is_authenticated:
+            if is_master_user(user):
+                case_queryset = case_queryset.filter(build_owner_scope_q(user, include_ownerless=False))
+            else:
+                case_queryset = apply_user_owned_or_shared(case_queryset, user)
         case = case_queryset.first()
         if not case:
             raise Case.DoesNotExist
@@ -1064,7 +1070,7 @@ def integrate_publication(request, id_api):
                 metadata__id_api=id_api,
                 read=False
             )
-            if user.is_authenticated and not is_master_user(user):
+            if user.is_authenticated:
                 notification = notification.filter(owner=user)
             notification = notification.first()
             if notification:
