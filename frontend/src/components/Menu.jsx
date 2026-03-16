@@ -6,12 +6,9 @@ import { subscribePublicationSync } from '../services/publicationSync';
 import caseTasksService from '../services/caseTasksService';
 import { subscribeToTaskUpdates } from '../services/taskSyncService';
 import SettingsModal from './SettingsModal';
-import { useAuth } from '../contexts/AuthContext';
 import './Menu.css';
 
 export default function Menu({ isAuthenticated, onBlockedAction }) {
-  const { user } = useAuth();
-  const isMaster = user?.role === 'MASTER';
   const [pendingCount, setPendingCount] = useState(0);
   const [scheduledTasksCount, setScheduledTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -91,7 +88,7 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
 
     const loadScheduledTasksCount = async () => {
       try {
-        const tasks = await caseTasksService.getAllTasks();
+        const tasks = await caseTasksService.getAllTasks({ exclude_ownerless: '1' });
         if (Array.isArray(tasks)) {
           const activeCount = tasks.filter((task) => task.status !== 'CONCLUIDA').length;
           setScheduledTasksCount(activeCount);
@@ -172,12 +169,6 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
           </li>
 
           <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
-
-          {isMaster && (
-            <li className="menu-item">
-              {renderMenuLink({ to: '/master', icon: '🔑', label: 'Painel Master' })}
-            </li>
-          )}
 
           <li className="menu-item">
             <button

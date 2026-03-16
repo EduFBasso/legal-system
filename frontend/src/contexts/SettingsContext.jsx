@@ -4,31 +4,57 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const SettingsContext = createContext();
 
+const AUTH_STORAGE_KEY = 'legal_system_auth';
+
+function safeJsonParse(value, fallback) {
+  try {
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function getCurrentSettingsStorageKey() {
+  const auth = safeJsonParse(localStorage.getItem(AUTH_STORAGE_KEY), null);
+  const userKey = auth?.user?.id || auth?.user?.email || 'anonymous';
+  return `legalSystemSettings:${userKey}`;
+}
+
+function getDefaultSettings() {
+  return {
+    showEmptyFields: false,
+    deletePassword: '',
+    retroactiveDays: 7,
+    autoIntegration: false,
+    showNotificationTestButtons: false,
+  };
+}
+
+function loadSettingsForCurrentUser() {
+  const savedSettings = localStorage.getItem(getCurrentSettingsStorageKey());
+  if (savedSettings) {
+    return safeJsonParse(savedSettings, getDefaultSettings());
+  }
+  return getDefaultSettings();
+}
+
 export function SettingsProvider({ children }) {
   // Carrega configurações do localStorage ou usa padrões
-  const [settings, setSettings] = useState(() => {
-    const savedSettings = localStorage.getItem('legalSystemSettings');
-    if (savedSettings) {
-      try {
-        return JSON.parse(savedSettings);
-      } catch (e) {
-        console.error('Error parsing settings:', e);
-      }
-    }
-    // Padrão: só mostra campos preenchidos (visual limpo)
-    return {
-      showEmptyFields: false,
-      deletePassword: '',
-      retroactiveDays: 7,  // Notificações para publicações dos últimos 7 dias
-      autoIntegration: false,  // Integração automática de publicações
-      showNotificationTestButtons: false, // Exibe botões de teste na página de notificações
-    };
-  });
+  const [settings, setSettings] = useState(() => loadSettingsForCurrentUser());
 
   // Salva no localStorage quando mudar
   useEffect(() => {
-    localStorage.setItem('legalSystemSettings', JSON.stringify(settings));
+    localStorage.setItem(getCurrentSettingsStorageKey(), JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    const handleAuthChanged = () => {
+      setSettings(loadSettingsForCurrentUser());
+    };
+
+    window.addEventListener('auth:changed', handleAuthChanged);
+    return () => window.removeEventListener('auth:changed', handleAuthChanged);
+  }, []);
 
   const updateSettings = (newSettings) => {
     setSettings((prev) => ({

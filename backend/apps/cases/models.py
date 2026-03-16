@@ -369,6 +369,32 @@ class Case(models.Model):
 
         self.save(update_fields=['status'])
 
+    def sync_cliente_principal_from_parties(self, save=True):
+        """
+        Sincroniza campos-atalho (cliente_principal/cliente_posicao)
+        com base na parte marcada como cliente em CaseParty.
+        """
+        client_party = self.parties.select_related('contact').filter(is_client=True).order_by('-created_at', '-id').first()
+
+        new_cliente_principal = client_party.contact if client_party else None
+        new_cliente_posicao = client_party.role if client_party and client_party.role in {'AUTOR', 'REU'} else ''
+
+        changed_fields = []
+        new_cliente_principal_id = new_cliente_principal.id if new_cliente_principal else None
+
+        if self.cliente_principal_id != new_cliente_principal_id:
+            self.cliente_principal = new_cliente_principal
+            changed_fields.append('cliente_principal')
+
+        if self.cliente_posicao != new_cliente_posicao:
+            self.cliente_posicao = new_cliente_posicao
+            changed_fields.append('cliente_posicao')
+
+        if save and changed_fields:
+            self.save(update_fields=changed_fields)
+
+        return bool(changed_fields)
+
     def __str__(self):
         if self.titulo:
             return f"{self.numero_processo} - {self.titulo}"
@@ -445,6 +471,17 @@ class CaseParty(models.Model):
 
     def __str__(self):
         return f"{self.contact.name} - {self.get_role_display()} ({self.case.numero_processo})"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.case_id:
+            self.case.sync_cliente_principal_from_parties(save=True)
+
+    def delete(self, *args, **kwargs):
+        case = self.case
+        super().delete(*args, **kwargs)
+        if case:
+            case.sync_cliente_principal_from_parties(save=True)
 
 
 class CaseMovement(models.Model):

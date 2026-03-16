@@ -177,7 +177,7 @@ function MovimentacoesTab({
       handleCancelCreateMovimentacao();
     } catch (error) {
       console.error('Error creating movimentacao:', error);
-      alert('Erro ao criar movimentação');
+      alert(`Erro ao criar movimentação:\n${error.message || error}`);
     } finally {
       setSavingMovimentacao(false);
     }

@@ -1386,6 +1386,13 @@
   align-items: center;
 }
 
+.section-owner-label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-right: 0.5rem;
+}
+
 .parties-list {
   display: flex;
   flex-direction: column;

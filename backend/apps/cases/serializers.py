@@ -1,7 +1,6 @@
-"""
-Serializers for Cases app
-"""
+"""Serializers for Cases app"""
 import unicodedata
+from datetime import date
 from rest_framework import serializers
 from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
 
@@ -72,6 +71,14 @@ class CaseMovementSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'data_limite_prazo', 'created_at', 'updated_at', 'orgao', 'publication_data', 'prazos']
     
+    def validate_data(self, value):
+        """Movimentações registram eventos passados — data futura não é permitida."""
+        if value > date.today():
+            raise serializers.ValidationError(
+                'A data da movimentação não pode ser futura.'
+            )
+        return value
+
     def get_tasks_count(self, obj):
         """Retorna a quantidade de tarefas vinculadas a esta movimentação"""
         return obj.tasks.count()
@@ -412,6 +419,10 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     publicacao_origem_tipo = serializers.CharField(source='publicacao_origem.tipo_comunicacao', read_only=True, allow_null=True)
     publicacao_origem_numero_processo = serializers.CharField(source='publicacao_origem.numero_processo', read_only=True, allow_null=True)
     
+    # Owner (advogado responsável)
+    owner_name = serializers.CharField(source='owner.profile.full_name_oab', read_only=True, default='')
+    owner_oab = serializers.CharField(source='owner.profile.oab_number', read_only=True, default='')
+
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
     
@@ -462,6 +473,8 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'publicacao_origem_data',
             'publicacao_origem_tipo',
             'publicacao_origem_numero_processo',
+            'owner_name',
+            'owner_oab',
             'parties',
             'participation_type',
             'participation_percentage',

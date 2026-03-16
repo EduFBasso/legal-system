@@ -31,18 +31,15 @@
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: slideUp 0.3s ease;
 }
 
+/* Avoid transform in Safari/WebKit: transform creates a new stacking context
+   that breaks touch hit-testing on fixed overlays (iOS bug) */
 @keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .modal-header {
@@ -158,6 +155,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  /* Eliminate 300ms tap delay and fix touch hit-test on iOS Safari */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-cancel {
@@ -175,12 +175,11 @@
 }
 
 .btn-create:hover:not(:disabled) {
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .btn-create:active:not(:disabled) {
-  transform: translateY(0);
+  opacity: 0.9;
 }
 
 .btn-cancel:disabled,

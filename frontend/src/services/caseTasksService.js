@@ -8,8 +8,9 @@ export const getTasksByMovimento = async (movimentacaoId) => {
   return await apiFetch(`/case-tasks/?movimentacao_id=${movimentacaoId}`);
 };
 
-export const getAllTasks = async () => {
-  return await apiFetch('/case-tasks/');
+export const getAllTasks = async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  return await apiFetch(`/case-tasks/${queryString ? `?${queryString}` : ''}`);
 };
 
 export const createTask = async (taskData) => {

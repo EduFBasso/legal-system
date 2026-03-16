@@ -24,6 +24,13 @@ export function NotificationsProvider({ children }) {
     return headers;
   };
 
+  const resetNotificationsState = useCallback(() => {
+    setNotifications([]);
+    setUnreadCount(0);
+    setError(null);
+    setShownNotifications(new Set());
+  }, []);
+
   // Solicitar permissão para Web Notifications
   useEffect(() => {
     if ('Notification' in window) {
@@ -358,8 +365,7 @@ export function NotificationsProvider({ children }) {
   // Polling: Buscar notificações a cada 30 segundos
   useEffect(() => {
     if (!getAuthToken()) {
-      setUnreadCount(0);
-      setNotifications([]);
+      resetNotificationsState();
       return;
     }
 
@@ -372,7 +378,7 @@ export function NotificationsProvider({ children }) {
     }, POLL_INTERVAL);
     
     return () => clearInterval(interval);
-  }, [fetchUnreadNotifications]);
+  }, [fetchUnreadNotifications, resetNotificationsState]);
 
   // Atualizar notificações ao finalizar busca de publicações
   // Inclui retries curtos para cobrir criação assíncrona no backend
@@ -416,6 +422,18 @@ export function NotificationsProvider({ children }) {
       }
     };
   }, [fetchUnreadNotifications]);
+
+  useEffect(() => {
+    const handleAuthChanged = () => {
+      resetNotificationsState();
+      if (getAuthToken()) {
+        fetchUnreadNotifications();
+      }
+    };
+
+    window.addEventListener('auth:changed', handleAuthChanged);
+    return () => window.removeEventListener('auth:changed', handleAuthChanged);
+  }, [fetchUnreadNotifications, resetNotificationsState]);
 
   const value = {
     notifications,

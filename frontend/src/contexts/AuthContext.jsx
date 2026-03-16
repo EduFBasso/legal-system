@@ -28,6 +28,16 @@ function persistAuth(authData) {
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
 }
 
+function emitAuthChanged(authData) {
+  window.dispatchEvent(new CustomEvent('auth:changed', {
+    detail: {
+      userId: authData?.user?.id ?? null,
+      userEmail: authData?.user?.email ?? null,
+      isAuthenticated: Boolean(authData?.access && authData?.user),
+    },
+  }));
+}
+
 function mergeLawyers(existing, incoming) {
   const map = new Map();
   [...existing, ...incoming].forEach((lawyer) => {
@@ -59,6 +69,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     persistAuth(auth);
+    emitAuthChanged(auth);
   }, [auth]);
 
   useEffect(() => {

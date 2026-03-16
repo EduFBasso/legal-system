@@ -80,6 +80,13 @@
   opacity: 1;
 }
 
+.scope-context {
+  margin: 4px 0 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-gray-800);
+}
+
 /* Estatísticas */
 .deadlines-stats {
   display: grid;

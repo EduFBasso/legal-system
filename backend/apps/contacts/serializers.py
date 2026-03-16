@@ -2,12 +2,16 @@
 Serializers para API REST do app de contatos.
 """
 from rest_framework import serializers
-from django.db.models import Q
 from django.contrib.auth import get_user_model
 from apps.accounts.permissions import is_master_user
+from apps.accounts.scope import get_master_scope_user, has_master_team_scope
 from .models import Contact
 
 UserModel = get_user_model()
+
+
+def _has_full_team_scope(request):
+    return has_master_team_scope(request)
 
 
 def _get_scope_user(request):
@@ -18,14 +22,13 @@ def _get_scope_user(request):
     if not is_master_user(user):
         return user
 
-    team_member_id = request.query_params.get('team_member_id') if request else None
-    if not team_member_id:
+    if _has_full_team_scope(request):
         return None
 
-    try:
-        return UserModel.objects.filter(id=int(team_member_id), is_active=True).first()
-    except (TypeError, ValueError):
-        return None
+    scope_user = get_master_scope_user(request, UserModel)
+    if scope_user is not None:
+        return scope_user
+    return user
 
 
 class ContactListSerializer(serializers.ModelSerializer):
@@ -88,9 +91,9 @@ class ContactListSerializer(serializers.ModelSerializer):
 
         queryset = obj.case_roles.filter(is_client=True, case__deleted=False)
         if scope_user is not None:
-            queryset = queryset.filter(Q(case__owner=scope_user) | Q(case__owner__isnull=True))
-        elif user and user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            queryset = queryset.filter(case__owner=scope_user)
+        elif user and user.is_authenticated and not _has_full_team_scope(request):
+            queryset = queryset.filter(case__owner=user)
 
         return queryset.exists()
     
@@ -104,9 +107,9 @@ class ContactListSerializer(serializers.ModelSerializer):
 
         case_parties = obj.case_roles.select_related('case').filter(case__deleted=False)
         if scope_user is not None:
-            case_parties = case_parties.filter(Q(case__owner=scope_user) | Q(case__owner__isnull=True))
-        elif user and user.is_authenticated and not is_master_user(user):
-            case_parties = case_parties.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            case_parties = case_parties.filter(case__owner=scope_user)
+        elif user and user.is_authenticated and not _has_full_team_scope(request):
+            case_parties = case_parties.filter(case__owner=user)
 
         return [
             {
@@ -204,9 +207,9 @@ class ContactDetailSerializer(serializers.ModelSerializer):
 
         queryset = obj.case_roles.filter(is_client=True, case__deleted=False)
         if scope_user is not None:
-            queryset = queryset.filter(Q(case__owner=scope_user) | Q(case__owner__isnull=True))
-        elif user and user.is_authenticated and not is_master_user(user):
-            queryset = queryset.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            queryset = queryset.filter(case__owner=scope_user)
+        elif user and user.is_authenticated and not _has_full_team_scope(request):
+            queryset = queryset.filter(case__owner=user)
 
         return queryset.exists()
     
@@ -221,9 +224,9 @@ class ContactDetailSerializer(serializers.ModelSerializer):
 
         case_parties = obj.case_roles.select_related('case').filter(case__deleted=False)
         if scope_user is not None:
-            case_parties = case_parties.filter(Q(case__owner=scope_user) | Q(case__owner__isnull=True))
-        elif user and user.is_authenticated and not is_master_user(user):
-            case_parties = case_parties.filter(Q(case__owner=user) | Q(case__owner__isnull=True))
+            case_parties = case_parties.filter(case__owner=scope_user)
+        elif user and user.is_authenticated and not _has_full_team_scope(request):
+            case_parties = case_parties.filter(case__owner=user)
 
         return [
             {

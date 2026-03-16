@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import publicationsService from '../services/publicationsService';
+import { getAuthToken } from '../utils/apiFetch';
 
 /**
  * Custom hook para gerenciar estado e operações de publicações
@@ -41,6 +42,15 @@ export function usePublications() {
     setToast(prev => ({ ...prev, show: false }));
   }, []);
 
+  const resetState = useCallback(() => {
+    setPublications([]);
+    setSearchParams(null);
+    setLastSearch(null);
+    setSelectedPublication(null);
+    setIsModalOpen(false);
+    setToast({ show: false, message: '', type: 'info' });
+  }, []);
+
   /**
    * Carrega informações da última busca
    */
@@ -49,9 +59,12 @@ export function usePublications() {
       const data = await publicationsService.getLastSearchInfo();
       if (data.success && data.last_search) {
         setLastSearch(data.last_search);
+      } else {
+        setLastSearch(null);
       }
     } catch (error) {
       console.error('Erro ao carregar última busca:', error);
+      setLastSearch(null);
     }
   }, []);
 
@@ -209,6 +222,18 @@ export function usePublications() {
   useEffect(() => {
     fetchLastSearch();
   }, [fetchLastSearch]);
+
+  useEffect(() => {
+    const handleAuthChanged = () => {
+      resetState();
+      if (getAuthToken()) {
+        fetchLastSearch();
+      }
+    };
+
+    window.addEventListener('auth:changed', handleAuthChanged);
+    return () => window.removeEventListener('auth:changed', handleAuthChanged);
+  }, [fetchLastSearch, resetState]);
 
   return {
     // Estado

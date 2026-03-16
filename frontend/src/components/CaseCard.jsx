@@ -71,8 +71,8 @@ export default function CaseCard({ caseData, onClick }) {
    */
   const getUrgencyBadge = () => {
     if (caseData.dias_sem_movimentacao === null) return null;
-    
-    if (!caseData.esta_ativo) {
+
+    if (caseData.dias_sem_movimentacao > 90) {
       return (
         <span className="badge badge-inactive">
           {caseData.dias_sem_movimentacao}d sem movimento
@@ -135,7 +135,7 @@ export default function CaseCard({ caseData, onClick }) {
           >
             {caseData.status_display || caseData.status}
           </span>
-          {!caseData.esta_ativo && (
+          {caseData.dias_sem_movimentacao !== null && caseData.dias_sem_movimentacao > 90 && (
             <span className="badge badge-auto-status-inactive">
               Inativo &gt;90d
             </span>

@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import caseTasksService from '../services/caseTasksService';
 import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
 import { useUrgencyVisibility } from '../hooks/useUrgencyVisibility';
@@ -20,17 +22,44 @@ import './DeadlinesPage.css';
  * Ordenadas por data de vencimento (menores prazos primeiro)
  */
 export default function DeadlinesPage() {
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null); // Para rastrear qual filtro está ativo
   const [selectedTaskId, setSelectedTaskId] = useState(null); // Para rastrear qual tarefa está selecionada
 
+  const tasksQueryParams = useMemo(() => {
+    const params = {};
+    const teamMemberId = searchParams.get('team_member_id');
+    const teamScope = searchParams.get('team_scope');
+    const excludeOwnerSelf = searchParams.get('exclude_owner_self');
+    const excludeOwnerless = searchParams.get('exclude_ownerless');
+
+    if (teamMemberId) params.team_member_id = teamMemberId;
+    if (teamScope) params.team_scope = teamScope;
+    if (excludeOwnerSelf) params.exclude_owner_self = excludeOwnerSelf;
+    if (excludeOwnerless) params.exclude_ownerless = excludeOwnerless;
+
+    return params;
+  }, [searchParams]);
+
+  const scopeLabel = searchParams.get('scope_label') || '';
+
+  const displayLabel = useMemo(() => {
+    if (scopeLabel) return scopeLabel;
+    if (!user) return '';
+    const name = user.full_name_oab || user.first_name || user.username || '';
+    const oab = user.oab_number || '';
+    return oab ? `${name} ${oab}` : name;
+  }, [scopeLabel, user]);
+
   // Buscar todas as tarefas do sistema
   const fetchAllTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await caseTasksService.getAllTasks();
+      const data = await caseTasksService.getAllTasks(tasksQueryParams);
       setTasks(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
@@ -40,7 +69,7 @@ export default function DeadlinesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tasksQueryParams]);
 
   useEffect(() => {
     fetchAllTasks();
@@ -187,6 +216,7 @@ export default function DeadlinesPage() {
       <div className="deadlines-page">
         <div className="page-header">
           <h1>⏰ Tarefas por Urgência</h1>
+          {displayLabel && <p className="scope-context">{displayLabel}</p>}
         </div>
         <div className="loading-state">
           <div className="spinner"></div>
@@ -201,6 +231,7 @@ export default function DeadlinesPage() {
       <div className="deadlines-page">
         <div className="page-header">
           <h1>⏰ Tarefas por Urgência</h1>
+          {displayLabel && <p className="scope-context">{displayLabel}</p>}
         </div>
         <div className="error-state">
           <p>❌ {error}</p>
@@ -219,6 +250,7 @@ export default function DeadlinesPage() {
             {totalTasks} {totalTasks === 1 ? 'tarefa' : 'tarefas'} 
             {completedTasks > 0 && ` • ${completedTasks} concluída(s)`}
           </p>
+          {displayLabel && <p className="scope-context">{displayLabel}</p>}
         </div>
       </div>
 

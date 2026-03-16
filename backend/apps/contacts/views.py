@@ -8,6 +8,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from apps.accounts.permissions import is_master_user
+from apps.accounts.scope import (
+    apply_master_team_scope,
+    apply_user_owned_or_shared,
+    get_master_scope_user,
+    has_master_team_scope,
+    is_truthy,
+)
 from .models import Contact
 from .serializers import (
     ContactListSerializer,
@@ -35,19 +42,23 @@ class ContactViewSet(viewsets.ModelViewSet):
     ).distinct().order_by('name')
     UserModel = get_user_model()
 
-    def _get_master_scope_user(self):
+    def _should_exclude_master_own(self):
         user = self.request.user
         if not user.is_authenticated or not is_master_user(user):
-            return None
+            return False
+        return is_truthy(self.request.query_params.get('exclude_owner_self'))
 
-        team_member_id = self.request.query_params.get('team_member_id')
-        if not team_member_id:
-            return None
+    def _should_exclude_ownerless(self):
+        user = self.request.user
+        if not user.is_authenticated or not is_master_user(user):
+            return False
+        return is_truthy(self.request.query_params.get('exclude_ownerless'))
 
-        try:
-            return self.UserModel.objects.filter(id=int(team_member_id), is_active=True).first()
-        except (TypeError, ValueError):
-            return None
+    def _has_master_team_scope(self):
+        return has_master_team_scope(self.request)
+
+    def _get_master_scope_user(self):
+        return get_master_scope_user(self.request, self.UserModel)
 
     def _resolve_contact_owner_for_create(self):
         user = self.request.user
@@ -68,11 +79,14 @@ class ContactViewSet(viewsets.ModelViewSet):
 
         scope_user = self._get_master_scope_user()
         if scope_user is not None:
-            queryset = queryset.filter(Q(owner=scope_user) | Q(owner__isnull=True))
+            queryset = queryset.filter(owner=scope_user)
         elif is_master_user(user):
-            queryset = queryset
+            if self._has_master_team_scope():
+                queryset = apply_master_team_scope(queryset, self.request, self.UserModel)
+            else:
+                queryset = apply_user_owned_or_shared(queryset, user)
         else:
-            queryset = queryset.filter(Q(owner=user) | Q(owner__isnull=True))
+            queryset = queryset.filter(owner=user)
 
         data_inicio = self.request.query_params.get('data_inicio')
         data_fim = self.request.query_params.get('data_fim')

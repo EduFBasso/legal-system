@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { BellRing } from 'lucide-react';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -20,7 +20,6 @@ import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
-import MasterPage from './pages/MasterPage';
 import MasterDashboardPage from './pages/MasterDashboardPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
@@ -69,8 +68,8 @@ function App() {
                         <MasterDashboardPage />
                       </div>
                     )
-                    : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>)
-                : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+                    : <Navigate to="/" replace />)
+                : <Navigate to="/" replace />}
             />
 
             {/* Rotas normais com layout padrão */}
@@ -96,7 +95,7 @@ function App() {
                         <Route path="/deadlines" element={<DeadlinesPage />} />
                         <Route
                           path="/master"
-                          element={user?.role === 'MASTER' ? <MasterPage /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
+                          element={user?.role === 'MASTER' ? <Navigate to="/painel-master" replace /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
                         />
                       </Routes>
                     ) : (

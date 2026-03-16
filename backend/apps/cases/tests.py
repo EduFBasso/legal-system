@@ -249,6 +249,34 @@ class CasePartyModelTest(TestCase):
         expected = f'{self.contact1.name} - Cliente/Representado ({self.case.numero_processo})'
         self.assertEqual(str(party), expected)
 
+    def test_caseparty_client_syncs_case_shortcut_fields(self):
+        """is_client=True deve sincronizar cliente_principal/cliente_posicao no Case"""
+        CaseParty.objects.create(
+            case=self.case,
+            contact=self.contact1,
+            role='AUTOR',
+            is_client=True,
+        )
+
+        self.case.refresh_from_db()
+        self.assertEqual(self.case.cliente_principal_id, self.contact1.id)
+        self.assertEqual(self.case.cliente_posicao, 'AUTOR')
+
+    def test_caseparty_client_delete_clears_case_shortcut_fields(self):
+        """Ao remover parte cliente, campos-atalho do Case devem ser limpos"""
+        party = CaseParty.objects.create(
+            case=self.case,
+            contact=self.contact1,
+            role='AUTOR',
+            is_client=True,
+        )
+
+        party.delete()
+        self.case.refresh_from_db()
+
+        self.assertIsNone(self.case.cliente_principal)
+        self.assertEqual(self.case.cliente_posicao, '')
+
 
 class CaseAPITest(APITestCase):
     """Test Case API endpoints"""

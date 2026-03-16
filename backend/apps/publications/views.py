@@ -12,6 +12,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from apps.accounts.permissions import is_master_user
+from apps.accounts.scope import apply_user_owned_or_shared, build_owner_scope_q
 
 from services.pje_comunica import PJeComunicaService
 from apps.notifications.models import Notification
@@ -32,7 +33,7 @@ def _apply_owner_filter(queryset, user, owner_field='owner'):
         return queryset
     if is_master_user(user):
         return queryset
-    return queryset.filter(models.Q(**{owner_field: user}) | models.Q(**{f'{owner_field}__isnull': True}))
+    return queryset.filter(build_owner_scope_q(user, owner_field=owner_field, include_ownerless=False))
 
 
 def normalize_string(text):
@@ -73,7 +74,7 @@ def _find_case_by_numero_processo(numero_processo, user=None):
 
     case_queryset = Case.objects.all()
     if user is not None and user.is_authenticated and not is_master_user(user):
-        case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
+        case_queryset = case_queryset.filter(build_owner_scope_q(user, include_ownerless=True))
 
     case = case_queryset.filter(numero_processo_unformatted=numero_limpo).first()
     if case:
@@ -1049,7 +1050,7 @@ def integrate_publication(request, id_api):
 
         case_queryset = Case.objects.filter(id=case_id)
         if user.is_authenticated and not is_master_user(user):
-            case_queryset = case_queryset.filter(models.Q(owner=user) | models.Q(owner__isnull=True))
+            case_queryset = apply_user_owned_or_shared(case_queryset, user)
         case = case_queryset.first()
         if not case:
             raise Case.DoesNotExist

@@ -124,6 +124,7 @@ class ContactAPITest(APITestCase):
             document_number='170.140.798-16',
             mobile='(19) 99019-8519',
             email='joao@example.com',
+            owner=self.user,
         )
         
         self.contact2 = Contact.objects.create(
@@ -131,6 +132,7 @@ class ContactAPITest(APITestCase):
             person_type='PF',
             document_number='123.456.789-00',
             mobile='(11) 98765-4321',
+            owner=self.user,
         )
         
         self.contact3 = Contact.objects.create(
@@ -138,6 +140,7 @@ class ContactAPITest(APITestCase):
             person_type='PJ',
             document_number='12.345.678/0001-90',
             phone='(11) 3000-0000',
+            owner=self.user,
         )
         
         # Create a case for testing search by process number
@@ -148,6 +151,7 @@ class ContactAPITest(APITestCase):
             comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
+            owner=self.user,
         )
         
         # Link contact1 to case
@@ -256,6 +260,7 @@ class ContactAPITest(APITestCase):
             comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
+            owner=self.user,
         )
         CaseParty.objects.create(
             case=case2,
@@ -268,17 +273,93 @@ class ContactAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
+    def test_non_master_only_sees_own_contacts(self):
+        other_user = User.objects.create_user(
+            username='otheruser',
+            password='testpass123'
+        )
+        Contact.objects.create(
+            name='Contato de Outro Usuário',
+            person_type='PF',
+            owner=other_user,
+        )
+
+        response = self.client.get('/api/contacts/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertIn(self.contact1.id, returned_ids)
+        self.assertIn(self.contact2.id, returned_ids)
+        self.assertIn(self.contact3.id, returned_ids)
+        self.assertNotIn(
+            Contact.objects.get(name='Contato de Outro Usuário').id,
+            returned_ids,
+        )
+
+    def test_master_default_scope_only_returns_own_contacts(self):
+        master = User.objects.create_user(username='masteronly', password='testpass123')
+        master.profile.role = 'MASTER'
+        master.profile.save()
+
+        own_contact = Contact.objects.create(
+            name='Contato do Master',
+            person_type='PF',
+            owner=master,
+        )
+        Contact.objects.create(
+            name='Contato da Equipe',
+            person_type='PF',
+            owner=self.user,
+        )
+        ownerless_contact = Contact.objects.create(
+            name='Contato Sem Dono',
+            person_type='PF',
+        )
+
+        self.client.force_authenticate(user=master)
+        response = self.client.get('/api/contacts/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertIn(own_contact.id, returned_ids)
+        self.assertIn(ownerless_contact.id, returned_ids)
+        self.assertNotIn(self.contact1.id, returned_ids)
+
+    def test_master_team_scope_all_returns_team_contacts(self):
+        master = User.objects.create_user(username='masterteam', password='testpass123')
+        master.profile.role = 'MASTER'
+        master.profile.save()
+
+        own_contact = Contact.objects.create(
+            name='Contato do Master',
+            person_type='PF',
+            owner=master,
+        )
+
+        self.client.force_authenticate(user=master)
+        response = self.client.get(f'/api/contacts/?team_scope=all&team_member_id={self.user.id}')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertIn(own_contact.id, returned_ids)
+        self.assertIn(self.contact1.id, returned_ids)
+
 
 class ContactSerializerTest(TestCase):
     """Test Contact serializers"""
     
     def setUp(self):
         """Set up test data"""
+        self.user = User.objects.create_user(
+            username='serializeruser',
+            password='testpass123'
+        )
+
         self.contact = Contact.objects.create(
             name='Test Contact',
             person_type='PF',
             document_number='123.456.789-00',
             mobile='(11) 91234-5678',
+            owner=self.user,
         )
         
         self.case = Case.objects.create(
@@ -288,6 +369,7 @@ class ContactSerializerTest(TestCase):
             comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
+            owner=self.user,
         )
         
         self.party = CaseParty.objects.create(
@@ -369,6 +451,7 @@ class ContactSerializerTest(TestCase):
             comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
+            owner=self.user,
         )
         party2 = CaseParty.objects.create(
             case=case2,
@@ -403,6 +486,7 @@ class ContactCasePartyIntegrationTest(APITestCase):
         self.contact = Contact.objects.create(
             name='João Silva',
             person_type='PF',
+            owner=self.user,
         )
         
         self.case = Case.objects.create(
@@ -412,6 +496,7 @@ class ContactCasePartyIntegrationTest(APITestCase):
             comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
+            owner=self.user,
         )
     
     def test_link_contact_to_case(self):

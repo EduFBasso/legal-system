@@ -1,0 +1,28 @@
+/* MovimentacaoEditForm.css */
+
+.mov-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Grid cells must declare min-width: 0 to prevent children
+   from overflowing the grid track (Safari/WebKit requirement) */
+.mov-form-row > div {
+  min-width: 0;
+}
+
+/* Constrain date input which has an intrinsic minimum width in WebKit */
+.mov-form-row input[type="date"] {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Touch devices (iPad, mobile): stacks vertically to prevent
+   native WebKit select popover from overlapping adjacent fields */
+@media (pointer: coarse) {
+  .mov-form-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -122,6 +122,11 @@ function InformacaoTab({
             {isEditing ? '✏️ Editando Informações' : '📋 Detalhes do Processo'}
           </h2>
           <div className="section-header-actions">
+            {!isEditing && formData.owner_name && (
+              <span className="section-owner-label">
+                {formData.owner_name}{formData.owner_oab ? ` ${formData.owner_oab}` : ''}
+              </span>
+            )}
             {!isEditing && (
               <>
                 <EditButton onClick={() => {

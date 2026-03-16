@@ -1,6 +1,7 @@
 import { Check, X } from 'lucide-react';
 import { MOVIMENTO_TIPOS } from '../../utils/movementUtils';
 import { caseTheme } from './caseTheme';
+import './MovimentacaoEditForm.css';
 
 /**
  * MovimentacaoEditForm - Formulário inline para editar movimentação
@@ -38,9 +39,9 @@ export default function MovimentacaoEditForm({
         Editar Movimentação (inline)
       </h4>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+      <div className="mov-form-row">
         {/* Data */}
-        <div>
+        <div style={{ minWidth: 0 }}>
           <label style={{ 
             display: 'block', 
             marginBottom: '0.5rem', 
@@ -56,7 +57,10 @@ export default function MovimentacaoEditForm({
             onChange={(e) => handleChange('data', e.target.value)}
             max={new Date().toISOString().split('T')[0]}
             style={{
-              width: '100%',
+              width: '1px',
+              minWidth: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
               padding: '0.75rem',
               border: `1px solid ${caseTheme.form.border}`,
               borderRadius: '6px',
