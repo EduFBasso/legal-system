@@ -82,7 +82,7 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       window.removeEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
       window.removeEventListener('focus', handleWindowFocus);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -123,7 +123,7 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       }
       window.removeEventListener('focus', handleFocus);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
   
   return (
     <>

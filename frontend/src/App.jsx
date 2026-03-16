@@ -30,6 +30,7 @@ import './styles/highlight.css'; // Sistema de destaque reutilizável
 
 function App() {
   const { isAuthenticated, showNotLoggedMessage, user } = useAuth();
+  const sessionKey = user?.id ? `user-${user.id}` : 'anonymous';
 
   // Initialize task synchronization across tabs
   useEffect(() => {
@@ -39,8 +40,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <NotificationsProvider>
-        <PublicationsProvider>
+      <NotificationsProvider key={`notifications-${sessionKey}`}>
+        <PublicationsProvider key={`publications-${sessionKey}`}>
           <Routes>
             {/* Rotas dedicadas para processos (full width, sem sidebar) */}
             <Route
@@ -80,7 +81,7 @@ function App() {
                 {/* <Breadcrumb /> */}
                 
                 <div className="app-layout">
-                  <Menu isAuthenticated={isAuthenticated} onBlockedAction={showNotLoggedMessage} />
+                  <Menu key={`menu-${sessionKey}`} isAuthenticated={isAuthenticated} onBlockedAction={showNotLoggedMessage} />
                   
                   <MainContent>
                     {isAuthenticated ? (

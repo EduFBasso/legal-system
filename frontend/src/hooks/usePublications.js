@@ -49,9 +49,12 @@ export function usePublications() {
       const data = await publicationsService.getLastSearchInfo();
       if (data.success && data.last_search) {
         setLastSearch(data.last_search);
+      } else {
+        setLastSearch(null);
       }
     } catch (error) {
       console.error('Erro ao carregar última busca:', error);
+      setLastSearch(null);
     }
   }, []);
 
