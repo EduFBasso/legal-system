@@ -58,6 +58,11 @@ Thumbs.db
 # === Dados/Fixtures ===
 data/*.db
 
+# === Dados sensíveis do escritório (nunca versionar) ===
+*.csv
+processos.csv
+NotificationsContext.backup.jsx
+
 # === Documentação de Desenvolvimento (temporária) ===
 backend/info/
 frontend/info/
@@ -86,3 +91,4 @@ nssm.zip
 backend_service.cmd
 frontend_service.cmd
 
+processos.csv
