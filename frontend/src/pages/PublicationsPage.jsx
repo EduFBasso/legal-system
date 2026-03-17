@@ -15,6 +15,12 @@ import {
   getPublicationDeleteBlockedMessage,
   getPublicationDeleteSuccessMessage,
 } from '../utils/publicationDeleteFeedback';
+import {
+  openCaseDetailWindow,
+  openCaseMovementsWindow,
+  openCreateCaseFromPublicationWindow,
+  openPublicationDetailsWindow,
+} from '../utils/publicationNavigation';
 import './PublicationsPage.css';
 
 /**
@@ -238,11 +244,12 @@ export default function PublicationsPage() {
       try {
         const result = await publicationsService.integratePublication(pub.id_api, {
           caseId: pub.case_suggestion.id,
-          createMovement: false
+          createMovement: true
         });
 
         if (result.success) {
           showToast('✅ Publicação integrada com sucesso!', 'success');
+          openCaseMovementsWindow(pub.case_suggestion.id);
           await loadLastSearch();
         } else {
           showToast(result.error || '❌ Erro ao integrar publicação', 'error');
@@ -256,7 +263,7 @@ export default function PublicationsPage() {
         'Nenhum caso foi encontrado automaticamente. Deseja deixar pendente para integração posterior?'
       );
       if (!confirmed) {
-        window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+        openCreateCaseFromPublicationWindow(pub.id_api);
       } else {
         try {
           const result = await publicationsService.integratePublication(pub.id_api, {
@@ -285,7 +292,7 @@ export default function PublicationsPage() {
 
       if (linkedCaseId) {
         showToast(`✅ Publicação já vinculada ao caso #${linkedCaseId}`, 'success');
-        window.open(`/cases/${linkedCaseId}`, '_blank', 'noopener,noreferrer');
+        openCaseDetailWindow(linkedCaseId);
         await loadLastSearch();
         return;
       }
@@ -303,9 +310,9 @@ export default function PublicationsPage() {
         }
       }
 
-      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+      openCreateCaseFromPublicationWindow(pub.id_api);
     } catch {
-      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+      openCreateCaseFromPublicationWindow(pub.id_api);
     }
   };
 

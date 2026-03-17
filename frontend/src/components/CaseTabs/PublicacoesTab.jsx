@@ -3,6 +3,7 @@ import { Link2, FileText, Calendar, Building2, ExternalLink, PlusCircle } from '
 import EmptyState from '../common/EmptyState';
 import { formatDate } from '../../utils/formatters';
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../../utils/consultaLinksHelper';
+import { openPublicationDetailsWindow } from '../../utils/publicationNavigation';
 import './PublicacoesTab.css';
 
 /**
@@ -40,8 +41,7 @@ function PublicacoesTab({
    * Abre página de detalhes da publicação em nova janela
    */
   const handleOpenPublicationDetails = (pub) => {
-    const url = `/publications/${pub.id_api}/details`;
-    window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+    openPublicationDetailsWindow(pub.id_api);
   };
 
   /**

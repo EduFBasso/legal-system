@@ -429,9 +429,14 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     def get_ultima_movimentacao_resumo(self, obj):
         """
         Retorna resumo da última movimentação cadastrada.
+        Prioriza descrição (que pode conter HTML) e volta a título se não houver.
         """
         ultima = obj.movimentacoes.order_by('-data').first()
         if ultima:
+            # Prioriza descrição completa (pode ter HTML)
+            if ultima.descricao:
+                return ultima.descricao
+            # Volta para título se não houver descrição
             return ultima.titulo
         return None
     

@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { useHighlight } from '../hooks/useHighlight';
+import { routeNotification } from '../utils/notificationRouting';
 import './NotificationsSummary.css';
 
 /**
@@ -55,10 +56,17 @@ export default function NotificationsSummary() {
   };
 
   const handleNotificationClick = async (notificationId) => {
+    const notification = notifications.find((item) => item.id === notificationId);
+    if (!notification) return;
+
     // Marcar como lida
     await markAsRead(notificationId);
-    // Navegar para a página de notificações
-    navigate('/notifications');
+
+    routeNotification({
+      notification,
+      navigate,
+      mode: 'notifications',
+    });
   };
 
   const handleStaleAlertClick = async (item) => {

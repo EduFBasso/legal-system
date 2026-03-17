@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { getAuthToken } from '../utils/apiFetch';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
@@ -13,7 +13,7 @@ export function NotificationsProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [permission, setPermission] = useState('default');
-  const [shownNotifications, setShownNotifications] = useState(new Set()); // IDs já exibidas
+  const shownNotificationsRef = useRef(new Set()); // IDs já exibidas - usar ref para evitar re-renders
 
   const buildAuthHeaders = (json = false) => {
     const token = getAuthToken();
@@ -25,10 +25,10 @@ export function NotificationsProvider({ children }) {
   };
 
   const resetNotificationsState = useCallback(() => {
-    setNotifications([]);
-    setUnreadCount(0);
-    setError(null);
-    setShownNotifications(new Set());
+    setNotifications(prev => (prev.length === 0 ? prev : []));
+    setUnreadCount(prev => (prev === 0 ? prev : 0));
+    setError(prev => (prev === null ? prev : null));
+    shownNotificationsRef.current = new Set();
   }, []);
 
   // Solicitar permissão para Web Notifications
@@ -51,7 +51,7 @@ export function NotificationsProvider({ children }) {
   const showWebNotification = useCallback((notification) => {
     if (permission !== 'granted') return;
     // Verificar se já foi exibida nesta sessão
-    if (shownNotifications.has(notification.id)) {
+    if (shownNotificationsRef.current.has(notification.id)) {
       return;
     }
     
@@ -70,7 +70,7 @@ export function NotificationsProvider({ children }) {
     const webNotification = new Notification(notification.title, options);
     
     // Marcar como já exibida
-    setShownNotifications(prev => new Set([...prev, notification.id]));
+    shownNotificationsRef.current = new Set([...shownNotificationsRef.current, notification.id]);
     
     // Quando clicar: marcar como lida e navegar
     webNotification.onclick = async () => {
@@ -95,7 +95,7 @@ export function NotificationsProvider({ children }) {
       }
       webNotification.close();
     };
-  }, [permission, shownNotifications]);
+  }, [permission]);
 
   // Buscar notificações não lidas
   const fetchUnreadNotifications = useCallback(async () => {
@@ -212,11 +212,7 @@ export function NotificationsProvider({ children }) {
           setUnreadCount(prev => Math.max(0, prev - 1));
         } else {
           // Se foi marcada como não lida, permitir reexibir
-          setShownNotifications(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(notificationId);
-            return newSet;
-          });
+          shownNotificationsRef.current.delete(notificationId);
           setUnreadCount(prev => prev + 1);
         }
         return true;
@@ -273,7 +269,7 @@ export function NotificationsProvider({ children }) {
 
   // Limpar cache de notificações exibidas (útil para testes)
   const clearShownNotifications = () => {
-    setShownNotifications(new Set());
+    shownNotificationsRef.current = new Set();
   };
 
   // Deletar notificação individual

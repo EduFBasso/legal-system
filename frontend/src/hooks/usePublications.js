@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import publicationsService from '../services/publicationsService';
 import { getAuthToken } from '../utils/apiFetch';
+import { openPublicationDetailsWindow } from '../utils/publicationNavigation';
 
 /**
  * Custom hook para gerenciar estado e operações de publicações
@@ -204,8 +205,7 @@ export function usePublications() {
    * Abre os detalhes de uma publicação em uma nova janela
    */
   const openModal = useCallback((publication) => {
-    const url = `/publications/${publication.id_api}/details`;
-    window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+    openPublicationDetailsWindow(publication.id_api);
   }, []);
 
   /**

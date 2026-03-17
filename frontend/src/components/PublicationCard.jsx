@@ -1,4 +1,6 @@
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
+import { getPublicationActionState } from '../utils/publicationActionState';
+import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import './PublicationCard.css';
 
 export default function PublicationCard({ 
@@ -129,7 +131,7 @@ export default function PublicationCard({
     onDelete();
   };
 
-  const isIntegrated = publication.integration_status === 'INTEGRATED' || !!publication.case_id;
+  const actionState = getPublicationActionState(publication, caseSuggestion);
 
   return (
     <div className={cardClassName} onClick={handleCardClick}>      {selectionMode && (
@@ -203,42 +205,28 @@ export default function PublicationCard({
       {/* Action Buttons Section (Integrar, Criar caso, etc.) */}
       {showActionButtons && (
         <div className="publication-actions">
-          {isIntegrated ? (
-            <button
-              className="btn-integrate"
-              onClick={(e) => {
-                e.stopPropagation();
+          <button
+            className={actionState.className}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (actionState.key === 'integrated') {
                 if (publication.case_id) {
-                  window.open(`/cases/${publication.case_id}`, '_blank', 'noopener,noreferrer');
+                  openCaseDetailWindow(publication.case_id);
                 }
-              }}
-              title={publication.case_id ? `Clique para abrir o caso #${publication.case_id}` : 'Publicação já integrada'}
-            >
-              ✅ Caso já criado/vinculado
-            </button>
-          ) : caseSuggestion ? (
-            <button
-              className="btn-integrate"
-              onClick={(e) => {
-                e.stopPropagation();
+                return;
+              }
+
+              if (actionState.key === 'suggested') {
                 onIntegrate();
-              }}
-              title="Vincular ao caso sugerido"
-            >
-              🔗 Vincular ao Caso #{caseSuggestion.id}
-            </button>
-          ) : (
-            <button
-              className="btn-create-case"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCreateCase();
-              }}
-              title="Criar novo caso para esta publicação"
-            >
-              ➕ Criar Caso
-            </button>
-          )}
+                return;
+              }
+
+              onCreateCase();
+            }}
+            title={actionState.title}
+          >
+            {actionState.label}
+          </button>
         </div>
       )}
 

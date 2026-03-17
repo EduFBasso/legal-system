@@ -3,6 +3,7 @@ import { useUrgencyVisibility } from '../../hooks/useUrgencyVisibility';
 import caseTasksService from '../../services/caseTasksService';
 import { notifyTaskUpdate } from '../../services/taskSyncService';
 import useSyncTaskUpdates from '../../hooks/useSyncTaskUpdates';
+import { openCaseDetailWindow } from '../../utils/publicationNavigation';
 import {
   getTaskUrgency,
   formatDaysRemaining,
@@ -84,9 +85,9 @@ export default function TasksTab({
     },
   });
 
-  // Abre case em nova janela
+  // Abre case em nova aba
   const handleOpenCase = (caseIdParam) => {
-    window.open(`/cases/${caseIdParam}`, '_blank', 'width=1400,height=900,left=100,top=100');
+    openCaseDetailWindow(caseIdParam);
   };
 
   // Agrupa e ordena tarefas por urgência

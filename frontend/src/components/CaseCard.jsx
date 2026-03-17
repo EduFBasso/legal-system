@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import './CaseCard.css';
 
 /**
@@ -21,8 +22,8 @@ export default function CaseCard({ caseData, onClick }) {
       return;
     }
     
-    // Abre em nova janela
-    window.open(`/cases/${caseData.id}`, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+    // Abre em nova aba
+    openCaseDetailWindow(caseData.id);
   };
 
   /**

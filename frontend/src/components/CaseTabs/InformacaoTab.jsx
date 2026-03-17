@@ -37,6 +37,11 @@ function InformacaoTab({
   tipoAcaoOptions = [],
   onInputChange = () => {},
 }) {
+  const sanitizeHTML = (html) => {
+    if (!html) return '';
+    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  };
+
   const hasPublicationOrigin = Boolean(formData.publicacao_origem && (formData.publicacao_origem_tipo || formData.publicacao_origem_data));
 
   const handleOpenMovimentacoesFromOrigem = () => {
@@ -402,7 +407,10 @@ function InformacaoTab({
                         <div className="detail-value-stacked">
                           <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
                           {formData.ultima_movimentacao_resumo && (
-                            <span className="detail-value-sub">{formData.ultima_movimentacao_resumo}</span>
+                            <div
+                              className="detail-value-sub"
+                              dangerouslySetInnerHTML={{ __html: sanitizeHTML(formData.ultima_movimentacao_resumo) }}
+                            />
                           )}
                           <button
                             className="btn-link detail-partes-hint"

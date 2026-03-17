@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import publicationsService from '../services/publicationsService';
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
+import {
+  openCaseDetailWindow,
+  openCaseMovementsWindow,
+  openCreateCaseFromPublicationWindow,
+} from '../utils/publicationNavigation';
+import { getPublicationActionState } from '../utils/publicationActionState';
 import './PublicationDetailsPage.css';
 
 console.log('📦 PublicationsService importado:', publicationsService);
@@ -56,7 +62,45 @@ export default function PublicationDetailsPage() {
   const handleCreateCase = () => {
     const publicationId = publication?.id_api || idApi;
     if (!publicationId) return;
-    window.open(`/cases/new?pub_id=${publicationId}`, '_blank', 'noopener,noreferrer');
+    openCreateCaseFromPublicationWindow(publicationId);
+  };
+
+  const handleActionClick = async () => {
+    if (!publication) return;
+
+    const actionState = getPublicationActionState(publication, publication.case_suggestion);
+
+    if (actionState.key === 'integrated') {
+      if (publication.case_id) {
+        openCaseDetailWindow(publication.case_id);
+      }
+      return;
+    }
+
+    if (actionState.key === 'suggested' && publication.case_suggestion?.id) {
+      try {
+        const targetCaseId = publication.case_suggestion.id;
+        const result = await publicationsService.integratePublication(publication.id_api, {
+          caseId: targetCaseId,
+          createMovement: true,
+        });
+
+        if (result?.success) {
+          openCaseMovementsWindow(targetCaseId);
+          setPublication((prev) => ({
+            ...prev,
+            integration_status: 'INTEGRATED',
+            case_id: targetCaseId,
+            case_suggestion: null,
+          }));
+          return;
+        }
+      } catch {
+        // fallback abaixo
+      }
+    }
+
+    handleCreateCase();
   };
 
   const handleCopyProcesso = async (e) => {
@@ -153,7 +197,7 @@ export default function PublicationDetailsPage() {
   const texto = publication.texto_completo || publication.texto_resumo || 'Texto não disponível';
   const isHTMLContent = isHTML(texto);
   const consultaLinks = generateAllConsultaLinks(publication);
-  const isIntegrated = publication.integration_status === 'INTEGRATED' || !!publication.case_id;
+  const actionState = getPublicationActionState(publication, publication.case_suggestion);
 
   return (
     <div className="publication-details-page">
@@ -177,17 +221,15 @@ export default function PublicationDetailsPage() {
               </span>
             </div>
           </div>
-          {!isIntegrated && (
-            <div className="header-actions">
-              <button
-                className="btn-create-case-top"
-                onClick={handleCreateCase}
-                title="Criar novo caso para esta publicação"
-              >
-                ➕ Criar Caso
-              </button>
-            </div>
-          )}
+          <div className="header-actions">
+            <button
+              className="btn-create-case-top"
+              onClick={handleActionClick}
+              title={actionState.title}
+            >
+              {actionState.label}
+            </button>
+          </div>
         </div>
       </div>
 

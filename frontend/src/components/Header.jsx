@@ -28,13 +28,12 @@ export default function Header() {
   };
 
   const isMasterUser = user?.role === 'MASTER';
-  const masterName = getFirstName(user?.full_name_oab) || getFirstName(user?.first_name) || getFirstName(user?.username) || 'Advogada';
-  const regularName = getFirstName(user?.first_name) || getFirstName(user?.username) || 'Advogada';
-  const oabLabel = user?.oab_number ? `OAB N° ${user.oab_number}` : '';
-  const professionalPrefix = 'Dr(a).';
-  const displayName = isMasterUser
-    ? `${professionalPrefix} ${masterName}${oabLabel ? ` ${oabLabel}` : ''}`.trim()
-    : `${professionalPrefix} ${regularName}${oabLabel ? ` ${oabLabel}` : ''}`.trim();
+  const firstName = getFirstName(user?.first_name)
+    || getFirstName(user?.full_name_oab)
+    || getFirstName(user?.username)
+    || 'Advogada';
+  const oabLabel = user?.oab_number ? ` OAB ${user.oab_number}` : '';
+  const displayName = `Olá, Dr(a) ${firstName}${oabLabel}`;
 
   const handleSubmit = async (event) => {
     event.preventDefault();

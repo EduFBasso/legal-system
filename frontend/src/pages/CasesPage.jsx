@@ -4,6 +4,7 @@ import casesService from '../services/casesService';
 import CaseCard from '../components/CaseCard';
 import Toast from '../components/common/Toast';
 import CasesFilters from '../components/CasesFilters';
+import { openCaseDetailWindow, openCreateCaseWindow } from '../utils/publicationNavigation';
 import './CasesPage.css';
 
 /**
@@ -139,16 +140,19 @@ export default function CasesPage() {
   const openCaseDetail = (caseItem) => {
     if (caseItem) {
       if (isLinkMode) {
-        const targetUrl = `/cases/${caseItem.id}?tab=parties&action=link&contactId=${linkContactId}`;
-        window.open(targetUrl, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+        openCaseDetailWindow(caseItem.id, {
+          tab: 'parties',
+          action: 'link',
+          contactId: linkContactId,
+        });
         return;
       }
 
-      // Open existing case detail page in new window/tab
-      window.open(`/cases/${caseItem.id}`, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+      // Open existing case detail page in new tab
+      openCaseDetailWindow(caseItem.id);
     } else {
-      // Open new case page in new window
-      window.open('/cases/new', '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+      // Open new case page in new tab
+      openCreateCaseWindow();
     }
   };
 

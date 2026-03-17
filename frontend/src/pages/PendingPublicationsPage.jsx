@@ -11,6 +11,12 @@ import {
   getPublicationDeleteBlockedMessage,
   getPublicationDeleteSuccessMessage,
 } from '../utils/publicationDeleteFeedback';
+import {
+  openCaseDetailWindow,
+  openCaseMovementsWindow,
+  openCreateCaseFromPublicationWindow,
+  openPublicationDetailsWindow,
+} from '../utils/publicationNavigation';
 import './PendingPublicationsPage.css';
 
 export default function PendingPublicationsPage() {
@@ -59,7 +65,7 @@ export default function PendingPublicationsPage() {
   const handleIntegrate = async (pub) => {
     if (!pub.case_suggestion?.id) {
       // Redirecionar para criar novo caso
-      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+      openCreateCaseFromPublicationWindow(pub.id_api);
       return;
     }
 
@@ -72,6 +78,9 @@ export default function PendingPublicationsPage() {
 
       if (result.success) {
         setToast({ message: '✅ Publicação vinculada com sucesso!', type: 'success' });
+        if (pub.case_suggestion?.id) {
+          openCaseMovementsWindow(pub.case_suggestion.id);
+        }
         setTimeout(() => loadPending(), 500);
       } else {
         setToast({ message: result.error || '❌ Erro ao integrar publicação', type: 'error' });
@@ -93,7 +102,7 @@ export default function PendingPublicationsPage() {
 
       if (linkedCaseId) {
         setToast({ message: `✅ Publicação já vinculada ao caso #${linkedCaseId}`, type: 'success' });
-        window.open(`/cases/${linkedCaseId}`, '_blank', 'noopener,noreferrer');
+        openCaseDetailWindow(linkedCaseId);
         await loadPending();
         return;
       }
@@ -111,17 +120,16 @@ export default function PendingPublicationsPage() {
         }
       }
 
-      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+      openCreateCaseFromPublicationWindow(pub.id_api);
     } catch {
-      window.open(`/cases/new?pub_id=${pub.id_api}`, '_blank', 'noopener,noreferrer');
+      openCreateCaseFromPublicationWindow(pub.id_api);
     } finally {
       setIntegrating(null);
     }
   };
 
   const handleOpenPublicationDetails = (pub) => {
-    const url = `/publications/${pub.id_api}/details`;
-    window.open(url, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+    openPublicationDetailsWindow(pub.id_api);
   };
 
   const handleDelete = async (pub) => {

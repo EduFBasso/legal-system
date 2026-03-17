@@ -5,6 +5,7 @@ import ContactCard from '../components/ContactCard';
 import Modal from '../components/Modal';
 import contactsAPI from '../services/api';
 import casesService from '../services/casesService';
+import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import {
   createTeamMember,
   deactivateTeamMember,
@@ -640,7 +641,7 @@ export default function MasterDashboardPage() {
                     <tr
                       key={c.id}
                       className="master-admin-cases-row"
-                      onClick={() => window.open(`/cases/${c.id}`, '_blank', 'noopener,noreferrer')}
+                      onClick={() => openCaseDetailWindow(c.id)}
                       title="Abrir processo em nova aba"
                     >
                       <td className="master-admin-cases-cell--numero">

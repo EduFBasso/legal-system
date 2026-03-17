@@ -78,7 +78,9 @@ def lawyers_for_login(request):
     results = []
     for user in users:
         profile = getattr(user, 'profile', None)
-        first_name = (user.first_name or user.username or '').strip()
+        profile_full_name = (profile.full_name_oab if profile else '') or ''
+        profile_first_name = profile_full_name.strip().split(' ')[0] if profile_full_name.strip() else ''
+        first_name = (user.first_name or profile_first_name or user.username or '').strip()
         oab_number = (profile.oab_number if profile else '') or ''
         label_name = f"{first_name} {oab_number}".strip()
         display_name = (

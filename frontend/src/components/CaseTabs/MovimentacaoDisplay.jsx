@@ -25,6 +25,22 @@ const formatLongDate = (value) => {
   });
 };
 
+const isHTML = (text) => {
+  if (!text) return false;
+  return /<[^>]+>/.test(text);
+};
+
+const sanitizeHTML = (html) => {
+  if (!html) return '';
+  return String(html)
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
+    .replace(/<\/br\s*>/gi, '<br/>');
+};
+
 export default function MovimentacaoDisplay({
   mov,
   tipoDisplay,
@@ -39,6 +55,7 @@ export default function MovimentacaoDisplay({
   const shouldShowPublicationHeader = !isManual && publicationData?.exists;
   const shouldShowOrgao = !shouldShowPublicationHeader && (!isManual || hasOrgao);
   const automaticDescription = publicationData?.texto_completo || mov?.descricao || '';
+  const automaticDescriptionIsHTML = isHTML(automaticDescription);
   const consultaLinks = publicationData?.exists
     ? generateAllConsultaLinks({
         tribunal: publicationData?.tribunal,
@@ -121,6 +138,11 @@ export default function MovimentacaoDisplay({
         <p style={movementDisplayStyles.descriptionManual}>
           {truncateAtSentence(manualDescricao || mov?.descricao || '', 180, 260) || 'Sem descrição.'}
         </p>
+      ) : automaticDescriptionIsHTML ? (
+        <div
+          style={movementDisplayStyles.descriptionAuto}
+          dangerouslySetInnerHTML={{ __html: sanitizeHTML(automaticDescription) }}
+        />
       ) : (
         <p style={movementDisplayStyles.descriptionAuto}>
           {automaticDescription || 'Movimentação automática sem descrição detalhada.'}
@@ -169,6 +191,21 @@ export default function MovimentacaoDisplay({
           >
             Editar
           </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteClick();
+            }}
+            style={movementDisplayStyles.actionButtonDelete}
+            {...deleteButtonInteractions}
+          >
+            Excluir
+          </button>
+        </div>
+      )}
+
+      {!isManual && (
+        <div style={movementDisplayStyles.actionsRow}>
           <button
             onClick={(e) => {
               e.stopPropagation();

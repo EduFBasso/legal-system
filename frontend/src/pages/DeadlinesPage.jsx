@@ -107,22 +107,25 @@ export default function DeadlinesPage() {
   };
 
   /**
-   * Abre processo/case em nova janela
+   * Abre processo/case em nova aba
    * Permite visualizar DeadlinesPage + CaseDetailPage lado a lado
    */
   const handleOpenCase = (caseId) => {
-    window.open(`/cases/${caseId}`, '_blank', 'width=1400,height=900,left=100,top=100');
+    openCaseDetailWindow(caseId);
   };
 
   /**
-   * Abre movimentação em nova janela com destaque auxiliar
+   * Abre movimentação em nova aba com destaque auxiliar
    * Seleciona a tarefa antes de abrir (feedback visual em A)
    * Destaca em MovimentacoesTab ao abrir (feedback visual em B)
    */
   const handleOpenMovement = (caseId, movementId, taskId) => {
     setSelectedTaskId(taskId); // Seleciona em DeadlinesPage
-    const url = getMovementLinkUrl(caseId, movementId, taskId);
-    window.open(url, '_blank', 'width=1400,height=900,left=100,top=100');
+    openCaseDetailWindow(caseId, {
+      tab: 'movements',
+      focusMovement: movementId,
+      focusTask: taskId,
+    });
   };
 
   /**

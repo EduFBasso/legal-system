@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count, Prefetch
+from django.db import transaction
 from django.contrib.auth import get_user_model
 from apps.accounts.permissions import is_master_user
 from apps.accounts.scope import (
@@ -29,6 +30,7 @@ def _normalize(text):
     return ''.join(c for c in nfd if unicodedata.category(c) != 'Mn').lower()
 
 from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
+from apps.publications.models import Publication
 from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
@@ -329,6 +331,46 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
         if case_id:
             queryset = queryset.filter(case_id=case_id)
         return queryset
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        """
+        Ao excluir uma movimentação gerada por publicação (DJE),
+        reverte a publicação para estado pendente e remove vínculo com caso,
+        para permitir novo fluxo manual de integração.
+        """
+        publication_id_api = instance.publicacao_id
+        case_id = instance.case_id
+
+        super().perform_destroy(instance)
+
+        # Recalcular data_ultima_movimentacao após exclusão
+        if case_id:
+            try:
+                case = Case.objects.get(id=case_id)
+                case.atualizar_data_ultima_movimentacao()
+            except Case.DoesNotExist:
+                pass
+
+        if not publication_id_api or not case_id:
+            return
+
+        still_linked_movements = CaseMovement.objects.filter(
+            case_id=case_id,
+            publicacao_id=publication_id_api,
+        ).exists()
+        if still_linked_movements:
+            return
+
+        Publication.objects.filter(
+            id_api=publication_id_api,
+            case_id=case_id,
+        ).update(
+            case=None,
+            integration_status='PENDING',
+            integration_notes='Desvinculada após exclusão manual da movimentação de origem',
+            updated_at=timezone.now(),
+        )
 
 
 class CasePrazoViewSet(viewsets.ModelViewSet):

@@ -807,6 +807,10 @@ def get_pending_publications(request):
 
         results = []
         for pub in queryset:
+            case_suggestion = None
+            if not pub.case_id and pub.integration_status != 'INTEGRATED':
+                case_suggestion = _build_case_suggestion(pub.numero_processo, user=user)
+
             results.append({
                 'id': pub.id,
                 'id_api': pub.id_api,
@@ -878,6 +882,10 @@ def get_all_publications(request):
 
         results = []
         for pub in queryset:
+            case_suggestion = None
+            if not pub.case_id and pub.integration_status != 'INTEGRATED':
+                case_suggestion = _build_case_suggestion(pub.numero_processo, user=user)
+
             results.append({
                 'id': pub.id,
                 'id_api': pub.id_api,
@@ -891,6 +899,7 @@ def get_all_publications(request):
                 'link_oficial': pub.link_oficial,
                 'integration_status': pub.integration_status,
                 'case_id': pub.case_id,
+                'case_suggestion': case_suggestion,
                 'case_numero': pub.case.numero_processo if pub.case else None,
                 'case_titulo': pub.case.titulo if pub.case else None,
                 'created_at': pub.created_at.isoformat() if pub.created_at else None,
