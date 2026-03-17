@@ -6,7 +6,7 @@ import './CaseCard.css';
  * Case Card Component
  * Displays a case summary card
  */
-export default function CaseCard({ caseData, onClick }) {
+export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
   const navigate = useNavigate();
   /**
    * Handle card click - open in new tab
@@ -119,6 +119,11 @@ export default function CaseCard({ caseData, onClick }) {
     }
   };
 
+  const handleOpenLinkedCase = (e, linkedCaseId) => {
+    e.stopPropagation();
+    openCaseDetailWindow(linkedCaseId);
+  };
+
   return (
     <div className="case-card" onClick={handleCardClick}>
       {/* Header */}
@@ -142,6 +147,11 @@ export default function CaseCard({ caseData, onClick }) {
             </span>
           )}
           {getUrgencyBadge()}
+          {linkedCases.length > 0 && (
+            <span className="badge badge-linked-cases">
+              Vinculado a {linkedCases.length} {linkedCases.length === 1 ? 'processo' : 'processos'}
+            </span>
+          )}
         </div>
       </div>
 
@@ -193,6 +203,29 @@ export default function CaseCard({ caseData, onClick }) {
             </div>
           )}
         </div>
+
+        {linkedCases.length > 0 && (
+          <div className="case-linked-group">
+            <span className="linked-group-label">Processos vinculados (mesmo cliente)</span>
+            <div className="linked-group-list">
+              {linkedCases.map((linkedCase) => (
+                <button
+                  key={linkedCase.id}
+                  className="linked-case-chip"
+                  onClick={(e) => handleOpenLinkedCase(e, linkedCase.id)}
+                  title={`Abrir processo ${linkedCase.numero_processo_formatted || linkedCase.numero_processo}`}
+                >
+                  <span className="linked-case-number">
+                    {linkedCase.numero_processo_formatted || linkedCase.numero_processo}
+                  </span>
+                  {linkedCase.status_display && (
+                    <span className="linked-case-status">{linkedCase.status_display}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tags */}
         {caseData.tags && caseData.tags.length > 0 && (

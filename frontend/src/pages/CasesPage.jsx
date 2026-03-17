@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import casesService from '../services/casesService';
 import CaseCard from '../components/CaseCard';
@@ -156,6 +156,42 @@ export default function CasesPage() {
     }
   };
 
+  const linkedCasesById = useMemo(() => {
+    const groupsByClientId = new Map();
+
+    cases.forEach((caseItem) => {
+      const clientId = caseItem?.cliente_principal;
+      if (!clientId) return;
+
+      if (!groupsByClientId.has(clientId)) {
+        groupsByClientId.set(clientId, []);
+      }
+      groupsByClientId.get(clientId).push(caseItem);
+    });
+
+    const links = new Map();
+
+    groupsByClientId.forEach((groupCases) => {
+      if (groupCases.length < 2) return;
+
+      groupCases.forEach((currentCase) => {
+        const related = groupCases
+          .filter((otherCase) => otherCase.id !== currentCase.id)
+          .map((otherCase) => ({
+            id: otherCase.id,
+            numero_processo: otherCase.numero_processo,
+            numero_processo_formatted: otherCase.numero_processo_formatted,
+            status_display: otherCase.status_display,
+            cliente_nome: otherCase.cliente_nome,
+          }));
+
+        links.set(currentCase.id, related);
+      });
+    });
+
+    return links;
+  }, [cases]);
+
   return (
     <div className="cases-page">
       <div className="cases-header">
@@ -250,6 +286,7 @@ export default function CasesPage() {
               <CaseCard
                 key={caseItem.id}
                 caseData={caseItem}
+                linkedCases={linkedCasesById.get(caseItem.id) || []}
                 onClick={() => openCaseDetail(caseItem)}
               />
             ))}

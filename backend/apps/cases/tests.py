@@ -4,6 +4,7 @@ Unit tests for Cases app
 from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import timedelta
@@ -277,6 +278,23 @@ class CasePartyModelTest(TestCase):
         self.assertIsNone(self.case.cliente_principal)
         self.assertEqual(self.case.cliente_posicao, '')
 
+    def test_caseparty_only_one_client_per_case(self):
+        """Banco deve impedir mais de um is_client=True para o mesmo processo"""
+        CaseParty.objects.create(
+            case=self.case,
+            contact=self.contact1,
+            role='AUTOR',
+            is_client=True,
+        )
+
+        with self.assertRaises(IntegrityError):
+            CaseParty.objects.create(
+                case=self.case,
+                contact=self.contact2,
+                role='REU',
+                is_client=True,
+            )
+
 
 class CaseAPITest(APITestCase):
     """Test Case API endpoints"""
@@ -522,6 +540,15 @@ class CasePartyAPITest(APITestCase):
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
+
+        self.case2 = Case.objects.create(
+            numero_processo='0000002-23.2024.8.26.0100',
+            titulo='Caso Teste 2',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
     
     def test_create_case_party(self):
         """Test creating a case party"""
@@ -567,6 +594,51 @@ class CasePartyAPITest(APITestCase):
         response = self.client.get('/api/case-parties/?role=CLIENTE')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+    def test_api_blocks_second_client_for_same_case(self):
+        """API deve bloquear 2 clientes no mesmo processo"""
+        contact2 = Contact.objects.create(name='Maria Souza', person_type='PF')
+
+        first_payload = {
+            'case': self.case.id,
+            'contact': self.contact.id,
+            'role': 'CLIENTE',
+            'is_client': True,
+        }
+        second_payload = {
+            'case': self.case.id,
+            'contact': contact2.id,
+            'role': 'CLIENTE',
+            'is_client': True,
+        }
+
+        response1 = self.client.post('/api/case-parties/', first_payload, format='json')
+        response2 = self.client.post('/api/case-parties/', second_payload, format='json')
+
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('is_client', response2.data)
+
+    def test_api_allows_same_client_in_multiple_cases(self):
+        """Mesmo contato pode ser cliente em processos diferentes"""
+        payload_case1 = {
+            'case': self.case.id,
+            'contact': self.contact.id,
+            'role': 'CLIENTE',
+            'is_client': True,
+        }
+        payload_case2 = {
+            'case': self.case2.id,
+            'contact': self.contact.id,
+            'role': 'CLIENTE',
+            'is_client': True,
+        }
+
+        response1 = self.client.post('/api/case-parties/', payload_case1, format='json')
+        response2 = self.client.post('/api/case-parties/', payload_case2, format='json')
+
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
 
 
 class CaseMovementModelTest(TestCase):

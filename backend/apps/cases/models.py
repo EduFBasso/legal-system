@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from django.conf import settings
@@ -466,6 +467,13 @@ class CaseParty(models.Model):
 
     class Meta:
         unique_together = ('case', 'contact')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['case'],
+                condition=Q(is_client=True),
+                name='unique_client_party_per_case',
+            ),
+        ]
         verbose_name = 'Parte do Processo'
         verbose_name_plural = 'Partes do Processo'
 
