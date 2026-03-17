@@ -19,8 +19,24 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'full_name_oab',
             'oab_number',
             'monitored_tribunais',
+            'publication_auto_integration',
             'is_active',
         ]
+
+
+class UserPreferencesSerializer(serializers.Serializer):
+    publication_auto_integration = serializers.BooleanField(required=False)
+
+    def update(self, user, validated_data):
+        profile = getattr(user, 'profile', None)
+        if not profile:
+            profile = UserProfile.objects.create(user=user)
+
+        if 'publication_auto_integration' in validated_data:
+            profile.publication_auto_integration = validated_data['publication_auto_integration']
+
+        profile.save(update_fields=['publication_auto_integration', 'updated_at'])
+        return profile
 
 
 class LoginTokenSerializer(TokenObtainPairSerializer):
@@ -82,6 +98,7 @@ class LoginTokenSerializer(TokenObtainPairSerializer):
             'full_name_oab': profile.full_name_oab if profile else '',
             'oab_number': profile.oab_number if profile else '',
             'monitored_tribunais': profile.monitored_tribunais if profile else [],
+            'publication_auto_integration': profile.publication_auto_integration if profile else False,
         }
         return data
 

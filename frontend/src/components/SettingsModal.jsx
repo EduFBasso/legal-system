@@ -6,36 +6,41 @@ import './SettingsModal.css';
 
 export default function SettingsModal({ isOpen, onClose }) {
   const { settings, updateSettings } = useSettings();
-  const [localSettings, setLocalSettings] = useState(settings);
+  const [draftSettings, setDraftSettings] = useState(null);
+  const localSettings = draftSettings ?? settings;
 
-  const handleSave = () => {
-    updateSettings(localSettings);
+  const handleSave = async () => {
+    await updateSettings(localSettings);
+    setDraftSettings(null);
     onClose();
   };
 
   const handleCancel = () => {
-    setLocalSettings(settings); // Reverte mudanças
+    setDraftSettings(null); // Reverte mudanças
     onClose();
   };
 
   const handleToggle = (key) => {
-    setLocalSettings((prev) => ({
+    setDraftSettings((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      ...(prev ?? settings),
+      [key]: !(prev ?? settings)[key],
     }));
   };
 
   const handlePasswordChange = (e) => {
-    setLocalSettings((prev) => ({
+    setDraftSettings((prev) => ({
       ...prev,
+      ...(prev ?? settings),
       deletePassword: e.target.value,
     }));
   };
 
   const handleRetroactiveDaysChange = (e) => {
     const value = parseInt(e.target.value) || 0;
-    setLocalSettings((prev) => ({
+    setDraftSettings((prev) => ({
       ...prev,
+      ...(prev ?? settings),
       retroactiveDays: Math.max(0, Math.min(30, value)), // Entre 0 e 30 dias
     }));
   };

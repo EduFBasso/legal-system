@@ -36,6 +36,10 @@ class UserProfile(models.Model):
         blank=True,
         help_text='Lista de tribunais monitorados para buscas automáticas'
     )
+    publication_auto_integration = models.BooleanField(
+        default=False,
+        help_text='Define se publicações devem ser integradas automaticamente para este usuário'
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

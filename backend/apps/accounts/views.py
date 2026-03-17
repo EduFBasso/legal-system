@@ -11,6 +11,7 @@ from .serializers import (
     TeamMemberCreateSerializer,
     TeamMemberSerializer,
     TeamMemberUpdateSerializer,
+    UserPreferencesSerializer,
     UserProfileSerializer,
 )
 
@@ -41,6 +42,24 @@ def me(request):
         'is_superuser': user.is_superuser,
         'is_master': is_master_user(user),
         'profile': UserProfileSerializer(profile).data if profile else None,
+    })
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def user_preferences(request):
+    profile = getattr(request.user, 'profile', None)
+
+    if request.method == 'GET':
+        return Response({
+            'publication_auto_integration': profile.publication_auto_integration if profile else False,
+        })
+
+    serializer = UserPreferencesSerializer(data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    updated_profile = serializer.update(request.user, serializer.validated_data)
+    return Response({
+        'publication_auto_integration': updated_profile.publication_auto_integration,
     })
 
 

@@ -1,6 +1,7 @@
 // src/contexts/SettingsContext.jsx
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
+import userPreferencesService from '../services/userPreferencesService';
 
 const SettingsContext = createContext();
 
@@ -38,6 +39,11 @@ function loadSettingsForCurrentUser() {
   return getDefaultSettings();
 }
 
+function isAuthenticatedUser() {
+  const auth = safeJsonParse(localStorage.getItem(AUTH_STORAGE_KEY), null);
+  return Boolean(auth?.access && auth?.user);
+}
+
 export function SettingsProvider({ children }) {
   // Carrega configurações do localStorage ou usa padrões
   const [settings, setSettings] = useState(() => loadSettingsForCurrentUser());
@@ -48,19 +54,56 @@ export function SettingsProvider({ children }) {
   }, [settings]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const syncPreferencesFromServer = async () => {
+      if (!isAuthenticatedUser()) return;
+      try {
+        const preferences = await userPreferencesService.getUserPreferences();
+        if (cancelled) return;
+        setSettings((prev) => ({
+          ...prev,
+          autoIntegration: Boolean(preferences?.publication_auto_integration),
+        }));
+      } catch {
+        // fallback silencioso para localStorage
+      }
+    };
+
     const handleAuthChanged = () => {
       setSettings(loadSettingsForCurrentUser());
+      syncPreferencesFromServer();
     };
 
     window.addEventListener('auth:changed', handleAuthChanged);
-    return () => window.removeEventListener('auth:changed', handleAuthChanged);
+
+    syncPreferencesFromServer();
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('auth:changed', handleAuthChanged);
+    };
   }, []);
 
-  const updateSettings = (newSettings) => {
-    setSettings((prev) => ({
-      ...prev,
+  const updateSettings = async (newSettings) => {
+    const nextSettings = {
+      ...settings,
       ...newSettings,
-    }));
+    };
+
+    setSettings(nextSettings);
+
+    if (!isAuthenticatedUser() || !Object.prototype.hasOwnProperty.call(newSettings, 'autoIntegration')) {
+      return;
+    }
+
+    try {
+      await userPreferencesService.updateUserPreferences({
+        publication_auto_integration: Boolean(nextSettings.autoIntegration),
+      });
+    } catch {
+      // fallback silencioso: mantém localStorage mesmo se a persistência remota falhar
+    }
   };
 
   return (

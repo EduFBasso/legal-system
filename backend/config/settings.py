@@ -201,6 +201,19 @@ REST_FRAMEWORK = {
 # Configurações de OAB para publicações
 OAB_NUMBER = config('OAB_NUMBER', default='507553')
 ADVOGADA_NOME = config('ADVOGADA_NOME', default='Vitoria Rocha de Morais')
+DEFAULT_MASTER_USERNAME = config(
+    'MASTER_USERNAME',
+    default=config('DJANGO_SUPERUSER_USERNAME', default=config('SUPERUSER_USERNAME', default='master')),
+)
+DEFAULT_MASTER_EMAIL = config(
+    'MASTER_EMAIL',
+    default=config('DJANGO_SUPERUSER_EMAIL', default='master@local.invalid'),
+)
+DEFAULT_MASTER_PASSWORD = config(
+    'MASTER_PASSWORD',
+    default=config('DJANGO_SUPERUSER_PASSWORD', default=config('SENHA_SUPERUSER', default='AltereEstaSenha!123')),
+)
+DEFAULT_MASTER_FIRST_NAME = config('MASTER_FIRST_NAME', default='Master')
 # Nota: O sistema aplica filtros inteligentes:
 # 1. POSITIVO: Garante menção à OAB/nome no texto (evita falsos positivos)
 # 2. NEGATIVO: Exclui publicações de outras advogadas (ex: LÚCIA VITÓRIA - OAB 407729)
