@@ -3,6 +3,10 @@ import { getPublicationActionState } from '../utils/publicationActionState';
 import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import './PublicationCard.css';
 
+// Chave de desenvolvimento: exibir botão excluir publicação
+// Para habilitar, adicionar VITE_DEV_SHOW_DELETE_PUBLICATION=true no .env.local
+const DEV_SHOW_DELETE_PUBLICATION = import.meta.env.VITE_DEV_SHOW_DELETE_PUBLICATION === 'true';
+
 export default function PublicationCard({ 
   publication, 
   onClick, 
@@ -166,7 +170,7 @@ export default function PublicationCard({
           </span>
         </div>
         <div className="publication-header-right">
-          {!selectionMode && (
+          {!selectionMode && DEV_SHOW_DELETE_PUBLICATION && (
             <button
               className="btn-delete-publication"
               onClick={handleDeleteClick}
