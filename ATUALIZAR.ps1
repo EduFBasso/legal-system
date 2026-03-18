@@ -59,7 +59,7 @@ Write-Info "Installing Python dependencies..."
 & $venvPip install -r "$InstallPath\backend\requirements.txt" --quiet
 Write-Info "Running migrations..."
 & $venvPython manage.py migrate --noinput
-& $venvPython manage.py collectstatic --noinput 2>&1 | Out-Null
+& $venvPython manage.py collectstatic --noinput
 Write-OK "Backend updated"
 
 Write-Step "4/5 Frontend"

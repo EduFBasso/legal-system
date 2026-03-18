@@ -136,7 +136,7 @@ if (-not (Test-Path "$InstallPath\.venv")) {
 }
 
 Write-Info "Installing Python dependencies..."
-& $venvPip install --upgrade pip --quiet
+& $venvPython -m pip install --upgrade pip --quiet
 & $venvPip install -r "$backendDir\requirements.txt" --quiet
 Write-OK "Python dependencies installed"
 
@@ -179,7 +179,7 @@ Write-Info "Running migrations..."
 Write-OK "Migrations done"
 
 Write-Info "Collecting static files..."
-& $venvPython manage.py collectstatic --noinput 2>&1 | Out-Null
+& $venvPython manage.py collectstatic --noinput
 Write-OK "Static files collected"
 
 Write-Info "Checking superuser..."
