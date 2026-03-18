@@ -18,6 +18,7 @@ pyinstaller==6.18.0
 pyinstaller-hooks-contrib==2026.0
 dj-database-url==3.1.2
 gunicorn==25.1.0
+waitress==3.0.2
 psycopg2-binary==2.9.11
 python-decouple==3.8
 pywin32-ctypes==0.2.3

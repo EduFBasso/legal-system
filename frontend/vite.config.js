@@ -12,6 +12,10 @@ export default defineConfig({
     host: '0.0.0.0',   // aceita conexões da rede local (Mac, celular, etc)
     port: 5173,
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 5173,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
