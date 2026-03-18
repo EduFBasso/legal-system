@@ -42,12 +42,13 @@ Write-Host "=========================================================="
 Write-Step "1/8 Check prerequisites"
 $git = Get-Command git    -ErrorAction SilentlyContinue
 $python = Get-Command python -ErrorAction SilentlyContinue
+$pyLauncher = Get-Command py -ErrorAction SilentlyContinue
 $node = Get-Command node   -ErrorAction SilentlyContinue
 $npm = Get-Command npm    -ErrorAction SilentlyContinue
 
 $missing = @()
 if (-not $git) { $missing += "Git    -> https://git-scm.com/download/win" }
-if (-not $python) { $missing += "Python -> https://www.python.org/downloads/release/python-3119/" }
+if (-not $python -and -not $pyLauncher) { $missing += "Python -> https://www.python.org/downloads/release/python-3119/" }
 if (-not $node) { $missing += "Node   -> https://nodejs.org/en (LTS)" }
 if (-not $npm) { $missing += "npm    (installed together with Node.js)" }
 
@@ -58,7 +59,12 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 
-$pyVer = (python --version 2>&1) -replace "Python ", ""
+if ($python) {
+    $pyVer = (python --version 2>&1) -replace "Python ", ""
+}
+else {
+    $pyVer = (& py -3.11 --version 2>&1) -replace "Python ", ""
+}
 $nodeVer = (node --version 2>&1) -replace "v", ""
 Write-OK "Python $pyVer | Node.js $nodeVer | Git ok"
 
@@ -97,7 +103,12 @@ Set-Location $InstallPath
 Write-Step "4/8 Python environment"
 if (-not (Test-Path "$InstallPath\.venv")) {
     Write-Info "Creating virtual environment..."
-    python -m venv "$InstallPath\.venv"
+    if ($python) {
+        python -m venv "$InstallPath\.venv"
+    }
+    else {
+        & py -3.11 -m venv "$InstallPath\.venv"
+    }
 }
 
 Write-Info "Installing Python dependencies..."
