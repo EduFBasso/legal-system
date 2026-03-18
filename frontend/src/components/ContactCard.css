@@ -259,32 +259,6 @@
   transform: scale(0.95);
 }
 
-/* Badge Cliente (verde) */
-.contact-type-client {
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  background: #d1fae5;
-  color: #065f46;
-  border-radius: 6px;
-  white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Badge Outras Partes - Testemunha, etc (amarelo/marrom) */
-.contact-type-role {
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  background: #fef3c7;
-  color: #92400e;
-  border-radius: 6px;
-  white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 /* Case Links - estilo inline igual CNPJ/CPF */
 .case-link-inline {
   display: inline-block;

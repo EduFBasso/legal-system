@@ -79,6 +79,29 @@ export default function ContactsPage() {
     }
   }, [searchParams, contacts, setSearchParams]);
 
+  // Focus/select contact card if "focus" query param is present (without opening modal)
+  useEffect(() => {
+    const contactIdToFocus = searchParams.get('focus');
+    if (!contactIdToFocus || contacts.length === 0) return;
+
+    const contactId = parseInt(contactIdToFocus, 10);
+    const contactExists = contacts.some(c => c.id === contactId);
+    if (!contactExists) return;
+
+    setSelectedContactId(contactId);
+
+    setTimeout(() => {
+      const element = document.getElementById(`contact-card-${contactId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 120);
+
+    const params = new URLSearchParams(searchParams);
+    params.delete('focus');
+    setSearchParams(params);
+  }, [searchParams, contacts, setSearchParams]);
+
   const loadContacts = async () => {
     try {
       setLoading(true);

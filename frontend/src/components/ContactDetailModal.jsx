@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import ConfirmDialog from './common/ConfirmDialog';
-import { FormField, FormSelect, FormMaskedField, AddressFieldGroup } from './common';
+import { FormField, FormSelect, FormMaskedField, AddressFieldGroup, PartyRoleBadge } from './common';
 import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
 import { deleteParty } from '../services/casePartiesService';
@@ -537,11 +537,9 @@ export default function ContactDetailModal({
                             📄 {linkedCase.numero_processo}
                           </div>
                           <div className="linked-case-role">
-                            <span className={`role-badge-small role-${linkedCase.role.toLowerCase()}`}>
-                              {linkedCase.role_display}
-                            </span>
+                            <PartyRoleBadge role={linkedCase.role} label={linkedCase.role_display} size="sm" />
                             {linkedCase.is_client && (
-                              <span className="client-badge-small">✓ CLIENTE</span>
+                              <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="sm" />
                             )}
                           </div>
                           <div className="linked-case-arrow">↗</div>

@@ -1,0 +1,55 @@
+.party-badge {
+  display: inline-block;
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  width: fit-content;
+  line-height: 1.2;
+}
+
+.party-badge--sm {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.95rem;
+}
+
+.party-badge--md {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+.party-badge--autor {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.party-badge--reu {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.party-badge--testemunha {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.party-badge--perito {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.party-badge--terceiro {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.party-badge--cliente {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.party-badge--representado {
+  background: #cffafe;
+  color: #155e75;
+}

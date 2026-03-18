@@ -566,11 +566,12 @@ select.edit-input {
 /* Botão adicionar vínculo com processo */
 .btn-add-link {
   padding: 8px 16px;
-  background: #10b981;
+  background: #047857;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 1rem;
+  line-height: 1.25;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -580,9 +581,9 @@ select.edit-input {
 }
 
 .btn-add-link:hover {
-  background: #059669;
+  background: #065f46;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 8px rgba(6, 95, 70, 0.25);
 }
 
 .btn-add-link:active {
@@ -659,56 +660,6 @@ select.edit-input {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.role-badge-small {
-  padding: 0.25rem 0.625rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.role-badge-small.role-autor {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.role-badge-small.role-reu {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.role-badge-small.role-testemunha {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.role-badge-small.role-perito {
-  background: #e0e7ff;
-  color: #3730a3;
-}
-
-.role-badge-small.role-terceiro {
-  background: #f3e8ff;
-  color: #6b21a8;
-}
-
-.role-badge-small.role-cliente {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.client-badge-small {
-  padding: 0.25rem 0.625rem;
-  background: #d1fae5;
-  color: #065f46;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
 .linked-case-arrow {

@@ -5,6 +5,7 @@ import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
 import EditableDetailField from '../EditableDetailField';
 import { SaveButton, CancelButton, DeleteButton, EditButton } from '../common/Button';
+import PartyRoleBadge from '../common/PartyRoleBadge';
 
 /**
  * InformacaoTab - Aba de Informações do Processo
@@ -288,13 +289,13 @@ function InformacaoTab({
                                 <Link
                                   to={`/contacts?open=${clientParty.contact}`}
                                   className="party-contact-link detail-client-link"
-                                  title="Ver detalhes do contato (abre em nova aba)"
+                                  title="Ver detalhes, selecionar ou criar outro processo com vínculo"
                                   target="_blank"
                                   rel="noopener noreferrer"
                                 >
                                   <span className="detail-client-name">{clientParty.contact_name}</span> ↗
                                 </Link>
-                                <span className="client-badge">✅ CLIENTE</span>
+                                <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="md" />
                               </div>
                             </div>
                           ) : (
@@ -319,11 +320,7 @@ function InformacaoTab({
                     })()}
                     <button
                       className="btn-link detail-partes-hint"
-                      onClick={() => window.open(
-                        `/cases/${id}?tab=parties`,
-                        '_blank',
-                        'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
-                      )}
+                      onClick={() => setActiveSection('parties')}
                     >ℹ️ Use a aba "Partes" para gerenciar detalhadamente</button>
                   </div>
                   <div className="detail-partes-col">
@@ -335,7 +332,15 @@ function InformacaoTab({
                           <div className="detail-partes-list">
                             {otherParties.map(party => (
                               <div key={party.id} className="detail-partes-item">
-                                <strong>{party.contact_name}</strong>
+                                <Link
+                                  to={`/contacts?open=${party.contact}`}
+                                  className="party-contact-link"
+                                  title="Ver detalhes, selecionar ou criar outro processo com vínculo"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <strong>{party.contact_name}</strong> ↗
+                                </Link>
                                 <span className="detail-value-sub">({party.role_display})</span>
                               </div>
                             ))}
@@ -359,11 +364,7 @@ function InformacaoTab({
                     <div className="detail-financeiro-actions">
                       <button
                         className="btn-link detail-financeiro-hint"
-                        onClick={() => window.open(
-                          `/cases/${id}?tab=financeiro`,
-                          '_blank',
-                          'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes'
-                        )}
+                        onClick={() => setActiveSection('financeiro')}
                       >💰 Use a aba "Financeiro" para controlar recebimentos e despesas</button>
                     </div>
                   </div>

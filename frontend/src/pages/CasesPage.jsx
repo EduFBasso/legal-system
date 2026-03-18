@@ -177,13 +177,30 @@ export default function CasesPage() {
       groupCases.forEach((currentCase) => {
         const related = groupCases
           .filter((otherCase) => otherCase.id !== currentCase.id)
-          .map((otherCase) => ({
-            id: otherCase.id,
-            numero_processo: otherCase.numero_processo,
-            numero_processo_formatted: otherCase.numero_processo_formatted,
-            status_display: otherCase.status_display,
-            cliente_nome: otherCase.cliente_nome,
-          }));
+          .map((otherCase) => {
+            const linkedParty = Array.isArray(otherCase.parties_summary)
+              ? otherCase.parties_summary.find((party) => party.is_client) || null
+              : null;
+
+            const linkedPartyBadges = [];
+            if (linkedParty?.role_display) {
+              linkedPartyBadges.push(linkedParty.role_display);
+            }
+            if (linkedParty?.is_client) {
+              linkedPartyBadges.push('Cliente');
+            }
+
+            return {
+              id: otherCase.id,
+              numero_processo: otherCase.numero_processo,
+              numero_processo_formatted: otherCase.numero_processo_formatted,
+              status_display: otherCase.status_display,
+              cliente_nome: otherCase.cliente_nome,
+              linked_party_name: linkedParty?.name || otherCase.cliente_nome || null,
+              linked_party_badges: linkedPartyBadges,
+              linked_party_contact_id: otherCase.cliente_principal || null,
+            };
+          });
 
         links.set(currentCase.id, related);
       });

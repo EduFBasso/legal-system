@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { openCaseDetailWindow } from '../utils/publicationNavigation';
+import PartyRoleBadge from './common/PartyRoleBadge';
 import './CaseCard.css';
 
 /**
@@ -8,6 +9,18 @@ import './CaseCard.css';
  */
 export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
   const navigate = useNavigate();
+
+  const renderRoleBadges = (badges = [], keyPrefix = 'badge') => (
+    <div className="role-badges">
+      {badges.map((badge) => (
+        <PartyRoleBadge
+          key={`${keyPrefix}-${badge}`}
+          label={badge}
+          size="sm"
+        />
+      ))}
+    </div>
+  );
   /**
    * Handle card click - open in new tab
    */
@@ -124,6 +137,40 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
     openCaseDetailWindow(linkedCaseId);
   };
 
+  const handleOpenClientContact = (e, contactId) => {
+    e.stopPropagation();
+    if (!contactId) return;
+    window.open(`/contacts?open=${contactId}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const groupedParties = Array.isArray(caseData.parties_summary)
+    ? Object.values(
+        caseData.parties_summary.reduce((acc, party) => {
+          const partyName = party?.name || 'Parte sem nome';
+          if (!acc[partyName]) {
+            acc[partyName] = {
+              name: partyName,
+              badges: [],
+              isClient: false,
+              contactId: null,
+            };
+          }
+
+          if (party?.role_display && !acc[partyName].badges.includes(party.role_display)) {
+            acc[partyName].badges.push(party.role_display);
+          }
+
+          if (party?.is_client && !acc[partyName].badges.includes('Cliente')) {
+            acc[partyName].badges.push('Cliente');
+            acc[partyName].isClient = true;
+            acc[partyName].contactId = caseData?.cliente_principal || null;
+          }
+
+          return acc;
+        }, {})
+      )
+    : [];
+
   return (
     <div className="case-card" onClick={handleCardClick}>
       {/* Header */}
@@ -149,7 +196,7 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
           {getUrgencyBadge()}
           {linkedCases.length > 0 && (
             <span className="badge badge-linked-cases">
-              Vinculado a {linkedCases.length} {linkedCases.length === 1 ? 'processo' : 'processos'}
+              🔗 Vínculo {linkedCases.length > 1 ? `(${linkedCases.length})` : ''}
             </span>
           )}
         </div>
@@ -190,23 +237,32 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
           )}
         </div>
 
-        {/* Details Grid */}
-        <div className="case-details">
-          <div className="detail-item">
-            <span className="detail-label">Distribuição:</span>
-            <span className="detail-value">{formatDate(caseData.data_distribuicao)}</span>
+        {/* Parties */}
+        {groupedParties.length > 0 && (
+          <div className="case-details case-parties-container">
+            {groupedParties.map((party) => (
+              <div key={party.name} className="party-line" title={party.name}>
+                {party.isClient && party.contactId ? (
+                  <button
+                    type="button"
+                    className="party-name-link"
+                    onClick={(e) => handleOpenClientContact(e, party.contactId)}
+                    title="Ver detalhes, selecionar ou criar outro processo com vínculo"
+                  >
+                    <span className="party-name-eye" aria-hidden="true">👁</span>
+                    <span className="party-name">{party.name}</span>
+                  </button>
+                ) : (
+                  <span className="party-name">{party.name}</span>
+                )}
+                {renderRoleBadges(party.badges, party.name)}
+              </div>
+            ))}
           </div>
-          {caseData.data_ultima_movimentacao && (
-            <div className="detail-item">
-              <span className="detail-label">Última Mov.:</span>
-              <span className="detail-value">{formatDate(caseData.data_ultima_movimentacao)}</span>
-            </div>
-          )}
-        </div>
+        )}
 
         {linkedCases.length > 0 && (
           <div className="case-linked-group">
-            <span className="linked-group-label">Processos vinculados (mesmo cliente)</span>
             <div className="linked-group-list">
               {linkedCases.map((linkedCase) => (
                 <button
@@ -215,11 +271,42 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
                   onClick={(e) => handleOpenLinkedCase(e, linkedCase.id)}
                   title={`Abrir processo ${linkedCase.numero_processo_formatted || linkedCase.numero_processo}`}
                 >
-                  <span className="linked-case-number">
-                    {linkedCase.numero_processo_formatted || linkedCase.numero_processo}
-                  </span>
-                  {linkedCase.status_display && (
-                    <span className="linked-case-status">{linkedCase.status_display}</span>
+                  <div className="linked-case-top-line">
+                    <span className="linked-case-number">
+                      {linkedCase.numero_processo_formatted || linkedCase.numero_processo}
+                    </span>
+                    {linkedCase.status_display && (
+                      <span className="linked-case-status">{linkedCase.status_display}</span>
+                    )}
+                  </div>
+                  {(linkedCase.linked_party_name || (linkedCase.linked_party_badges && linkedCase.linked_party_badges.length > 0)) && (
+                    <div className="linked-case-bottom-line">
+                      {linkedCase.linked_party_name && (
+                        linkedCase.linked_party_contact_id ? (
+                          <span
+                            className="linked-party-name linked-party-name--clickable"
+                            onClick={(e) => handleOpenClientContact(e, linkedCase.linked_party_contact_id)}
+                            role="button"
+                            tabIndex={0}
+                            title="Ver detalhes, selecionar ou criar outro processo com vínculo"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleOpenClientContact(e, linkedCase.linked_party_contact_id);
+                              }
+                            }}
+                          >
+                            <span className="party-name-eye" aria-hidden="true">👁</span>
+                            {linkedCase.linked_party_name}
+                          </span>
+                        ) : (
+                          <span className="linked-party-name">{linkedCase.linked_party_name}</span>
+                        )
+                      )}
+                      {linkedCase.linked_party_badges && linkedCase.linked_party_badges.length > 0 && (
+                        renderRoleBadges(linkedCase.linked_party_badges, `linked-${linkedCase.id}`)
+                      )}
+                    </div>
                   )}
                 </button>
               ))}
@@ -243,28 +330,6 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
           </div>
         )}
 
-        {/* Parties */}
-        {caseData.parties_summary && caseData.parties_summary.length > 0 && (
-          <div className="case-parties">
-            <span className="parties-label">Partes:</span>
-            <div className="parties-list">
-              {caseData.parties_summary.slice(0, 3).map((party, i) => (
-                <span
-                  key={i}
-                  className={`party-chip${party.is_client ? ' party-chip--client' : ''}`}
-                  title={`${party.name} · ${party.role_display}`}
-                >
-                  {party.name} - ({party.is_client ? 'Cliente' : party.role_display})
-                </span>
-              ))}
-              {caseData.parties_summary.length > 3 && (
-                <span className="party-chip party-chip--more">
-                  +{caseData.parties_summary.length - 3}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Footer */}

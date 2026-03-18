@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Users, UserPlus, Trash2, Edit2 } from 'lucide-react';
 import { formatCPF, formatCNPJ, formatPhone } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
+import PartyRoleBadge from '../common/PartyRoleBadge';
 
 /**
  * PartiesTab - Aba de Partes do Processo
@@ -69,11 +70,9 @@ function PartiesTab({
                   <div className="party-details">
                       <h3 className="party-name">{party.contact_name}</h3>
                       <div className="party-badges">
-                        <span className={`party-role-badge role-${party.role.toLowerCase()}`}>
-                          {party.role_display}
-                        </span>
+                        <PartyRoleBadge role={party.role} label={party.role_display} size="md" />
                         {party.is_client && (
-                          <span className="client-badge">✅ CLIENTE</span>
+                          <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="md" />
                         )}
                       </div>
                     </div>

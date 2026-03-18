@@ -1,4 +1,5 @@
 // src/components/ContactCard.jsx
+import PartyRoleBadge from './common/PartyRoleBadge';
 import './ContactCard.css';
 
 function PhoneIcon() {
@@ -52,6 +53,8 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
 
   return (
     <div 
+      id={`contact-card-${contact.id}`}
+      data-testid={`contact-card-${contact.id}`}
       className={`contact-card${isSelected ? ' selected' : ''}`}
       onClick={onSelect}
     >
@@ -73,18 +76,24 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
             <div className="contact-badges">
               <span className="contact-type">{person_type === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}</span>
               {contact.is_client_anywhere && (
-                <span className="contact-type-client">Cliente</span>
+                <PartyRoleBadge label="Cliente" isClient={true} size="md" />
               )}
               {/* Badges para outras partes (testemunha, etc) */}
               {contact.linked_cases && contact.linked_cases.length > 0 && (() => {
                 // Coletar roles únicos que não são cliente
-                const nonClientRoles = [...new Set(
-                  contact.linked_cases
-                    .filter(lc => !lc.is_client)
-                    .map(lc => lc.role_display)
-                )];
-                return nonClientRoles.map(role => (
-                  <span key={role} className="contact-type-role">{role}</span>
+                const nonClientRolesMap = new Map();
+                contact.linked_cases
+                  .filter(lc => !lc.is_client && lc.role_display)
+                  .forEach((lc) => {
+                    const key = `${lc.role || ''}-${lc.role_display}`;
+                    if (!nonClientRolesMap.has(key)) {
+                      nonClientRolesMap.set(key, { role: lc.role, label: lc.role_display });
+                    }
+                  });
+
+                const nonClientRoles = Array.from(nonClientRolesMap.values());
+                return nonClientRoles.map(({ role, label }) => (
+                  <PartyRoleBadge key={`${role}-${label}`} role={role} label={label} size="md" />
                 ));
               })()}
             </div>
