@@ -46,9 +46,33 @@ $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
 $node = Get-Command node   -ErrorAction SilentlyContinue
 $npm = Get-Command npm    -ErrorAction SilentlyContinue
 
+$pythonCmd = $null
+if ($python) {
+    try {
+        $probe = (python --version 2>&1 | Out-String).Trim()
+        if ($probe -match '^Python\s+3\.11(\.|$)') {
+            $pythonCmd = 'python'
+        }
+    }
+    catch {
+        # ignore and fallback to py launcher
+    }
+}
+if (-not $pythonCmd -and $pyLauncher) {
+    try {
+        $probe = (& py -3.11 --version 2>&1 | Out-String).Trim()
+        if ($probe -match '^Python\s+3\.11(\.|$)') {
+            $pythonCmd = 'py -3.11'
+        }
+    }
+    catch {
+        # keep null
+    }
+}
+
 $missing = @()
 if (-not $git) { $missing += "Git    -> https://git-scm.com/download/win" }
-if (-not $python -and -not $pyLauncher) { $missing += "Python -> https://www.python.org/downloads/release/python-3119/" }
+if (-not $pythonCmd) { $missing += "Python 3.11 -> https://www.python.org/downloads/release/python-3119/" }
 if (-not $node) { $missing += "Node   -> https://nodejs.org/en (LTS)" }
 if (-not $npm) { $missing += "npm    (installed together with Node.js)" }
 
@@ -59,7 +83,7 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 
-if ($python) {
+if ($pythonCmd -eq 'python') {
     $pyVer = (python --version 2>&1) -replace "Python ", ""
 }
 else {
@@ -103,7 +127,7 @@ Set-Location $InstallPath
 Write-Step "4/8 Python environment"
 if (-not (Test-Path "$InstallPath\.venv")) {
     Write-Info "Creating virtual environment..."
-    if ($python) {
+    if ($pythonCmd -eq 'python') {
         python -m venv "$InstallPath\.venv"
     }
     else {
