@@ -1,28 +1,17 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Instala o Legal System em um computador Windows (servidor de escritório).
+    Install Legal System on a Windows server machine.
 
 .DESCRIPTION
-    Script completo de instalação para primeiro uso. Executa:
-      1. Verificação de pré-requisitos (Git, Python, Node.js)
-      2. Clone do repositório GitHub
-      3. Criação do ambiente Python e instalação de dependências
-      4. Configuração automática do .env (com IP detectado da máquina)
-      5. Migrações do banco de dados
-      6. Build de produção do frontend
-      7. Registro dos serviços Windows via NSSM
-
-.NOTES
-    PRÉ-REQUISITOS (instalar manualmente antes de rodar este script):
-      • Git         → https://git-scm.com/download/win
-      • Python 3.11 → https://www.python.org/downloads/release/python-3119/
-                      (marcar "Add Python to PATH" durante instalação)
-      • Node.js 20  → https://nodejs.org/en  (LTS, Windows Installer)
-
-    Executar como Administrador:
-      Clique com botão direito no PowerShell → "Executar como administrador"
-      Depois rode: .\INSTALAR_SERVIDOR.ps1
+    First-time setup script:
+      1) Check prerequisites (Git, Python, Node.js)
+      2) Clone/update repository
+      3) Create Python virtual environment and install dependencies
+      4) Create backend .env using detected local IP
+      5) Run migrations + collectstatic
+      6) Build frontend for production
+      7) Register Windows services using NSSM
 #>
 
 param(
@@ -33,47 +22,39 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# ─── Helpers de output ────────────────────────────────────────────────────────
-function Write-Step { param($msg) Write-Host "`n══ $msg" -ForegroundColor Cyan }
-function Write-OK { param($msg) Write-Host "  [OK]  $msg" -ForegroundColor Green }
-function Write-Warn { param($msg) Write-Host "  [!!!] $msg" -ForegroundColor Yellow }
-function Write-Fail { param($msg) Write-Host "`n  [ERRO] $msg" -ForegroundColor Red; exit 1 }
-function Write-Info { param($msg) Write-Host "        $msg" -ForegroundColor Gray }
+function Write-Step { param([string]$msg) Write-Host "`n== $msg" -ForegroundColor Cyan }
+function Write-OK { param([string]$msg) Write-Host "  [OK]  $msg" -ForegroundColor Green }
+function Write-Warn { param([string]$msg) Write-Host "  [!!]  $msg" -ForegroundColor Yellow }
+function Write-Fail { param([string]$msg) Write-Host "`n  [ERR] $msg" -ForegroundColor Red; exit 1 }
+function Write-Info { param([string]$msg) Write-Host "       $msg" -ForegroundColor Gray }
 
-# ─── Variáveis derivadas ──────────────────────────────────────────────────────
 $venvPython = "$InstallPath\.venv\Scripts\python.exe"
 $venvPip = "$InstallPath\.venv\Scripts\pip.exe"
 $nssmPath = "$InstallPath\nssm-2.24\win64\nssm.exe"
 $backendDir = "$InstallPath\backend"
 $frontendDir = "$InstallPath\frontend"
 
-# ─── Banner ───────────────────────────────────────────────────────────────────
 Write-Host ""
-Write-Host "╔══════════════════════════════════════════════════════════╗" -ForegroundColor Blue
-Write-Host "║          LEGAL SYSTEM — INSTALAÇÃO NO SERVIDOR           ║" -ForegroundColor Blue
-Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Blue
-Write-Host ""
+Write-Host "=========================================================="
+Write-Host "        LEGAL SYSTEM - WINDOWS SERVER INSTALLER"
+Write-Host "=========================================================="
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 1 — Verificar pré-requisitos
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "1/8  Verificando pré-requisitos"
-
+Write-Step "1/8 Check prerequisites"
 $git = Get-Command git    -ErrorAction SilentlyContinue
 $python = Get-Command python -ErrorAction SilentlyContinue
 $node = Get-Command node   -ErrorAction SilentlyContinue
 $npm = Get-Command npm    -ErrorAction SilentlyContinue
 
 $missing = @()
-if (-not $git) { $missing += "Git    →  https://git-scm.com/download/win" }
-if (-not $python) { $missing += "Python →  https://www.python.org/downloads/release/python-3119/" }
-if (-not $node) { $missing += "Node   →  https://nodejs.org/en  (LTS)" }
-if (-not $npm) { $missing += "npm    (instalado junto com Node.js)" }
+if (-not $git) { $missing += "Git    -> https://git-scm.com/download/win" }
+if (-not $python) { $missing += "Python -> https://www.python.org/downloads/release/python-3119/" }
+if (-not $node) { $missing += "Node   -> https://nodejs.org/en (LTS)" }
+if (-not $npm) { $missing += "npm    (installed together with Node.js)" }
 
 if ($missing.Count -gt 0) {
     Write-Host ""
-    Write-Host "  Instale os programas abaixo e rode este script novamente:" -ForegroundColor Red
-    $missing | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
+    Write-Host "Install required tools first:" -ForegroundColor Red
+    $missing | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
     exit 1
 }
 
@@ -81,196 +62,145 @@ $pyVer = (python --version 2>&1) -replace "Python ", ""
 $nodeVer = (node --version 2>&1) -replace "v", ""
 Write-OK "Python $pyVer | Node.js $nodeVer | Git ok"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 2 — Detectar IP do servidor
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "2/8  Detectando IP da máquina na rede"
-
+Write-Step "2/8 Detect local IP"
 $detectedIP = (
     Get-NetIPAddress -AddressFamily IPv4 |
-    Where-Object { $_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual' } |
+    Where-Object { $_.PrefixOrigin -in @('Dhcp', 'Manual') } |
     Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.*' } |
     Select-Object -First 1
 ).IPAddress
 
 if (-not $detectedIP) {
     $detectedIP = "127.0.0.1"
-    Write-Warn "Não foi possível detectar IP local. Usando 127.0.0.1."
-    Write-Warn "Edite backend\.env e frontend\.env.local depois para corrigir."
+    Write-Warn "Could not detect local IP. Using 127.0.0.1."
 }
 else {
-    Write-OK "IP detectado: $detectedIP"
+    Write-OK "Detected IP: $detectedIP"
 }
-
 $hostName = $env:COMPUTERNAME
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 3 — Clonar repositório
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "3/8  Repositório"
-
+Write-Step "3/8 Repository"
 if (Test-Path "$InstallPath\.git") {
-    Write-OK "Repositório já existe em $InstallPath — atualizando..."
+    Write-OK "Repository already exists. Updating..."
     Set-Location $InstallPath
     git fetch origin
     git checkout $Branch
     git pull origin $Branch
 }
 else {
-    Write-Info "Clonando $RepoUrl → $InstallPath ..."
+    Write-Info "Cloning repository..."
     git clone --branch $Branch $RepoUrl $InstallPath
-    Write-OK "Clone concluído"
+    Write-OK "Clone completed"
 }
-
 Set-Location $InstallPath
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 4 — Ambiente Python e dependências
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "4/8  Ambiente Python"
-
+Write-Step "4/8 Python environment"
 if (-not (Test-Path "$InstallPath\.venv")) {
-    Write-Info "Criando virtualenv..."
+    Write-Info "Creating virtual environment..."
     python -m venv "$InstallPath\.venv"
 }
 
-Write-Info "Instalando dependências Python (pode demorar 1-2 min na primeira vez)..."
+Write-Info "Installing Python dependencies..."
 & $venvPip install --upgrade pip --quiet
 & $venvPip install -r "$backendDir\requirements.txt" --quiet
-Write-OK "Dependências Python instaladas (inclui waitress para produção)"
+Write-OK "Python dependencies installed"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 5 — Configurar backend .env
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "5/8  Configurando backend/.env"
-
-# Gerar SECRET_KEY aleatória
-$chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#%^&*(-_=+)'
+Write-Step "5/8 Configure backend .env"
+$chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 $secretKey = -join ((1..60) | ForEach-Object { $chars[(Get-Random -Maximum $chars.Length)] })
 
 $envContent = @"
-# Gerado automaticamente por INSTALAR_SERVIDOR.ps1 em $(Get-Date -Format 'yyyy-MM-dd')
-# NÃO versionar este arquivo (já está no .gitignore)
+# Auto-generated by INSTALAR_SERVIDOR.ps1 on $(Get-Date -Format 'yyyy-MM-dd')
+# Do not commit this file.
 
 SECRET_KEY=$secretKey
 DEBUG=False
 
 ALLOWED_HOSTS=localhost,127.0.0.1,$detectedIP,$hostName
-
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://${detectedIP}:5173,http://${hostName}:5173
 
-# Banco de dados (SQLite padrão — copie db.sqlite3 do computador anterior se houver dados)
+# SQLite default database (copy db.sqlite3 from old machine if needed)
 # DATABASE_URL=sqlite:///db.sqlite3
 
 OAB_NUMBER=507553
 ADVOGADA_NOME=Vitoria Rocha de Morais
-
 JWT_ACCESS_TOKEN_HOURS=8
 JWT_REFRESH_TOKEN_HOURS=168
 "@
 
 $envPath = "$backendDir\.env"
 if (Test-Path $envPath) {
-    Write-Warn "backend\.env já existe — mantendo arquivo atual (não sobrescrito)."
-    Write-Info "Para regenerar, delete $envPath e rode o script novamente."
+    Write-Warn "backend/.env already exists. Keeping current file."
 }
 else {
-    $envContent | Set-Content -Encoding UTF8 $envPath
-    Write-OK "backend\.env criado com IP $detectedIP"
+    $envContent | Set-Content -Encoding ASCII $envPath
+    Write-OK "backend/.env created"
 }
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 6 — Banco de dados e estáticos
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "6/8  Banco de dados"
-
-Write-Info "Aplicando migrações..."
+Write-Step "6/8 Database setup"
 Set-Location $backendDir
+Write-Info "Running migrations..."
 & $venvPython manage.py migrate --noinput
-Write-OK "Migrações aplicadas"
+Write-OK "Migrations done"
 
-Write-Info "Coletando arquivos estáticos..."
+Write-Info "Collecting static files..."
 & $venvPython manage.py collectstatic --noinput 2>&1 | Out-Null
-Write-OK "Estáticos coletados"
+Write-OK "Static files collected"
 
-# Criar superusuário se não existir
-Write-Info "Verificando usuário master..."
+Write-Info "Checking superuser..."
 $createUser = & $venvPython manage.py shell -c @"
 from django.contrib.auth import get_user_model
 User = get_user_model()
-exists = User.objects.filter(is_superuser=True).exists()
-print('exists' if exists else 'missing')
+print('exists' if User.objects.filter(is_superuser=True).exists() else 'missing')
 "@
 if ($createUser.Trim() -eq 'missing') {
-    Write-Warn "Nenhum superusuário encontrado."
-    Write-Warn "Crie manualmente depois com:"
+    Write-Warn "No superuser found. Create one later with:"
     Write-Info "  cd $backendDir"
     Write-Info "  $venvPython manage.py createsuperuser"
 }
 else {
-    Write-OK "Superusuário já existe"
+    Write-OK "Superuser already exists"
 }
 
-# ─── Aviso sobre banco de dados ───────────────────────────────────────────────
 Write-Host ""
-Write-Host "  ┌─────────────────────────────────────────────────────────┐" -ForegroundColor Yellow
-Write-Host "  │  ATENÇÃO — BANCO DE DADOS                               │" -ForegroundColor Yellow
-Write-Host "  │  Se já havia dados no computador anterior (Dell-Edu),   │" -ForegroundColor Yellow
-Write-Host "  │  copie o arquivo:                                        │" -ForegroundColor Yellow
-Write-Host "  │    C:\dev\legal-system\backend\db.sqlite3               │" -ForegroundColor Yellow
-Write-Host "  │  para este mesmo caminho neste computador.              │" -ForegroundColor Yellow
-Write-Host "  └─────────────────────────────────────────────────────────┘" -ForegroundColor Yellow
+Write-Host "IMPORTANT: If you have old data, copy db.sqlite3 from old machine:"
+Write-Host "  C:\dev\legal-system\backend\db.sqlite3"
+Write-Host "to the same path on this machine."
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 7 — Build de produção do frontend
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "7/8  Frontend (build de produção)"
-
+Write-Step "7/8 Frontend production build"
 Set-Location $frontendDir
-
-# Criar .env.local
 $envLocalPath = "$frontendDir\.env.local"
 if (Test-Path $envLocalPath) {
-    Write-Warn "frontend\.env.local já existe — mantendo arquivo atual."
+    Write-Warn "frontend/.env.local already exists. Keeping current file."
 }
 else {
     @"
-# Gerado por INSTALAR_SERVIDOR.ps1
 VITE_API_URL=http://${detectedIP}:8000/api
-"@ | Set-Content -Encoding UTF8 $envLocalPath
-    Write-OK "frontend\.env.local criado"
+"@ | Set-Content -Encoding ASCII $envLocalPath
+    Write-OK "frontend/.env.local created"
 }
 
-Write-Info "Instalando pacotes npm..."
+Write-Info "npm install..."
 npm install --silent
-Write-OK "npm install concluído"
+Write-OK "npm install done"
 
-Write-Info "Gerando build de produção (pode demorar 30-60 segundos)..."
+Write-Info "npm run build..."
 npm run build
-Write-OK "Build gerado em frontend\dist\"
+Write-OK "Frontend build generated"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  PASSO 8 — Serviços Windows via NSSM
-# ═══════════════════════════════════════════════════════════════════════════════
-Write-Step "8/8  Registrando serviços Windows"
-
+Write-Step "8/8 Register Windows services (NSSM)"
 Set-Location $InstallPath
-
 if (-not (Test-Path $nssmPath)) {
-    Write-Warn "NSSM não encontrado em $nssmPath"
-    Write-Warn "Os serviços Windows NÃO foram registrados."
-    Write-Warn "Para iniciar manualmente, rode:"
-    Write-Info "  infra\backend_prod.cmd"
-    Write-Info "  infra\frontend_prod.cmd"
+    Write-Warn "NSSM not found at: $nssmPath"
+    Write-Warn "Services were not registered."
+    Write-Info "Run manually: infra\\backend_prod.cmd and infra\\frontend_prod.cmd"
 }
 else {
     $backendCmd = "$InstallPath\infra\backend_prod.cmd"
     $frontendCmd = "$InstallPath\infra\frontend_prod.cmd"
 
-    # ── Backend service ───────────────────────────────────────────────────────
     $svcBack = Get-Service -Name "LegalSystem-Backend" -ErrorAction SilentlyContinue
     if ($svcBack) {
-        Write-Info "Serviço LegalSystem-Backend já existe — atualizando..."
         Stop-Service "LegalSystem-Backend" -Force -ErrorAction SilentlyContinue
         & $nssmPath set LegalSystem-Backend Application "C:\Windows\System32\cmd.exe"
         & $nssmPath set LegalSystem-Backend AppParameters "/c `"$backendCmd`""
@@ -279,15 +209,13 @@ else {
         & $nssmPath install LegalSystem-Backend "C:\Windows\System32\cmd.exe" "/c `"$backendCmd`""
     }
     & $nssmPath set LegalSystem-Backend AppDirectory $backendDir
-    & $nssmPath set LegalSystem-Backend DisplayName  "Legal System - Backend (Waitress)"
-    & $nssmPath set LegalSystem-Backend Description  "Django backend do Legal System"
-    & $nssmPath set LegalSystem-Backend Start        SERVICE_AUTO_START
-    Write-OK "LegalSystem-Backend registrado"
+    & $nssmPath set LegalSystem-Backend DisplayName "Legal System - Backend (Waitress)"
+    & $nssmPath set LegalSystem-Backend Description "Django backend"
+    & $nssmPath set LegalSystem-Backend Start SERVICE_AUTO_START
+    Write-OK "LegalSystem-Backend configured"
 
-    # ── Frontend service ──────────────────────────────────────────────────────
     $svcFront = Get-Service -Name "LegalSystem-Frontend" -ErrorAction SilentlyContinue
     if ($svcFront) {
-        Write-Info "Serviço LegalSystem-Frontend já existe — atualizando..."
         Stop-Service "LegalSystem-Frontend" -Force -ErrorAction SilentlyContinue
         & $nssmPath set LegalSystem-Frontend Application "C:\Windows\System32\cmd.exe"
         & $nssmPath set LegalSystem-Frontend AppParameters "/c `"$frontendCmd`""
@@ -296,34 +224,30 @@ else {
         & $nssmPath install LegalSystem-Frontend "C:\Windows\System32\cmd.exe" "/c `"$frontendCmd`""
     }
     & $nssmPath set LegalSystem-Frontend AppDirectory $frontendDir
-    & $nssmPath set LegalSystem-Frontend DisplayName  "Legal System - Frontend (Vite Preview)"
-    & $nssmPath set LegalSystem-Frontend Description  "Frontend React do Legal System"
-    & $nssmPath set LegalSystem-Frontend Start        SERVICE_AUTO_START
-    Write-OK "LegalSystem-Frontend registrado"
+    & $nssmPath set LegalSystem-Frontend DisplayName "Legal System - Frontend (Vite Preview)"
+    & $nssmPath set LegalSystem-Frontend Description "React frontend"
+    & $nssmPath set LegalSystem-Frontend Start SERVICE_AUTO_START
+    Write-OK "LegalSystem-Frontend configured"
 
-    # ── Iniciar serviços ──────────────────────────────────────────────────────
-    Write-Info "Iniciando serviços..."
+    Write-Info "Starting services..."
     Start-Service "LegalSystem-Backend"
     Start-Sleep -Seconds 3
     Start-Service "LegalSystem-Frontend"
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 4
 
     $back = (Get-Service "LegalSystem-Backend").Status
     $front = (Get-Service "LegalSystem-Frontend").Status
     Write-OK "Backend: $back | Frontend: $front"
 }
 
-# ─── Resumo final ─────────────────────────────────────────────────────────────
 Set-Location $InstallPath
 Write-Host ""
-Write-Host "╔══════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║              INSTALAÇÃO CONCLUÍDA!                       ║" -ForegroundColor Green
-Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "=========================================================="
+Write-Host "                   INSTALLATION COMPLETED"
+Write-Host "=========================================================="
+Write-Host "Local URL : http://localhost:5173"
+Write-Host "LAN URL   : http://${detectedIP}:5173"
+Write-Host "API URL   : http://${detectedIP}:8000/api/"
 Write-Host ""
-Write-Host "  Acesso local:     http://localhost:5173" -ForegroundColor White
-Write-Host "  Acesso na rede:   http://${detectedIP}:5173" -ForegroundColor White
-Write-Host "  API backend:      http://${detectedIP}:8000/api/" -ForegroundColor White
-Write-Host ""
-Write-Host "  Para atualizar o código no futuro:" -ForegroundColor Gray
-Write-Host "    .\ATUALIZAR.ps1   (executar como Administrador)" -ForegroundColor Yellow
+Write-Host "To update later, run as Administrator: .\ATUALIZAR.ps1"
 Write-Host ""
