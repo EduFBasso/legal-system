@@ -30,7 +30,7 @@ function Write-Info { param([string]$msg) Write-Host "       $msg" -ForegroundCo
 
 $venvPython = "$InstallPath\.venv\Scripts\python.exe"
 $venvPip = "$InstallPath\.venv\Scripts\pip.exe"
-$nssmPath = "$InstallPath\nssm-2.24\win64\nssm.exe"
+$nssmPath = $null
 $backendDir = "$InstallPath\backend"
 $frontendDir = "$InstallPath\frontend"
 
@@ -225,12 +225,31 @@ Write-OK "Frontend build generated"
 
 Write-Step "8/8 Register Windows services (NSSM)"
 Set-Location $InstallPath
+
+$nssmCandidates = @(
+    "$InstallPath\nssm-2.24\win64\nssm.exe",
+    "$InstallPath\nssm\win64\nssm.exe",
+    "$InstallPath\tools\nssm\nssm.exe",
+    "C:\tools\nssm\nssm.exe",
+    "C:\nssm\nssm.exe"
+)
+
+$nssmCmd = Get-Command nssm -ErrorAction SilentlyContinue
+if ($nssmCmd -and $nssmCmd.Source) {
+    $nssmCandidates += $nssmCmd.Source
+}
+
+$nssmPath = $nssmCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
 if (-not (Test-Path $nssmPath)) {
-    Write-Warn "NSSM not found at: $nssmPath"
+    Write-Warn "NSSM not found in common paths."
+    Write-Info "Expected one of:"
+    $nssmCandidates | Select-Object -Unique | ForEach-Object { Write-Info "  $_" }
     Write-Warn "Services were not registered."
     Write-Info "Run manually: infra\\backend_prod.cmd and infra\\frontend_prod.cmd"
 }
 else {
+    Write-OK "Using NSSM at: $nssmPath"
     $backendCmd = "$InstallPath\infra\backend_prod.cmd"
     $frontendCmd = "$InstallPath\infra\frontend_prod.cmd"
 
