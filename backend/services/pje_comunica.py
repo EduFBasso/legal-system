@@ -331,11 +331,12 @@ class PJeComunicaService:
                         seen_ids.add(item_id)
                         normalized = cls.normalize_publication(item, tribunal)
                         
-                        # Aplicar FILTRO POSITIVO: deve mencionar a advogada
-                        if cls.should_include_publication(normalized, oab, nome_advogado):
-                            # Aplicar FILTRO NEGATIVO: não pode ser outra advogada
-                            if not cls.should_exclude_publication(normalized):
-                                results.append(normalized)
+                        # Busca por OAB é precisa: a API já garante vínculo com este OAB.
+                        # Só aplica filtro NEGATIVO (excluir outras advogadas com OAB/nome similar).
+                        # NÃO aplica filtro positivo aqui, pois algumas publicações (ex: TRT15
+                        # distribuições) não mencionam OAB/nome no texto.
+                        if not cls.should_exclude_publication(normalized):
+                            results.append(normalized)
             else:
                 errors.append({
                     'tribunal': tribunal,
