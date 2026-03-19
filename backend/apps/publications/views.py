@@ -4,7 +4,7 @@ Views para API de Publications.
 import re
 import time
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -137,9 +137,9 @@ def _extract_prazo_days(texto_publicacao):
 @api_view(['GET'])
 def fetch_today_publications(request):
     """
-    Busca publicações de hoje em todos os tribunais configurados.
+    Busca publicações do dia atual, com opção de incluir dias anteriores.
     
-    GET /api/publications/today
+    GET /api/publications/today?lookback_days=1
     
     Response:
     {
@@ -168,16 +168,27 @@ def fetch_today_publications(request):
         owner = user if user.is_authenticated else None
         oab_number, advogada_nome, tribunais_configurados = _get_user_publication_identity(user)
 
+        lookback_days = request.query_params.get('lookback_days')
+        try:
+            lookback_days = int(lookback_days) if lookback_days is not None else 0
+        except (TypeError, ValueError):
+            lookback_days = 0
+        lookback_days = max(0, min(lookback_days, 30))
+
         # Iniciar cronômetro
         start_time = time.time()
         
-        # Data de hoje
+        # Janela de data (hoje com retrocesso opcional)
         hoje = datetime.now().date()
+        data_inicio = hoje - timedelta(days=lookback_days)
+        data_fim = hoje
         
         # Busca publicações usando o service
-        result = PJeComunicaService.fetch_today_publications(
+        result = PJeComunicaService.fetch_publications(
             oab=oab_number,
             nome_advogado=advogada_nome,
+            data_inicio=data_inicio.isoformat(),
+            data_fim=data_fim.isoformat(),
             tribunais=tribunais_configurados,
         )
         
@@ -201,14 +212,15 @@ def fetch_today_publications(request):
         # Criar histórico de busca
         SearchHistory.objects.create(
             owner=owner,
-            data_inicio=hoje,
-            data_fim=hoje,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
             tribunais=tribunais_configurados,
             total_publicacoes=result.get('total_publicacoes', 0),
             total_novas=total_novas,
             duration_seconds=round(duration, 2),
             search_params={
                 'retroactive_days': 7,
+                'lookback_days': lookback_days,
                 'oab': oab_number,
                 'nome_advogado': advogada_nome,
             }

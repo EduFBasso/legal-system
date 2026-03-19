@@ -31,10 +31,13 @@ class PublicationsService {
 
   /**
    * Busca publicações do dia atual
+   * Inclui opção de buscar também dias anteriores pela data de disponibilização
    * @returns {Promise<Object>} Publicações de hoje
    */
-  async searchToday() {
-    return await apiFetch(`/publications/today`);
+  async searchToday({ lookbackDays = 1 } = {}) {
+    const safeLookback = Number.isFinite(Number(lookbackDays)) ? Number(lookbackDays) : 1;
+    const normalizedLookback = Math.max(0, Math.min(30, safeLookback));
+    return await apiFetch(`/publications/today?lookback_days=${normalizedLookback}`);
   }
 
   /**
