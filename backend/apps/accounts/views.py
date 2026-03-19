@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from .permissions import IsMasterPermission, is_master_user
 from .serializers import (
     LoginTokenSerializer,
+    MasterSelfUpdateSerializer,
     TeamMemberCreateSerializer,
     TeamMemberSerializer,
     TeamMemberUpdateSerializer,
@@ -63,6 +64,37 @@ def user_preferences(request):
     })
 
 
+@api_view(['GET', 'PATCH'])
+@permission_classes([permissions.IsAuthenticated, IsMasterPermission])
+def master_self_account(request):
+    user = request.user
+
+    if request.method == 'GET':
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'email': user.email,
+            'role': getattr(getattr(user, 'profile', None), 'role', None),
+        })
+
+    serializer = MasterSelfUpdateSerializer(
+        data=request.data,
+        partial=True,
+        context={'user': user},
+    )
+    serializer.is_valid(raise_exception=True)
+    updated_user = serializer.update(user, serializer.validated_data)
+
+    return Response({
+        'id': updated_user.id,
+        'username': updated_user.username,
+        'first_name': updated_user.first_name,
+        'email': updated_user.email,
+        'role': getattr(getattr(updated_user, 'profile', None), 'role', None),
+    })
+
+
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def lawyers_for_login(request):
@@ -80,14 +112,8 @@ def lawyers_for_login(request):
         profile = getattr(user, 'profile', None)
         profile_full_name = (profile.full_name_oab if profile else '') or ''
         profile_first_name = profile_full_name.strip().split(' ')[0] if profile_full_name.strip() else ''
-        first_name = (user.first_name or profile_first_name or user.username or '').strip()
-        oab_number = (profile.oab_number if profile else '') or ''
-        label_name = f"{first_name} {oab_number}".strip()
-        display_name = (
-            label_name
-            or user.email
-            or user.username
-        )
+        first_name = (user.first_name or profile_first_name or '').strip()
+        display_name = first_name or user.username or user.email or f"Membro {user.id}"
         login_email = user.email or ''
 
         if not login_email:

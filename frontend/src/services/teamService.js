@@ -31,3 +31,10 @@ export async function deactivateTeamMember(id) {
 export async function reactivateTeamMember(id) {
   return await apiFetch(`/auth/team/${id}/reactivate/`, { method: 'POST' });
 }
+
+export async function updateMasterSelfAccount(payload) {
+  return await apiFetch('/auth/account/', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}

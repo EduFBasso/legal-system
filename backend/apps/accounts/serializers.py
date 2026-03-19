@@ -39,6 +39,66 @@ class UserPreferencesSerializer(serializers.Serializer):
         return profile
 
 
+class MasterSelfUpdateSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150, required=False)
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    current_password = serializers.CharField(write_only=True, required=False, allow_blank=False)
+    new_password = serializers.CharField(write_only=True, required=False, allow_blank=False)
+
+    def validate_username(self, value):
+        user = self.context['user']
+        normalized = value.strip()
+        if not normalized:
+            raise serializers.ValidationError('Username não pode ficar em branco.')
+
+        exists = User.objects.filter(username__iexact=normalized).exclude(pk=user.pk).exists()
+        if exists:
+            raise serializers.ValidationError('Username já existe.')
+        return normalized
+
+    def validate(self, attrs):
+        user = self.context['user']
+        current_password = attrs.get('current_password')
+        new_password = attrs.get('new_password')
+
+        if new_password and not current_password:
+            raise serializers.ValidationError({'current_password': 'Informe a senha atual para definir uma nova senha.'})
+
+        if current_password and not new_password:
+            raise serializers.ValidationError({'new_password': 'Informe a nova senha.'})
+
+        if current_password and not user.check_password(current_password):
+            raise serializers.ValidationError({'current_password': 'Senha atual inválida.'})
+
+        if new_password:
+            try:
+                validate_password(new_password, user=user)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError({'new_password': exc.messages})
+
+        return attrs
+
+    def update(self, user, validated_data):
+        changed_fields = []
+
+        if 'username' in validated_data:
+            user.username = validated_data['username']
+            changed_fields.append('username')
+
+        if 'first_name' in validated_data:
+            user.first_name = validated_data['first_name'].strip()
+            changed_fields.append('first_name')
+
+        if validated_data.get('new_password'):
+            user.set_password(validated_data['new_password'])
+            changed_fields.append('password')
+
+        if changed_fields:
+            user.save(update_fields=changed_fields)
+
+        return user
+
+
 class LoginTokenSerializer(TokenObtainPairSerializer):
     username = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField(required=False)
@@ -178,11 +238,14 @@ class TeamMemberCreateSerializer(serializers.Serializer):
         oab_number = validated_data.pop('oab_number', '')
         monitored_tribunais = validated_data.pop('monitored_tribunais', [])
 
+        profile_first_name = (full_name_oab or '').strip().split(' ')[0] if (full_name_oab or '').strip() else ''
+        first_name = (validated_data.get('first_name') or '').strip() or profile_first_name
+
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email'),
             password=password,
-            first_name=validated_data.get('first_name', ''),
+            first_name=first_name,
             last_name=validated_data.get('last_name', ''),
             is_active=True,
         )
@@ -241,6 +304,10 @@ class TeamMemberUpdateSerializer(serializers.Serializer):
             profile.role = validated_data['role']
         if 'full_name_oab' in validated_data:
             profile.full_name_oab = validated_data['full_name_oab']
+            derived_first_name = validated_data['full_name_oab'].strip().split(' ')[0] if validated_data['full_name_oab'].strip() else ''
+            if derived_first_name and not validated_data.get('first_name'):
+                user.first_name = derived_first_name
+                user.save(update_fields=['first_name'])
         if 'oab_number' in validated_data:
             profile.oab_number = validated_data['oab_number']
         if 'monitored_tribunais' in validated_data:

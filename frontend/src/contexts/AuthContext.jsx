@@ -138,14 +138,13 @@ export function AuthProvider({ children }) {
         user: data.user,
       };
 
-      const firstName = data.user?.first_name?.trim() || data.user?.username || selectedEmail;
-      const labelName = `${firstName}${data.user?.oab_number ? ` ${data.user.oab_number}` : ''}`.trim();
+      const displayName = data.user?.first_name?.trim() || data.user?.username || selectedEmail;
 
       setAuth(nextAuth);
       setPassword('');
       setLawyers((prev) => mergeLawyers(prev, [{
         email: data.user?.email || selectedEmail,
-        name: labelName,
+        name: displayName,
         role: data.user?.role || 'ADVOGADO',
       }]));
       return true;
@@ -161,6 +160,31 @@ export function AuthProvider({ children }) {
     setAuth(null);
     setPassword('');
     setError('');
+  };
+
+  const updateAuthUser = (nextUser) => {
+    if (!nextUser) return;
+
+    setAuth((current) => {
+      if (!current?.user) return current;
+      return {
+        ...current,
+        user: {
+          ...current.user,
+          ...nextUser,
+        },
+      };
+    });
+
+    const userEmail = nextUser.email || auth?.user?.email;
+    if (userEmail) {
+      const displayName = nextUser.first_name?.trim() || nextUser.username || userEmail;
+      setLawyers((prev) => mergeLawyers(prev, [{
+        email: userEmail,
+        name: displayName,
+        role: nextUser.role || auth?.user?.role || 'ADVOGADO',
+      }]));
+    }
   };
 
   const showNotLoggedMessage = () => {
@@ -183,6 +207,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     fetchLawyers,
+    updateAuthUser,
     showNotLoggedMessage,
   }), [
     auth,
