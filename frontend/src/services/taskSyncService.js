@@ -27,7 +27,6 @@ export const initTaskSync = (implementation) => {
  */
 export const subscribeToTaskUpdates = (callback) => {
   if (!syncImplementation) {
-    console.warn('Task sync not initialized. Skipping subscription.');
     return () => {};
   }
   return syncImplementation.subscribe(callback);
@@ -40,7 +39,6 @@ export const subscribeToTaskUpdates = (callback) => {
  */
 export const notifyTaskUpdate = (event) => {
   if (!syncImplementation) {
-    console.warn('Task sync not initialized. Skipping notification.');
     return;
   }
   syncImplementation.notify(event);

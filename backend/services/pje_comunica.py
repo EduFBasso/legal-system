@@ -24,7 +24,15 @@ TRIBUNAIS = [
 # OABs e nomes a EXCLUIR (outras advogadas com nomes similares)
 EXCLUDED_LAWYERS = {
     'oabs': ['407729'],  # LÚCIA VITÓRIA ROCHA DO NASCIMENTO
-    'keywords': ['LUCIA', 'LÚCIA', 'ROCHA DO NASCIMENTO']
+    # Frases específicas (não palavras isoladas) para evitar falsos positivos
+    # Ex: publicações TRT com partes/testemunhas chamadas "Lucia" não devem ser excluídas
+    'keywords': [
+        'ROCHA DO NASCIMENTO',  # sobrenome composto específico
+        'LUCIA VITORIA',        # nome completo sem acentos
+        'LÚCIA VITÓRIA',        # nome completo com acentos
+        'LUCIA VITÓRIA',        # variação mista
+        'LÚCIA VITORIA',        # variação mista
+    ]
 }
 
 

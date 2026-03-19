@@ -27,12 +27,13 @@ import { useAuth } from './contexts/AuthContext';
 import './App.css';
 import './styles/highlight.css'; // Sistema de destaque reutilizável
 
+// Initialize at module level so all component subscriptions work on first mount
+initTaskSync(taskSyncBroadcast);
+
 function App() {
   const { isAuthenticated, showNotLoggedMessage, user } = useAuth();
 
-  // Initialize task synchronization across tabs
   useEffect(() => {
-    initTaskSync(taskSyncBroadcast);
     return () => cleanupTaskSync();
   }, []);
 
