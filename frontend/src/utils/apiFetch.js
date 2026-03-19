@@ -10,7 +10,21 @@
  * - Retry logic (future)
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
+function resolveApiBaseUrl() {
+  const configuredUrl = (import.meta.env.VITE_API_URL || '').trim();
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const protocol = window.location.protocol || 'http:';
+    return `${protocol}//${window.location.hostname}:8000/api`;
+  }
+
+  return 'http://127.0.0.1:8000/api';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 const AUTH_STORAGE_KEY = 'legal_system_auth';
 
 export function getStoredAuth() {

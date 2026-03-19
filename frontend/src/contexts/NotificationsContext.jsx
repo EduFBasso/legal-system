@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
-import { getAuthToken } from '../utils/apiFetch';
+import { getApiBaseUrl, getAuthToken } from '../utils/apiFetch';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
+const API_BASE_URL = getApiBaseUrl();
 const POLL_INTERVAL = 30000; // 30 segundos
 
 // eslint-disable-next-line react-refresh/only-export-components

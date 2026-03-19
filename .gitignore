@@ -92,3 +92,4 @@ backend_service.cmd
 frontend_service.cmd
 
 processos.csv
+backup_db_legal-system/

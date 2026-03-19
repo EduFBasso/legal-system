@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { getApiBaseUrl } from '../utils/apiFetch';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
+const API_BASE_URL = getApiBaseUrl();
 
 const AUTH_STORAGE_KEY = 'legal_system_auth';
 const LAWYERS_STORAGE_KEY = 'legal_system_known_lawyers';
