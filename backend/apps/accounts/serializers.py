@@ -6,6 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from .models import UserProfile
+from .name_utils import derive_first_name
 
 
 User = get_user_model()
@@ -147,11 +148,12 @@ class LoginTokenSerializer(TokenObtainPairSerializer):
         attrs = self._resolve_user_from_identifier(attrs)
         data = super().validate(attrs)
         profile = getattr(self.user, 'profile', None)
+        profile_first_name = derive_first_name(profile.full_name_oab if profile else '')
         data['user'] = {
             'id': self.user.id,
             'username': self.user.username,
             'email': self.user.email,
-            'first_name': self.user.first_name,
+            'first_name': derive_first_name(self.user.first_name, profile_first_name),
             'last_name': self.user.last_name,
             'is_superuser': self.user.is_superuser,
             'role': profile.role if profile else 'ADVOGADO',
@@ -179,11 +181,12 @@ class TeamMemberSerializer(serializers.Serializer):
     @classmethod
     def from_user(cls, user):
         profile = getattr(user, 'profile', None)
+        profile_first_name = derive_first_name(profile.full_name_oab if profile else '')
         return {
             'id': user.id,
             'username': user.username,
             'email': user.email,
-            'first_name': user.first_name,
+            'first_name': derive_first_name(user.first_name, profile_first_name),
             'last_name': user.last_name,
             'is_active': user.is_active,
             'role': profile.role if profile else UserProfile.ROLE_ADVOGADO,
@@ -238,8 +241,7 @@ class TeamMemberCreateSerializer(serializers.Serializer):
         oab_number = validated_data.pop('oab_number', '')
         monitored_tribunais = validated_data.pop('monitored_tribunais', [])
 
-        profile_first_name = (full_name_oab or '').strip().split(' ')[0] if (full_name_oab or '').strip() else ''
-        first_name = (validated_data.get('first_name') or '').strip() or profile_first_name
+        first_name = derive_first_name(validated_data.get('first_name'), full_name_oab)
 
         user = User.objects.create_user(
             username=validated_data.get('username'),
@@ -292,10 +294,16 @@ class TeamMemberUpdateSerializer(serializers.Serializer):
         if not profile:
             profile = UserProfile.objects.create(user=user)
 
+        derived_first_name = derive_first_name(
+            validated_data.get('first_name'),
+            validated_data.get('full_name_oab'),
+            profile.full_name_oab,
+        )
+
         if 'email' in validated_data:
             user.email = validated_data['email']
-        if 'first_name' in validated_data:
-            user.first_name = validated_data['first_name']
+        if 'first_name' in validated_data or 'full_name_oab' in validated_data:
+            user.first_name = derived_first_name
         if 'last_name' in validated_data:
             user.last_name = validated_data['last_name']
         user.save()
@@ -304,10 +312,6 @@ class TeamMemberUpdateSerializer(serializers.Serializer):
             profile.role = validated_data['role']
         if 'full_name_oab' in validated_data:
             profile.full_name_oab = validated_data['full_name_oab']
-            derived_first_name = validated_data['full_name_oab'].strip().split(' ')[0] if validated_data['full_name_oab'].strip() else ''
-            if derived_first_name and not validated_data.get('first_name'):
-                user.first_name = derived_first_name
-                user.save(update_fields=['first_name'])
         if 'oab_number' in validated_data:
             profile.oab_number = validated_data['oab_number']
         if 'monitored_tribunais' in validated_data:

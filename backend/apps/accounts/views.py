@@ -5,6 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
+from .name_utils import derive_first_name
 from .permissions import IsMasterPermission, is_master_user
 from .serializers import (
     LoginTokenSerializer,
@@ -110,9 +111,7 @@ def lawyers_for_login(request):
     results = []
     for user in users:
         profile = getattr(user, 'profile', None)
-        profile_full_name = (profile.full_name_oab if profile else '') or ''
-        profile_first_name = profile_full_name.strip().split(' ')[0] if profile_full_name.strip() else ''
-        first_name = (user.first_name or profile_first_name or '').strip()
+        first_name = derive_first_name(user.first_name, profile.full_name_oab if profile else '')
         display_name = first_name or user.username or user.email or f"Membro {user.id}"
         login_email = user.email or ''
 

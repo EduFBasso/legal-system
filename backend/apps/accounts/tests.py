@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
 from django.test import TestCase, override_settings
 
 from apps.accounts.models import UserProfile
 from apps.accounts.signals import ensure_default_master_user
+from apps.accounts.serializers import TeamMemberSerializer
 
 
 User = get_user_model()
@@ -44,3 +46,53 @@ class DefaultMasterBootstrapTests(TestCase):
             User.objects.filter(profile__role=UserProfile.ROLE_MASTER, profile__is_active=True).count(),
             1,
         )
+
+
+class TeamMemberNameFallbackTests(TestCase):
+    def setUp(self):
+        self.master = User.objects.create_user(
+            username='master.tests',
+            email='master.tests@example.com',
+            password='SenhaForte!123',
+            first_name='Master',
+        )
+        self.master.profile.role = UserProfile.ROLE_MASTER
+        self.master.profile.is_active = True
+        self.master.profile.save(update_fields=['role', 'is_active'])
+        self.client = APIClient()
+        self.client.force_authenticate(self.master)
+
+    def test_team_member_serializer_falls_back_to_full_name_when_first_name_empty(self):
+        user = User.objects.create_user(
+            username='vitoria.rocha',
+            email='advocaciavitoriarocha@gmail.com',
+            password='SenhaForte!123',
+            first_name='',
+        )
+        user.profile.role = UserProfile.ROLE_ADVOGADO
+        user.profile.full_name_oab = 'Vitoria Rocha de Morais'
+        user.profile.oab_number = '507553'
+        user.profile.is_active = True
+        user.profile.save(update_fields=['role', 'full_name_oab', 'oab_number', 'is_active'])
+
+        payload = TeamMemberSerializer.from_user(user)
+
+        self.assertEqual(payload['first_name'], 'Vitoria')
+
+    def test_lawyers_for_login_falls_back_to_full_name_when_first_name_empty(self):
+        user = User.objects.create_user(
+            username='vitoria.rocha',
+            email='advocaciavitoriarocha@gmail.com',
+            password='SenhaForte!123',
+            first_name='',
+        )
+        user.profile.role = UserProfile.ROLE_ADVOGADO
+        user.profile.full_name_oab = 'Vitoria Rocha de Morais'
+        user.profile.oab_number = '507553'
+        user.profile.is_active = True
+        user.profile.save(update_fields=['role', 'full_name_oab', 'oab_number', 'is_active'])
+
+        response = self.client.get('/api/auth/lawyers/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['results'][0]['name'], 'Vitoria')
