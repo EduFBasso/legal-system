@@ -93,3 +93,4 @@ frontend_service.cmd
 
 processos.csv
 backup_db_legal-system/
+reset_test_data.py

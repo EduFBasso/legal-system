@@ -9,13 +9,19 @@ from .models import UserProfile
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_profile_for_user(sender, instance, created, **kwargs):
+def create_profile_for_user(sender, instance, created, raw=False, **kwargs):
+    # Durante loaddata/fixtures (raw=True), não criar/alterar registros derivados.
+    # Isso evita duplicar perfis quando restauramos User + UserProfile via dumpdata.
+    if raw:
+        return
     if created:
         UserProfile.objects.create(user=instance)
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def save_profile_for_user(sender, instance, **kwargs):
+def save_profile_for_user(sender, instance, raw=False, **kwargs):
+    if raw:
+        return
     if hasattr(instance, 'profile'):
         instance.profile.save()
 

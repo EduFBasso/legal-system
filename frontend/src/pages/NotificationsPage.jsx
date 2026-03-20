@@ -114,6 +114,16 @@ export default function NotificationsPage() {
     }
     
     const routed = routeNotification({ notification, navigate, mode: 'details' });
+
+    // Se veio de um minicard (via ?highlight=) e o usuário clicou no card destacado,
+    // remover o highlight da URL para o card voltar ao estilo "lido".
+    if (
+      notification.type === 'publication'
+      && notification.metadata?.id_api
+      && String(notification.id) === String(highlightNotificationId)
+    ) {
+      navigate('/notifications', { replace: true });
+    }
     if (routed) {
       return;
     }
@@ -326,10 +336,17 @@ export default function NotificationsPage() {
           </div>
         ) : (
           filteredNotifications.map((notification) => (
+            (() => {
+              const isHighlighted = String(notification.id) === String(highlightNotificationId);
+              const highlightedClass = isHighlighted && notification.type === 'publication'
+                ? 'selected pulse-active'
+                : (isHighlighted ? 'selected' : '');
+
+              return (
             <div
               key={notification.id}
               id={`notification-${notification.id}`}
-              className={`notification-card ${notification.read ? 'read' : 'unread'} ${getNotificationCardClass(notification)} ${String(notification.id) === String(highlightNotificationId) ? 'selected' : ''}`}
+              className={`notification-card ${notification.read ? 'read' : 'unread'} ${getNotificationCardClass(notification)} ${highlightedClass}`}
               onClick={() => handleViewDetails(notification)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -381,6 +398,8 @@ export default function NotificationsPage() {
 
               </div>
             </div>
+              );
+            })()
           ))
         )}
       </div>

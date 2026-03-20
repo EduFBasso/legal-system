@@ -44,7 +44,7 @@
   display: inline-block;
   background: #ef4444;
   color: white;
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 12px;
@@ -229,7 +229,7 @@
   border: 2px solid transparent;
   background: white;
   color: #64748b;
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
@@ -396,10 +396,8 @@
 
 .notification-card.selected {
   background: #f1f8f4 !important;
-  border: 2px solid #6366f1 !important;
-  border-left: 4px solid #6366f1;
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
-  animation: pulse-indigo 2s ease-in-out infinite;
+  opacity: 1 !important;
+  border-left: 4px solid #4caf50;
 }
 
 @keyframes pulse-indigo {
@@ -464,21 +462,21 @@
 
 .notification-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1.125rem; /* 18px */
   font-weight: 600;
   color: #1e293b;
   flex: 1;
 }
 
 .notification-time {
-  font-size: 13px;
+  font-size: 1rem;
   color: #64748b;
   white-space: nowrap;
 }
 
 .notification-message {
   margin: 0 0 12px 0;
-  font-size: 14px;
+  font-size: 1rem;
   color: #475569;
   line-height: 1.6;
 }
@@ -491,7 +489,7 @@
 }
 
 .notification-type {
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -499,7 +497,7 @@
 }
 
 .notification-priority {
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;

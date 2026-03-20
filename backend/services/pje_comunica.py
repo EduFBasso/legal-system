@@ -3,6 +3,7 @@ Service para integração com API PJe Comunica.
 Busca publicações jurídicas em múltiplos tribunais.
 """
 import re
+import time
 from datetime import datetime, date
 from typing import List, Dict, Optional
 
@@ -12,6 +13,8 @@ import requests
 # API Configuration
 API_URL = "https://comunicaapi.pje.jus.br/api/v1/comunicacao"
 API_TIMEOUT = 15  # seconds
+API_MAX_RETRIES = 2
+API_RETRY_BACKOFF_SECONDS = (0.75, 2.0)  # attempt 1, attempt 2
 
 # Tribunais suportados (principais)
 TRIBUNAIS = [
@@ -74,30 +77,40 @@ class PJeComunicaService:
             params["dataDisponibilizacaoFim"] = data_fim
         
         try:
-            response = requests.get(API_URL, params=params, timeout=API_TIMEOUT)
-            response.raise_for_status()
-            data = response.json()
-            
-            if data.get('status') != 'success':
-                return {
-                    'tribunal': tribunal,
-                    'success': False,
-                    'error': data.get('message', 'Erro desconhecido'),
-                    'items': []
-                }
-            
-            return {
-                'tribunal': tribunal,
-                'success': True,
-                'count': data.get('count', 0),
-                'items': data.get('items', [])
-            }
-            
-        except requests.exceptions.RequestException as e:
+            last_error = None
+            for attempt in range(API_MAX_RETRIES + 1):
+                try:
+                    response = requests.get(API_URL, params=params, timeout=API_TIMEOUT)
+                    response.raise_for_status()
+                    data = response.json()
+
+                    if data.get('status') != 'success':
+                        return {
+                            'tribunal': tribunal,
+                            'success': False,
+                            'error': data.get('message', 'Erro desconhecido'),
+                            'items': []
+                        }
+
+                    return {
+                        'tribunal': tribunal,
+                        'success': True,
+                        'count': data.get('count', 0),
+                        'items': data.get('items', [])
+                    }
+                except requests.exceptions.RequestException as e:
+                    last_error = e
+                    if attempt >= API_MAX_RETRIES:
+                        break
+
+                    # Backoff simples para reduzir falhas intermitentes da API
+                    backoff = API_RETRY_BACKOFF_SECONDS[min(attempt, len(API_RETRY_BACKOFF_SECONDS) - 1)]
+                    time.sleep(backoff)
+
             return {
                 'tribunal': tribunal,
                 'success': False,
-                'error': str(e),
+                'error': str(last_error) if last_error else 'Erro de conexão (sem detalhes)',
                 'items': []
             }
         except Exception as e:

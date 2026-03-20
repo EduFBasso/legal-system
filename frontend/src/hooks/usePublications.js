@@ -147,6 +147,13 @@ export function usePublications() {
             'success'
           );
         }
+
+        // Observabilidade: se houve falhas em algum tribunal, avisar sem quebrar o fluxo
+        if (Array.isArray(data.erros) && data.erros.length > 0) {
+          const first = data.erros.slice(0, 2).map((e) => `${e.tribunal} (${e.tipo_busca})`).join(', ');
+          const more = data.erros.length > 2 ? ` +${data.erros.length - 2}` : '';
+          showToast(`⚠️ Alguns tribunais falharam na consulta: ${first}${more}`, 'warning');
+        }
       }
       return data;
     } catch (error) {
@@ -188,6 +195,13 @@ export function usePublications() {
             `${data.total_publicacoes} publicação(ões) encontrada(s).`,
             'success'
           );
+        }
+
+        // Observabilidade: se houve falhas em algum tribunal, avisar sem quebrar o fluxo
+        if (Array.isArray(data.erros) && data.erros.length > 0) {
+          const first = data.erros.slice(0, 2).map((e) => `${e.tribunal} (${e.tipo_busca})`).join(', ');
+          const more = data.erros.length > 2 ? ` +${data.erros.length - 2}` : '';
+          showToast(`⚠️ Alguns tribunais falharam na consulta: ${first}${more}`, 'warning');
         }
       }
       return data;

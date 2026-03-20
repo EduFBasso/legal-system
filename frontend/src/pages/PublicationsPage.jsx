@@ -19,7 +19,6 @@ import {
   openCaseDetailWindow,
   openCaseMovementsWindow,
   openCreateCaseFromPublicationWindow,
-  openPublicationDetailsWindow,
 } from '../utils/publicationNavigation';
 import './PublicationsPage.css';
 
@@ -264,22 +263,14 @@ export default function PublicationsPage() {
       const confirmed = window.confirm(
         'Nenhum caso foi encontrado automaticamente. Deseja deixar pendente para integração posterior?'
       );
-      if (!confirmed) {
-        openCreateCaseFromPublicationWindow(pub.id_api);
-      } else {
-        try {
-          const result = await publicationsService.integratePublication(pub.id_api, {
-            createMovement: false
-          });
-          if (result.success) {
-            showToast('⏸️ Publicação deixada pendente', 'info');
-            await loadLastSearch();
-            notifyPublicationsUpdated();
-          }
-        } catch (error) {
-          showToast(error.message || '❌ Erro ao atualizar publicação', 'error');
-        }
+      if (confirmed) {
+        // Já é o estado padrão após a busca (integration_status=PENDING).
+        // Evita chamar /integrate sem case_id (backend exige case_id).
+        showToast('⏸️ Publicação mantida pendente', 'info');
+        return;
       }
+
+      openCreateCaseFromPublicationWindow(pub.id_api);
     }
   };
 

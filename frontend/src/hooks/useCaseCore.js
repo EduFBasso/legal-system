@@ -197,18 +197,31 @@ export function useCaseCore(
 
         const pubId = sourcePublication?.id_api || publicationId;
         const shouldAutoIntegratePublication = settings?.autoIntegration ?? false;
-        const shouldCreateMovement = shouldAutoIntegratePublication
-          && systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
+        const shouldCreateMovementBySystemSetting = systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
 
         if (pubId) {
-          if (shouldAutoIntegratePublication) {
+          // REGRA DE NEGÓCIO:
+          // Se o processo foi criado a partir de uma publicação (via ?pub_id=),
+          // essa publicação deve ser vinculada ao processo mesmo no modo manual.
+          const forceIntegrateSourcePublication = true;
+          const shouldIntegrateSourcePublication = forceIntegrateSourcePublication || shouldAutoIntegratePublication;
+
+          if (shouldIntegrateSourcePublication) {
             try {
+              // Para publicação de origem, sempre garantir criação de movimentação.
+              const createMovementRequested = true;
+
               const integrationResult = await publicationsService.integratePublication(pubId, {
                 caseId: created.id,
-                createMovement: shouldCreateMovement,
+                createMovement: createMovementRequested,
               });
 
-              if (shouldCreateMovement && integrationResult?.movement_created !== true) {
+              // Caso o backend não crie a movimentação (ou se estiver desligado por setting),
+              // fazer fallback explícito para garantir que apareça em Movimentações.
+              if (
+                createMovementRequested
+                && (integrationResult?.movement_created !== true || shouldCreateMovementBySystemSetting === false)
+              ) {
                 try {
                   await publicationsService.createMovementFromPublication(pubId);
                 } catch (fallbackError) {
@@ -223,7 +236,7 @@ export function useCaseCore(
               });
             } catch (integrationError) {
               console.error('Error integrating source publication:', integrationError);
-              showToast('Processo criado, mas houve falha ao vincular a publicação automaticamente', 'warning');
+              showToast('Processo criado, mas houve falha ao vincular a publicação de origem', 'warning');
             }
           } else {
             publicationIntegrationSkipped = true;

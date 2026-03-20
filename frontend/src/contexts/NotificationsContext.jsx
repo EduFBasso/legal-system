@@ -13,16 +13,16 @@ export function NotificationsProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [permission, setPermission] = useState('default');
+  const [authToken, setAuthToken] = useState(() => getAuthToken());
   const shownNotificationsRef = useRef(new Set()); // IDs já exibidas - usar ref para evitar re-renders
 
-  const buildAuthHeaders = (json = false) => {
-    const token = getAuthToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const buildAuthHeaders = useCallback((json = false) => {
+    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
     if (json) {
       headers['Content-Type'] = 'application/json';
     }
     return headers;
-  };
+  }, [authToken]);
 
   const resetNotificationsState = useCallback(() => {
     setNotifications(prev => (prev.length === 0 ? prev : []));
@@ -95,13 +95,13 @@ export function NotificationsProvider({ children }) {
       }
       webNotification.close();
     };
-  }, [permission]);
+  }, [buildAuthHeaders, permission]);
 
   // Buscar notificações não lidas
   const fetchUnreadNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      if (!getAuthToken()) {
+      if (!authToken) {
         setUnreadCount(0);
         setNotifications([]);
         return;
@@ -164,7 +164,7 @@ export function NotificationsProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [permission, showWebNotification]);
+  }, [authToken, buildAuthHeaders, permission, showWebNotification]);
 
   // Buscar todas as notificações
   const fetchAllNotifications = async () => {
@@ -360,7 +360,7 @@ export function NotificationsProvider({ children }) {
 
   // Polling: Buscar notificações a cada 30 segundos
   useEffect(() => {
-    if (!getAuthToken()) {
+    if (!authToken) {
       resetNotificationsState();
       return;
     }
@@ -374,12 +374,12 @@ export function NotificationsProvider({ children }) {
     }, POLL_INTERVAL);
     
     return () => clearInterval(interval);
-  }, [fetchUnreadNotifications, resetNotificationsState]);
+  }, [authToken, fetchUnreadNotifications, resetNotificationsState]);
 
   // Atualizar notificações ao finalizar busca de publicações
   // Inclui retries curtos para cobrir criação assíncrona no backend
   useEffect(() => {
-    if (!getAuthToken()) {
+    if (!authToken) {
       return;
     }
 
@@ -417,19 +417,29 @@ export function NotificationsProvider({ children }) {
         clearRetries();
       }
     };
-  }, [fetchUnreadNotifications]);
+  }, [authToken, fetchUnreadNotifications]);
 
   useEffect(() => {
     const handleAuthChanged = () => {
+      setAuthToken(getAuthToken());
       resetNotificationsState();
-      if (getAuthToken()) {
-        fetchUnreadNotifications();
-      }
     };
 
     window.addEventListener('auth:changed', handleAuthChanged);
     return () => window.removeEventListener('auth:changed', handleAuthChanged);
   }, [fetchUnreadNotifications, resetNotificationsState]);
+
+  // Fallback: se o localStorage mudar (ou auth mudar fora do fluxo normal), atualizar token
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (!event || event.key === null || event.key === 'legal_system_auth') {
+        setAuthToken(getAuthToken());
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const value = {
     notifications,

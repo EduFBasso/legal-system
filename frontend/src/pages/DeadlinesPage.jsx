@@ -11,6 +11,7 @@ import {
   isToday,
   parseLocalDate,
 } from '../utils/taskUrgency';
+import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import TaskCard from '../components/TaskCard';
 import UrgencySection from '../components/UrgencySection';
 import './DeadlinesPage.css';
@@ -97,14 +98,6 @@ export default function DeadlinesPage() {
     });
     return unsubscribe;
   }, [fetchAllTasks]);
-
-  /**
-   * Gera URL para navegar até a movimentação e destacar tarefa específica
-   * Destaque azul auxiliar em MovimentacoesTab para facilitar localização
-   */
-  const getMovementLinkUrl = (caseId, movementId, taskId) => {
-    return `/cases/${caseId}?tab=movements&focusMovement=${movementId}&focusTask=${taskId}`;
-  };
 
   /**
    * Abre processo/case em nova aba
