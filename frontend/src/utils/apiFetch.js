@@ -125,6 +125,19 @@ export async function apiFetch(endpoint, options = {}) {
 
         return String(value ?? '');
       };
+
+      const serverMessage =
+        (typeof errorData?.error === 'string' && errorData.error.trim())
+        || (typeof errorData?.message === 'string' && errorData.message.trim())
+        || (typeof errorData?.detail === 'string' && errorData.detail.trim())
+        || (typeof errorData === 'string' && errorData.trim())
+        || '';
+
+      if (serverMessage) {
+        const apiError = new Error(serverMessage);
+        apiError.status = response.status;
+        throw apiError;
+      }
       
       // Format validation errors from Django
       if (errorData && typeof errorData === 'object') {

@@ -230,9 +230,46 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Configurações de OAB para publicações
-OAB_NUMBER = config('OAB_NUMBER', default='507553')
-ADVOGADA_NOME = config('ADVOGADA_NOME', default='Vitoria Rocha de Morais')
+# ===== PUBLICAÇÕES / PJe Comunica =====
+# Identidade padrão (fallback) para consultas quando usuário não tem perfil.
+# Em produção, configure via .env ou (preferível) use o perfil do usuário.
+OAB_NUMBER = config('OAB_NUMBER', default='')
+ADVOGADA_NOME = config('ADVOGADA_NOME', default='')
+
+# Integração com PJe Comunica
+PJE_COMUNICA_API_URL = config('PJE_COMUNICA_API_URL', default='https://comunicaapi.pje.jus.br/api/v1/comunicacao')
+PJE_COMUNICA_TIMEOUT_SECONDS = config('PJE_COMUNICA_TIMEOUT_SECONDS', default=15, cast=int)
+PJE_COMUNICA_MAX_RETRIES = config('PJE_COMUNICA_MAX_RETRIES', default=2, cast=int)
+PJE_COMUNICA_RETRY_BACKOFF_SECONDS = config(
+    'PJE_COMUNICA_RETRY_BACKOFF_SECONDS',
+    default='0.75,2.0',
+    cast=Csv(),
+)
+PJE_COMUNICA_DEFAULT_TRIBUNAIS = config(
+    'PJE_COMUNICA_DEFAULT_TRIBUNAIS',
+    default='TJSP,TRF3,TRT2,TRT15',
+    cast=Csv(),
+)
+
+# Regras globais (fallback) para rejeitar publicações de advogados similares.
+# Preferível configurar por usuário (UserProfile), mas esses valores servem como padrão.
+PJE_COMUNICA_EXCLUDED_LAWYERS_OABS = config(
+    'PJE_COMUNICA_EXCLUDED_LAWYERS_OABS',
+    default='',
+    cast=Csv(),
+)
+PJE_COMUNICA_EXCLUDED_LAWYERS_KEYWORDS = config(
+    'PJE_COMUNICA_EXCLUDED_LAWYERS_KEYWORDS',
+    default='',
+    cast=Csv(),
+)
+
+# Limites operacionais (evitar spam/volume)
+PUBLICATIONS_NOTIFICATION_MAX_PER_SEARCH = config(
+    'PUBLICATIONS_NOTIFICATION_MAX_PER_SEARCH',
+    default=5,
+    cast=int,
+)
 DEFAULT_MASTER_USERNAME = config(
     'MASTER_USERNAME',
     default=config('DJANGO_SUPERUSER_USERNAME', default=config('SUPERUSER_USERNAME', default='master')),

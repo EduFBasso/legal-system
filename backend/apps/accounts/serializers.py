@@ -20,6 +20,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'full_name_oab',
             'oab_number',
             'monitored_tribunais',
+            'publications_excluded_oabs',
+            'publications_excluded_keywords',
             'publication_auto_integration',
             'is_active',
         ]
@@ -43,6 +45,8 @@ class UserPreferencesSerializer(serializers.Serializer):
 class MasterSelfUpdateSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150, required=False)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    full_name_oab = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    oab_number = serializers.CharField(max_length=30, required=False, allow_blank=True)
     current_password = serializers.CharField(write_only=True, required=False, allow_blank=False)
     new_password = serializers.CharField(write_only=True, required=False, allow_blank=False)
 
@@ -96,6 +100,22 @@ class MasterSelfUpdateSerializer(serializers.Serializer):
 
         if changed_fields:
             user.save(update_fields=changed_fields)
+
+        if 'full_name_oab' in validated_data or 'oab_number' in validated_data:
+            profile = getattr(user, 'profile', None)
+            if not profile:
+                profile = UserProfile.objects.create(user=user)
+
+            profile_changed = []
+            if 'full_name_oab' in validated_data:
+                profile.full_name_oab = validated_data['full_name_oab'].strip()
+                profile_changed.append('full_name_oab')
+            if 'oab_number' in validated_data:
+                profile.oab_number = validated_data['oab_number'].strip()
+                profile_changed.append('oab_number')
+
+            if profile_changed:
+                profile.save(update_fields=[*profile_changed, 'updated_at'])
 
         return user
 
@@ -160,6 +180,8 @@ class LoginTokenSerializer(TokenObtainPairSerializer):
             'full_name_oab': profile.full_name_oab if profile else '',
             'oab_number': profile.oab_number if profile else '',
             'monitored_tribunais': profile.monitored_tribunais if profile else [],
+            'publications_excluded_oabs': profile.publications_excluded_oabs if profile else [],
+            'publications_excluded_keywords': profile.publications_excluded_keywords if profile else [],
             'publication_auto_integration': profile.publication_auto_integration if profile else False,
         }
         return data
@@ -176,6 +198,8 @@ class TeamMemberSerializer(serializers.Serializer):
     full_name_oab = serializers.CharField(allow_blank=True)
     oab_number = serializers.CharField(allow_blank=True)
     monitored_tribunais = serializers.ListField(child=serializers.CharField(), required=False)
+    publications_excluded_oabs = serializers.ListField(child=serializers.CharField(), required=False)
+    publications_excluded_keywords = serializers.ListField(child=serializers.CharField(), required=False)
     profile_is_active = serializers.BooleanField()
 
     @classmethod
@@ -193,6 +217,8 @@ class TeamMemberSerializer(serializers.Serializer):
             'full_name_oab': profile.full_name_oab if profile else '',
             'oab_number': profile.oab_number if profile else '',
             'monitored_tribunais': profile.monitored_tribunais if profile else [],
+            'publications_excluded_oabs': profile.publications_excluded_oabs if profile else [],
+            'publications_excluded_keywords': profile.publications_excluded_keywords if profile else [],
             'profile_is_active': profile.is_active if profile else False,
         }
 
@@ -212,6 +238,16 @@ class TeamMemberCreateSerializer(serializers.Serializer):
     full_name_oab = serializers.CharField(max_length=200, required=False, allow_blank=True)
     oab_number = serializers.CharField(max_length=30, required=False, allow_blank=True)
     monitored_tribunais = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+    publications_excluded_oabs = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+    publications_excluded_keywords = serializers.ListField(
         child=serializers.CharField(),
         required=False,
         default=list,
@@ -240,6 +276,8 @@ class TeamMemberCreateSerializer(serializers.Serializer):
         full_name_oab = validated_data.pop('full_name_oab', '')
         oab_number = validated_data.pop('oab_number', '')
         monitored_tribunais = validated_data.pop('monitored_tribunais', [])
+        publications_excluded_oabs = validated_data.pop('publications_excluded_oabs', [])
+        publications_excluded_keywords = validated_data.pop('publications_excluded_keywords', [])
 
         first_name = derive_first_name(validated_data.get('first_name'), full_name_oab)
 
@@ -260,6 +298,8 @@ class TeamMemberCreateSerializer(serializers.Serializer):
         profile.full_name_oab = full_name_oab
         profile.oab_number = oab_number
         profile.monitored_tribunais = monitored_tribunais
+        profile.publications_excluded_oabs = publications_excluded_oabs
+        profile.publications_excluded_keywords = publications_excluded_keywords
         profile.is_active = True
         profile.save()
         return user
@@ -278,6 +318,14 @@ class TeamMemberUpdateSerializer(serializers.Serializer):
     full_name_oab = serializers.CharField(max_length=200, required=False, allow_blank=True)
     oab_number = serializers.CharField(max_length=30, required=False, allow_blank=True)
     monitored_tribunais = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    publications_excluded_oabs = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    publications_excluded_keywords = serializers.ListField(
         child=serializers.CharField(),
         required=False,
     )
@@ -316,6 +364,10 @@ class TeamMemberUpdateSerializer(serializers.Serializer):
             profile.oab_number = validated_data['oab_number']
         if 'monitored_tribunais' in validated_data:
             profile.monitored_tribunais = validated_data['monitored_tribunais']
+        if 'publications_excluded_oabs' in validated_data:
+            profile.publications_excluded_oabs = validated_data['publications_excluded_oabs']
+        if 'publications_excluded_keywords' in validated_data:
+            profile.publications_excluded_keywords = validated_data['publications_excluded_keywords']
         profile.save()
 
         return user

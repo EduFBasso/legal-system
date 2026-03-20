@@ -96,3 +96,38 @@ class TeamMemberNameFallbackTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['results'][0]['name'], 'Vitoria')
+
+
+class MasterSelfAccountProfileUpdateTests(TestCase):
+    def setUp(self):
+        self.master = User.objects.create_user(
+            username='master.profile',
+            email='master.profile@example.com',
+            password='SenhaForte!123',
+            first_name='Master',
+        )
+        self.master.profile.role = UserProfile.ROLE_MASTER
+        self.master.profile.is_active = True
+        self.master.profile.save(update_fields=['role', 'is_active'])
+
+        self.client = APIClient()
+        self.client.force_authenticate(self.master)
+
+    def test_master_can_update_full_name_and_oab_number(self):
+        response = self.client.patch(
+            '/api/auth/account/',
+            {
+                'full_name_oab': 'Vitória Rocha de Morais',
+                'oab_number': '507553',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['full_name_oab'], 'Vitória Rocha de Morais')
+        self.assertEqual(response.data['oab_number'], '507553')
+
+        self.master.refresh_from_db()
+        self.master.profile.refresh_from_db()
+        self.assertEqual(self.master.profile.full_name_oab, 'Vitória Rocha de Morais')
+        self.assertEqual(self.master.profile.oab_number, '507553')

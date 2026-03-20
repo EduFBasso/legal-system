@@ -4,39 +4,66 @@ Busca publicações jurídicas em múltiplos tribunais.
 """
 import re
 import time
+import unicodedata
 from datetime import datetime, date
 from typing import List, Dict, Optional
 
 import requests
+from django.conf import settings
 
 
-# API Configuration
-API_URL = "https://comunicaapi.pje.jus.br/api/v1/comunicacao"
-API_TIMEOUT = 15  # seconds
-API_MAX_RETRIES = 2
-API_RETRY_BACKOFF_SECONDS = (0.75, 2.0)  # attempt 1, attempt 2
+# Defaults mantidos no módulo como fallback, mas configuráveis via settings/env.
+# (Em produção, prefira configurar via .env e/ou perfil do usuário.)
+DEFAULT_PJE_COMUNICA_API_URL = "https://comunicaapi.pje.jus.br/api/v1/comunicacao"
+DEFAULT_PJE_COMUNICA_TIMEOUT_SECONDS = 15
+DEFAULT_PJE_COMUNICA_MAX_RETRIES = 2
+DEFAULT_PJE_COMUNICA_RETRY_BACKOFF_SECONDS = (0.75, 2.0)
 
-# Tribunais suportados (principais)
-TRIBUNAIS = [
-    'TJSP',   # Tribunal de Justiça de São Paulo
-    'TRF3',   # Tribunal Regional Federal da 3ª Região
-    'TRT2',   # Tribunal Regional do Trabalho da 2ª Região (SP)
-    'TRT15',  # Tribunal Regional do Trabalho da 15ª Região (Campinas)
+DEFAULT_TRIBUNAIS = [
+    'TJSP',
+    'TRF3',
+    'TRT2',
+    'TRT15',
 ]
 
-# OABs e nomes a EXCLUIR (outras advogadas com nomes similares)
-EXCLUDED_LAWYERS = {
-    'oabs': ['407729'],  # LÚCIA VITÓRIA ROCHA DO NASCIMENTO
-    # Frases específicas (não palavras isoladas) para evitar falsos positivos
-    # Ex: publicações TRT com partes/testemunhas chamadas "Lucia" não devem ser excluídas
-    'keywords': [
-        'ROCHA DO NASCIMENTO',  # sobrenome composto específico
-        'LUCIA VITORIA',        # nome completo sem acentos
-        'LÚCIA VITÓRIA',        # nome completo com acentos
-        'LUCIA VITÓRIA',        # variação mista
-        'LÚCIA VITORIA',        # variação mista
-    ]
-}
+def _sanitize_str_list(values) -> list[str]:
+    if not values:
+        return []
+    sanitized: list[str] = []
+    for item in values:
+        if item is None:
+            continue
+        text = str(item).strip()
+        if not text:
+            continue
+        sanitized.append(text)
+    return sanitized
+
+
+def _resolve_exclusion_rules(excluded_oabs=None, excluded_keywords=None) -> tuple[list[str], list[str]]:
+    """Resolve regras de exclusão priorizando parâmetros e caindo para settings."""
+    if excluded_oabs is None:
+        excluded_oabs = _get_setting('PJE_COMUNICA_EXCLUDED_LAWYERS_OABS', [])
+    if excluded_keywords is None:
+        excluded_keywords = _get_setting('PJE_COMUNICA_EXCLUDED_LAWYERS_KEYWORDS', [])
+    return _sanitize_str_list(excluded_oabs), _sanitize_str_list(excluded_keywords)
+
+
+def _normalize_for_match(value: str) -> str:
+    """Normaliza para matching: remove acentos, transforma em UPPER e colapsa espaços."""
+    if not value:
+        return ''
+    value = unicodedata.normalize('NFD', value)
+    value = ''.join(char for char in value if unicodedata.category(char) != 'Mn')
+    value = re.sub(r'\s+', ' ', value).strip()
+    return value.upper()
+
+
+def _get_setting(name: str, default):
+    try:
+        return getattr(settings, name)
+    except Exception:
+        return default
 
 
 class PJeComunicaService:
@@ -78,9 +105,16 @@ class PJeComunicaService:
         
         try:
             last_error = None
-            for attempt in range(API_MAX_RETRIES + 1):
+            api_url = _get_setting('PJE_COMUNICA_API_URL', DEFAULT_PJE_COMUNICA_API_URL)
+            api_timeout = _get_setting('PJE_COMUNICA_TIMEOUT_SECONDS', DEFAULT_PJE_COMUNICA_TIMEOUT_SECONDS)
+            api_max_retries = _get_setting('PJE_COMUNICA_MAX_RETRIES', DEFAULT_PJE_COMUNICA_MAX_RETRIES)
+            api_backoff = _get_setting('PJE_COMUNICA_RETRY_BACKOFF_SECONDS', DEFAULT_PJE_COMUNICA_RETRY_BACKOFF_SECONDS)
+            if isinstance(api_backoff, list):
+                api_backoff = tuple(float(x) for x in api_backoff)
+
+            for attempt in range(max(0, int(api_max_retries)) + 1):
                 try:
-                    response = requests.get(API_URL, params=params, timeout=API_TIMEOUT)
+                    response = requests.get(api_url, params=params, timeout=api_timeout)
                     response.raise_for_status()
                     data = response.json()
 
@@ -100,12 +134,13 @@ class PJeComunicaService:
                     }
                 except requests.exceptions.RequestException as e:
                     last_error = e
-                    if attempt >= API_MAX_RETRIES:
+                    if attempt >= api_max_retries:
                         break
 
                     # Backoff simples para reduzir falhas intermitentes da API
-                    backoff = API_RETRY_BACKOFF_SECONDS[min(attempt, len(API_RETRY_BACKOFF_SECONDS) - 1)]
-                    time.sleep(backoff)
+                    if api_backoff:
+                        backoff = api_backoff[min(attempt, len(api_backoff) - 1)]
+                        time.sleep(backoff)
 
             return {
                 'tribunal': tribunal,
@@ -214,7 +249,11 @@ class PJeComunicaService:
         }
     
     @staticmethod
-    def should_exclude_publication(pub: Dict) -> bool:
+    def should_exclude_publication(
+        pub: Dict,
+        excluded_oabs: Optional[list[str]] = None,
+        excluded_keywords: Optional[list[str]] = None,
+    ) -> bool:
         """
         Verifica se uma publicação deve ser EXCLUÍDA por pertencer a outra advogada.
         
@@ -234,16 +273,18 @@ class PJeComunicaService:
             pub.get('texto_resumo', ''),
             pub.get('orgao', ''),
         ]
-        full_text = ' '.join(text_fields).upper()
+        full_text = _normalize_for_match(' '.join(text_fields))
         
+        excluded_oabs, excluded_keywords = _resolve_exclusion_rules(excluded_oabs, excluded_keywords)
+
         # Verificar OABs excluídas
-        for excluded_oab in EXCLUDED_LAWYERS['oabs']:
-            if excluded_oab in full_text:
+        for excluded_oab in excluded_oabs:
+            if excluded_oab and str(excluded_oab) in full_text:
                 return True  # EXCLUIR
         
         # Verificar keywords excluídas
-        for keyword in EXCLUDED_LAWYERS['keywords']:
-            if keyword.upper() in full_text:
+        for keyword in excluded_keywords:
+            if keyword and _normalize_for_match(keyword) in full_text:
                 return True  # EXCLUIR
         
         # Passou por todos os filtros - INCLUIR publicação
@@ -271,18 +312,27 @@ class PJeComunicaService:
             pub.get('texto_resumo', ''),
             pub.get('orgao', ''),
         ]
-        full_text = ' '.join(text_fields).upper()
+        full_text = _normalize_for_match(' '.join(text_fields))
         
         # Verificar se menciona o número da OAB
-        if oab and oab in full_text:
+        if oab and str(oab).strip() and str(oab).strip() in full_text:
             return True  # INCLUIR - menciona OAB
         
         # Verificar se menciona partes do nome da advogada
         # Dividir nome em partes significativas (ignorar preposições)
         if nome_advogado:
-            # Remover preposições comuns
-            nome_parts = nome_advogado.upper().replace(' DE ', ' ').replace(' DA ', ' ').replace(' DO ', ' ')
-            nome_parts = [p.strip() for p in nome_parts.split() if len(p.strip()) > 2]
+            nome_norm = _normalize_for_match(nome_advogado)
+            # Remover preposições comuns (após normalizar)
+            nome_norm = (
+                f' {nome_norm} '
+                .replace(' DE ', ' ')
+                .replace(' DA ', ' ')
+                .replace(' DO ', ' ')
+                .replace(' DAS ', ' ')
+                .replace(' DOS ', ' ')
+            ).strip()
+
+            nome_parts = [p.strip() for p in nome_norm.split() if len(p.strip()) > 2]
             
             # Procurar pelo menos 2 partes do nome (ex: VITORIA + ROCHA)
             matches = sum(1 for part in nome_parts if part in full_text)
@@ -300,7 +350,9 @@ class PJeComunicaService:
         nome_advogado: str,
         data_inicio: str,
         data_fim: str,
-        tribunais: Optional[List[str]] = None
+        tribunais: Optional[List[str]] = None,
+        excluded_oabs: Optional[list[str]] = None,
+        excluded_keywords: Optional[list[str]] = None,
     ) -> Dict:
         """
         Busca publicações com filtros personalizados.
@@ -319,19 +371,30 @@ class PJeComunicaService:
         Returns:
             Dict com publicações normalizadas e estatísticas
         """
+        oab_clean = (oab or '').strip()
+        nome_clean = (nome_advogado or '').strip()
+        if not oab_clean and not nome_clean:
+            raise ValueError('Consulta de publicações requer OAB e/ou nome do advogado')
+
         if tribunais is None:
-            tribunais = TRIBUNAIS
+            tribunais = list(_get_setting('PJE_COMUNICA_DEFAULT_TRIBUNAIS', DEFAULT_TRIBUNAIS))
         
         results = []
         errors = []
         seen_ids = set()  # Para evitar duplicatas
+
+        excluded_total = 0
+        excluded_by_oab = 0
+        excluded_by_keyword = 0
+
+        resolved_excluded_oabs, resolved_excluded_keywords = _resolve_exclusion_rules(excluded_oabs, excluded_keywords)
         
         # Busca em cada tribunal
         for tribunal in tribunais:
             # BUSCA 1: Por número OAB
             result_oab = cls.fetch_publications_from_tribunal(
                 tribunal=tribunal,
-                oab=oab,
+                oab=oab_clean,
                 nome_advogado=None,  # Apenas OAB
                 data_inicio=data_inicio,
                 data_fim=data_fim
@@ -348,7 +411,23 @@ class PJeComunicaService:
                         # Só aplica filtro NEGATIVO (excluir outras advogadas com OAB/nome similar).
                         # NÃO aplica filtro positivo aqui, pois algumas publicações (ex: TRT15
                         # distribuições) não mencionam OAB/nome no texto.
-                        if not cls.should_exclude_publication(normalized):
+                        if cls.should_exclude_publication(
+                            normalized,
+                            excluded_oabs=resolved_excluded_oabs,
+                            excluded_keywords=resolved_excluded_keywords,
+                        ):
+                            excluded_total += 1
+                            # Heurística: contabiliza por presença no texto normalizado.
+                            full_text = _normalize_for_match(' '.join([
+                                normalized.get('texto_completo', ''),
+                                normalized.get('texto_resumo', ''),
+                                normalized.get('orgao', ''),
+                            ]))
+                            if any(oab in full_text for oab in resolved_excluded_oabs if oab):
+                                excluded_by_oab += 1
+                            if any(_normalize_for_match(k) in full_text for k in resolved_excluded_keywords if k):
+                                excluded_by_keyword += 1
+                        else:
                             results.append(normalized)
             else:
                 errors.append({
@@ -361,7 +440,7 @@ class PJeComunicaService:
             result_nome = cls.fetch_publications_from_tribunal(
                 tribunal=tribunal,
                 oab=None,  # Apenas Nome
-                nome_advogado=nome_advogado,
+                nome_advogado=nome_clean,
                 data_inicio=data_inicio,
                 data_fim=data_fim
             )
@@ -375,9 +454,24 @@ class PJeComunicaService:
                         normalized = cls.normalize_publication(item, tribunal)
                         
                         # Aplicar FILTRO POSITIVO: deve mencionar a advogada
-                        if cls.should_include_publication(normalized, oab, nome_advogado):
+                        if cls.should_include_publication(normalized, oab_clean, nome_clean):
                             # Aplicar FILTRO NEGATIVO: não pode ser outra advogada
-                            if not cls.should_exclude_publication(normalized):
+                            if cls.should_exclude_publication(
+                                normalized,
+                                excluded_oabs=resolved_excluded_oabs,
+                                excluded_keywords=resolved_excluded_keywords,
+                            ):
+                                excluded_total += 1
+                                full_text = _normalize_for_match(' '.join([
+                                    normalized.get('texto_completo', ''),
+                                    normalized.get('texto_resumo', ''),
+                                    normalized.get('orgao', ''),
+                                ]))
+                                if any(oab in full_text for oab in resolved_excluded_oabs if oab):
+                                    excluded_by_oab += 1
+                                if any(_normalize_for_match(k) in full_text for k in resolved_excluded_keywords if k):
+                                    excluded_by_keyword += 1
+                            else:
                                 results.append(normalized)
             else:
                 errors.append({
@@ -391,6 +485,9 @@ class PJeComunicaService:
             'data_inicio': data_inicio,
             'data_fim': data_fim,
             'total_publicacoes': len(results),
+            'total_publicacoes_descartadas': excluded_total,
+            'descartadas_por_oab': excluded_by_oab,
+            'descartadas_por_palavra_chave': excluded_by_keyword,
             'total_tribunais_consultados': len(tribunais),
             'buscas_por_tribunal': 2,  # OAB + Nome
             'publicacoes': results,

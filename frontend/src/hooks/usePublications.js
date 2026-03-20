@@ -36,6 +36,21 @@ export function usePublications() {
     });
   }, []);
 
+  const getExcludedPublicationsSuffix = useCallback((data) => {
+    const totalDiscarded = Number(data?.total_publicacoes_descartadas ?? 0);
+    if (!Number.isFinite(totalDiscarded) || totalDiscarded <= 0) return '';
+
+    const discardedByOab = Number(data?.descartadas_por_oab ?? 0);
+    const discardedByKeyword = Number(data?.descartadas_por_palavra_chave ?? 0);
+
+    const parts = [];
+    if (Number.isFinite(discardedByOab) && discardedByOab > 0) parts.push(`${discardedByOab} por OAB`);
+    if (Number.isFinite(discardedByKeyword) && discardedByKeyword > 0) parts.push(`${discardedByKeyword} por frase`);
+
+    const breakdown = parts.length ? ` (${parts.join(', ')})` : '';
+    return ` ⚠️ ${totalDiscarded} descartada(s) por regras de exclusão${breakdown}.`;
+  }, []);
+
   /**
    * Oculta o toast
    */
@@ -110,8 +125,12 @@ export function usePublications() {
       }
     } catch (error) {
       console.error('Erro ao carregar última busca:', error);
-      showToast('Erro ao carregar última busca.', 'error');
+      const message = error?.message || 'Erro ao carregar última busca.';
+      const type = error?.status === 400 ? 'warning' : 'error';
+      showToast(message, type);
       setPublications([]);
+      setSearchParams(null);
+      setLastSearch(null);
     } finally {
       setLoading(false);
     }
@@ -138,12 +157,14 @@ export function usePublications() {
         
         // Disparar evento para atualizar sidebar
         window.dispatchEvent(new Event('publicationsSearchCompleted'));
+
+        const excludedSuffix = getExcludedPublicationsSuffix(data);
         
         if (data.total_publicacoes === 0) {
-          showToast('Nenhuma publicação encontrada para hoje.', 'warning');
+          showToast(`Nenhuma publicação encontrada para hoje.${excludedSuffix}`, 'warning');
         } else {
           showToast(
-            `${data.total_publicacoes} publicação(ões) encontrada(s) para hoje.`,
+            `${data.total_publicacoes} publicação(ões) encontrada(s) para hoje.${excludedSuffix}`,
             'success'
           );
         }
@@ -158,13 +179,15 @@ export function usePublications() {
       return data;
     } catch (error) {
       console.error('Erro ao buscar publicações de hoje:', error);
-      showToast('Erro ao buscar publicações de hoje.', 'error');
+      const message = error?.message || 'Erro ao buscar publicações de hoje.';
+      const type = error?.status === 400 ? 'warning' : 'error';
+      showToast(message, type);
       setPublications([]);
       return null;
     } finally {
       setLoading(false);
     }
-  }, [fetchLastSearch, showToast]);
+  }, [fetchLastSearch, showToast, getExcludedPublicationsSuffix]);
 
   /**
    * Busca publicações com parâmetros personalizados
@@ -187,12 +210,14 @@ export function usePublications() {
         
         // Disparar evento para atualizar sidebar
         window.dispatchEvent(new Event('publicationsSearchCompleted'));
+
+        const excludedSuffix = getExcludedPublicationsSuffix(data);
         
         if (data.total_publicacoes === 0) {
-          showToast('Nenhuma publicação encontrada.', 'warning');
+          showToast(`Nenhuma publicação encontrada.${excludedSuffix}`, 'warning');
         } else {
           showToast(
-            `${data.total_publicacoes} publicação(ões) encontrada(s).`,
+            `${data.total_publicacoes} publicação(ões) encontrada(s).${excludedSuffix}`,
             'success'
           );
         }
@@ -207,13 +232,15 @@ export function usePublications() {
       return data;
     } catch (error) {
       console.error('Erro ao buscar publicações:', error);
-      showToast('Erro ao buscar publicações.', 'error');
+      const message = error?.message || 'Erro ao buscar publicações.';
+      const type = error?.status === 400 ? 'warning' : 'error';
+      showToast(message, type);
       setPublications([]);
       return null;
     } finally {
       setLoading(false);
     }
-  }, [fetchLastSearch, showToast]);
+  }, [fetchLastSearch, showToast, getExcludedPublicationsSuffix]);
 
   /**
    * Abre os detalhes de uma publicação em uma nova janela

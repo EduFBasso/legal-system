@@ -8,6 +8,9 @@ from apps.accounts.models import UserProfile
 from apps.cases.models import Case, CaseMovement
 from apps.publications.models import Publication, SearchHistory
 from apps.publications.views import _build_case_suggestion, _create_movement_from_publication, _extract_prazo_days
+from services.pje_comunica import PJeComunicaService
+
+from django.test import override_settings
 
 
 User = get_user_model()
@@ -288,3 +291,34 @@ class PublicationCaseSuggestionScopeTests(TestCase):
 
 		self.assertIsNotNone(suggestion)
 		self.assertEqual(suggestion['id'], case.id)
+
+
+class PJeComunicaNameNormalizationTests(TestCase):
+	def test_should_include_publication_matches_name_with_or_without_accents(self):
+		pub = {
+			'texto_completo': 'Intima-se a advogada VITORIA ROCHA DE MORAIS para manifestação.',
+			'texto_resumo': '',
+			'orgao': '',
+		}
+		# nome com acento + caixa variada no cadastro não deve perder match
+		self.assertTrue(PJeComunicaService.should_include_publication(pub, oab='507553', nome_advogado='Vitória Rocha de Morais'))
+
+	@override_settings(
+		PJE_COMUNICA_EXCLUDED_LAWYERS_OABS=['407729'],
+		PJE_COMUNICA_EXCLUDED_LAWYERS_KEYWORDS=['ROCHA DO NASCIMENTO', 'LUCIA VITORIA'],
+	)
+	def test_should_exclude_publication_excludes_keyword_even_with_accent_variation(self):
+		pub = {
+			'texto_completo': 'Consta como patrona LUCIA VITORIA ROCHA DO NASCIMENTO (OAB 407729).',
+			'texto_resumo': '',
+			'orgao': '',
+		}
+		self.assertTrue(PJeComunicaService.should_exclude_publication(pub))
+
+
+class PublicationsDebugSearchGatingTests(TestCase):
+	@override_settings(DEBUG=False)
+	def test_debug_search_returns_404_when_debug_false(self):
+		url = reverse('publications:debug')
+		response = self.client.get(url, data={'data_inicio': '2026-02-01', 'data_fim': '2026-02-02'})
+		self.assertEqual(response.status_code, 404)

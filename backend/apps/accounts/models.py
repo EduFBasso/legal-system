@@ -36,6 +36,16 @@ class UserProfile(models.Model):
         blank=True,
         help_text='Lista de tribunais monitorados para buscas automáticas'
     )
+    publications_excluded_oabs = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Lista de números de OAB (sem formatação) para rejeitar publicações (evita falsos positivos)'
+    )
+    publications_excluded_keywords = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Lista de frases/trechos para rejeitar publicações (evita falsos positivos)'
+    )
     publication_auto_integration = models.BooleanField(
         default=False,
         help_text='Define se publicações devem ser integradas automaticamente para este usuário'

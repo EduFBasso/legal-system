@@ -26,10 +26,27 @@ logger = logging.getLogger(__name__)
 
 def _get_user_publication_identity(user):
     profile = getattr(user, 'profile', None)
-    oab_number = (profile.oab_number if profile else '') or settings.OAB_NUMBER
-    advogado_nome = (profile.full_name_oab if profile else '') or settings.ADVOGADA_NOME
-    tribunais = (profile.monitored_tribunais if profile else None) or ['TJSP', 'TRF3', 'TRT2', 'TRT15']
+    # Para usuário autenticado, priorizar APENAS os dados do perfil.
+    # O fallback global (settings/.env) é usado somente quando não há profile (ex.: chamadas anônimas).
+    if profile is not None and getattr(user, 'is_authenticated', False):
+        oab_number = profile.oab_number or ''
+        advogado_nome = profile.full_name_oab or ''
+    else:
+        oab_number = settings.OAB_NUMBER
+        advogado_nome = settings.ADVOGADA_NOME
+    tribunais = (profile.monitored_tribunais if profile else None) or getattr(
+        settings,
+        'PJE_COMUNICA_DEFAULT_TRIBUNAIS',
+        ['TJSP', 'TRF3', 'TRT2', 'TRT15'],
+    )
     return oab_number, advogado_nome, tribunais
+
+
+def _get_user_publication_exclusion_rules(user):
+    profile = getattr(user, 'profile', None)
+    excluded_oabs = getattr(profile, 'publications_excluded_oabs', None) if profile else None
+    excluded_keywords = getattr(profile, 'publications_excluded_keywords', None) if profile else None
+    return excluded_oabs or [], excluded_keywords or []
 
 
 def _apply_owner_filter(queryset, user, owner_field='owner'):
@@ -171,6 +188,16 @@ def fetch_today_publications(request):
         user = request.user
         owner = user if user.is_authenticated else None
         oab_number, advogada_nome, tribunais_configurados = _get_user_publication_identity(user)
+        excluded_oabs, excluded_keywords = _get_user_publication_exclusion_rules(user)
+
+        if not (str(oab_number).strip() or str(advogada_nome).strip()):
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Para buscar publicações, configure o Nome completo e/ou o Número da OAB no seu perfil (Meu Acesso).'
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         lookback_days = request.query_params.get('lookback_days')
         try:
@@ -194,6 +221,8 @@ def fetch_today_publications(request):
             data_inicio=data_inicio.isoformat(),
             data_fim=data_fim.isoformat(),
             tribunais=tribunais_configurados,
+            excluded_oabs=excluded_oabs,
+            excluded_keywords=excluded_keywords,
         )
         
         # Salvar publicações no banco e criar histórico
@@ -264,6 +293,16 @@ def search_publications(request):
         user = request.user
         owner = user if user.is_authenticated else None
         oab_number, advogada_nome, tribunais_configurados = _get_user_publication_identity(user)
+        excluded_oabs, excluded_keywords = _get_user_publication_exclusion_rules(user)
+
+        if not (str(oab_number).strip() or str(advogada_nome).strip()):
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Para buscar publicações, configure o Nome completo e/ou o Número da OAB no seu perfil (Meu Acesso).'
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Validar parâmetros obrigatórios
         data_inicio = request.query_params.get('data_inicio')
@@ -295,7 +334,9 @@ def search_publications(request):
             nome_advogado=advogada_nome,
             data_inicio=data_inicio,
             data_fim=data_fim,
-            tribunais=tribunais
+            tribunais=tribunais,
+            excluded_oabs=excluded_oabs,
+            excluded_keywords=excluded_keywords,
         )
         
         # Salvar publicações no banco e criar histórico
@@ -354,16 +395,25 @@ def search_publications(request):
 @api_view(['GET'])
 def debug_search(request):
     import requests
+    if not getattr(settings, 'DEBUG', False):
+        return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if not request.user or not request.user.is_authenticated:
+        return Response({'detail': 'Authentication required'}, status=status.HTTP_403_FORBIDDEN)
+
+    if not is_master_user(request.user):
+        return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
     tribunal = request.query_params.get('tribunal', 'TJSP')
-    oab = request.query_params.get('oab', '507553')
-    nome = request.query_params.get('nome', 'Vitoria Rocha de Morais')
+    oab = request.query_params.get('oab', '')
+    nome = request.query_params.get('nome', '')
     data_inicio = request.query_params.get('data_inicio')
     data_fim = request.query_params.get('data_fim')
     if not data_inicio or not data_fim:
         return Response({'error': 'datas obrigatorias'}, status=400)
     params_oab = {'siglaTribunal': tribunal, 'numeroOab': oab, 'dataDisponibilizacaoInicio': data_inicio, 'dataDisponibilizacaoFim': data_fim}
     params_nome = {'siglaTribunal': tribunal, 'nomeAdvogado': nome, 'dataDisponibilizacaoInicio': data_inicio, 'dataDisponibilizacaoFim': data_fim}
-    api_url = 'https://comunicaapi.pje.jus.br/api/v1/comunicacao'
+    api_url = getattr(settings, 'PJE_COMUNICA_API_URL', 'https://comunicaapi.pje.jus.br/api/v1/comunicacao')
     try:
         response_oab = requests.get(api_url, params=params_oab, timeout=15)
         response_nome = requests.get(api_url, params=params_nome, timeout=15)
@@ -403,8 +453,15 @@ def _create_publication_notifications(publicacoes, retroactive_days=7, owner=Non
     # Calcular data limite (hoje - retroactive_days)
     cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=retroactive_days)
     
+    max_per_search = getattr(settings, 'PUBLICATIONS_NOTIFICATION_MAX_PER_SEARCH', 5)
+    try:
+        max_per_search = int(max_per_search)
+    except (TypeError, ValueError):
+        max_per_search = 5
+    max_per_search = max(0, min(max_per_search, 50))
+
     notifications_created = 0
-    for pub in publicacoes[:5]:  # Limitar a 5 notificações por busca
+    for pub in publicacoes[:max_per_search]:
         # Filtrar por data de disponibilização
         data_disp = pub.get('data_disponibilizacao')
         if data_disp:
@@ -575,6 +632,16 @@ def get_last_search(request):
     """
     try:
         user = request.user
+        oab_number, advogada_nome, _tribunais_configurados = _get_user_publication_identity(user)
+
+        if not (str(oab_number).strip() or str(advogada_nome).strip()):
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Para buscar publicações, configure o Nome completo e/ou o Número da OAB no seu perfil (Meu Acesso).'
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         last_search = _apply_owner_filter(SearchHistory.objects.all(), user).first()  # Ordenado por -executed_at
         
         if not last_search:
@@ -647,6 +714,16 @@ def retrieve_last_search_publications(request):
     """
     try:
         user = request.user
+        oab_number, advogada_nome, _tribunais_configurados = _get_user_publication_identity(user)
+
+        if not (str(oab_number).strip() or str(advogada_nome).strip()):
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Para buscar publicações, configure o Nome completo e/ou o Número da OAB no seu perfil (Meu Acesso).'
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         # Buscar última pesquisa
         last_search = _apply_owner_filter(SearchHistory.objects.all(), user).first()
         

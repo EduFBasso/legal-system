@@ -23,6 +23,8 @@ const EMPTY_MEMBER_FORM = {
   password: '',
   role: 'ADVOGADO',
   oab_number: '',
+  publications_excluded_oabs_text: '',
+  publications_excluded_keywords_text: '',
 };
 
 const EMPTY_EDIT_FORM = {
@@ -30,11 +32,28 @@ const EMPTY_EDIT_FORM = {
   email: '',
   role: 'ADVOGADO',
   oab_number: '',
+  publications_excluded_oabs_text: '',
+  publications_excluded_keywords_text: '',
 };
+
+function parseTextList(value) {
+  if (!value) return [];
+  return String(value)
+    .split(/\r?\n|,/g)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function joinTextList(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  return items.map((item) => String(item).trim()).filter(Boolean).join('\n');
+}
 
 const EMPTY_MASTER_ACCOUNT_FORM = {
   username: '',
   first_name: '',
+  full_name_oab: '',
+  oab_number: '',
   current_password: '',
   new_password: '',
   confirm_new_password: '',
@@ -190,6 +209,8 @@ export default function MasterDashboardPage() {
       ...EMPTY_MASTER_ACCOUNT_FORM,
       username: user?.username || '',
       first_name: user?.first_name || '',
+      full_name_oab: user?.full_name_oab || '',
+      oab_number: user?.oab_number || '',
     });
     setMasterAccountError('');
     setIsMasterAccountOpen(true);
@@ -229,6 +250,8 @@ export default function MasterDashboardPage() {
     const payload = {
       username,
       first_name: firstName,
+      full_name_oab: masterAccountForm.full_name_oab.trim(),
+      oab_number: masterAccountForm.oab_number.trim(),
     };
 
     if (newPassword) {
@@ -287,6 +310,8 @@ export default function MasterDashboardPage() {
         email: memberForm.email.trim(),
         password: memberForm.password,
         role: memberForm.role,
+        publications_excluded_oabs: parseTextList(memberForm.publications_excluded_oabs_text),
+        publications_excluded_keywords: parseTextList(memberForm.publications_excluded_keywords_text),
       };
       if (memberForm.oab_number.trim()) {
         payload.oab_number = memberForm.oab_number.trim();
@@ -317,6 +342,8 @@ export default function MasterDashboardPage() {
       email: selectedMember.email || '',
       role: selectedMember.role || 'ADVOGADO',
       oab_number: selectedMember.oab_number || '',
+      publications_excluded_oabs_text: joinTextList(selectedMember.publications_excluded_oabs),
+      publications_excluded_keywords_text: joinTextList(selectedMember.publications_excluded_keywords),
     });
     setEditFormError('');
     setIsEditOpen(true);
@@ -347,6 +374,8 @@ export default function MasterDashboardPage() {
         email: editForm.email.trim(),
         role: editForm.role,
         oab_number: editForm.oab_number.trim(),
+        publications_excluded_oabs: parseTextList(editForm.publications_excluded_oabs_text),
+        publications_excluded_keywords: parseTextList(editForm.publications_excluded_keywords_text),
       });
       const refreshedMembers = await fetchActiveTeamMembers();
       setTeamMembers(refreshedMembers);
@@ -895,6 +924,31 @@ export default function MasterDashboardPage() {
 
           <div className="master-admin-form-row">
             <div className="master-admin-form-field">
+              <label htmlFor="master_account_full_name_oab">Nome completo (para buscar publicações)</label>
+              <input
+                id="master_account_full_name_oab"
+                name="full_name_oab"
+                type="text"
+                value={masterAccountForm.full_name_oab}
+                onChange={handleMasterAccountFormChange}
+                placeholder="Ex: Vitória Rocha de Morais"
+              />
+            </div>
+            <div className="master-admin-form-field">
+              <label htmlFor="master_account_oab_number">Número da OAB (para buscar publicações)</label>
+              <input
+                id="master_account_oab_number"
+                name="oab_number"
+                type="text"
+                value={masterAccountForm.oab_number}
+                onChange={handleMasterAccountFormChange}
+                placeholder="Ex: 507553"
+              />
+            </div>
+          </div>
+
+          <div className="master-admin-form-row">
+            <div className="master-admin-form-field">
               <label htmlFor="master_account_current_password">Senha atual</label>
               <input
                 id="master_account_current_password"
@@ -1036,6 +1090,30 @@ export default function MasterDashboardPage() {
             </div>
           </div>
 
+          <div className="master-admin-form-field">
+            <label htmlFor="member_publications_excluded_oabs">Rejeitar publicações (OABs)</label>
+            <textarea
+              id="member_publications_excluded_oabs"
+              name="publications_excluded_oabs_text"
+              value={memberForm.publications_excluded_oabs_text}
+              onChange={handleMemberFormChange}
+              placeholder="Uma OAB por linha ou separadas por vírgula (ex: 407729)"
+              rows={3}
+            />
+          </div>
+
+          <div className="master-admin-form-field">
+            <label htmlFor="member_publications_excluded_keywords">Rejeitar publicações (frases)</label>
+            <textarea
+              id="member_publications_excluded_keywords"
+              name="publications_excluded_keywords_text"
+              value={memberForm.publications_excluded_keywords_text}
+              onChange={handleMemberFormChange}
+              placeholder="Uma frase por linha (ex: LUCIA VITORIA, ROCHA DO NASCIMENTO)"
+              rows={3}
+            />
+          </div>
+
           {memberFormError ? <p className="master-admin-form-error">{memberFormError}</p> : null}
 
           <div className="master-admin-form-footer">
@@ -1109,6 +1187,30 @@ export default function MasterDashboardPage() {
               type="text"
               value={editForm.oab_number}
               onChange={handleEditFormChange}
+            />
+          </div>
+
+          <div className="master-admin-form-field">
+            <label htmlFor="edit_member_publications_excluded_oabs">Rejeitar publicações (OABs)</label>
+            <textarea
+              id="edit_member_publications_excluded_oabs"
+              name="publications_excluded_oabs_text"
+              value={editForm.publications_excluded_oabs_text}
+              onChange={handleEditFormChange}
+              placeholder="Uma OAB por linha ou separadas por vírgula"
+              rows={3}
+            />
+          </div>
+
+          <div className="master-admin-form-field">
+            <label htmlFor="edit_member_publications_excluded_keywords">Rejeitar publicações (frases)</label>
+            <textarea
+              id="edit_member_publications_excluded_keywords"
+              name="publications_excluded_keywords_text"
+              value={editForm.publications_excluded_keywords_text}
+              onChange={handleEditFormChange}
+              placeholder="Uma frase por linha"
+              rows={3}
             />
           </div>
 

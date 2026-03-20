@@ -69,6 +69,7 @@ def user_preferences(request):
 @permission_classes([permissions.IsAuthenticated, IsMasterPermission])
 def master_self_account(request):
     user = request.user
+    profile = getattr(user, 'profile', None)
 
     if request.method == 'GET':
         return Response({
@@ -76,7 +77,9 @@ def master_self_account(request):
             'username': user.username,
             'first_name': user.first_name,
             'email': user.email,
-            'role': getattr(getattr(user, 'profile', None), 'role', None),
+            'role': getattr(profile, 'role', None),
+            'full_name_oab': getattr(profile, 'full_name_oab', '') if profile else '',
+            'oab_number': getattr(profile, 'oab_number', '') if profile else '',
         })
 
     serializer = MasterSelfUpdateSerializer(
@@ -86,13 +89,16 @@ def master_self_account(request):
     )
     serializer.is_valid(raise_exception=True)
     updated_user = serializer.update(user, serializer.validated_data)
+    updated_profile = getattr(updated_user, 'profile', None)
 
     return Response({
         'id': updated_user.id,
         'username': updated_user.username,
         'first_name': updated_user.first_name,
         'email': updated_user.email,
-        'role': getattr(getattr(updated_user, 'profile', None), 'role', None),
+        'role': getattr(updated_profile, 'role', None),
+        'full_name_oab': getattr(updated_profile, 'full_name_oab', '') if updated_profile else '',
+        'oab_number': getattr(updated_profile, 'oab_number', '') if updated_profile else '',
     })
 
 

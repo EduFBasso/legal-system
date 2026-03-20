@@ -250,6 +250,7 @@ export default function PendingPublicationsPage() {
 
       {toast && (
         <Toast
+          isOpen={true}
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}

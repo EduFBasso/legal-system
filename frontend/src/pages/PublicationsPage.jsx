@@ -59,6 +59,32 @@ export default function PublicationsPage() {
     window.dispatchEvent(new Event('publicationsSearchCompleted'));
   }, []);
 
+  const handleConfirmIntegrate = useCallback(async () => {
+    setIntegrateLoading(true);
+    try {
+      const result = await publicationsService.batchIntegratePublications({
+        autoLink: true,
+        createMovement: false,
+        autoIntegration: settings.autoIntegration ?? false
+      });
+
+      if (result.success) {
+        showToast(
+          `${result.integrated} integrada(s), ${result.pending} pendente(s), ${result.ignored} ignorada(s).`,
+          'success'
+        );
+        notifyPublicationsUpdated();
+      } else {
+        showToast(result.error || 'Erro ao integrar publicacoes.', 'error');
+      }
+    } catch (error) {
+      showToast(error.message || 'Erro ao integrar publicacoes.', 'error');
+    } finally {
+      setIntegrateLoading(false);
+      setShowIntegrateConfirm(false);
+    }
+  }, [showToast, settings.autoIntegration, notifyPublicationsUpdated]);
+
   /**
    * Handler para busca com filtros
    * Adiciona retroactiveDays do settings
@@ -86,33 +112,7 @@ export default function PublicationsPage() {
         setShowIntegrateConfirm(true);
       }
     }
-  }, [search, settings.retroactiveDays, settings.autoIntegration]);
-
-  const handleConfirmIntegrate = useCallback(async () => {
-    setIntegrateLoading(true);
-    try {
-      const result = await publicationsService.batchIntegratePublications({
-        autoLink: true,
-        createMovement: false,
-        autoIntegration: settings.autoIntegration ?? false
-      });
-
-      if (result.success) {
-        showToast(
-          `${result.integrated} integrada(s), ${result.pending} pendente(s), ${result.ignored} ignorada(s).`,
-          'success'
-        );
-        notifyPublicationsUpdated();
-      } else {
-        showToast(result.error || 'Erro ao integrar publicacoes.', 'error');
-      }
-    } catch (error) {
-      showToast(error.message || 'Erro ao integrar publicacoes.', 'error');
-    } finally {
-      setIntegrateLoading(false);
-      setShowIntegrateConfirm(false);
-    }
-  }, [showToast, settings.autoIntegration]);
+  }, [search, settings.retroactiveDays, settings.autoIntegration, handleConfirmIntegrate]);
 
   /**
    * Funções de seleção para exclusão
@@ -473,8 +473,14 @@ export default function PublicationsPage() {
       {/* Toast Notifications */}
       {toast.show && (
         <Toast
+          isOpen={toast.show}
           message={toast.message}
           type={toast.type}
+          autoCloseMs={
+            toast.type === 'warning' && String(toast.message || '').includes('Para buscar publicações')
+              ? 8000
+              : 3000
+          }
           onClose={hideToast}
         />
       )}
