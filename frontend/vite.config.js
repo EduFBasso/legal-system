@@ -11,10 +11,12 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',   // aceita conexões da rede local (Mac, celular, etc)
     port: 5173,
+    allowedHosts: ['desktop-irvt17p', 'localhost', '127.0.0.1'],
   },
   preview: {
     host: '0.0.0.0',
     port: 5173,
+    allowedHosts: ['desktop-irvt17p', 'localhost', '127.0.0.1'],
   },
   resolve: {
     alias: {

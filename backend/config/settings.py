@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
 import dj_database_url
+import socket
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +30,33 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
+def _collect_local_ipv4_hosts() -> list[str]:
+    hosts = {'localhost', '127.0.0.1'}
+    try:
+        hostname = socket.gethostname()
+        if hostname:
+            hosts.add(hostname)
+            hosts.add(hostname.lower())
+            hosts.add(hostname.upper())
+    except Exception:
+        pass
+
+    # Includes all IPv4 addresses assigned to local interfaces.
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ip = info[4][0]
+            if ip:
+                hosts.add(ip)
+    except Exception:
+        pass
+
+    return sorted(hosts)
+
+
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+for local_host in _collect_local_ipv4_hosts():
+    if local_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(local_host)
 
 # === Segurança de produção (ativadas quando DEBUG=False) ===
 # Todas controladas via .env — sem código diferente entre dev e prod
@@ -175,6 +202,10 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:5173,http://127.0.0.1:5173',
     cast=Csv(),
 )
+for local_host in _collect_local_ipv4_hosts():
+    local_origin = f'http://{local_host}:5173'
+    if local_origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(local_origin)
 CORS_ALLOW_CREDENTIALS = True
 
 # Django REST Framework
