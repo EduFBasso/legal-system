@@ -4,8 +4,9 @@ Views para API de Publications.
 import re
 import time
 import unicodedata
+import logging
 from datetime import datetime, timedelta
-from django.db import models
+from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.decorators import api_view
@@ -18,6 +19,9 @@ from services.pje_comunica import PJeComunicaService
 from apps.notifications.models import Notification
 from apps.cases.models import Case, CaseMovement
 from .models import Publication, SearchHistory
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_user_publication_identity(user):
@@ -492,9 +496,15 @@ def _save_publications_to_db(publicacoes, owner=None):
                 }
             )
             total_novas += 1
-        except Exception:
-            # Publicação já existe (duplicate id_api) ou erro de validação
-            pass
+        except IntegrityError:
+            # Publicação já existe (duplicate id_api)
+            continue
+        except Exception as error:
+            logger.warning(
+                'Erro ao salvar publicação id_api=%s: %s',
+                id_api,
+                str(error),
+            )
     
     return total_novas
 

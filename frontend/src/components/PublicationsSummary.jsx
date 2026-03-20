@@ -150,7 +150,7 @@ export default function PublicationsSummary() {
       ) : (
         <div className="no-check-info">
           <p className="no-check-message">📋 Nenhuma busca recente</p>
-          <p className="no-check-hint">Clique em "Buscar Hoje" para iniciar (inclui ontem)</p>
+          <p className="no-check-hint">Clique em "Buscar Hoje" para iniciar</p>
         </div>
       )}
 
@@ -161,7 +161,7 @@ export default function PublicationsSummary() {
           onClick={handleSearchToday}
           disabled={loading}
         >
-          {loading ? '⏳ Buscando...' : '🔍 Buscar Hoje (inclui ontem)'}
+          {loading ? '⏳ Buscando...' : '🔍 Buscar Hoje'}
         </button>
       </div>
 
