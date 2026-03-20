@@ -26,7 +26,6 @@ function MovimentacoesTab({
   highlightedTaskId = null,
   numeroProcesso = '',
   tasks = [],
-  onDelete = () => {},
   onRefreshTasks = () => {},
   onRefreshMovements = () => {},
 }) {
@@ -478,7 +477,6 @@ function MovimentacoesTab({
                 onEditStart={() => handleOpenEditMovimentacao(mov)}
                 onEditCancel={handleCancelEditMovimentacao}
                 onEditSave={() => handleSaveMovimentacao(mov.id)}
-                onDelete={() => onDelete(mov.id)}
                 saving={savingMovimentacao}
                 // Task props
                 tasks={tasks}

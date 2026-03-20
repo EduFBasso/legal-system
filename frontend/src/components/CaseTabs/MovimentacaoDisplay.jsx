@@ -46,7 +46,6 @@ export default function MovimentacaoDisplay({
   tipoDisplay,
   manualDescricao,
   onEditClick,
-  onDeleteClick,
 }) {
   const isManual = mov?.origem === 'MANUAL';
   const hasPrazo = Number.isFinite(mov?.prazo) && mov.prazo > 0;
@@ -69,11 +68,6 @@ export default function MovimentacaoDisplay({
     base: caseTheme.button.primary,
     hover: caseTheme.button.primaryDark,
     shadow: '0 2px 8px rgba(22, 101, 52, 0.3)',
-  });
-  const deleteButtonInteractions = getButtonHoverHandlers({
-    base: caseTheme.button.danger,
-    hover: '#DC2626',
-    shadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
   });
 
   return (
@@ -190,31 +184,6 @@ export default function MovimentacaoDisplay({
             {...editButtonInteractions}
           >
             Editar
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteClick();
-            }}
-            style={movementDisplayStyles.actionButtonDelete}
-            {...deleteButtonInteractions}
-          >
-            Excluir
-          </button>
-        </div>
-      )}
-
-      {!isManual && (
-        <div style={movementDisplayStyles.actionsRow}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteClick();
-            }}
-            style={movementDisplayStyles.actionButtonDelete}
-            {...deleteButtonInteractions}
-          >
-            Excluir
           </button>
         </div>
       )}

@@ -19,7 +19,6 @@ import TasksInlineList from './TasksInlineList';
  * - onEditStart: () => void
  * - onEditCancel: () => void
  * - onEditSave: () => Promise
- * - onDelete: () => void
  * - saving: boolean
  * - tasks: Task[]
  * - addingTaskForMovement, editingTaskId, auxiliarHighlightedTaskId
@@ -39,7 +38,6 @@ export default function MovimentacaoCard({
   onEditStart,
   onEditCancel,
   onEditSave,
-  onDelete,
   saving,
   // Task props
   tasks = [],
@@ -96,7 +94,6 @@ export default function MovimentacaoCard({
               tipoDisplay={tipoDisplay}
               manualDescricao={manualDescricao}
               onEditClick={onEditStart}
-              onDeleteClick={onDelete}
             />
 
             {/* SEÇÃO DE TAREFAS */}
