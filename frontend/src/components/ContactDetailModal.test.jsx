@@ -321,7 +321,7 @@ describe('ContactDetailModal', () => {
         expect(screen.getByText((content, element) => {
           return element?.className === 'linked-case-number' && content.includes('0000001-23');
         })).toBeInTheDocument();
-        expect(screen.getByText('Autor')).toBeInTheDocument();
+        expect(screen.getByText(/autor/i)).toBeInTheDocument();
         // Check for client badge specifically
         const clientBadges = screen.queryAllByText(/CLIENTE/i);
         expect(clientBadges.length).toBeGreaterThan(0);

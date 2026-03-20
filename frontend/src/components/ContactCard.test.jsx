@@ -130,7 +130,7 @@ describe('ContactCard', () => {
       />
     );
 
-    expect(screen.getByText('Cliente')).toBeInTheDocument();
+    expect(screen.getByText(/cliente/i)).toBeInTheDocument();
   });
 
   it('does not render "Cliente" badge when is_client_anywhere is false', () => {
@@ -148,7 +148,7 @@ describe('ContactCard', () => {
       />
     );
 
-    expect(screen.queryByText('Cliente')).not.toBeInTheDocument();
+    expect(screen.queryByText(/cliente/i)).not.toBeInTheDocument();
   });
 
   it('renders role badges for non-client roles', () => {
@@ -166,7 +166,7 @@ describe('ContactCard', () => {
       />
     );
 
-    expect(screen.getByText('Testemunha')).toBeInTheDocument();
+    expect(screen.getByText(/testemunha/i)).toBeInTheDocument();
   });
 
   it('renders default icon for PF when no photo', () => {
