@@ -33,6 +33,10 @@ export default function AllPublicationsPage() {
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
 
+  const notifyPublicationsUpdated = useCallback(() => {
+    window.dispatchEvent(new Event('publicationsSearchCompleted'));
+  }, []);
+
   const loadAllPublications = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -85,7 +89,10 @@ export default function AllPublicationsPage() {
         if (pub.case_suggestion?.id) {
           openCaseMovementsWindow(pub.case_suggestion.id);
         }
-        setTimeout(() => loadAllPublications(), 500);
+        setTimeout(() => {
+          loadAllPublications();
+          notifyPublicationsUpdated();
+        }, 500);
       } else {
         setToast({ message: result.error || '❌ Erro ao integrar publicação', type: 'error' });
       }
@@ -108,6 +115,7 @@ export default function AllPublicationsPage() {
         setToast({ message: `✅ Publicação já vinculada ao caso #${linkedCaseId}`, type: 'success' });
         openCaseDetailWindow(linkedCaseId);
         await loadAllPublications();
+        notifyPublicationsUpdated();
         return;
       }
 
@@ -120,6 +128,7 @@ export default function AllPublicationsPage() {
         if (result.success) {
           setToast({ message: `✅ Publicação vinculada ao caso #${suggestedCaseId}`, type: 'success' });
           await loadAllPublications();
+          notifyPublicationsUpdated();
           return;
         }
       }
@@ -164,7 +173,10 @@ export default function AllPublicationsPage() {
           }),
           type: 'success'
         });
-        setTimeout(() => loadAllPublications(), 500);
+        setTimeout(() => {
+          loadAllPublications();
+          notifyPublicationsUpdated();
+        }, 500);
       } else {
         setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
           result.error,

@@ -285,6 +285,7 @@ export function useCaseCore(
   const handleDelete = async (deletePublicationToo = false) => {
     try {
       await casesService.delete(id, 'Deleted via UI', deletePublicationToo);
+      window.dispatchEvent(new Event('publicationsSearchCompleted'));
       showToast('Processo deletado com sucesso!', 'success');
       
       if (onCaseDeleted) {

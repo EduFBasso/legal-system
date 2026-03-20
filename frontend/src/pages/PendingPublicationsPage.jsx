@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { FileText } from 'lucide-react';
 import EmptyState from '../components/common/EmptyState';
 import PublicationCard from '../components/PublicationCard';
@@ -30,6 +30,10 @@ export default function PendingPublicationsPage() {
   const [pendingDeletePublication, setPendingDeletePublication] = useState(null);
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
+
+  const notifyPublicationsUpdated = useCallback(() => {
+    window.dispatchEvent(new Event('publicationsSearchCompleted'));
+  }, []);
 
   useEffect(() => {
     loadPending();
@@ -81,7 +85,10 @@ export default function PendingPublicationsPage() {
         if (pub.case_suggestion?.id) {
           openCaseMovementsWindow(pub.case_suggestion.id);
         }
-        setTimeout(() => loadPending(), 500);
+        setTimeout(() => {
+          loadPending();
+          notifyPublicationsUpdated();
+        }, 500);
       } else {
         setToast({ message: result.error || '❌ Erro ao integrar publicação', type: 'error' });
       }
@@ -104,6 +111,7 @@ export default function PendingPublicationsPage() {
         setToast({ message: `✅ Publicação já vinculada ao caso #${linkedCaseId}`, type: 'success' });
         openCaseDetailWindow(linkedCaseId);
         await loadPending();
+        notifyPublicationsUpdated();
         return;
       }
 
@@ -116,6 +124,7 @@ export default function PendingPublicationsPage() {
         if (result.success) {
           setToast({ message: `✅ Publicação vinculada ao caso #${suggestedCaseId}`, type: 'success' });
           await loadPending();
+          notifyPublicationsUpdated();
           return;
         }
       }
@@ -160,7 +169,10 @@ export default function PendingPublicationsPage() {
           }),
           type: 'success'
         });
-        setTimeout(() => loadPending(), 500);
+        setTimeout(() => {
+          loadPending();
+          notifyPublicationsUpdated();
+        }, 500);
       } else {
         setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
           result.error,

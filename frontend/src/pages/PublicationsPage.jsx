@@ -103,6 +103,7 @@ export default function PublicationsPage() {
           `${result.integrated} integrada(s), ${result.pending} pendente(s), ${result.ignored} ignorada(s).`,
           'success'
         );
+        notifyPublicationsUpdated();
       } else {
         showToast(result.error || 'Erro ao integrar publicacoes.', 'error');
       }
@@ -251,6 +252,7 @@ export default function PublicationsPage() {
           showToast('✅ Publicação integrada com sucesso!', 'success');
           openCaseMovementsWindow(pub.case_suggestion.id);
           await loadLastSearch();
+          notifyPublicationsUpdated();
         } else {
           showToast(result.error || '❌ Erro ao integrar publicação', 'error');
         }
@@ -272,6 +274,7 @@ export default function PublicationsPage() {
           if (result.success) {
             showToast('⏸️ Publicação deixada pendente', 'info');
             await loadLastSearch();
+            notifyPublicationsUpdated();
           }
         } catch (error) {
           showToast(error.message || '❌ Erro ao atualizar publicação', 'error');
@@ -306,6 +309,7 @@ export default function PublicationsPage() {
         if (result.success) {
           showToast(`✅ Publicação vinculada ao caso #${suggestedCaseId}`, 'success');
           await loadLastSearch();
+          notifyPublicationsUpdated();
           return;
         }
       }
