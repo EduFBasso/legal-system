@@ -234,7 +234,10 @@ def fetch_today_publications(request):
             total_novas = _save_publications_to_db(publicacoes, owner=owner)
             
             # Enriquecer publicações com dados do banco (integration_status, case_id, etc)
-            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes, owner=owner)
+            result['publicacoes'] = _attach_case_suggestions(
+                _enrich_publications_with_db_data(publicacoes, owner=owner),
+                user=user,
+            )
             
             # Criar notificações para novas publicações (7 dias retroativos)
             _create_publication_notifications(publicacoes, retroactive_days=7, owner=owner)
@@ -348,7 +351,10 @@ def search_publications(request):
             total_novas = _save_publications_to_db(publicacoes, owner=owner)
             
             # Enriquecer publicações com dados do banco (integration_status, case_id, etc)
-            result['publicacoes'] = _enrich_publications_with_db_data(publicacoes, owner=owner)
+            result['publicacoes'] = _attach_case_suggestions(
+                _enrich_publications_with_db_data(publicacoes, owner=owner),
+                user=user,
+            )
             
             # Criar notificações para novas publicações
             _create_publication_notifications(
@@ -531,37 +537,37 @@ def _save_publications_to_db(publicacoes, owner=None):
         id_api = pub.get('id_api')
         if not id_api:
             continue
-        
-        # Tentar criar (unique constraint previne duplicatas)
+
+        # Evitar IntegrityError dentro de transações atômicas (ex.: testes).
+        # get_or_create é mais seguro e mantém a deduplicação por id_api.
         try:
-            Publication.objects.create(
-                owner=owner,
+            data_disp = pub.get('data_disponibilizacao')
+            data_disp_date = datetime.fromisoformat(data_disp).date() if data_disp else None
+
+            _obj, created = Publication.objects.get_or_create(
                 id_api=id_api,
-                numero_processo=pub.get('numero_processo'),
-                tribunal=pub.get('tribunal', ''),
-                tipo_comunicacao=pub.get('tipo_comunicacao', ''),
-                data_disponibilizacao=datetime.fromisoformat(pub.get('data_disponibilizacao')).date(),
-                orgao=pub.get('orgao', ''),
-                meio=pub.get('meio', ''),
-                texto_resumo=pub.get('texto_resumo', ''),
-                texto_completo=pub.get('texto_completo', ''),
-                link_oficial=pub.get('link_oficial'),
-                hash_pub=pub.get('hash'),
-                integration_status='PENDING',
-                search_metadata={
-                    'original_data': pub
-                }
+                defaults={
+                    'owner': owner,
+                    'numero_processo': pub.get('numero_processo'),
+                    'tribunal': pub.get('tribunal', ''),
+                    'tipo_comunicacao': pub.get('tipo_comunicacao', ''),
+                    'data_disponibilizacao': data_disp_date,
+                    'orgao': pub.get('orgao', ''),
+                    'meio': pub.get('meio', ''),
+                    'texto_resumo': pub.get('texto_resumo', ''),
+                    'texto_completo': pub.get('texto_completo', ''),
+                    'link_oficial': pub.get('link_oficial'),
+                    'hash_pub': pub.get('hash'),
+                    'integration_status': 'PENDING',
+                    'search_metadata': {
+                        'original_data': pub
+                    },
+                },
             )
-            total_novas += 1
-        except IntegrityError:
-            # Publicação já existe (duplicate id_api)
-            continue
+            if created:
+                total_novas += 1
         except Exception as error:
-            logger.warning(
-                'Erro ao salvar publicação id_api=%s: %s',
-                id_api,
-                str(error),
-            )
+            logger.warning('Erro ao salvar publicação id_api=%s: %s', id_api, str(error))
     
     return total_novas
 
@@ -604,6 +610,84 @@ def _enrich_publications_with_db_data(publicacoes, owner=None):
         
         enriched.append(enriched_pub)
     
+    return enriched
+
+
+def _attach_case_suggestions(publicacoes, user=None):
+    """Anexa `case_suggestion` (id/numero_processo/titulo) a uma lista de publicações (dict).
+
+    Motivação: resultados vindos direto do PJe eram enriquecidos apenas com status/case_id,
+    então o frontend não conseguia exibir "Vincular ao caso" nos cards.
+
+    Estratégia:
+    - Tenta um match em lote por `numero_processo_unformatted` para eficiência.
+    - Para casos legados onde `numero_processo_unformatted` esteja vazio/inconsistente,
+      cai no fallback robusto já existente em `_find_case_by_numero_processo`.
+    """
+    if not publicacoes:
+        return []
+
+    # Coletar números limpos (só dígitos)
+    numeros_limpos = []
+    for pub in publicacoes:
+        numero = (pub or {}).get('numero_processo')
+        numero_limpo = normalize_processo_numero(numero)
+        if numero_limpo:
+            numeros_limpos.append(numero_limpo)
+
+    numeros_set = set(numeros_limpos)
+    case_by_numero_limpo = {}
+
+    if numeros_set:
+        case_queryset = Case.objects.all()
+        if user is not None and getattr(user, 'is_authenticated', False):
+            if is_master_user(user):
+                case_queryset = case_queryset.filter(build_owner_scope_q(user, include_ownerless=False))
+            else:
+                case_queryset = case_queryset.filter(build_owner_scope_q(user, include_ownerless=True))
+
+        # Primeiro: tentativa rápida por numero_processo_unformatted
+        candidates = case_queryset.exclude(numero_processo_unformatted__isnull=True).exclude(
+            numero_processo_unformatted=''
+        ).filter(numero_processo_unformatted__in=numeros_set).only(
+            'id', 'numero_processo', 'numero_processo_unformatted', 'titulo'
+        )
+
+        for case in candidates:
+            key = case.numero_processo_unformatted
+            if key and key in numeros_set and key not in case_by_numero_limpo:
+                case_by_numero_limpo[key] = case
+
+    enriched = []
+    for pub in publicacoes:
+        next_pub = {**(pub or {})}
+
+        # Se já está vinculada/integrada, não precisa sugerir.
+        is_integrated = bool(next_pub.get('case_id')) or next_pub.get('integration_status') == 'INTEGRATED'
+        if is_integrated:
+            next_pub['case_suggestion'] = None
+            enriched.append(next_pub)
+            continue
+
+        numero = next_pub.get('numero_processo')
+        numero_limpo = normalize_processo_numero(numero)
+
+        case = case_by_numero_limpo.get(numero_limpo) if numero_limpo else None
+        if case is None and numero:
+            # Fallback robusto para cobrir casos manuais/legados
+            case = _find_case_by_numero_processo(numero, user=user)
+
+        if case:
+            next_pub['case_suggestion'] = {
+                'id': case.id,
+                'numero_processo': case.numero_processo,
+                'titulo': case.titulo,
+            }
+        else:
+            next_pub['case_suggestion'] = None
+
+        enriched.append(next_pub)
+
     return enriched
 
 

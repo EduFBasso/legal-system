@@ -11,6 +11,7 @@ from apps.publications.views import _build_case_suggestion, _create_movement_fro
 from services.pje_comunica import PJeComunicaService
 
 from django.test import override_settings
+from unittest.mock import patch
 
 
 User = get_user_model()
@@ -322,3 +323,120 @@ class PublicationsDebugSearchGatingTests(TestCase):
 		url = reverse('publications:debug')
 		response = self.client.get(url, data={'data_inicio': '2026-02-01', 'data_fim': '2026-02-02'})
 		self.assertEqual(response.status_code, 404)
+
+
+class PublicationsSearchCaseSuggestionTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='pub_search_user', password='123456', email='pub_search_user@example.com')
+		profile = self.user.profile
+		profile.full_name_oab = 'Teste OAB'
+		profile.oab_number = '123456'
+		profile.save(update_fields=['full_name_oab', 'oab_number'])
+
+		self.client.force_login(self.user)
+
+		self.case = Case.objects.create(
+			numero_processo='1000000-00.2026.8.26.0001',
+			titulo='Caso existente',
+			tribunal='TJSP',
+			comarca='São Paulo',
+			status='ATIVO',
+			owner=self.user,
+		)
+
+	@patch('apps.publications.views.PJeComunicaService.fetch_publications')
+	def test_search_publications_attaches_case_suggestion(self, mock_fetch):
+		mock_fetch.return_value = {
+			'success': True,
+			'total_publicacoes': 1,
+			'publicacoes': [
+				{
+					'id_api': 910000001,
+					'numero_processo': '1000000-00.2026.8.26.0001',
+					'tribunal': 'TJSP',
+					'tipo_comunicacao': 'Intimação',
+					'data_disponibilizacao': '2026-02-20',
+					'orgao': '1ª Vara',
+					'meio': 'D',
+					'texto_resumo': 'Resumo',
+					'texto_completo': 'Texto completo',
+					'link_oficial': None,
+					'hash': 'abc',
+				}
+			],
+			'erros': None,
+		}
+
+		url = reverse('publications:search')
+		response = self.client.get(url, data={
+			'data_inicio': '2026-02-20',
+			'data_fim': '2026-02-20',
+			'tribunais': ['TJSP'],
+			'retroactive_days': 7,
+		})
+
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertTrue(payload['success'])
+		self.assertEqual(payload['total_publicacoes'], 1)
+
+		pub = payload['publicacoes'][0]
+		self.assertIn('case_suggestion', pub)
+		self.assertIsNotNone(pub['case_suggestion'])
+		self.assertEqual(pub['case_suggestion']['id'], self.case.id)
+		self.assertEqual(pub['case_suggestion']['numero_processo'], self.case.numero_processo)
+
+	@patch('apps.publications.views.PJeComunicaService.fetch_publications')
+	def test_search_publications_no_case_suggestion_when_already_integrated(self, mock_fetch):
+		# Pré-criar a publicação no banco como integrada
+		Publication.objects.create(
+			owner=self.user,
+			id_api=910000002,
+			numero_processo=self.case.numero_processo,
+			tribunal='TJSP',
+			tipo_comunicacao='Intimação',
+			data_disponibilizacao=date(2026, 2, 20),
+			orgao='1ª Vara',
+			meio='D',
+			texto_resumo='Resumo',
+			texto_completo='Texto completo',
+			integration_status='INTEGRATED',
+			case=self.case,
+		)
+
+		mock_fetch.return_value = {
+			'success': True,
+			'total_publicacoes': 1,
+			'publicacoes': [
+				{
+					'id_api': 910000002,
+					'numero_processo': self.case.numero_processo,
+					'tribunal': 'TJSP',
+					'tipo_comunicacao': 'Intimação',
+					'data_disponibilizacao': '2026-02-20',
+					'orgao': '1ª Vara',
+					'meio': 'D',
+					'texto_resumo': 'Resumo',
+					'texto_completo': 'Texto completo',
+					'link_oficial': None,
+					'hash': 'abc',
+				}
+			],
+			'erros': None,
+		}
+
+		url = reverse('publications:search')
+		response = self.client.get(url, data={
+			'data_inicio': '2026-02-20',
+			'data_fim': '2026-02-20',
+			'tribunais': ['TJSP'],
+			'retroactive_days': 7,
+		})
+
+		self.assertEqual(response.status_code, 200, response.content)
+		payload = response.json()
+		pub = payload['publicacoes'][0]
+		self.assertEqual(pub['integration_status'], 'INTEGRATED')
+		self.assertTrue(pub.get('case_id'))
+		self.assertIn('case_suggestion', pub)
+		self.assertIsNone(pub['case_suggestion'])
