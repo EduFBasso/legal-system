@@ -191,63 +191,6 @@ class PublicationAutoIntegrateRelatedTests(TestCase):
 		)
 
 
-class PublicationBatchIntegrateManualCaseFallbackTests(TestCase):
-	def setUp(self):
-		self.case = Case.objects.create(
-			numero_processo='0000618-47.2026.8.26.0320',
-			titulo='Caso manual sem campo derivado',
-			tribunal='TJSP',
-			comarca='Limeira',
-			status='ATIVO',
-		)
-
-		# Simula cenário legado/manual: campo derivado vazio
-		Case.objects.filter(id=self.case.id).update(numero_processo_unformatted='')
-		self.case.refresh_from_db()
-
-		self.search = SearchHistory.objects.create(
-			data_inicio=date(2026, 2, 10),
-			data_fim=date(2026, 2, 20),
-			tribunais=['TJSP'],
-			total_publicacoes=1,
-			total_novas=1,
-		)
-
-		self.pub = Publication.objects.create(
-			id_api=800000001,
-			numero_processo='0000618-47.2026.8.26.0320',
-			tribunal='TJSP',
-			tipo_comunicacao='Intimação',
-			data_disponibilizacao=date(2026, 2, 15),
-			orgao='4ª Vara Cível',
-			meio='D',
-			texto_resumo='Publicação para caso manual',
-			texto_completo='Publicação para validar fallback de integração.',
-			integration_status='PENDING',
-		)
-
-	def test_batch_integrate_finds_manual_case_without_unformatted_field(self):
-		url = reverse('publications:batch_integrate_publications')
-		response = self.client.post(
-			url,
-			data={
-				'search_id': self.search.id,
-				'auto_link': True,
-				'create_movement': False,
-			},
-			content_type='application/json',
-		)
-
-		self.assertEqual(response.status_code, 200)
-		payload = response.json()
-		self.assertTrue(payload['success'])
-		self.assertEqual(payload['integrated'], 1)
-
-		self.pub.refresh_from_db()
-		self.assertEqual(self.pub.integration_status, 'INTEGRATED')
-		self.assertEqual(self.pub.case_id, self.case.id)
-
-
 class PublicationCaseSuggestionScopeTests(TestCase):
 	def setUp(self):
 		self.master = User.objects.create_user(username='master_scope', password='123456', email='master_scope@example.com')

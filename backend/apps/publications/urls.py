@@ -14,7 +14,6 @@ urlpatterns = [
     path('all', views.get_all_publications, name='all_publications'),
     path('pending', views.get_pending_publications, name='pending_publications'),
     path('pending/count', views.get_pending_count, name='pending_count'),
-    path('batch-integrate', views.batch_integrate_publications, name='batch_integrate_publications'),
     path('history', views.get_search_history, name='search_history'),
     path('history/delete', views.delete_search_history, name='delete_search_history'),
     path('history/<int:search_id>', views.get_search_history_detail, name='search_history_detail'),

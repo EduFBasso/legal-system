@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { usePublicationsContext } from '../contexts/PublicationsContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
@@ -9,7 +9,6 @@ import PublicationsSearchForm from  '../components/PublicationsSearchForm';
 import PublicationsList from '../components/PublicationsList';
 import PublicationsStats from '../components/PublicationsStats';
 import Toast from '../components/common/Toast';
-import ConfirmDialog from '../components/common/ConfirmDialog';
 import PublicationDeleteDialogs from '../components/publications/PublicationDeleteDialogs';
 import {
   getPublicationDeleteBlockedMessage,
@@ -29,14 +28,12 @@ import './PublicationsPage.css';
 export default function PublicationsPage() {
   const { settings } = useSettings();
   const location = useLocation();
+  const navigate = useNavigate();
   const markPublicationNotificationAsRead = usePublicationNotificationRead();
   
   // Estado de seleção para exclusão
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [showIntegrateConfirm, setShowIntegrateConfirm] = useState(false);
-  const [integrateCount, setIntegrateCount] = useState(0);
-  const [integrateLoading, setIntegrateLoading] = useState(false);
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
@@ -59,40 +56,13 @@ export default function PublicationsPage() {
     window.dispatchEvent(new Event('publicationsSearchCompleted'));
   }, []);
 
-  const handleConfirmIntegrate = useCallback(async () => {
-    setIntegrateLoading(true);
-    try {
-      const result = await publicationsService.batchIntegratePublications({
-        autoLink: true,
-        createMovement: false,
-        autoIntegration: settings.autoIntegration ?? false
-      });
-
-      if (result.success) {
-        showToast(
-          `${result.integrated} integrada(s), ${result.pending} pendente(s), ${result.ignored} ignorada(s).`,
-          'success'
-        );
-        notifyPublicationsUpdated();
-      } else {
-        showToast(result.error || 'Erro ao integrar publicacoes.', 'error');
-      }
-    } catch (error) {
-      showToast(error.message || 'Erro ao integrar publicacoes.', 'error');
-    } finally {
-      setIntegrateLoading(false);
-      setShowIntegrateConfirm(false);
-    }
-  }, [showToast, settings.autoIntegration, notifyPublicationsUpdated]);
-
   /**
    * Handler para busca com filtros
    * Adiciona retroactiveDays do settings
-   * Se autoIntegration ativado, integra automaticamente
+   * Se a busca retornou publicações (> 0), redireciona para Histórico de Buscas
    */
   const handleSearch = useCallback(async (filters) => {
     const retroactiveDays = settings.retroactiveDays ?? 7;
-    const autoIntegration = settings.autoIntegration ?? false;
 
     const result = await search({
       dataInicio: filters.dataInicio,
@@ -102,17 +72,9 @@ export default function PublicationsPage() {
     });
 
     if (result?.success && result.total_publicacoes > 0) {
-      setIntegrateCount(result.total_publicacoes);
-      
-      if (autoIntegration) {
-        // Integração automática ativada - integra sem confirmação
-        await handleConfirmIntegrate();
-      } else {
-        // Integração manual - mostra modal
-        setShowIntegrateConfirm(true);
-      }
+      navigate('/search-history', { state: { fromPublicationsSearch: true } });
     }
-  }, [search, settings.retroactiveDays, settings.autoIntegration, handleConfirmIntegrate]);
+  }, [search, settings.retroactiveDays, navigate]);
 
   /**
    * Funções de seleção para exclusão
@@ -484,18 +446,6 @@ export default function PublicationsPage() {
           onClose={hideToast}
         />
       )}
-
-      <ConfirmDialog
-        isOpen={showIntegrateConfirm}
-        type="info"
-        title="🔗 Integrar publicações agora?"
-        message={`Encontramos ${integrateCount} publicação(ões). Deseja integrar agora?`}
-        warningMessage="Se escolher 'Deixar pendente', elas ficarão na aba Pendentes para integração posterior."
-        confirmText={integrateLoading ? 'Integrando...' : '✅ Integrar agora'}
-        cancelText="⏸️ Deixar pendente"
-        onConfirm={handleConfirmIntegrate}
-        onCancel={() => setShowIntegrateConfirm(false)}
-      />
 
       <PublicationDeleteDialogs
         showConfirm={showDeleteConfirmDialog}
