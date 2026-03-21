@@ -1,3 +1,10 @@
+export function formatNumeroProcessoShort(numeroProcesso, digits = 7) {
+  if (!numeroProcesso) return null;
+  const digitsOnly = String(numeroProcesso).replace(/\D/g, '');
+  if (!digitsOnly) return null;
+  return digitsOnly.slice(0, digits);
+}
+
 export function getPublicationActionState(publication, caseSuggestionParam = null) {
   const caseSuggestion = caseSuggestionParam ?? publication?.case_suggestion ?? null;
   const isIntegrated = publication?.integration_status === 'INTEGRATED' || Boolean(publication?.case_id);
@@ -14,10 +21,15 @@ export function getPublicationActionState(publication, caseSuggestionParam = nul
   }
 
   if (caseSuggestion?.id) {
+    const processoShort = formatNumeroProcessoShort(caseSuggestion.numero_processo);
     return {
       key: 'suggested',
-      label: `🔗 Vincular ao Caso #${caseSuggestion.id}`,
-      title: `Vincular ao caso #${caseSuggestion.id}`,
+      label: processoShort
+        ? `🔗 Processo: ${processoShort}...`
+        : `🔗 Vincular ao Caso #${caseSuggestion.id}`,
+      title: caseSuggestion.numero_processo
+        ? `Vincular ao processo ${caseSuggestion.numero_processo}`
+        : `Vincular ao caso #${caseSuggestion.id}`,
       className: 'btn-integrate',
     };
   }

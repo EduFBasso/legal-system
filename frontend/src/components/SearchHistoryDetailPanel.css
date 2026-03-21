@@ -1,0 +1,7 @@
+/* Painel inline: reaproveita estilos do modal sem travar altura/scroll */
+
+.search-history-detail-panel {
+  max-height: none;
+  overflow: visible;
+  margin-top: 2rem;
+}

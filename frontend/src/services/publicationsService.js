@@ -255,24 +255,6 @@ class PublicationsService {
   }
 
   /**
-   * Integra publicacoes da ultima busca
-   * @param {Object} payload - parametros de integracao
-   * @param {boolean} payload.autoIntegration - setting de integração automática
-   * @returns {Promise<Object>} Resultado
-   */
-  async batchIntegratePublications({ searchId = null, autoLink = true, createMovement = false, autoIntegration = false } = {}) {
-    return await apiFetch('/publications/batch-integrate', {
-      method: 'POST',
-      body: JSON.stringify({
-        search_id: searchId,
-        auto_link: autoLink,
-        create_movement: createMovement,
-        auto_integration: autoIntegration
-      })
-    });
-  }
-
-  /**
    * Cria uma movimentação a partir de uma publicação já vinculada
    * Útil para modo manual quando AUTO_CREATE_MOVEMENT está desativado
    * @param {number} idApi - ID da publicação na API

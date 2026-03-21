@@ -39,37 +39,7 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
     openCaseDetailWindow(caseData.id);
   };
 
-  /**
-   * Get tribunal badge color
-   */
-  const getTribunalColor = (tribunal) => {
-    const colors = {
-      'TJSP': '#1976d2',
-      'STF': '#c62828',
-      'STJ': '#6a1b9a',
-      'TRF1': '#00796b',
-      'TRF2': '#00796b',
-      'TRF3': '#00796b',
-      'TRF4': '#00796b',
-      'TRF5': '#00796b',
-      'TST': '#f57c00',
-    };
-    return colors[tribunal] || '#757575';
-  };
-
-  /**
-   * Get status badge color
-   */
-  const getStatusColor = (status) => {
-    const colors = {
-      'ATIVO': '#4caf50',
-      'INATIVO': '#9e9e9e',
-      'SUSPENSO': '#ff9800',
-      'ARQUIVADO': '#757575',
-      'ENCERRADO': '#2196f3',
-    };
-    return colors[status] || '#757575';
-  };
+  const statusClass = caseData?.status ? String(caseData.status).toLowerCase() : '';
 
   /**
    * Format date to Brazilian format
@@ -177,14 +147,12 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
       <div className="case-header">
         <div className="case-badges">
           <span 
-            className="badge badge-tribunal"
-            style={{ backgroundColor: getTribunalColor(caseData.tribunal) }}
+            className="info-badge tribunal"
           >
             {caseData.tribunal_display || caseData.tribunal}
           </span>
           <span 
-            className="badge badge-status"
-            style={{ backgroundColor: getStatusColor(caseData.status) }}
+            className={`info-badge status ${statusClass ? `status-${statusClass}` : ''}`}
           >
             {caseData.status_display || caseData.status}
           </span>

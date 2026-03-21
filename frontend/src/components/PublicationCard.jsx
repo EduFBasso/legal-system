@@ -12,6 +12,7 @@ export default function PublicationCard({
   onToggleSelect = () => {},
   onDelete = () => {},
   showActionButtons = false,
+  showDeleteButton,
   onIntegrate = () => {},
   onCreateCase = () => {},
   caseSuggestion = null
@@ -132,6 +133,7 @@ export default function PublicationCard({
   };
 
   const actionState = getPublicationActionState(publication, caseSuggestion);
+  const shouldShowDeleteButton = showDeleteButton === undefined ? showActionButtons : Boolean(showDeleteButton);
 
   return (
     <div className={cardClassName} onClick={handleCardClick}>      {selectionMode && (
@@ -166,7 +168,7 @@ export default function PublicationCard({
           </span>
         </div>
         <div className="publication-header-right">
-          {!selectionMode && showActionButtons && (
+          {!selectionMode && shouldShowDeleteButton && (
             <button
               className="btn-delete-publication"
               onClick={handleDeleteClick}

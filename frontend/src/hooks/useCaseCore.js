@@ -176,7 +176,6 @@ export function useCaseCore(
       if (!id) {
         // Criar novo caso
         const created = await casesService.create(cleanedData);
-        let publicationIntegrationSkipped = false;
 
         let failedParties = 0;
         for (const party of parties) {
@@ -196,50 +195,42 @@ export function useCaseCore(
         }
 
         const pubId = sourcePublication?.id_api || publicationId;
-        const shouldAutoIntegratePublication = settings?.autoIntegration ?? false;
         const shouldCreateMovementBySystemSetting = systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
 
         if (pubId) {
           // REGRA DE NEGÓCIO:
           // Se o processo foi criado a partir de uma publicação (via ?pub_id=),
-          // essa publicação deve ser vinculada ao processo mesmo no modo manual.
-          const forceIntegrateSourcePublication = true;
-          const shouldIntegrateSourcePublication = forceIntegrateSourcePublication || shouldAutoIntegratePublication;
+          // essa publicação deve ser vinculada ao processo.
+          try {
+            // Para publicação de origem, sempre garantir criação de movimentação.
+            const createMovementRequested = true;
 
-          if (shouldIntegrateSourcePublication) {
-            try {
-              // Para publicação de origem, sempre garantir criação de movimentação.
-              const createMovementRequested = true;
+            const integrationResult = await publicationsService.integratePublication(pubId, {
+              caseId: created.id,
+              createMovement: createMovementRequested,
+            });
 
-              const integrationResult = await publicationsService.integratePublication(pubId, {
-                caseId: created.id,
-                createMovement: createMovementRequested,
-              });
-
-              // Caso o backend não crie a movimentação (ou se estiver desligado por setting),
-              // fazer fallback explícito para garantir que apareça em Movimentações.
-              if (
-                createMovementRequested
-                && (integrationResult?.movement_created !== true || shouldCreateMovementBySystemSetting === false)
-              ) {
-                try {
-                  await publicationsService.createMovementFromPublication(pubId);
-                } catch (fallbackError) {
-                  console.warn('Fallback de criação de movimentação falhou:', fallbackError);
-                }
+            // Caso o backend não crie a movimentação (ou se estiver desligado por setting),
+            // fazer fallback explícito para garantir que apareça em Movimentações.
+            if (
+              createMovementRequested
+              && (integrationResult?.movement_created !== true || shouldCreateMovementBySystemSetting === false)
+            ) {
+              try {
+                await publicationsService.createMovementFromPublication(pubId);
+              } catch (fallbackError) {
+                console.warn('Fallback de criação de movimentação falhou:', fallbackError);
               }
-
-              notifyPublicationSync({
-                type: 'PUBLICATION_INTEGRATED',
-                idApi: Number(pubId),
-                caseId: created.id,
-              });
-            } catch (integrationError) {
-              console.error('Error integrating source publication:', integrationError);
-              showToast('Processo criado, mas houve falha ao vincular a publicação de origem', 'warning');
             }
-          } else {
-            publicationIntegrationSkipped = true;
+
+            notifyPublicationSync({
+              type: 'PUBLICATION_INTEGRATED',
+              idApi: Number(pubId),
+              caseId: created.id,
+            });
+          } catch (integrationError) {
+            console.error('Error integrating source publication:', integrationError);
+            showToast('Processo criado, mas houve falha ao vincular a publicação de origem', 'warning');
           }
         }
 
@@ -253,8 +244,6 @@ export function useCaseCore(
 
         if (failedParties > 0) {
           showToast(`Processo criado! ${failedParties} parte(s) não foram vinculadas`, 'warning');
-        } else if (publicationIntegrationSkipped) {
-          showToast('Processo criado com sucesso! Publicação mantida como não vinculada (integração automática desativada).', 'success');
         } else {
           showToast('Processo criado com sucesso!', 'success');
         }

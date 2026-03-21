@@ -3,14 +3,18 @@
  * Exibe lista de todas as buscas realizadas com filtros e paginação
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 import publicationsService from '../services/publicationsService';
 import SearchHistoryList from '../components/SearchHistoryList';
 import SearchHistoryControls from '../components/SearchHistoryControls';
-import SearchHistoryDetailModal from '../components/SearchHistoryDetailModal';
+import SearchHistoryDetailPanel from '../components/SearchHistoryDetailPanel';
+import { openCreateCaseFromPublicationWindow, openCaseMovementsWindow } from '../utils/publicationNavigation';
 import './SearchHistoryPage.css';
 
 function SearchHistoryPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
     searches,
     loading,
@@ -31,12 +35,12 @@ function SearchHistoryPage() {
     formatDateTime
   } = useSearchHistory();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingBackend, setIsSearchingBackend] = useState(false);
   const [isBackendQuery, setIsBackendQuery] = useState(false); // Indica se query atual é tipo backend (nome/processo)
   const [backendMatchIds, setBackendMatchIds] = useState(new Set()); // IDs dos cartões encontrados no backend
   const debounceTimerRef = useRef(null);
+  const detailPanelRef = useRef(null);
 
   // Verificar se ordenação é crescente
   const isAscending = ordering === 'executed_at';
@@ -234,16 +238,106 @@ function SearchHistoryPage() {
    */
   const handleSearchClick = async (search) => {
     await loadSearchDetail(search.id);
-    setIsModalOpen(true);
+
+    // Scroll para o painel de detalhes (evita confusão de onde "apareceu" o conteúdo)
+    setTimeout(() => {
+      try {
+        detailPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        // noop
+      }
+    }, 0);
   };
 
   /**
    * Fecha o modal de detalhes
    */
   const handleCloseModal = () => {
-    setIsModalOpen(false);
     clearSelectedSearch();
   };
+
+  const refreshSelectedDetail = useCallback(async () => {
+    if (!selectedSearch?.id) return;
+    await loadSearchDetail(selectedSearch.id);
+  }, [selectedSearch?.id, loadSearchDetail]);
+
+  const handleCreateCaseFromPublication = useCallback((publication) => {
+    if (!publication?.id_api) return;
+    openCreateCaseFromPublicationWindow(publication.id_api);
+  }, []);
+
+  const handleIntegratePublicationToSuggestedCase = useCallback(async (publication) => {
+    const idApi = publication?.id_api;
+    const suggestedCaseId = publication?.case_suggestion?.id;
+
+    if (!idApi || !suggestedCaseId) {
+      window.alert('Não foi possível vincular: nenhum caso sugerido encontrado para esta publicação.');
+      return;
+    }
+
+    const confirmed = window.confirm('Vincular esta publicação ao caso sugerido?');
+    if (!confirmed) return;
+
+    try {
+      const result = await publicationsService.integratePublication(idApi, {
+        caseId: suggestedCaseId,
+        createMovement: true,
+      });
+
+      if (!result?.success) {
+        window.alert(result?.error || 'Falha ao vincular publicação ao caso.');
+        return;
+      }
+
+      openCaseMovementsWindow(suggestedCaseId);
+      await refreshSelectedDetail();
+    } catch (err) {
+      console.error('Erro ao integrar publicação:', err);
+      window.alert('Erro ao vincular publicação.');
+    }
+  }, [refreshSelectedDetail]);
+
+  const handleDeletePublication = useCallback(async (publication) => {
+    const idApi = publication?.id_api;
+    if (!idApi) return;
+
+    const confirmed = window.confirm('Apagar esta publicação? Esta ação não pode ser desfeita.');
+    if (!confirmed) return;
+
+    try {
+      const result = await publicationsService.deletePublication(idApi);
+      if (!result?.success) {
+        window.alert(result?.error || 'Falha ao apagar publicação.');
+        return;
+      }
+
+      await refreshSelectedDetail();
+    } catch (err) {
+      console.error('Erro ao apagar publicação:', err);
+      window.alert('Erro ao apagar publicação.');
+    }
+  }, [refreshSelectedDetail]);
+
+  // Se veio de uma busca de publicações (redirect), abrir automaticamente a busca mais recente com resultados.
+  useEffect(() => {
+    const cameFromSearch = Boolean(location.state?.fromPublicationsSearch);
+    if (!cameFromSearch) return;
+
+    if (loading) return;
+    if (selectedSearch) return;
+
+    const mostRecentWithResults = searches.find((s) => (s.total_publicacoes || 0) > 0);
+    if (!mostRecentWithResults) return;
+
+    loadSearchDetail(mostRecentWithResults.id);
+
+    // Limpar state para não reabrir ao fechar o painel (React Router precisa ver o replace)
+    try {
+      navigate('/search-history', { replace: true, state: {} });
+    } catch {
+      // noop
+    }
+  }, [location.state, loading, searches, selectedSearch, loadSearchDetail, navigate]);
 
   return (
     <div className="search-history-page">
@@ -299,7 +393,23 @@ function SearchHistoryPage() {
                 formatDate={formatDate}
                 formatDateTime={formatDateTime}
                 backendMatchIds={backendMatchIds}
+                selectedSearchId={selectedSearch?.id || null}
               />
+
+              {/* Detalhes inline da busca selecionada */}
+              {(selectedSearch || detailLoading) && (
+                <div ref={detailPanelRef}>
+                  <SearchHistoryDetailPanel
+                    publications={selectedPublications}
+                    loading={detailLoading}
+                    onClose={handleCloseModal}
+                    onIntegrate={handleIntegratePublicationToSuggestedCase}
+                    onCreateCase={handleCreateCaseFromPublication}
+                    onDelete={handleDeletePublication}
+                    highlightProcessNumber={isBackendQuery ? searchQuery : null}
+                  />
+                </div>
+              )}
 
               {/* Paginação */}
               {pagination.count > pagination.limit && (
@@ -330,19 +440,6 @@ function SearchHistoryPage() {
             </>
           )}
         </>
-      )}
-
-      {/* Modal de detalhes */}
-      {isModalOpen && (
-        <SearchHistoryDetailModal
-          search={selectedSearch}
-          publications={selectedPublications}
-          loading={detailLoading}
-          onClose={handleCloseModal}
-          formatDate={formatDate}
-          formatDateTime={formatDateTime}
-          highlightProcessNumber={isBackendQuery ? searchQuery : null}
-        />
       )}
     </div>
   );

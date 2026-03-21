@@ -35,17 +35,59 @@
   gap: 0.5rem;
 }
 
-.badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
+/* Badges (padronizado com Case Detail) */
+.case-card .info-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  color: white;
+  display: inline-block;
+  white-space: nowrap;
+  background: #f8fafc;
+  color: #1e293b;
+  border: 2px solid #cbd5e1;
 }
 
-/* Badge colors set inline via style prop */
+.case-card .info-badge.status {
+  border: none;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+.case-card .info-badge.status.status-ativo {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.case-card .info-badge.status.status-inativo {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.case-card .info-badge.status.status-suspenso {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.case-card .info-badge.status.status-arquivado {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.case-card .info-badge.status.status-encerrado {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.case-card .info-badge.tribunal {
+  background: #dbeafe;
+  color: #1e40af;
+  border: none;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
 
 .badge-auto-status-inactive {
   background: #f87171;

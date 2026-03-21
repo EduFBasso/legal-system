@@ -109,17 +109,11 @@ export function usePublications() {
         // Se não há mais publicações no banco, limpar lastSearch
         if (data.total_publicacoes === 0) {
           setLastSearch(null);
-          showToast('Nenhuma publicação encontrada na última busca.', 'warning');
         } else {
           // Atualizar lastSearch com dados atualizados
           await fetchLastSearch();
-          showToast(
-            `${data.total_publicacoes} publicação(ões) carregada(s) da última busca.`,
-            'success'
-          );
         }
       } else {
-        showToast(data.message || 'Nenhuma busca anterior encontrada.', 'warning');
         setPublications([]);
         setLastSearch(null);
       }

@@ -11,7 +11,8 @@ function SearchHistoryList({
   onSearchClick, 
   formatDate, 
   formatDateTime,
-  backendMatchIds = new Set()
+  backendMatchIds = new Set(),
+  selectedSearchId = null,
 }) {
   return (
     <div className="search-history-list">
@@ -23,6 +24,7 @@ function SearchHistoryList({
           formatDate={formatDate}
           formatDateTime={formatDateTime}
           isHighlighted={backendMatchIds.has(search.id)}
+          isSelected={selectedSearchId === search.id}
         />
       ))}
     </div>
@@ -45,7 +47,8 @@ SearchHistoryList.propTypes = {
   onSearchClick: PropTypes.func.isRequired,
   formatDate: PropTypes.func.isRequired,
   formatDateTime: PropTypes.func.isRequired,
-  backendMatchIds: PropTypes.instanceOf(Set)
+  backendMatchIds: PropTypes.instanceOf(Set),
+  selectedSearchId: PropTypes.number,
 };
 
 export default SearchHistoryList;
