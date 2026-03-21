@@ -163,7 +163,7 @@ describe('SearchHistoryPage (inline details)', () => {
     });
 
     // Inline panel title
-    expect(screen.getByText('Detalhes da Busca')).toBeInTheDocument();
+    expect(screen.getByText('Publicações')).toBeInTheDocument();
     // Publications card rendered inline
     expect(screen.getByTestId('pub-card-533000001')).toBeInTheDocument();
   });
@@ -175,6 +175,6 @@ describe('SearchHistoryPage (inline details)', () => {
       expect(mockLoadSearchDetail).toHaveBeenCalledWith(10);
     });
 
-    expect(screen.getByText('Detalhes da Busca')).toBeInTheDocument();
+    expect(screen.getByText('Publicações')).toBeInTheDocument();
   });
 });

@@ -335,12 +335,9 @@ function SearchHistoryPage() {
               {(selectedSearch || detailLoading) && (
                 <div ref={detailPanelRef}>
                   <SearchHistoryDetailPanel
-                    search={selectedSearch}
                     publications={selectedPublications}
                     loading={detailLoading}
                     onClose={handleCloseModal}
-                    formatDate={formatDate}
-                    formatDateTime={formatDateTime}
                     highlightProcessNumber={isBackendQuery ? searchQuery : null}
                   />
                 </div>

@@ -11,12 +11,9 @@ import './SearchHistoryDetailPanel.css';
 import './SearchHistoryDetailModal.css';
 
 function SearchHistoryDetailPanel({
-  search,
   publications,
   loading,
   onClose,
-  formatDate,
-  formatDateTime,
   highlightProcessNumber = null,
 }) {
   const markPublicationNotificationAsRead = usePublicationNotificationRead();
@@ -65,12 +62,12 @@ function SearchHistoryDetailPanel({
 
   const matchingPublicationIds = getMatchingPublications();
 
-  if (!search && !loading) return null;
+  if (!publications && !loading) return null;
 
   return (
     <section className="modal-content search-history-modal search-history-detail-panel">
       <div className="modal-header">
-        <h2>Detalhes da Busca</h2>
+        <h2>Publicações</h2>
         <button className="modal-close-btn" onClick={onClose} aria-label="Fechar detalhes">
           ✕
         </button>
@@ -83,64 +80,6 @@ function SearchHistoryDetailPanel({
         </div>
       ) : (
         <>
-          <div className="search-info-section">
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-icon">🕐</span>
-                <div className="info-content">
-                  <span className="info-label">Executada em</span>
-                  <span className="info-value">{formatDateTime(search.executed_at)}</span>
-                </div>
-              </div>
-
-              <div className="info-item">
-                <span className="info-icon">📅</span>
-                <div className="info-content">
-                  <span className="info-label">Período consultado</span>
-                  <span className="info-value">
-                    {formatDate(search.data_inicio)} até {formatDate(search.data_fim)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="info-item">
-                <span className="info-icon">⚖️</span>
-                <div className="info-content">
-                  <span className="info-label">Tribunais</span>
-                  <div className="tribunais-list">
-                    {search.tribunais.map((tribunal, index) => (
-                      <span
-                        key={index}
-                        className={`tribunal-badge tribunal-${tribunal.toLowerCase()}`}
-                      >
-                        {tribunal}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="info-item">
-                <span className="info-icon">⏱️</span>
-                <div className="info-content">
-                  <span className="info-label">Duração</span>
-                  <span className="info-value">{search.duration_seconds} segundos</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="search-stats">
-              <div className="search-stat">
-                <span className="stat-number">{search.total_publicacoes}</span>
-                <span className="stat-text">Publicações encontradas</span>
-              </div>
-              <div className="search-stat search-stat-highlight">
-                <span className="stat-number">{search.total_novas}</span>
-                <span className="stat-text">Novas nesta busca</span>
-              </div>
-            </div>
-          </div>
-
           <div className="publications-section">
             <h3 className="section-title">Publicações ({publications.length})</h3>
 
@@ -179,17 +118,6 @@ function SearchHistoryDetailPanel({
 }
 
 SearchHistoryDetailPanel.propTypes = {
-  search: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    executed_at: PropTypes.string.isRequired,
-    data_inicio: PropTypes.string.isRequired,
-    data_fim: PropTypes.string.isRequired,
-    tribunais: PropTypes.arrayOf(PropTypes.string).isRequired,
-    total_publicacoes: PropTypes.number.isRequired,
-    total_novas: PropTypes.number.isRequired,
-    duration_seconds: PropTypes.number.isRequired,
-    search_params: PropTypes.object,
-  }),
   publications: PropTypes.arrayOf(
     PropTypes.shape({
       id_api: PropTypes.number.isRequired,
@@ -205,8 +133,6 @@ SearchHistoryDetailPanel.propTypes = {
   ).isRequired,
   loading: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  formatDate: PropTypes.func.isRequired,
-  formatDateTime: PropTypes.func.isRequired,
   highlightProcessNumber: PropTypes.string,
 };
 
