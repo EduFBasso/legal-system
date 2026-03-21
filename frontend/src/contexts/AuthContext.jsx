@@ -1,5 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { getApiBaseUrl } from '../utils/apiFetch';
 
 const API_BASE_URL = getApiBaseUrl();
@@ -83,7 +90,7 @@ export function AuthProvider({ children }) {
     }
   }, [lawyers, selectedEmail]);
 
-  const fetchLawyers = async () => {
+  const fetchLawyers = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/lawyers/`);
       if (!response.ok) return;
@@ -93,11 +100,13 @@ export function AuthProvider({ children }) {
     } catch {
       // silêncio proposital: fallback para dados locais
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchLawyers();
-  }, []);
+    if (!isAuthenticated) {
+      fetchLawyers();
+    }
+  }, [fetchLawyers, isAuthenticated]);
 
   useEffect(() => {
     const onUnauthorized = () => {
@@ -109,7 +118,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
   }, []);
 
-  const login = async () => {
+  const login = useCallback(async () => {
     if (!selectedEmail || !password) {
       setError('Selecione a advogada e informe a senha.');
       return false;
@@ -154,15 +163,15 @@ export function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [password, selectedEmail]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setAuth(null);
     setPassword('');
     setError('');
-  };
+  }, []);
 
-  const updateAuthUser = (nextUser) => {
+  const updateAuthUser = useCallback((nextUser) => {
     if (!nextUser) return;
 
     setAuth((current) => {
@@ -185,11 +194,11 @@ export function AuthProvider({ children }) {
         role: nextUser.role || auth?.user?.role || 'ADVOGADO',
       }]));
     }
-  };
+  }, [auth?.user?.email, auth?.user?.role]);
 
-  const showNotLoggedMessage = () => {
+  const showNotLoggedMessage = useCallback(() => {
     window.alert('Você não está logado. Faça login para usar o sistema.');
-  };
+  }, []);
 
   const value = useMemo(() => ({
     auth,
@@ -212,11 +221,16 @@ export function AuthProvider({ children }) {
   }), [
     auth,
     error,
+    fetchLawyers,
     isAuthenticated,
     isLoading,
+    login,
     lawyers,
+    logout,
     password,
     selectedEmail,
+    showNotLoggedMessage,
+    updateAuthUser,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
