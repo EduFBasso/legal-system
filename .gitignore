@@ -94,3 +94,15 @@ frontend_service.cmd
 processos.csv
 backup_db_legal-system/
 reset_test_data.py
+
+# === Reset local (não versionar) ===
+backend/reset_database.ps1
+backend/reset_database.bat
+backend/DATABASE_RESET_GUIDE.md
+backend/apps/accounts/management/__init__.py
+backend/apps/accounts/management/commands/__init__.py
+backend/apps/accounts/management/commands/purge_system_data.py
+
+# Artefatos de reset/local dumps
+backend/_dev_*.json
+backend/*_backup*.json
