@@ -3,14 +3,16 @@
  * Exibe lista de todas as buscas realizadas com filtros e paginação
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 import publicationsService from '../services/publicationsService';
 import SearchHistoryList from '../components/SearchHistoryList';
 import SearchHistoryControls from '../components/SearchHistoryControls';
-import SearchHistoryDetailModal from '../components/SearchHistoryDetailModal';
+import SearchHistoryDetailPanel from '../components/SearchHistoryDetailPanel';
 import './SearchHistoryPage.css';
 
 function SearchHistoryPage() {
+  const location = useLocation();
   const {
     searches,
     loading,
@@ -31,12 +33,12 @@ function SearchHistoryPage() {
     formatDateTime
   } = useSearchHistory();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingBackend, setIsSearchingBackend] = useState(false);
   const [isBackendQuery, setIsBackendQuery] = useState(false); // Indica se query atual é tipo backend (nome/processo)
   const [backendMatchIds, setBackendMatchIds] = useState(new Set()); // IDs dos cartões encontrados no backend
   const debounceTimerRef = useRef(null);
+  const detailPanelRef = useRef(null);
 
   // Verificar se ordenação é crescente
   const isAscending = ordering === 'executed_at';
@@ -234,16 +236,44 @@ function SearchHistoryPage() {
    */
   const handleSearchClick = async (search) => {
     await loadSearchDetail(search.id);
-    setIsModalOpen(true);
+
+    // Scroll para o painel de detalhes (evita confusão de onde "apareceu" o conteúdo)
+    setTimeout(() => {
+      try {
+        detailPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        // noop
+      }
+    }, 0);
   };
 
   /**
    * Fecha o modal de detalhes
    */
   const handleCloseModal = () => {
-    setIsModalOpen(false);
     clearSelectedSearch();
   };
+
+  // Se veio de uma busca de publicações (redirect), abrir automaticamente a busca mais recente com resultados.
+  useEffect(() => {
+    const cameFromSearch = Boolean(location.state?.fromPublicationsSearch);
+    if (!cameFromSearch) return;
+
+    if (loading) return;
+    if (selectedSearch) return;
+
+    const mostRecentWithResults = searches.find((s) => (s.total_publicacoes || 0) > 0);
+    if (!mostRecentWithResults) return;
+
+    loadSearchDetail(mostRecentWithResults.id);
+
+    // Limpar state para não reabrir ao voltar/refresh
+    try {
+      window.history.replaceState({}, document.title);
+    } catch {
+      // noop
+    }
+  }, [location.state, loading, searches, selectedSearch, loadSearchDetail]);
 
   return (
     <div className="search-history-page">
@@ -301,6 +331,21 @@ function SearchHistoryPage() {
                 backendMatchIds={backendMatchIds}
               />
 
+              {/* Detalhes inline da busca selecionada */}
+              {(selectedSearch || detailLoading) && (
+                <div ref={detailPanelRef}>
+                  <SearchHistoryDetailPanel
+                    search={selectedSearch}
+                    publications={selectedPublications}
+                    loading={detailLoading}
+                    onClose={handleCloseModal}
+                    formatDate={formatDate}
+                    formatDateTime={formatDateTime}
+                    highlightProcessNumber={isBackendQuery ? searchQuery : null}
+                  />
+                </div>
+              )}
+
               {/* Paginação */}
               {pagination.count > pagination.limit && (
                 <div className="pagination">
@@ -330,19 +375,6 @@ function SearchHistoryPage() {
             </>
           )}
         </>
-      )}
-
-      {/* Modal de detalhes */}
-      {isModalOpen && (
-        <SearchHistoryDetailModal
-          search={selectedSearch}
-          publications={selectedPublications}
-          loading={detailLoading}
-          onClose={handleCloseModal}
-          formatDate={formatDate}
-          formatDateTime={formatDateTime}
-          highlightProcessNumber={isBackendQuery ? searchQuery : null}
-        />
       )}
     </div>
   );
