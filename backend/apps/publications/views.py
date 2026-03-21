@@ -1230,7 +1230,9 @@ def integrate_publication(request, id_api):
         user = request.user
         case_id = request.data.get('case_id')
         create_movement = _to_bool(request.data.get('create_movement', False), default=False)
-        auto_integrate_related = _to_bool(request.data.get('auto_integrate_related', True), default=True)
+        # IMPORTANT: auto-integrate related pending publications is intentionally OFF by default.
+        # This avoids silent integration/movement creation for publications the user didn't act on.
+        auto_integrate_related = _to_bool(request.data.get('auto_integrate_related', False), default=False)
         notes = request.data.get('notes', '')
 
         if not case_id:

@@ -120,6 +120,7 @@ class PublicationAutoIntegrateRelatedTests(TestCase):
 			data={
 				'case_id': self.case.id,
 				'create_movement': True,
+				'auto_integrate_related': True,
 			},
 			content_type='application/json',
 		)
@@ -154,6 +155,33 @@ class PublicationAutoIntegrateRelatedTests(TestCase):
 
 		self.assertEqual(mov_current, 1)
 		self.assertEqual(mov_related, 1)
+
+	def test_integrate_publication_does_not_auto_integrate_related_by_default(self):
+		url = reverse('publications:integrate_publication', kwargs={'id_api': self.pub_current.id_api})
+		response = self.client.post(
+			url,
+			data={
+				'case_id': self.case.id,
+				'create_movement': True,
+			},
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertTrue(payload['success'])
+		self.assertEqual(payload['related_integrated'], 0)
+		self.assertEqual(payload['related_movements_created'], 0)
+
+		self.pub_current.refresh_from_db()
+		self.pub_related_pending.refresh_from_db()
+
+		self.assertEqual(self.pub_current.integration_status, 'INTEGRATED')
+		self.assertEqual(self.pub_current.case_id, self.case.id)
+
+		# Related remains pending unless explicitly requested
+		self.assertEqual(self.pub_related_pending.integration_status, 'PENDING')
+		self.assertIsNone(self.pub_related_pending.case_id)
 
 	def test_integrate_publication_does_not_duplicate_existing_movement(self):
 		CaseMovement.objects.create(
