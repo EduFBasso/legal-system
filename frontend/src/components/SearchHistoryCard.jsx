@@ -9,11 +9,14 @@ function SearchHistoryCard({
   onClick, 
   formatDate, 
   formatDateTime,
-  isHighlighted = false
+  isHighlighted = false,
+  isSelected = false,
 }) {
-  const cardClassName = isHighlighted 
-    ? "search-history-card highlight-process-found" 
-    : "search-history-card";
+  const cardClassName = [
+    'search-history-card',
+    isHighlighted ? 'highlight-process-found' : null,
+    isSelected ? 'search-history-card-selected' : null,
+  ].filter(Boolean).join(' ');
 
   return (
     <div className={cardClassName} onClick={onClick}>
@@ -86,7 +89,8 @@ SearchHistoryCard.propTypes = {
   onClick: PropTypes.func.isRequired,
   formatDate: PropTypes.func.isRequired,
   formatDateTime: PropTypes.func.isRequired,
-  isHighlighted: PropTypes.bool
+  isHighlighted: PropTypes.bool,
+  isSelected: PropTypes.bool,
 };
 
 export default SearchHistoryCard;

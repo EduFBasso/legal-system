@@ -16,6 +16,18 @@
   border-color: var(--publication-primary, #6366f1);
 }
 
+/* Cartão selecionado (busca clicada) */
+.search-history-card-selected {
+  border: 3px solid var(--publication-primary, #6366f1);
+  box-shadow:
+    0 0 0 2px var(--publication-glow, rgba(99, 102, 241, 0.18)),
+    0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.search-history-card-selected:hover {
+  border-color: var(--publication-dark, #4f46e5);
+}
+
 /* Cabeçalho */
 .card-header {
   display: flex;

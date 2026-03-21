@@ -1773,6 +1773,9 @@ def get_search_history_detail(request, search_id):
                 'integration_status': pub.integration_status,
                 'case_id': pub.case_id,
             })
+
+        # Enriquecer com sugestão de caso (para habilitar "Vincular ao caso..." nos cards)
+        publicacoes_json = _attach_case_suggestions(publicacoes_json, user=user)
         
         # Montar resposta com todos os dados da busca
         return Response({

@@ -3,16 +3,18 @@
  * Exibe lista de todas as buscas realizadas com filtros e paginação
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 import publicationsService from '../services/publicationsService';
 import SearchHistoryList from '../components/SearchHistoryList';
 import SearchHistoryControls from '../components/SearchHistoryControls';
 import SearchHistoryDetailPanel from '../components/SearchHistoryDetailPanel';
+import { openCreateCaseFromPublicationWindow, openCaseMovementsWindow } from '../utils/publicationNavigation';
 import './SearchHistoryPage.css';
 
 function SearchHistoryPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     searches,
     loading,
@@ -254,6 +256,68 @@ function SearchHistoryPage() {
     clearSelectedSearch();
   };
 
+  const refreshSelectedDetail = useCallback(async () => {
+    if (!selectedSearch?.id) return;
+    await loadSearchDetail(selectedSearch.id);
+  }, [selectedSearch?.id, loadSearchDetail]);
+
+  const handleCreateCaseFromPublication = useCallback((publication) => {
+    if (!publication?.id_api) return;
+    openCreateCaseFromPublicationWindow(publication.id_api);
+  }, []);
+
+  const handleIntegratePublicationToSuggestedCase = useCallback(async (publication) => {
+    const idApi = publication?.id_api;
+    const suggestedCaseId = publication?.case_suggestion?.id;
+
+    if (!idApi || !suggestedCaseId) {
+      window.alert('Não foi possível vincular: nenhum caso sugerido encontrado para esta publicação.');
+      return;
+    }
+
+    const confirmed = window.confirm('Vincular esta publicação ao caso sugerido?');
+    if (!confirmed) return;
+
+    try {
+      const result = await publicationsService.integratePublication(idApi, {
+        caseId: suggestedCaseId,
+        createMovement: true,
+      });
+
+      if (!result?.success) {
+        window.alert(result?.error || 'Falha ao vincular publicação ao caso.');
+        return;
+      }
+
+      openCaseMovementsWindow(suggestedCaseId);
+      await refreshSelectedDetail();
+    } catch (err) {
+      console.error('Erro ao integrar publicação:', err);
+      window.alert('Erro ao vincular publicação.');
+    }
+  }, [refreshSelectedDetail]);
+
+  const handleDeletePublication = useCallback(async (publication) => {
+    const idApi = publication?.id_api;
+    if (!idApi) return;
+
+    const confirmed = window.confirm('Apagar esta publicação? Esta ação não pode ser desfeita.');
+    if (!confirmed) return;
+
+    try {
+      const result = await publicationsService.deletePublication(idApi);
+      if (!result?.success) {
+        window.alert(result?.error || 'Falha ao apagar publicação.');
+        return;
+      }
+
+      await refreshSelectedDetail();
+    } catch (err) {
+      console.error('Erro ao apagar publicação:', err);
+      window.alert('Erro ao apagar publicação.');
+    }
+  }, [refreshSelectedDetail]);
+
   // Se veio de uma busca de publicações (redirect), abrir automaticamente a busca mais recente com resultados.
   useEffect(() => {
     const cameFromSearch = Boolean(location.state?.fromPublicationsSearch);
@@ -267,13 +331,13 @@ function SearchHistoryPage() {
 
     loadSearchDetail(mostRecentWithResults.id);
 
-    // Limpar state para não reabrir ao voltar/refresh
+    // Limpar state para não reabrir ao fechar o painel (React Router precisa ver o replace)
     try {
-      window.history.replaceState({}, document.title);
+      navigate('/search-history', { replace: true, state: {} });
     } catch {
       // noop
     }
-  }, [location.state, loading, searches, selectedSearch, loadSearchDetail]);
+  }, [location.state, loading, searches, selectedSearch, loadSearchDetail, navigate]);
 
   return (
     <div className="search-history-page">
@@ -329,6 +393,7 @@ function SearchHistoryPage() {
                 formatDate={formatDate}
                 formatDateTime={formatDateTime}
                 backendMatchIds={backendMatchIds}
+                selectedSearchId={selectedSearch?.id || null}
               />
 
               {/* Detalhes inline da busca selecionada */}
@@ -338,6 +403,9 @@ function SearchHistoryPage() {
                     publications={selectedPublications}
                     loading={detailLoading}
                     onClose={handleCloseModal}
+                    onIntegrate={handleIntegratePublicationToSuggestedCase}
+                    onCreateCase={handleCreateCaseFromPublication}
+                    onDelete={handleDeletePublication}
                     highlightProcessNumber={isBackendQuery ? searchQuery : null}
                   />
                 </div>

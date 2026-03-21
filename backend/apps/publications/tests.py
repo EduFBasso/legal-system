@@ -411,3 +411,67 @@ class PublicationsSearchCaseSuggestionTests(TestCase):
 		self.assertTrue(pub.get('case_id'))
 		self.assertIn('case_suggestion', pub)
 		self.assertIsNone(pub['case_suggestion'])
+
+
+class PublicationsSearchHistoryDetailCaseSuggestionTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(
+			username='pub_history_user',
+			password='123456',
+			email='pub_history_user@example.com',
+		)
+		profile = self.user.profile
+		profile.full_name_oab = 'Teste Histórico'
+		profile.oab_number = '999999'
+		profile.save(update_fields=['full_name_oab', 'oab_number'])
+
+		self.client.force_login(self.user)
+
+		self.case = Case.objects.create(
+			numero_processo='1000000-00.2026.8.26.0001',
+			titulo='Caso existente (histórico)',
+			tribunal='TJSP',
+			comarca='São Paulo',
+			status='ATIVO',
+			owner=self.user,
+		)
+
+		self.pub = Publication.objects.create(
+			owner=self.user,
+			id_api=920000001,
+			numero_processo=self.case.numero_processo,
+			tribunal='TJSP',
+			tipo_comunicacao='Intimação',
+			data_disponibilizacao=date(2026, 3, 21),
+			orgao='1ª Vara',
+			meio='D',
+			texto_resumo='Resumo',
+			texto_completo='Texto completo',
+			integration_status='PENDING',
+		)
+
+		self.search = SearchHistory.objects.create(
+			owner=self.user,
+			data_inicio=date(2026, 3, 20),
+			data_fim=date(2026, 3, 21),
+			tribunais=['TJSP'],
+			total_publicacoes=1,
+			total_novas=0,
+			search_params={'retroactive_days': 7},
+			duration_seconds=1.0,
+		)
+
+	def test_search_history_detail_attaches_case_suggestion(self):
+		url = reverse('publications:search_history_detail', kwargs={'search_id': self.search.id})
+		response = self.client.get(url)
+
+		self.assertEqual(response.status_code, 200, response.content)
+		payload = response.json()
+		self.assertTrue(payload['success'])
+		self.assertIn('publicacoes', payload)
+		self.assertEqual(len(payload['publicacoes']), 1)
+
+		pub = payload['publicacoes'][0]
+		self.assertIn('case_suggestion', pub)
+		self.assertIsNotNone(pub['case_suggestion'])
+		self.assertEqual(pub['case_suggestion']['id'], self.case.id)

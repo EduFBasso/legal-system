@@ -25,8 +25,10 @@ vi.mock('../components/SearchHistoryList', () => ({
 
 // Mock PublicationCard and PublicationDetailModal used by the detail panel
 vi.mock('../components/PublicationCard', () => ({
-  default: ({ publication, onClick }) => (
+  default: ({ publication, onClick, showActionButtons, showDeleteButton }) => (
     <div data-testid={`pub-card-${publication.id_api}`} onClick={onClick}>
+      <div data-testid={`pub-actions-flag-${publication.id_api}`}>{showActionButtons ? 'on' : 'off'}</div>
+      <div data-testid={`pub-delete-prop-${publication.id_api}`}>{String(showDeleteButton)}</div>
       Pub {publication.id_api}
     </div>
   )
@@ -162,10 +164,11 @@ describe('SearchHistoryPage (inline details)', () => {
       expect(mockLoadSearchDetail).toHaveBeenCalledWith(10);
     });
 
-    // Inline panel title
-    expect(screen.getByText('Publicações')).toBeInTheDocument();
     // Publications card rendered inline
     expect(screen.getByTestId('pub-card-533000001')).toBeInTheDocument();
+    // Panel passes action buttons and does not force-hide delete
+    expect(screen.getByTestId('pub-actions-flag-533000001')).toHaveTextContent('on');
+    expect(screen.getByTestId('pub-delete-prop-533000001')).toHaveTextContent('undefined');
   });
 
   it('auto-opens most recent search when coming from publications search', async () => {
@@ -175,6 +178,6 @@ describe('SearchHistoryPage (inline details)', () => {
       expect(mockLoadSearchDetail).toHaveBeenCalledWith(10);
     });
 
-    expect(screen.getByText('Publicações')).toBeInTheDocument();
+    expect(screen.getByTestId('pub-card-533000001')).toBeInTheDocument();
   });
 });

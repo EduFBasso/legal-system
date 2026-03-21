@@ -14,6 +14,9 @@ function SearchHistoryDetailPanel({
   publications,
   loading,
   onClose,
+  onIntegrate = () => {},
+  onCreateCase = () => {},
+  onDelete = () => {},
   highlightProcessNumber = null,
 }) {
   const markPublicationNotificationAsRead = usePublicationNotificationRead();
@@ -67,7 +70,7 @@ function SearchHistoryDetailPanel({
   return (
     <section className="modal-content search-history-modal search-history-detail-panel">
       <div className="modal-header">
-        <h2>Publicações</h2>
+        <div />
         <button className="modal-close-btn" onClick={onClose} aria-label="Fechar detalhes">
           ✕
         </button>
@@ -81,8 +84,6 @@ function SearchHistoryDetailPanel({
       ) : (
         <>
           <div className="publications-section">
-            <h3 className="section-title">Publicações ({publications.length})</h3>
-
             {publications.length === 0 ? (
               <div className="empty-publications">
                 <span className="empty-icon">📭</span>
@@ -97,7 +98,12 @@ function SearchHistoryDetailPanel({
                       key={pub.id_api}
                       publication={pub}
                       highlighted={isHighlighted}
+                      showActionButtons={true}
                       onClick={() => handlePublicationClick(pub)}
+                      onIntegrate={() => onIntegrate(pub)}
+                      onCreateCase={() => onCreateCase(pub)}
+                      onDelete={() => onDelete(pub)}
+                      caseSuggestion={pub.case_suggestion}
                     />
                   );
                 })}
@@ -133,6 +139,9 @@ SearchHistoryDetailPanel.propTypes = {
   ).isRequired,
   loading: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  onIntegrate: PropTypes.func,
+  onCreateCase: PropTypes.func,
+  onDelete: PropTypes.func,
   highlightProcessNumber: PropTypes.string,
 };
 

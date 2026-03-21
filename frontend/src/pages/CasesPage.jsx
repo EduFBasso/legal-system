@@ -31,6 +31,12 @@ export default function CasesPage() {
     ordering: '-data_ultima_movimentacao',
   });
 
+  const hasActiveFilters = Boolean(
+    (filters.search && filters.search.trim() !== '') ||
+    filters.status ||
+    filters.tribunal
+  );
+
   /**
    * Load cases from API
    */
@@ -108,6 +114,38 @@ export default function CasesPage() {
       ...prev,
       [key]: value
     }));
+  };
+
+  const toggleStatusFilter = (status) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (prev.status === status) {
+        delete next.status;
+      } else {
+        next.status = status;
+      }
+      return next;
+    });
+  };
+
+  const toggleTribunal = (tribunal) => {
+    setSelectedTribunals((prev) => {
+      const next = prev.includes(tribunal)
+        ? prev.filter((t) => t !== tribunal)
+        : [...prev, tribunal];
+
+      setFilters((prevFilters) => {
+        const nextFilters = { ...prevFilters };
+        if (next.length > 0) {
+          nextFilters.tribunal = next.join(',');
+        } else {
+          delete nextFilters.tribunal;
+        }
+        return nextFilters;
+      });
+
+      return next;
+    });
   };
 
   /**
@@ -222,7 +260,7 @@ export default function CasesPage() {
       {stats && (
         <div className="cases-stats">
           <div 
-            className={`stat-card stat-clickable ${filters.search === '' ? 'stat-selected' : ''}`}
+            className={`stat-card stat-clickable ${!hasActiveFilters ? 'stat-selected' : ''}`}
             onClick={clearFilters} 
             title="Ver todos os processos"
           >
@@ -230,14 +268,16 @@ export default function CasesPage() {
             <div className="stat-label">Total</div>
           </div>
           <div 
-            className={`stat-card stat-active stat-clickable`}
+            className={`stat-card stat-active stat-clickable ${filters.status === 'ATIVO' ? 'stat-selected' : ''}`}
+            onClick={() => toggleStatusFilter('ATIVO')}
             title="Processos ativos (movimentação < 90 dias)"
           >
             <div className="stat-value">{stats.ativos || 0}</div>
             <div className="stat-label">Ativos</div>
           </div>
           <div 
-            className={`stat-card stat-inactive stat-clickable`}
+            className={`stat-card stat-inactive stat-clickable ${filters.status === 'INATIVO' ? 'stat-selected' : ''}`}
+            onClick={() => toggleStatusFilter('INATIVO')}
             title="Processos inativos (sem movimentação > 90 dias)"
           >
             <div className="stat-value">{stats.inativos || 0}</div>
@@ -260,9 +300,20 @@ export default function CasesPage() {
                     <div 
                       key={tribunal} 
                       className="tribunal-item"
+                      onClick={() => toggleTribunal(tribunal)}
                       title={tribunal}
                     >
-                      <span className="tribunal-name">{tribunal}</span>
+                      <div className="tribunal-checkbox-group">
+                        <input
+                          type="checkbox"
+                          className="tribunal-filter-checkbox"
+                          checked={selectedTribunals.includes(tribunal)}
+                          onChange={() => toggleTribunal(tribunal)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Filtrar por tribunal ${tribunal}`}
+                        />
+                        <span className="tribunal-name">{tribunal}</span>
+                      </div>
                       <span className="tribunal-count">{count}</span>
                     </div>
                   ))}
@@ -279,7 +330,7 @@ export default function CasesPage() {
         onSearchChange={(value) => handleFilterChange('search', value)}
         isAscending={filters.ordering === 'data_ultima_movimentacao'}
         onOrderingToggle={toggleOrdering}
-        totalCount={cases.length || 0}
+        totalCount={stats?.total ?? (cases.length || 0)}
         filteredCount={cases.length || 0}
       />
 

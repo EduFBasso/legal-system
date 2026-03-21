@@ -14,6 +14,7 @@ import {
   getPublicationDeleteBlockedMessage,
   getPublicationDeleteSuccessMessage,
 } from '../utils/publicationDeleteFeedback';
+import { formatNumeroProcessoShort } from '../utils/publicationActionState';
 import {
   openCaseDetailWindow,
   openCaseMovementsWindow,
@@ -72,9 +73,16 @@ export default function PublicationsPage() {
     });
 
     if (result?.success && result.total_publicacoes > 0) {
+      // A busca em si dispara toast de sucesso ("X publicações encontrada(s)").
+      // Como aqui redirecionamos para o Histórico, esse toast fica sem contexto e reaparece ao voltar.
+      // Mantemos warning/error (ex: falhas em tribunais), então só limpamos quando não houver erros.
+      const hasTribunalErrors = Array.isArray(result.erros) && result.erros.length > 0;
+      if (!hasTribunalErrors) {
+        hideToast();
+      }
       navigate('/search-history', { state: { fromPublicationsSearch: true } });
     }
-  }, [search, settings.retroactiveDays, navigate]);
+  }, [search, settings.retroactiveDays, navigate, hideToast]);
 
   /**
    * Funções de seleção para exclusão
@@ -197,9 +205,12 @@ export default function PublicationsPage() {
    */
   const handleIntegrateSingle = async (pub) => {
     if (pub.case_suggestion?.id) {
+      const processoShort = formatNumeroProcessoShort(pub.case_suggestion.numero_processo);
       // Tem case_suggestion - perguntar se deseja vincular
       const confirmed = window.confirm(
-        `Vincular ao caso #${pub.case_suggestion.id}?`
+        processoShort
+          ? `Vincular ao processo ${processoShort}...?`
+          : `Vincular ao caso #${pub.case_suggestion.id}?`
       );
       if (!confirmed) return;
 
