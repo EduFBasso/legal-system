@@ -1607,6 +1607,16 @@
   border-color: #2563eb;
 }
 
+.btn-edit-party:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-edit-party:disabled:hover {
+  background: white;
+  border-color: #bfdbfe;
+}
+
 .btn-remove-party {
   padding: 0.75rem;
   background: white;
@@ -1621,6 +1631,16 @@
 .btn-remove-party:hover {
   background: #fef2f2;
   border-color: #dc2626;
+}
+
+.btn-remove-party:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-remove-party:disabled:hover {
+  background: white;
+  border-color: #fecaca;
 }
 
 /* Party Modal */

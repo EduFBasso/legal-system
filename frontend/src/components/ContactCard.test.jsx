@@ -378,4 +378,51 @@ describe('ContactCard', () => {
     const phoneButton = screen.getByTitle('Ligar');
     expect(phoneButton).toHaveAttribute('href', 'tel:+5519990198519');
   });
+
+  it('does not render interactive links/buttons when readOnly is true', () => {
+    const onView = vi.fn();
+    const onSelect = vi.fn();
+    const onLinkToCase = vi.fn();
+
+    renderWithRouter(
+      <ContactCard
+        contact={mockContactFull}
+        onView={onView}
+        onSelect={onSelect}
+        onLinkToCase={onLinkToCase}
+        isSelected={false}
+        readOnly={true}
+      />
+    );
+
+    expect(screen.queryByTitle('Visualizar contato')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Vincular a processo')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /0000004/ })).not.toBeInTheDocument();
+    expect(screen.queryByTitle('WhatsApp')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Ligar')).not.toBeInTheDocument();
+
+    // Still renders the process number as plain text
+    expect(screen.getByText(/0000004/)).toBeInTheDocument();
+  });
+
+  it('renders view button in readOnly when allowViewInReadOnly is true', () => {
+    const onView = vi.fn();
+    const onSelect = vi.fn();
+
+    renderWithRouter(
+      <ContactCard
+        contact={mockContactFull}
+        onView={onView}
+        onSelect={onSelect}
+        onLinkToCase={null}
+        isSelected={false}
+        readOnly={true}
+        allowViewInReadOnly={true}
+      />
+    );
+
+    const viewButton = screen.getByTitle('Visualizar contato');
+    viewButton.click();
+    expect(onView).toHaveBeenCalledTimes(1);
+  });
 });

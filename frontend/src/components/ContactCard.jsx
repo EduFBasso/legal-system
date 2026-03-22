@@ -18,7 +18,15 @@ function WhatsAppIcon() {
   );
 }
 
-export default function ContactCard({ contact, onView, onSelect, isSelected, onLinkToCase }) {
+export default function ContactCard({
+  contact,
+  onView,
+  onSelect,
+  isSelected,
+  onLinkToCase,
+  readOnly = false,
+  allowViewInReadOnly = false,
+}) {
   const {
     name,
     person_type,
@@ -99,19 +107,21 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
             </div>
           </div>
           <div className="contact-row-right">
-            <button 
-              className="btn-view" 
-              title="Visualizar contato"
-              onClick={(e) => {
-                e.stopPropagation();
-                onView();
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button>
+            {typeof onView === 'function' && (!readOnly || allowViewInReadOnly) ? (
+              <button 
+                className="btn-view" 
+                title="Visualizar contato"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onView();
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -119,19 +129,21 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
         <div className="contact-row">
           <div className="contact-row-left"></div>
           <div className="contact-row-right">
-            <button 
-              className="btn-link-case" 
-              title="Vincular a processo"
-              onClick={(e) => {
-                e.stopPropagation();
-                onLinkToCase && onLinkToCase();
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
+            {!readOnly && typeof onLinkToCase === 'function' ? (
+              <button 
+                className="btn-link-case" 
+                title="Vincular a processo"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLinkToCase();
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -152,16 +164,20 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
                       {contact.linked_cases.map((linkedCase, index) => (
                         <span key={linkedCase.id}>
                           {index > 0 && ', '}
-                          <a
-                            href={`/cases/${linkedCase.case_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="case-link-inline"
-                            onClick={(e) => e.stopPropagation()}
-                            title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
-                          >
+                          {readOnly ? (
                             <strong>{linkedCase.numero_processo}</strong>
-                          </a>
+                          ) : (
+                            <a
+                              href={`/cases/${linkedCase.case_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="case-link-inline"
+                              onClick={(e) => e.stopPropagation()}
+                              title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
+                            >
+                              <strong>{linkedCase.numero_processo}</strong>
+                            </a>
+                          )}
                         </span>
                       ))}
                     </span>
@@ -177,16 +193,20 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
                   {contact.linked_cases.map((linkedCase, index) => (
                     <span key={linkedCase.id}>
                       {index > 0 && ', '}
-                      <a
-                        href={`/cases/${linkedCase.case_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="case-link-inline"
-                        onClick={(e) => e.stopPropagation()}
-                        title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
-                      >
+                      {readOnly ? (
                         <strong>{linkedCase.numero_processo}</strong>
-                      </a>
+                      ) : (
+                        <a
+                          href={`/cases/${linkedCase.case_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="case-link-inline"
+                          onClick={(e) => e.stopPropagation()}
+                          title={`${linkedCase.role_display}${linkedCase.is_client ? ' (Cliente)' : ''}`}
+                        >
+                          <strong>{linkedCase.numero_processo}</strong>
+                        </a>
+                      )}
                     </span>
                   ))}
                 </span>
@@ -194,7 +214,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
             )}
           </div>
           <div className="contact-row-right">
-            {isPhone && telLink && (
+            {!readOnly && isPhone && telLink ? (
               <a 
                 href={telLink} 
                 className="btn-phone"
@@ -203,7 +223,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
               >
                 <PhoneIcon />
               </a>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -221,7 +241,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
             )}
           </div>
           <div className="contact-row-right">
-            {isPhone && whatsappLink && (
+            {!readOnly && isPhone && whatsappLink ? (
               <a 
                 href={whatsappLink}
                 target="_blank"
@@ -232,7 +252,7 @@ export default function ContactCard({ contact, onView, onSelect, isSelected, onL
               >
                 <WhatsAppIcon />
               </a>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

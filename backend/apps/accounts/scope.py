@@ -25,7 +25,10 @@ def get_master_scope_user(request, user_model):
         return None
 
     try:
-        return user_model.objects.filter(id=int(team_member_id), is_active=True).first()
+        team_member_id_int = int(team_member_id)
+        if team_member_id_int == getattr(user, 'id', None):
+            return user
+        return get_active_team_members_queryset(user_model).filter(id=team_member_id_int).first()
     except (TypeError, ValueError):
         return None
 

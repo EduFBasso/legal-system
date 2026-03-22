@@ -1,0 +1,107 @@
+import { openCaseDetailWindow } from '../../utils/publicationNavigation';
+
+export default function MasterCasesSection({
+  selectedLawyer,
+  selectedLawyerOptionLabel,
+  casesSearch,
+  onCasesSearchChange,
+  casesError,
+  casesLoading,
+  casesData,
+}) {
+  return (
+    <section className="master-admin-cases-section" aria-label="Processos">
+      <div className="master-admin-cases-header">
+        <div>
+          <h2 className="master-admin-cases-title">Processos</h2>
+          <p className="master-admin-cases-subtitle">
+            {selectedLawyer && `Processos de ${selectedLawyerOptionLabel}`}
+          </p>
+        </div>
+        <div className="master-admin-contacts-search-wrap">
+          <span className="master-admin-contacts-search-icon">🔍</span>
+          <input
+            type="text"
+            className="master-admin-contacts-search"
+            placeholder="Buscar por número, cliente, título..."
+            value={casesSearch}
+            onChange={onCasesSearchChange}
+          />
+        </div>
+      </div>
+
+      {casesError ? (
+        <div className="master-admin-contacts-feedback master-admin-contacts-feedback--error">{casesError}</div>
+      ) : casesLoading ? (
+        <div className="master-admin-contacts-feedback">Carregando processos...</div>
+      ) : casesData.length === 0 ? (
+        <div className="master-admin-contacts-feedback">Nenhum processo encontrado para o filtro aplicado.</div>
+      ) : (
+        <div className="master-admin-cases-table-wrap">
+          <table className="master-admin-cases-table">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Título / Tipo</th>
+                <th>Tribunal</th>
+                <th>Cliente</th>
+                <th>Última movimentação</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {casesData.map((c) => (
+                <tr
+                  key={c.id}
+                  className="master-admin-cases-row"
+                  onClick={() => openCaseDetailWindow(c.id, { teamMemberId: selectedLawyer, readOnly: true })}
+                  title="Abrir processo em nova aba"
+                >
+                  <td className="master-admin-cases-cell--numero">
+                    {c.numero_processo_formatted || c.numero_processo || '—'}
+                  </td>
+                  <td className="master-admin-cases-cell--titulo">
+                    {c.titulo || c.tipo_acao_display || '—'}
+                  </td>
+                  <td>{c.tribunal_display || c.tribunal || '—'}</td>
+                  <td>
+                    {c.cliente_nome
+                      || c.parties_summary?.find((party) => party.is_client)?.name
+                      || c.parties_summary?.[0]?.name
+                      || '—'}
+                  </td>
+                  <td>
+                    {c.data_ultima_movimentacao
+                      ? new Date(c.data_ultima_movimentacao + 'T00:00:00').toLocaleDateString('pt-BR')
+                      : '—'}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="master-admin-cases-finance-link"
+                      title="Abrir aba Financeiro (somente leitura)"
+                      aria-label="Abrir financeiro do processo"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openCaseDetailWindow(c.id, {
+                          teamMemberId: selectedLawyer,
+                          readOnly: true,
+                          tab: 'financeiro',
+                        });
+                      }}
+                    >
+                      💰
+                    </button>
+                    <span className="master-admin-cases-status" data-status={c.status}>
+                      {c.status_display || c.status || '—'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}

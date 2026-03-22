@@ -17,6 +17,7 @@ function FinancialEntriesSection({
   onRemove,
   totalLabel,
   totalValue,
+  readOnly = false,
 }) {
   return (
     <div className="financeiro-bloco-content">
@@ -30,6 +31,7 @@ function FinancialEntriesSection({
             label="Data"
             value={form.data}
             onChange={(value) => setForm({ ...form, data: value })}
+            disabled={readOnly}
           />
 
           <div className="financeiro-field">
@@ -40,6 +42,7 @@ function FinancialEntriesSection({
               placeholder={descriptionPlaceholder}
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+              disabled={readOnly}
             />
           </div>
 
@@ -48,9 +51,10 @@ function FinancialEntriesSection({
             value={form.valor}
             onChange={(value) => setForm({ ...form, valor: value })}
             placeholder="0,00"
+            disabled={readOnly}
           />
 
-          <button className="btn btn-success" onClick={onAdd}>
+          <button className="btn btn-success" onClick={onAdd} disabled={readOnly}>
             <Plus size={16} />
             {addButtonLabel}
           </button>
@@ -72,6 +76,7 @@ function FinancialEntriesSection({
                     className="btn-icon-danger"
                     onClick={() => onRemove(item.id)}
                     title="Remover"
+                    disabled={readOnly}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -117,6 +122,7 @@ function FinanceiroTab({
   onAddDespesa = () => {},
   onRemoveDespesa = () => {},
   autoSavingObservations = false,
+  readOnly = false,
 }) {
   const calcularTotalHonorarios = () => {
     const honorarioParcela = parseCurrencyValue(formData.attorney_fee_amount || '');
@@ -406,6 +412,7 @@ function FinanceiroTab({
                               onChange={(value) => onInputChange('attorney_fee_amount', value)}
                               placeholder="0,00"
                               className="financeiro-currency-inline"
+                              disabled={readOnly}
                             />
                           </div>
 
@@ -417,6 +424,7 @@ function FinanceiroTab({
                               min="1"
                               value={formData.attorney_fee_installments || 1}
                               onChange={(e) => onInputChange('attorney_fee_installments', e.target.value)}
+                              disabled={readOnly}
                             />
                           </div>
                         </div>
@@ -465,6 +473,7 @@ function FinanceiroTab({
             onRemove={onRemoveRecebimento}
             totalLabel="Total Recebido:"
             totalValue={calcularTotalRecebimentos()}
+            readOnly={readOnly}
           />
         </div>
 
@@ -484,6 +493,7 @@ function FinanceiroTab({
             onRemove={onRemoveDespesa}
             totalLabel="Total de Custos:"
             totalValue={calcularTotalDespesas()}
+            readOnly={readOnly}
           />
         </div>
       </div>

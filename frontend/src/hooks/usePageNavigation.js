@@ -35,6 +35,10 @@ export function usePageNavigation() {
         setActiveSection('parties');
       } else if (tab === 'info') {
         setActiveSection('info');
+      } else if (tab === 'financeiro') {
+        setActiveSection('financeiro');
+      } else if (tab === 'vinculos') {
+        setActiveSection('vinculos');
       }
 
       if (focusMovement) {
@@ -68,6 +72,13 @@ export function usePageNavigation() {
   const handleTabChange = (newTab, isEditing, caseData, formData, setIsEditing, setFormData) => {
     // Se estiver editando na aba de informações, confirma antes de sair
     if (isEditing && activeSection === 'info') {
+      // Caso novo (sem caseData ainda): não descartar o formulário ao navegar.
+      // Mantém o modo de edição e preserva os valores preenchidos.
+      if (!caseData) {
+        setActiveSection(newTab);
+        return;
+      }
+
       const confirmLeave = window.confirm(
         'Você está editando informações do processo.\n\n' +
         'Deseja sair sem salvar as alterações?'
@@ -76,7 +87,7 @@ export function usePageNavigation() {
         return; // Cancela mudança de aba
       }
       // Reverte mudanças não salvas
-      setFormData(caseData);
+      setFormData(caseData || {});
       setIsEditing(false);
     }
     setActiveSection(newTab);

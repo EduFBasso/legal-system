@@ -71,6 +71,9 @@ class CaseViewSet(viewsets.ModelViewSet):
             team_scope = self.request.query_params.get('team_scope')
             if team_scope == 'all':
                 qs = apply_master_team_scope(qs, self.request, UserModel)
+            else:
+                # Master sem escopo explícito: exibe apenas os próprios registros (e ownerless quando aplicável).
+                qs = apply_user_owned_or_shared(qs, user)
         elif user.is_authenticated and not is_master_user(user):
             qs = apply_user_owned_or_shared(qs, user)
 
@@ -92,6 +95,7 @@ class CaseViewSet(viewsets.ModelViewSet):
         'comarca': ['exact', 'icontains'],
         'status': ['exact'],
         'auto_status': ['exact'],
+        'cliente_principal': ['exact'],
         'data_distribuicao': ['gte', 'lte', 'exact'],
         'data_ultima_movimentacao': ['gte', 'lte', 'exact'],
     }
@@ -288,8 +292,14 @@ class CasePartyViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return queryset
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            return queryset.filter(case__owner=scope_user)
         if is_master_user(user):
-            return queryset
+            team_scope = self.request.query_params.get('team_scope')
+            if team_scope == 'all':
+                return apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner')
+            return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
         return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
 
 
@@ -325,8 +335,18 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         user = self.request.user
-        if user.is_authenticated and not is_master_user(user):
-            queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            queryset = queryset.filter(case__owner=scope_user)
+        elif user.is_authenticated:
+            if is_master_user(user):
+                team_scope = self.request.query_params.get('team_scope')
+                if team_scope == 'all':
+                    queryset = apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner')
+                else:
+                    queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+            else:
+                queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -403,8 +423,18 @@ class CasePrazoViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         user = self.request.user
-        if user.is_authenticated and not is_master_user(user):
-            queryset = apply_user_owned_or_shared(queryset, user, owner_field='movimentacao__case__owner')
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            queryset = queryset.filter(movimentacao__case__owner=scope_user)
+        elif user.is_authenticated:
+            if is_master_user(user):
+                team_scope = self.request.query_params.get('team_scope')
+                if team_scope == 'all':
+                    queryset = apply_master_team_scope(queryset, self.request, UserModel, owner_field='movimentacao__case__owner')
+                else:
+                    queryset = apply_user_owned_or_shared(queryset, user, owner_field='movimentacao__case__owner')
+            else:
+                queryset = apply_user_owned_or_shared(queryset, user, owner_field='movimentacao__case__owner')
         movimentacao_id = self.request.query_params.get('movimentacao_id')
         case_id = self.request.query_params.get('case_id')
         
@@ -449,8 +479,12 @@ class CaseTaskViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(case__owner=scope_user)
         elif user.is_authenticated:
             if is_master_user(user):
-                # Master sem escopo definido: exibe apenas as próprias tarefas
-                queryset = queryset.filter(case__owner=user)
+                team_scope = self.request.query_params.get('team_scope')
+                if team_scope == 'all':
+                    queryset = apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner')
+                else:
+                    # Master sem escopo definido: exibe apenas as próprias tarefas
+                    queryset = queryset.filter(case__owner=user)
             else:
                 exclude_ownerless = is_truthy(self.request.query_params.get('exclude_ownerless'))
                 if exclude_ownerless:
@@ -467,6 +501,12 @@ class CaseTaskViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movimentacao_id=movimentacao_id)
 
         return queryset
+
+    @action(detail=False, methods=['get'], url_path='count')
+    def count(self, request):
+        """Retorna apenas a contagem de tarefas para o mesmo escopo/filtros do list()."""
+        queryset = self.filter_queryset(self.get_queryset())
+        return Response({'count': queryset.count()})
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
@@ -496,8 +536,15 @@ class PaymentViewSet(viewsets.ModelViewSet):
         scope_user = get_master_scope_user(self.request, UserModel)
         if scope_user is not None:
             queryset = queryset.filter(case__owner=scope_user)
-        elif user.is_authenticated and not is_master_user(user):
-            queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+        elif user.is_authenticated:
+            if is_master_user(user):
+                team_scope = self.request.query_params.get('team_scope')
+                if team_scope == 'all':
+                    queryset = apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner', include_ownerless=False)
+                else:
+                    queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+            else:
+                queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -531,8 +578,15 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         scope_user = get_master_scope_user(self.request, UserModel)
         if scope_user is not None:
             queryset = queryset.filter(case__owner=scope_user)
-        elif user.is_authenticated and not is_master_user(user):
-            queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+        elif user.is_authenticated:
+            if is_master_user(user):
+                team_scope = self.request.query_params.get('team_scope')
+                if team_scope == 'all':
+                    queryset = apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner', include_ownerless=False)
+                else:
+                    queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+            else:
+                queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)
@@ -559,8 +613,18 @@ class CaseDocumentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
-        if user.is_authenticated and not is_master_user(user):
-            queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            queryset = queryset.filter(case__owner=scope_user)
+        elif user.is_authenticated:
+            if is_master_user(user):
+                team_scope = self.request.query_params.get('team_scope')
+                if team_scope == 'all':
+                    queryset = apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner', include_ownerless=False)
+                else:
+                    queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+            else:
+                queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
         case_id = self.request.query_params.get('case_id')
         if case_id:
             queryset = queryset.filter(case_id=case_id)

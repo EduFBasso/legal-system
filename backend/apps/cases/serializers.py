@@ -351,7 +351,9 @@ class CaseListSerializer(serializers.ModelSerializer):
     def get_parties_summary(self, obj):
         return [
             {
+                'contact_id': p.contact_id,
                 'name': p.contact.name,
+                'role': p.role,
                 'role_display': p.get_role_display(),
                 'is_client': p.is_client,
             }
@@ -418,6 +420,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     publicacao_origem_data = serializers.DateField(source='publicacao_origem.data_disponibilizacao', read_only=True, allow_null=True)
     publicacao_origem_tipo = serializers.CharField(source='publicacao_origem.tipo_comunicacao', read_only=True, allow_null=True)
     publicacao_origem_numero_processo = serializers.CharField(source='publicacao_origem.numero_processo', read_only=True, allow_null=True)
+    publicacao_origem_id_api = serializers.IntegerField(source='publicacao_origem.id_api', read_only=True, allow_null=True)
     
     # Owner (advogado responsável)
     owner_name = serializers.CharField(source='owner.profile.full_name_oab', read_only=True, default='')
@@ -475,6 +478,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'total_publicacoes',
             'publicacoes_recentes',
             'publicacao_origem',
+            'publicacao_origem_id_api',
             'publicacao_origem_data',
             'publicacao_origem_tipo',
             'publicacao_origem_numero_processo',

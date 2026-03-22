@@ -24,6 +24,7 @@ export default function TasksInlineList({
   onCancelEditTask,
   onSaveEditedTask,
   onToggleTaskStatus,
+  readOnly = false,
 }) {
   const taskList = (tasks || []).filter((task) => Number(task.movimentacao) === Number(movimentoId));
   const isCreating = addingTaskForMovement === movimentoId;
@@ -42,10 +43,13 @@ export default function TasksInlineList({
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (readOnly) return;
               onOpenAddTask(movimentoId);
             }}
             style={tasksInlineStyles.addButton}
-            {...addTaskButtonInteractions}
+            disabled={readOnly}
+            aria-disabled={readOnly ? 'true' : undefined}
+            {...(readOnly ? {} : addTaskButtonInteractions)}
           >
             <Plus size={16} /> Nova Tarefa
           </button>
@@ -115,8 +119,13 @@ export default function TasksInlineList({
                     className={`movement-task-checkbox movement-task-checkbox--${urgency.toLowerCase()}`}
                     type="checkbox"
                     checked={isDone}
-                    onChange={() => onToggleTaskStatus(task)}
+                    onChange={() => {
+                      if (readOnly) return;
+                      onToggleTaskStatus(task);
+                    }}
                     onClick={(e) => e.stopPropagation()}
+                    disabled={readOnly}
+                    aria-disabled={readOnly ? 'true' : undefined}
                     style={{
                       marginTop: '0.2rem',
                     }}
@@ -166,13 +175,16 @@ export default function TasksInlineList({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (readOnly) return;
                       onOpenEditTask(task);
                     }}
                     style={{
                       ...tasksInlineStyles.editTaskButton,
                       background: editButtonBaseColor,
                     }}
-                    {...editTaskButtonInteractions}
+                    disabled={readOnly}
+                    aria-disabled={readOnly ? 'true' : undefined}
+                    {...(readOnly ? {} : editTaskButtonInteractions)}
                   >
                     Editar
                   </button>

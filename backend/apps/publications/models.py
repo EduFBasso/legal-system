@@ -4,6 +4,39 @@ from django.db.models.deletion import ProtectedError
 from django.conf import settings
 
 
+class PublicationDeletionTombstone(models.Model):
+    """Registro de deleção de publicação (tombstone).
+
+    Usado para bloquear reimportação em novas buscas quando a configuração
+    `PUBLICATIONS_ALLOW_REIMPORT_AFTER_DELETE` estiver desabilitada.
+    """
+
+    id_api = models.BigIntegerField(db_index=True)
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='deleted_publications',
+        db_index=True,
+    )
+
+    deleted_at = models.DateTimeField(auto_now_add=True)
+
+    reason = models.CharField(max_length=255, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Tombstone de Publicação'
+        verbose_name_plural = 'Tombstones de Publicações'
+        constraints = [
+            models.UniqueConstraint(fields=['owner', 'id_api'], name='unique_deleted_publication_id_api_per_owner'),
+        ]
+
+    def __str__(self):
+        return f"deleted id_api={self.id_api} owner={self.owner_id}"
+
+
 class Publication(models.Model):
     """
     Publicação jurídica salva localmente para histórico e consulta offline.

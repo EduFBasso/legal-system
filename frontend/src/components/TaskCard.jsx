@@ -1,4 +1,5 @@
 import React from 'react';
+import './TaskCard.css';
 
 /**
  * TaskCard Component - Cartão de Tarefa Reutilizável
@@ -27,6 +28,7 @@ export default function TaskCard({
   isToday,
   formatDate,
   formatDaysRemaining,
+  readOnly = false,
 }) {
   const isSelected = selectedTaskId === task.id;
   const isCompleted = task.status === 'CONCLUIDA';
@@ -40,15 +42,18 @@ export default function TaskCard({
 
   const handleCaseClick = (e) => {
     e.stopPropagation();
+    if (readOnly) return;
     onOpenCase(task.case);
   };
 
   const handleMovementClick = (e) => {
     e.stopPropagation();
+    if (readOnly) return;
     onOpenMovement(task.case, task.movimentacao, task.id);
   };
 
   const handleCheckboxChange = () => {
+    if (readOnly) return;
     onToggleStatus(task);
   };
 
@@ -63,6 +68,7 @@ export default function TaskCard({
           checked={isCompleted}
           onChange={handleCheckboxChange}
           className="checkbox-input"
+          disabled={readOnly}
         />
       </div>
 
@@ -74,7 +80,8 @@ export default function TaskCard({
           <a
             className="task-process-link"
             onClick={handleCaseClick}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: readOnly ? 'default' : 'pointer', pointerEvents: readOnly ? 'none' : 'auto' }}
+            aria-disabled={readOnly}
           >
             {task.case_numero}
           </a>
@@ -84,7 +91,8 @@ export default function TaskCard({
               <a
                 className="task-movement-link-anchor"
                 onClick={handleMovementClick}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: readOnly ? 'default' : 'pointer', pointerEvents: readOnly ? 'none' : 'auto' }}
+                aria-disabled={readOnly}
               >
                 📋 {task.movimentacao_titulo}
               </a>

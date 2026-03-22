@@ -1,0 +1,247 @@
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import caseTasksService from '../services/caseTasksService';
+import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
+import { useUrgencyVisibility } from '../hooks/useUrgencyVisibility';
+import {
+  getTaskUrgency,
+  formatDaysRemaining,
+  isOverdue,
+  isToday,
+  parseLocalDate,
+} from '../utils/taskUrgency';
+import { openCaseDetailWindow } from '../utils/publicationNavigation';
+import UrgencySection from './UrgencySection';
+import '../pages/DeadlinesPage.css';
+
+export default function DeadlinesContent({
+  tasksQueryParams,
+  readOnly = false,
+}) {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedUrgency, setSelectedUrgency] = useState(null);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+
+  const fetchAllTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await caseTasksService.getAllTasks(tasksQueryParams);
+      setTasks(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      console.error('Erro ao buscar tarefas:', err);
+      setError('Erro ao carregar tarefas do sistema.');
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [tasksQueryParams]);
+
+  useEffect(() => {
+    fetchAllTasks();
+    const interval = setInterval(fetchAllTasks, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchAllTasks]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToTaskUpdates((event) => {
+      if (event?.type === 'task-updated') {
+        if (event?.taskId && event?.newStatus) {
+          setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+              task.id === event.taskId ? { ...task, status: event.newStatus } : task
+            )
+          );
+        }
+        fetchAllTasks();
+      }
+    });
+    return unsubscribe;
+  }, [fetchAllTasks]);
+
+  const handleOpenCase = (caseId) => {
+    if (readOnly) return;
+    openCaseDetailWindow(caseId);
+  };
+
+  const handleOpenMovement = (caseId, movementId, taskId) => {
+    if (readOnly) return;
+    setSelectedTaskId(taskId);
+    openCaseDetailWindow(caseId, {
+      tab: 'movements',
+      focusMovement: movementId,
+      focusTask: taskId,
+    });
+  };
+
+  const grouped = useMemo(() => {
+    const tasksWithUrgency = tasks.map((task) => ({
+      ...task,
+      calculated_urgency: getTaskUrgency(task.data_vencimento),
+    }));
+
+    const groupedTasks = {
+      URGENTISSIMO: [],
+      URGENTE: [],
+      NORMAL: [],
+    };
+
+    tasksWithUrgency.forEach((task) => {
+      groupedTasks[task.calculated_urgency].push(task);
+    });
+
+    Object.keys(groupedTasks).forEach((urgency) => {
+      groupedTasks[urgency].sort((a, b) => {
+        if (!a.data_vencimento) return 1;
+        if (!b.data_vencimento) return -1;
+        return parseLocalDate(a.data_vencimento) - parseLocalDate(b.data_vencimento);
+      });
+    });
+
+    return groupedTasks;
+  }, [tasks]);
+
+  const totalTasks = useMemo(() => tasks.length, [tasks]);
+
+  const { URGENCIES, urgencyConfig, shouldShowUrgency } = useUrgencyVisibility(selectedUrgency);
+
+  const showUrgencyContainerBorder = useMemo(() => selectedUrgency === null, [selectedUrgency]);
+
+  const handleToggleTaskStatus = async (task) => {
+    if (readOnly) return;
+
+    try {
+      const nextStatus = task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA';
+      await caseTasksService.patchTask(task.id, { status: nextStatus });
+
+      setTasks((prevTasks) =>
+        prevTasks.map((t) => (t.id === task.id ? { ...t, status: nextStatus } : t))
+      );
+
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'status-changed',
+        taskId: task.id,
+        caseId: task.case,
+        newStatus: nextStatus,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Erro ao atualizar tarefa:', err);
+      alert('Erro ao atualizar tarefa. Tente novamente.');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '—';
+    const date = parseLocalDate(dateString);
+    return date.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  };
+
+  if (loading) {
+    return (
+      <div className="deadlines-page">
+        <div className="page-header">
+          <h1>⏰ Tarefas por Urgência</h1>
+        </div>
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Carregando tarefas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="deadlines-page">
+        <div className="page-header">
+          <h1>⏰ Tarefas por Urgência</h1>
+        </div>
+        <div className="error-state">
+          <p>❌ {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="deadlines-page">
+      <div className="page-header">
+        <div className="header-content">
+          <h1>⏰ Tarefas por Urgência</h1>
+        </div>
+      </div>
+
+      <div className="deadlines-stats">
+        <div
+          className={`stat-card stat-total stat-clickable ${selectedUrgency === null ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(null)}
+          title="Mostrar todas as tarefas"
+        >
+          <div className="stat-number">{totalTasks}</div>
+          <div className="stat-label">Todas</div>
+        </div>
+        <div
+          className={`stat-card stat-urgentissimo stat-clickable ${selectedUrgency === 'URGENTISSIMO' ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(selectedUrgency === 'URGENTISSIMO' ? null : 'URGENTISSIMO')}
+          title="Filtrar apenas críticas"
+        >
+          <div className="stat-number">{grouped.URGENTISSIMO.length}</div>
+          <div className="stat-label">CRITICO</div>
+        </div>
+        <div
+          className={`stat-card stat-urgente stat-clickable ${selectedUrgency === 'URGENTE' ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(selectedUrgency === 'URGENTE' ? null : 'URGENTE')}
+          title="Filtrar apenas urgentes"
+        >
+          <div className="stat-number">{grouped.URGENTE.length}</div>
+          <div className="stat-label">Urgentes</div>
+        </div>
+        <div
+          className={`stat-card stat-normal stat-clickable ${selectedUrgency === 'NORMAL' ? 'stat-selected' : ''}`}
+          onClick={() => setSelectedUrgency(selectedUrgency === 'NORMAL' ? null : 'NORMAL')}
+          title="Filtrar apenas normais"
+        >
+          <div className="stat-number">{grouped.NORMAL.length}</div>
+          <div className="stat-label">Normais</div>
+        </div>
+      </div>
+
+      <div className="tasks-container">
+        {totalTasks === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">✅</div>
+            <h2>Nenhuma tarefa</h2>
+            <p>Você está em dia com todas as tarefas!</p>
+          </div>
+        ) : (
+          <>
+            {URGENCIES.map((urgency) =>
+              shouldShowUrgency(urgency) && grouped[urgency].length > 0 ? (
+                <UrgencySection
+                  key={urgency}
+                  urgency={urgency}
+                  tasks={grouped[urgency]}
+                  sectionClassName={urgencyConfig[urgency].className}
+                  selectedTaskId={selectedTaskId}
+                  onSelectTask={setSelectedTaskId}
+                  onToggleStatus={handleToggleTaskStatus}
+                  onOpenCase={handleOpenCase}
+                  onOpenMovement={handleOpenMovement}
+                  isOverdue={isOverdue}
+                  isToday={isToday}
+                  formatDate={formatDate}
+                  formatDaysRemaining={formatDaysRemaining}
+                  showBorder={showUrgencyContainerBorder}
+                  readOnly={readOnly}
+                />
+              ) : null
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

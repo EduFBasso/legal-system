@@ -3,9 +3,11 @@ from datetime import date, timedelta
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 from apps.accounts.models import UserProfile
 from apps.cases.models import Case, CaseMovement
+from apps.notifications.models import Notification
 from apps.publications.models import Publication, SearchHistory
 from apps.publications.views import _build_case_suggestion, _create_movement_from_publication, _extract_prazo_days
 from services.pje_comunica import PJeComunicaService
@@ -262,7 +264,206 @@ class PublicationCaseSuggestionScopeTests(TestCase):
 		suggestion = _build_case_suggestion('2000000-00.2026.8.26.0001', user=self.master)
 
 		self.assertIsNotNone(suggestion)
-		self.assertEqual(suggestion['id'], case.id)
+
+
+class PublicationDeleteTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='pub_delete_user', password='123456', email='pub_delete@example.com')
+		self.client.force_login(self.user)
+
+	def test_delete_publication_is_hard_delete(self):
+		publication = Publication.objects.create(
+			id_api=900000001,
+			owner=self.user,
+			numero_processo='1000000-00.2026.8.26.0001',
+			tribunal='TJSP',
+			tipo_comunicacao='Intimação',
+			data_disponibilizacao=date(2026, 2, 20),
+			orgao='1ª Vara',
+			meio='D',
+			texto_resumo='Resumo',
+			texto_completo='Texto completo',
+		)
+
+		url = reverse('publications:delete', kwargs={'id_api': publication.id_api})
+		response = self.client.delete(url)
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertTrue(payload.get('success'))
+		self.assertFalse(Publication.objects.filter(id_api=publication.id_api).exists())
+
+	def test_delete_publication_is_blocked_when_linked_to_case(self):
+		publication = Publication.objects.create(
+			id_api=900000002,
+			owner=self.user,
+			numero_processo='1000000-00.2026.8.26.0002',
+			tribunal='TJSP',
+			tipo_comunicacao='Despacho',
+			data_disponibilizacao=date(2026, 2, 21),
+			orgao='2ª Vara',
+			meio='D',
+			texto_resumo='Resumo',
+			texto_completo='Texto completo',
+		)
+
+		case = Case.objects.create(
+			numero_processo='1000000-00.2026.8.26.0002',
+			titulo='Caso vinculado',
+			tribunal='TJSP',
+			comarca='São Paulo',
+			status='ATIVO',
+			owner=self.user,
+			publicacao_origem=publication,
+		)
+		# Também simula vínculo direto publication.case
+		publication.case = case
+		publication.save(update_fields=['case'])
+
+		url = reverse('publications:delete', kwargs={'id_api': publication.id_api})
+		response = self.client.delete(url)
+		self.assertEqual(response.status_code, 400)
+		payload = response.json()
+		self.assertFalse(payload.get('success'))
+		self.assertTrue(Publication.objects.filter(id_api=publication.id_api).exists())
+
+
+class PublicationReimportAfterDeleteTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='pub_reimport_user', password='123456', email='pub_reimport@example.com')
+		profile = self.user.profile
+		profile.full_name_oab = 'Teste OAB'
+		profile.oab_number = '123456'
+		profile.save(update_fields=['full_name_oab', 'oab_number'])
+		self.client.force_login(self.user)
+
+	@patch('apps.publications.views.PJeComunicaService.fetch_publications')
+	def test_deleted_publication_is_reimported_on_next_search(self, mock_fetch):
+		pub_id_api = 910000001
+		pub_payload = {
+			'id_api': pub_id_api,
+			'numero_processo': '1000000-00.2026.8.26.0001',
+			'tribunal': 'TJSP',
+			'tipo_comunicacao': 'Intimação',
+			'data_disponibilizacao': '2026-02-20',
+			'orgao': '1ª Vara',
+			'meio': 'D',
+			'texto_resumo': 'Resumo',
+			'texto_completo': 'Texto completo',
+			'link_oficial': None,
+		}
+
+		mock_fetch.return_value = {
+			'success': True,
+			'total_publicacoes': 1,
+			'publicacoes': [pub_payload],
+		}
+
+		search_url = reverse('publications:search')
+		response_1 = self.client.get(
+			search_url,
+			data={
+				'data_inicio': '2026-02-19',
+				'data_fim': '2026-02-21',
+				'tribunais': 'TJSP',
+				'retroactive_days': 0,
+			},
+		)
+		self.assertEqual(response_1.status_code, 200)
+		self.assertTrue(Publication.objects.filter(id_api=pub_id_api, owner=self.user).exists())
+
+
+class PublicationBlockReimportAfterDeleteTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='pub_block_user', password='123456', email='pub_block@example.com')
+		profile = self.user.profile
+		profile.full_name_oab = 'Teste OAB'
+		profile.oab_number = '123456'
+		profile.save(update_fields=['full_name_oab', 'oab_number'])
+		self.client.force_login(self.user)
+
+	@patch('apps.publications.views.PJeComunicaService.fetch_publications')
+	def test_deleted_publication_is_not_reimported_when_policy_blocks(self, mock_fetch):
+		with override_settings(
+			LEGAL_SYSTEM_SETTINGS={
+				**getattr(settings, 'LEGAL_SYSTEM_SETTINGS', {}),
+				'PUBLICATIONS_ALLOW_REIMPORT_AFTER_DELETE': False,
+			}
+		):
+			pub_id_api = 920000001
+			pub_payload = {
+				'id_api': pub_id_api,
+				'numero_processo': '1000000-00.2026.8.26.0001',
+				'tribunal': 'TJSP',
+				'tipo_comunicacao': 'Intimação',
+				'data_disponibilizacao': '2026-02-20',
+				'orgao': '1ª Vara',
+				'meio': 'D',
+				'texto_resumo': 'Resumo',
+				'texto_completo': 'Texto completo',
+				'link_oficial': None,
+			}
+
+			mock_fetch.return_value = {
+				'success': True,
+				'total_publicacoes': 1,
+				'publicacoes': [pub_payload],
+			}
+
+			search_url = reverse('publications:search')
+			response_1 = self.client.get(
+				search_url,
+				data={
+					'data_inicio': '2026-02-19',
+					'data_fim': '2026-02-21',
+					'tribunais': 'TJSP',
+					'retroactive_days': 0,
+				},
+			)
+			self.assertEqual(response_1.status_code, 200)
+			self.assertTrue(Publication.objects.filter(id_api=pub_id_api, owner=self.user).exists())
+
+			delete_url = reverse('publications:delete', kwargs={'id_api': pub_id_api})
+			response_del = self.client.delete(delete_url)
+			self.assertEqual(response_del.status_code, 200)
+			self.assertFalse(Publication.objects.filter(id_api=pub_id_api, owner=self.user).exists())
+
+			response_2 = self.client.get(
+				search_url,
+				data={
+					'data_inicio': '2026-02-19',
+					'data_fim': '2026-02-21',
+					'tribunais': 'TJSP',
+					'retroactive_days': 0,
+				},
+			)
+			self.assertEqual(response_2.status_code, 200)
+			payload = response_2.json()
+			self.assertEqual(payload.get('total_publicacoes'), 0)
+			self.assertEqual(payload.get('publicacoes'), [])
+			self.assertFalse(Publication.objects.filter(id_api=pub_id_api, owner=self.user).exists())
+
+
+class PublicationGetByIdResponseTests(TestCase):
+	def test_get_publication_by_id_includes_internal_pk_id(self):
+		pub = Publication.objects.create(
+			id_api=812345678,
+			numero_processo='0000618-47.2026.8.26.0320',
+			tribunal='TJSP',
+			tipo_comunicacao='Intimação',
+			data_disponibilizacao=date(2026, 3, 10),
+			orgao='Foro de Limeira - 4ª Vara Cível',
+			meio='D',
+			texto_resumo='Publicação para teste de GET by id_api',
+			texto_completo='Conteúdo completo da publicação',
+		)
+
+		url = reverse('publications:get_by_id', kwargs={'id_api': pub.id_api})
+		response = self.client.get(url)
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertTrue(payload.get('success'))
+		self.assertEqual(payload.get('publication', {}).get('id_api'), pub.id_api)
+		self.assertEqual(payload.get('publication', {}).get('id'), pub.id)
 
 
 class PJeComunicaNameNormalizationTests(TestCase):

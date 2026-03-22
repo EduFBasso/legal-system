@@ -13,6 +13,11 @@ export const getAllTasks = async (params = {}) => {
   return await apiFetch(`/case-tasks/${queryString ? `?${queryString}` : ''}`);
 };
 
+export const getTasksCount = async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  return await apiFetch(`/case-tasks/count/${queryString ? `?${queryString}` : ''}`);
+};
+
 export const createTask = async (taskData) => {
   return await apiFetch('/case-tasks/', {
     method: 'POST',
@@ -44,6 +49,7 @@ export default {
   getTasksByCase,
   getTasksByMovimento,
   getAllTasks,
+  getTasksCount,
   createTask,
   updateTask,
   patchTask,

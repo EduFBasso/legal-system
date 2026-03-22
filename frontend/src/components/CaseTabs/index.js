@@ -6,3 +6,4 @@ export { default as DeadlinesTab } from './DeadlinesTab';
 export { default as TasksTab } from './TasksTab';
 export { default as FinanceiroTab } from './FinanceiroTab';
 export { default as PublicacoesTab } from './PublicacoesTab';
+export { default as VinculosTab } from './VinculosTab';

@@ -12,7 +12,18 @@ export function openCreateCaseFromPublicationWindow(idApi) {
   window.open(`/cases/new?pub_id=${idApi}`, '_blank', 'noopener,noreferrer');
 }
 
-export function openCaseDetailWindow(caseId, { tab = null, focusMovement = null, focusTask = null, action = null, contactId = null } = {}) {
+export function openCaseDetailWindow(
+  caseId,
+  {
+    tab = null,
+    focusMovement = null,
+    focusTask = null,
+    action = null,
+    contactId = null,
+    teamMemberId = null,
+    readOnly = false,
+  } = {}
+) {
   if (!caseId) return;
 
   const params = new URLSearchParams();
@@ -21,6 +32,8 @@ export function openCaseDetailWindow(caseId, { tab = null, focusMovement = null,
   if (focusTask) params.set('focusTask', String(focusTask));
   if (action) params.set('action', action);
   if (contactId) params.set('contactId', String(contactId));
+  if (teamMemberId) params.set('team_member_id', String(teamMemberId));
+  if (readOnly) params.set('readonly', '1');
 
   const query = params.toString();
   const url = query ? `/cases/${caseId}?${query}` : `/cases/${caseId}`;

@@ -298,6 +298,9 @@ LEGAL_SYSTEM_SETTINGS = {
     'AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION': True,
     'HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC': True,  # Oculta aba Publicações se auto-create movement estiver ativo
     'PUBLICATION_CACHE_DURATION': 300,  # em segundos, 0 = sem cache
+    # Se False: publicações deletadas (lixeira) ficam bloqueadas e não são reimportadas em novas buscas.
+    # Se True (padrão): ao deletar e buscar novamente o mesmo período, a publicação pode reaparecer.
+    'PUBLICATIONS_ALLOW_REIMPORT_AFTER_DELETE': True,
     
     # ===== MOVIMENTAÇÕES =====
     'AUTO_LOAD_MOVEMENTS_ON_CASE': True,

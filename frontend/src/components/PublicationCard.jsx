@@ -134,6 +134,8 @@ export default function PublicationCard({
 
   const actionState = getPublicationActionState(publication, caseSuggestion);
   const shouldShowDeleteButton = showDeleteButton === undefined ? showActionButtons : Boolean(showDeleteButton);
+  const isIntegrated = publication?.integration_status === 'INTEGRATED' || !!publication?.case_id;
+  const canDeletePublication = !isIntegrated;
 
   return (
     <div className={cardClassName} onClick={handleCardClick}>      {selectionMode && (
@@ -168,7 +170,7 @@ export default function PublicationCard({
           </span>
         </div>
         <div className="publication-header-right">
-          {!selectionMode && shouldShowDeleteButton && (
+          {!selectionMode && shouldShowDeleteButton && canDeletePublication && (
             <button
               className="btn-delete-publication"
               onClick={handleDeleteClick}

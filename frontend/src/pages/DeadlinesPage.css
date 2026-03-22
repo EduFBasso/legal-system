@@ -58,7 +58,7 @@
 }
 
 /* Header */
-.page-header {
+.deadlines-page .page-header {
   background: var(--color-white);
   border-bottom: 1px solid var(--color-gray-200);
   padding: 24px 0;
@@ -66,21 +66,21 @@
   box-shadow: none;
 }
 
-.header-content h1 {
+.deadlines-page .header-content h1 {
   margin: 0 0 8px 0;
   font-size: 28px;
   font-weight: 700;
   color: var(--color-gray-800);
 }
 
-.header-subtitle {
+.deadlines-page .header-subtitle {
   margin: 0;
   font-size: 14px;
   color: var(--color-gray-600);
   opacity: 1;
 }
 
-.scope-context {
+.deadlines-page .scope-context {
   margin: 4px 0 0 0;
   font-size: 20px;
   font-weight: 700;
@@ -246,9 +246,9 @@
   overflow-wrap: anywhere;
 }
 /* Estados de Loading/Error/Empty */
-.loading-state,
-.error-state,
-.empty-state {
+.deadlines-page .loading-state,
+.deadlines-page .error-state,
+.deadlines-page .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -260,7 +260,7 @@
   border: 1px solid var(--color-gray-200);
 }
 
-.spinner {
+.deadlines-page .spinner {
   width: 40px;
   height: 40px;
   border: 4px solid var(--color-gray-200);
@@ -274,60 +274,60 @@
   to { transform: rotate(360deg); }
 }
 
-.loading-state p,
-.error-state p,
-.empty-state p {
+.deadlines-page .loading-state p,
+.deadlines-page .error-state p,
+.deadlines-page .empty-state p {
   color: var(--color-gray-600);
   margin: 0;
   font-size: 15px;
 }
 
-.empty-icon {
+.deadlines-page .empty-icon {
   font-size: 48px;
   margin-bottom: 16px;
 }
 
-.empty-state h2 {
+.deadlines-page .empty-state h2 {
   margin: 0 0 8px 0;
   color: var(--color-gray-800);
   font-size: 20px;
   font-weight: 700;
 }
 
-.error-state p {
+.deadlines-page .error-state p {
   color: #7f1d1d;
   font-weight: 500;
 }
 
 /* Container de tarefas */
-.tasks-container {
+.deadlines-page .tasks-container {
   display: flex;
   flex-direction: column;
   gap: 32px;
 }
 
 /* Seção de urgência */
-.urgency-section {
+.deadlines-page .urgency-section {
   border-radius: 8px;
   border: 1px solid var(--color-gray-200);
   background: var(--color-white);
   overflow: hidden;
 }
 
-.urgency-section.urgentissimo-section {
+.deadlines-page .urgency-section.urgentissimo-section {
   border-left: 6px solid var(--color-urgentissimo);
 }
 
-.urgency-section.urgente-section {
+.deadlines-page .urgency-section.urgente-section {
   border-left: 6px solid var(--color-urgente);
 }
 
-.urgency-section.normal-section {
+.deadlines-page .urgency-section.normal-section {
   border-left: 6px solid var(--color-normal);
 }
 
 /* Header da seção */
-.section-header {
+.deadlines-page .section-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -336,7 +336,7 @@
 }
 
 /* Lista de tarefas */
-.tasks-list {
+.deadlines-page .tasks-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -344,7 +344,7 @@
   background: var(--color-gray-50);
 }
 
-.task-item {
+.deadlines-page .task-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -355,7 +355,7 @@
   transition: var(--transition-default);
 }
 
-.task-item:hover {
+.deadlines-page .task-item:hover {
   background: var(--color-gray-50);
   border-color: var(--color-gray-400);
   box-shadow: var(--shadow-default);
@@ -363,38 +363,38 @@
 }
 
 /* Task item hover states for each urgency */
-.task-item.urgentissimo:hover {
+.deadlines-page .task-item.urgentissimo:hover {
   --color-rgb: var(--color-urgentissimo-rgb);
   background: var(--color-urgentissimo-light);
   border-color: var(--color-urgentissimo);
   box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
 }
 
-.task-item.urgente:hover {
+.deadlines-page .task-item.urgente:hover {
   --color-rgb: var(--color-urgente-rgb);
   background: var(--color-urgente-light);
   border-color: var(--color-urgente);
   box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
 }
 
-.task-item.normal:hover {
+.deadlines-page .task-item.normal:hover {
   --color-rgb: var(--color-normal-rgb);
   background: var(--color-normal-light);
   border-color: var(--color-normal);
   box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
 }
 
-.task-item.completed {
+.deadlines-page .task-item.completed {
   opacity: 0.6;
 }
 
-.task-item.completed .task-title {
+.deadlines-page .task-item.completed .task-title {
   text-decoration: line-through;
   color: var(--color-gray-400);
 }
 
 /* Task item selected states for each urgency */
-.task-item.urgentissimo.selected {
+.deadlines-page .task-item.urgentissimo.selected {
   --color-rgb: var(--color-urgentissimo-rgb);
   border: 3px solid var(--color-urgentissimo);
   background: var(--color-urgentissimo-light);
@@ -407,7 +407,7 @@
   transform: var(--transform-hover-emphasis);
 }
 
-.task-item.urgente.selected {
+.deadlines-page .task-item.urgente.selected {
   --color-rgb: var(--color-urgente-rgb);
   border: 3px solid var(--color-urgente);
   background: var(--color-urgente-light);
@@ -420,7 +420,7 @@
   transform: var(--transform-hover-emphasis);
 }
 
-.task-item.normal.selected {
+.deadlines-page .task-item.normal.selected {
   --color-rgb: var(--color-normal-rgb);
   border: 3px solid var(--color-normal);
   background: var(--color-normal-light);
@@ -434,12 +434,12 @@
 }
 
 /* Checkbox */
-.task-checkbox {
+.deadlines-page .task-checkbox {
   flex-shrink: 0;
   margin-top: 4px;
 }
 
-.checkbox-input {
+.deadlines-page .checkbox-input {
   width: 20px;
   height: 20px;
   cursor: pointer;
@@ -511,17 +511,17 @@
 }
 
 /* Conteúdo principal da tarefa */
-.task-main {
+.deadlines-page .task-main {
   flex: 1;
   cursor: pointer;
   min-width: 0;
 }
 
-.task-main:hover {
+.deadlines-page .task-main:hover {
   opacity: 0.8;
 }
 
-.task-title {
+.deadlines-page .task-title {
   font-weight: 700;
   font-size: 17px;
   color: var(--color-gray-800);
@@ -552,7 +552,7 @@
   border-bottom: 1px solid var(--color-gray-200);
 }
 
-.task-process-meta {
+.deadlines-page .task-process-meta {
   font-size: 15px;
   margin: 8px 0 12px 0;
   padding: 8px 0;
@@ -568,13 +568,25 @@
   padding: 8px 0;
 }
 
-.task-movement-link-anchor {
+.deadlines-page .task-movement-link-anchor {
   display: inline-block;
   color: var(--color-gray-800);
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;
   transition: var(--transition-link);
+}
+
+/* Read-only: link visual disabled (still rendered, but inert) */
+.deadlines-page .task-process-link[aria-disabled='true'],
+.deadlines-page .task-movement-link-anchor[aria-disabled='true'] {
+  opacity: 0.55;
+  text-decoration: none;
+}
+
+.deadlines-page .task-process-link[aria-disabled='true']:hover,
+.deadlines-page .task-movement-link-anchor[aria-disabled='true']:hover {
+  text-decoration: none;
 }
 
 /* Link colors for each urgency */
@@ -597,7 +609,7 @@
   text-underline-offset: 2px;
 }
 
-.task-description {
+.deadlines-page .task-description {
   font-size: 15px;
   color: var(--color-gray-600);
   margin: 0 0 10px 0;
@@ -609,7 +621,7 @@
   color: var(--color-gray-700);
 }
 
-.task-meta {
+.deadlines-page .task-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -670,7 +682,7 @@
   font-weight: 700;
 }
 
-.task-process-link {
+.deadlines-page .task-process-link {
   display: inline-block;
   color: var(--color-gray-800);
   text-decoration: none;

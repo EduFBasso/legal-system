@@ -43,14 +43,17 @@ export const contactsAPI = {
   /**
    * Busca um contato específico por ID
    * @param {number} id - ID do contato
+   * @param {Object} [params={}] - Query params opcionais (ex: team_member_id)
    * @returns {Promise<Object>} Dados completos do contato
    * @throws {Error} Se contato não encontrado (404)
    * @example
    * const contact = await contactsAPI.getById(1);
    * console.log(contact.name, contact.email);
    */
-  getById: async (id) => {
-    return apiFetch(`/contacts/${id}/`);
+  getById: async (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/contacts/${id}/?${queryString}` : `/contacts/${id}/`;
+    return apiFetch(endpoint);
   },
 
   /**

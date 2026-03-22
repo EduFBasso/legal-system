@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import timedelta
 from apps.contacts.models import Contact
-from apps.cases.models import Case, CaseParty, CaseMovement
+from apps.cases.models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense
 
 
 class CaseModelTest(TestCase):
@@ -336,6 +336,31 @@ class CaseAPITest(APITestCase):
         response = self.client.get('/api/cases/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
+
+    def test_list_cases_includes_parties_summary_contact_id_and_role(self):
+        """Listagem deve incluir contact_id/role em parties_summary para suportar navegação Contato↔Processo no frontend."""
+        CaseParty.objects.create(
+            case=self.case1,
+            contact=self.contact,
+            role='AUTOR',
+            is_client=True,
+        )
+
+        response = self.client.get('/api/cases/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        case1_payload = next((item for item in response.data if item.get('id') == self.case1.id), None)
+        self.assertIsNotNone(case1_payload)
+
+        parties_summary = case1_payload.get('parties_summary')
+        self.assertIsInstance(parties_summary, list)
+        self.assertGreaterEqual(len(parties_summary), 1)
+
+        party = parties_summary[0]
+        self.assertIn('contact_id', party)
+        self.assertEqual(party['contact_id'], self.contact.id)
+        self.assertIn('role', party)
+        self.assertEqual(party['role'], 'AUTOR')
     
     def test_retrieve_case(self):
         """Test retrieving a single case"""
@@ -496,6 +521,17 @@ class CaseAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['status'], 'ATIVO')
+
+    def test_filter_by_cliente_principal(self):
+        """Test filtering cases by cliente_principal"""
+        self.case1.cliente_principal = self.contact
+        self.case1.cliente_posicao = 'AUTOR'
+        self.case1.save()
+
+        response = self.client.get(f'/api/cases/?cliente_principal={self.contact.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.case1.id)
     
     def test_search_by_numero_processo(self):
         """Test searching cases by process number"""
@@ -976,6 +1012,385 @@ class DeadlineNotificationTest(APITestCase):
         self.assertEqual(notif_urgentissimo.priority, 'urgent')
         self.assertEqual(notif_urgente.priority, 'high')
         self.assertEqual(notif_normal.priority, 'medium')
+
+
+class CaseTaskScopeTests(APITestCase):
+    """Security/regression tests for CaseTaskViewSet scoping."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_a = User.objects.create_user(username='task_user_a', password='testpass123')
+        self.user_a.profile.role = 'ADVOGADO'
+        self.user_a.profile.save()
+        self.user_b = User.objects.create_user(username='task_user_b', password='testpass123')
+        self.user_b.profile.role = 'ADVOGADO'
+        self.user_b.profile.save()
+        self.master = User.objects.create_user(username='task_master', password='testpass123')
+        self.master.profile.role = 'MASTER'
+        self.master.profile.save()
+
+        self.case_a = Case.objects.create(
+            numero_processo='0000001-23.2026.8.26.0100',
+            titulo='Case A',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.user_a,
+        )
+
+        self.task_a = CaseTask.objects.create(
+            case=self.case_a,
+            titulo='Tarefa do A',
+            descricao='Teste de escopo',
+        )
+
+    def test_non_master_cannot_use_team_member_id_to_view_other_tasks(self):
+        self.client.force_authenticate(user=self.user_b)
+
+        response = self.client.get(f'/api/case-tasks/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertNotIn(self.task_a.id, returned_ids)
+
+    def test_master_can_scope_tasks_by_team_member_id(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get(f'/api/case-tasks/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertIn(self.task_a.id, returned_ids)
+
+
+class MasterCaseScopeTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.master = User.objects.create_user(username='scope_master', password='testpass123')
+        self.master.profile.role = 'MASTER'
+        self.master.profile.save()
+
+        self.user_a = User.objects.create_user(username='scope_user_a', password='testpass123')
+        self.user_a.profile.role = 'ADVOGADO'
+        self.user_a.profile.save()
+
+        self.contact = Contact.objects.create(name='Contato', person_type='PF')
+
+        self.case_master = Case.objects.create(
+            numero_processo='0000001-23.2026.8.26.0100',
+            titulo='Case Master',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.master,
+        )
+        self.case_a = Case.objects.create(
+            numero_processo='0000002-23.2026.8.26.0100',
+            titulo='Case A',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.user_a,
+        )
+        self.case_ownerless = Case.objects.create(
+            numero_processo='0000003-23.2026.8.26.0100',
+            titulo='Case Ownerless',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+
+        self.party_a = CaseParty.objects.create(case=self.case_a, contact=self.contact, role='AUTOR')
+        self.party_master = CaseParty.objects.create(case=self.case_master, contact=self.contact, role='AUTOR')
+
+        self.movement_a = CaseMovement.objects.create(
+            case=self.case_a,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Mov A',
+            origem='MANUAL',
+        )
+
+    def test_master_without_scope_does_not_see_other_users_cases(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/cases/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.case_master.id, returned_ids)
+        self.assertIn(self.case_ownerless.id, returned_ids)
+        self.assertNotIn(self.case_a.id, returned_ids)
+
+    def test_master_team_scope_all_sees_team_cases(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/cases/?team_scope=all')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.case_master.id, returned_ids)
+        self.assertIn(self.case_a.id, returned_ids)
+
+    def test_master_team_member_id_scopes_to_member_cases(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get(f'/api/cases/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.case_a.id, returned_ids)
+        self.assertNotIn(self.case_master.id, returned_ids)
+        self.assertNotIn(self.case_ownerless.id, returned_ids)
+
+    def test_master_without_scope_does_not_see_other_users_case_parties(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/case-parties/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.party_master.id, returned_ids)
+        self.assertNotIn(self.party_a.id, returned_ids)
+
+    def test_master_without_scope_does_not_see_other_users_movements(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/case-movements/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertNotIn(self.movement_a.id, returned_ids)
+
+
+class PaymentExpenseScopeTests(APITestCase):
+    """Security/regression tests for PaymentViewSet and ExpenseViewSet scoping."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.master = User.objects.create_user(username='pay_master', password='testpass123')
+        self.master.profile.role = 'MASTER'
+        self.master.profile.save()
+
+        self.user_a = User.objects.create_user(username='pay_user_a', password='testpass123')
+        self.user_a.profile.role = 'ADVOGADO'
+        self.user_a.profile.save()
+
+        self.user_b = User.objects.create_user(username='pay_user_b', password='testpass123')
+        self.user_b.profile.role = 'ADVOGADO'
+        self.user_b.profile.save()
+
+        self.case_master = Case.objects.create(
+            numero_processo='0000100-23.2026.8.26.0100',
+            titulo='Case Master Pay',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.master,
+        )
+        self.case_a = Case.objects.create(
+            numero_processo='0000101-23.2026.8.26.0100',
+            titulo='Case A Pay',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.user_a,
+        )
+        self.case_ownerless = Case.objects.create(
+            numero_processo='0000102-23.2026.8.26.0100',
+            titulo='Case Ownerless Pay',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+
+        self.payment_master = Payment.objects.create(
+            case=self.case_master,
+            date=timezone.now().date(),
+            description='Payment master',
+            value=100,
+        )
+        self.payment_a = Payment.objects.create(
+            case=self.case_a,
+            date=timezone.now().date(),
+            description='Payment user A',
+            value=200,
+        )
+        self.payment_ownerless = Payment.objects.create(
+            case=self.case_ownerless,
+            date=timezone.now().date(),
+            description='Payment ownerless',
+            value=300,
+        )
+
+        self.expense_master = Expense.objects.create(
+            case=self.case_master,
+            date=timezone.now().date(),
+            description='Expense master',
+            value=10,
+        )
+        self.expense_a = Expense.objects.create(
+            case=self.case_a,
+            date=timezone.now().date(),
+            description='Expense user A',
+            value=20,
+        )
+        self.expense_ownerless = Expense.objects.create(
+            case=self.case_ownerless,
+            date=timezone.now().date(),
+            description='Expense ownerless',
+            value=30,
+        )
+
+    def test_non_master_cannot_use_team_member_id_to_view_other_users_payments(self):
+        self.client.force_authenticate(user=self.user_b)
+
+        response = self.client.get(f'/api/payments/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertNotIn(self.payment_a.id, returned_ids)
+
+    def test_master_without_scope_sees_self_and_ownerless_payments_only(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/payments/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.payment_master.id, returned_ids)
+        self.assertIn(self.payment_ownerless.id, returned_ids)
+        self.assertNotIn(self.payment_a.id, returned_ids)
+
+    def test_master_team_scope_all_sees_team_payments_but_not_ownerless(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/payments/?team_scope=all')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.payment_master.id, returned_ids)
+        self.assertIn(self.payment_a.id, returned_ids)
+        self.assertNotIn(self.payment_ownerless.id, returned_ids)
+
+    def test_master_team_member_id_scopes_to_member_payments(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get(f'/api/payments/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.payment_a.id, returned_ids)
+        self.assertNotIn(self.payment_master.id, returned_ids)
+        self.assertNotIn(self.payment_ownerless.id, returned_ids)
+
+    def test_master_team_scope_all_sees_team_expenses_but_not_ownerless(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/expenses/?team_scope=all')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.expense_master.id, returned_ids)
+        self.assertIn(self.expense_a.id, returned_ids)
+        self.assertNotIn(self.expense_ownerless.id, returned_ids)
+
+    def test_non_master_cannot_use_team_member_id_to_view_other_users_expenses(self):
+        self.client.force_authenticate(user=self.user_b)
+
+        response = self.client.get(f'/api/expenses/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertNotIn(self.expense_a.id, returned_ids)
+
+    def test_master_without_scope_sees_self_and_ownerless_expenses_only(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get('/api/expenses/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.expense_master.id, returned_ids)
+        self.assertIn(self.expense_ownerless.id, returned_ids)
+        self.assertNotIn(self.expense_a.id, returned_ids)
+
+    def test_master_team_member_id_scopes_to_member_expenses(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get(f'/api/expenses/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+
+        self.assertIn(self.expense_a.id, returned_ids)
+        self.assertNotIn(self.expense_master.id, returned_ids)
+        self.assertNotIn(self.expense_ownerless.id, returned_ids)
+
+
+class CasePrazoScopeTests(APITestCase):
+    """Security/regression tests for CasePrazoViewSet scoping."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_a = User.objects.create_user(username='prazo_user_a', password='testpass123')
+        self.user_a.profile.role = 'ADVOGADO'
+        self.user_a.profile.save()
+
+        self.user_b = User.objects.create_user(username='prazo_user_b', password='testpass123')
+        self.user_b.profile.role = 'ADVOGADO'
+        self.user_b.profile.save()
+
+        self.master = User.objects.create_user(username='prazo_master', password='testpass123')
+        self.master.profile.role = 'MASTER'
+        self.master.profile.save()
+
+        self.case_a = Case.objects.create(
+            numero_processo='0000201-23.2026.8.26.0100',
+            titulo='Case A Prazo',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            owner=self.user_a,
+        )
+
+        self.movement_a = CaseMovement.objects.create(
+            case=self.case_a,
+            data=timezone.now().date(),
+            tipo='DESPACHO',
+            titulo='Mov Prazo A',
+            origem='MANUAL',
+        )
+
+        self.prazo_a = CasePrazo.objects.create(
+            movimentacao=self.movement_a,
+            prazo_dias=15,
+            descricao='Prazo do A',
+        )
+
+    def test_non_master_cannot_use_team_member_id_to_view_other_prazos(self):
+        self.client.force_authenticate(user=self.user_b)
+
+        response = self.client.get(f'/api/case-prazos/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertNotIn(self.prazo_a.id, returned_ids)
+
+    def test_master_can_scope_prazos_by_team_member_id(self):
+        self.client.force_authenticate(user=self.master)
+
+        response = self.client.get(f'/api/case-prazos/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertIn(self.prazo_a.id, returned_ids)
+
 
 
 # Test Summary:

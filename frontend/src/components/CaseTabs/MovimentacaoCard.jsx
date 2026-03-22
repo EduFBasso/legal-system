@@ -39,6 +39,9 @@ export default function MovimentacaoCard({
   onEditCancel,
   onEditSave,
   saving,
+  onMentionProcess,
+  excludeCnj,
+  readOnly = false,
   // Task props
   tasks = [],
   addingTaskForMovement,
@@ -94,6 +97,9 @@ export default function MovimentacaoCard({
               tipoDisplay={tipoDisplay}
               manualDescricao={manualDescricao}
               onEditClick={onEditStart}
+              onMentionProcess={onMentionProcess}
+              excludeCnj={excludeCnj}
+              readOnly={readOnly}
             />
 
             {/* SEÇÃO DE TAREFAS */}
@@ -116,6 +122,7 @@ export default function MovimentacaoCard({
               onToggleTaskStatus={onToggleTaskStatus}
               onNewTaskFormChange={onNewTaskFormChange}
               onEditTaskFormChange={onEditTaskFormChange}
+              readOnly={readOnly}
             />
           </>
         )}

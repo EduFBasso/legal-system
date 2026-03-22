@@ -117,23 +117,29 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
     ? Object.values(
         caseData.parties_summary.reduce((acc, party) => {
           const partyName = party?.name || 'Parte sem nome';
-          if (!acc[partyName]) {
-            acc[partyName] = {
+          const partyContactId = party?.contact_id || null;
+          const partyKey = partyContactId ? String(partyContactId) : partyName;
+
+          if (!acc[partyKey]) {
+            acc[partyKey] = {
               name: partyName,
               badges: [],
               isClient: false,
-              contactId: null,
+              contactId: partyContactId,
             };
           }
 
-          if (party?.role_display && !acc[partyName].badges.includes(party.role_display)) {
-            acc[partyName].badges.push(party.role_display);
+          if (party?.role_display && !acc[partyKey].badges.includes(party.role_display)) {
+            acc[partyKey].badges.push(party.role_display);
           }
 
-          if (party?.is_client && !acc[partyName].badges.includes('Cliente')) {
-            acc[partyName].badges.push('Cliente');
-            acc[partyName].isClient = true;
-            acc[partyName].contactId = caseData?.cliente_principal || null;
+          if (party?.is_client && !acc[partyKey].badges.includes('Cliente')) {
+            acc[partyKey].badges.push('Cliente');
+            acc[partyKey].isClient = true;
+            // Compat: se API antiga não mandar contact_id, cair no cliente_principal
+            if (!acc[partyKey].contactId) {
+              acc[partyKey].contactId = caseData?.cliente_principal || null;
+            }
           }
 
           return acc;
@@ -164,7 +170,7 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
           {getUrgencyBadge()}
           {linkedCases.length > 0 && (
             <span className="badge badge-linked-cases">
-              🔗 Vínculo {linkedCases.length > 1 ? `(${linkedCases.length})` : ''}
+              🔗 Mesmo cliente {linkedCases.length > 1 ? `(${linkedCases.length})` : ''}
             </span>
           )}
         </div>
@@ -210,7 +216,7 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
           <div className="case-details case-parties-container">
             {groupedParties.map((party) => (
               <div key={party.name} className="party-line" title={party.name}>
-                {party.isClient && party.contactId ? (
+                {party.contactId ? (
                   <button
                     type="button"
                     className="party-name-link"

@@ -10,7 +10,7 @@ import './Menu.css';
 
 export default function Menu({ isAuthenticated, onBlockedAction }) {
   const [pendingCount, setPendingCount] = useState(0);
-  const [scheduledTasksCount, setScheduledTasksCount] = useState(0);
+  const [openTasksCount, setOpenTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const renderMenuLink = ({ to, end = true, icon, label, badge = null }) => {
@@ -54,7 +54,19 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       }
     };
 
+    const loadOpenTasksCount = async () => {
+      try {
+        const result = await caseTasksService.getTasksCount({
+          status__in: 'PENDENTE,EM_ANDAMENTO',
+        });
+        setOpenTasksCount(Number(result?.count || 0));
+      } catch {
+        setOpenTasksCount(0);
+      }
+    };
+
     loadPendingCount();
+    loadOpenTasksCount();
 
     const handlePublicationsSearchCompleted = () => {
       loadPendingCount();
@@ -62,6 +74,7 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
 
     const handleWindowFocus = () => {
       loadPendingCount();
+      loadOpenTasksCount();
     };
 
     // Escutar eventos de integração para atualizar contador
@@ -71,57 +84,21 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       }
     });
 
+    const unsubscribeTasks = subscribeToTaskUpdates(() => {
+      loadOpenTasksCount();
+    });
+
     window.addEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
     window.addEventListener('focus', handleWindowFocus);
 
     return () => {
       unsubscribe();
+      unsubscribeTasks();
       window.removeEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
       window.removeEventListener('focus', handleWindowFocus);
     };
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
-    const loadScheduledTasksCount = async () => {
-      try {
-        const tasks = await caseTasksService.getAllTasks({ exclude_ownerless: '1' });
-        if (Array.isArray(tasks)) {
-          const activeCount = tasks.filter((task) => task.status !== 'CONCLUIDA').length;
-          setScheduledTasksCount(activeCount);
-          return;
-        }
-        setScheduledTasksCount(0);
-      } catch {
-        setScheduledTasksCount(0);
-      }
-    };
-
-    loadScheduledTasksCount();
-
-    const unsubscribeTasks = subscribeToTaskUpdates((event) => {
-      if (event?.type === 'task-updated') {
-        loadScheduledTasksCount();
-      }
-    });
-
-    const handleFocus = () => {
-      loadScheduledTasksCount();
-    };
-
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      if (unsubscribeTasks) {
-        unsubscribeTasks();
-      }
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [isAuthenticated]);
-  
   return (
     <>
       <nav className="app-menu">
@@ -162,8 +139,8 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
               to: '/deadlines',
               icon: '⏰',
               label: 'Tarefas Agendadas',
-              badge: isAuthenticated && scheduledTasksCount > 0 ? (
-                <span className="menu-count-badge menu-count-badge--tasks">{scheduledTasksCount}</span>
+              badge: isAuthenticated && openTasksCount > 0 ? (
+                <span className="menu-count-badge menu-count-badge--tasks">{openTasksCount}</span>
               ) : null,
             })}
           </li>

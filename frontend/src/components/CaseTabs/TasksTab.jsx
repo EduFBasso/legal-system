@@ -31,6 +31,7 @@ export default function TasksTab({
   caseId = null,
   formatDate = (date) => date ? new Date(date).toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—',
   onRefreshTasks = () => {},
+  readOnly = false,
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -125,6 +126,10 @@ export default function TasksTab({
 
   // Marca tarefa como concluída
   const handleToggleTaskStatus = async (task) => {
+    if (readOnly) {
+      return;
+    }
+
     try {
       const nextStatus = task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA';
       await caseTasksService.patchTask(task.id, { status: nextStatus });
@@ -153,6 +158,10 @@ export default function TasksTab({
 
   // Criar nova tarefa do processo
   const handleCreateTask = async (taskData) => {
+    if (readOnly) {
+      return;
+    }
+
     setCreatingTask(true);
     try {
       const newTask = await caseTasksService.createTask(taskData);
@@ -218,14 +227,16 @@ export default function TasksTab({
             {completedTasks > 0 && ` • ${completedTasks} concluída(s)`}
           </p>
         </div>
-        <button 
-          className="btn-add-task"
-          onClick={() => setIsCreateTaskModalOpen(true)}
-          disabled={creatingTask}
-          title="Criar nova tarefa do processo"
-        >
-          + Adicionar Tarefa
-        </button>
+        {!readOnly && (
+          <button 
+            className="btn-add-task"
+            onClick={() => setIsCreateTaskModalOpen(true)}
+            disabled={creatingTask}
+            title="Criar nova tarefa do processo"
+          >
+            + Adicionar Tarefa
+          </button>
+        )}
       </div>
 
       {/* Estatísticas */}
@@ -292,6 +303,7 @@ export default function TasksTab({
                   formatDate={formatDate}
                   formatDaysRemaining={formatDaysRemaining}
                   showBorder={showUrgencyContainerBorder}
+                  readOnly={readOnly}
                 />
               )
             ))}

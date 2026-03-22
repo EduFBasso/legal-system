@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import ContactCard from '../components/ContactCard';
+import MasterContactDetailsModal from '../components/MasterContactDetailsModal';
 import Modal from '../components/Modal';
+import MasterCasesSection from '../components/MasterDashboard/MasterCasesSection';
+import MasterContactsSection from '../components/MasterDashboard/MasterContactsSection';
+import MasterTasksSection from '../components/MasterDashboard/MasterTasksSection';
 import contactsAPI from '../services/api';
 import casesService from '../services/casesService';
-import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import {
   createTeamMember,
   deactivateTeamMember,
@@ -105,6 +107,7 @@ export default function MasterDashboardPage() {
   const [casesLoading, setCasesLoading] = useState(false);
   const [casesError, setCasesError] = useState('');
   const [selectedContactId, setSelectedContactId] = useState(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactsLoading, setContactsLoading] = useState(true);
   const [contactsError, setContactsError] = useState('');
   const [teamMembers, setTeamMembers] = useState([]);
@@ -144,6 +147,9 @@ export default function MasterDashboardPage() {
   const selectedLawyerLabel = selectedLawyer
     ? (lawyerOptions.find((option) => option.id === selectedLawyer)?.label || 'Advogado selecionado')
     : 'Selecione o Advogado';
+  const selectedLawyerOptionLabel = selectedLawyer
+    ? (lawyerOptions.find((option) => option.id === selectedLawyer)?.label || '')
+    : '';
 
   useEffect(() => {
     let mounted = true;
@@ -417,14 +423,21 @@ export default function MasterDashboardPage() {
 
   useEffect(() => {
     let mounted = true;
+    if (!selectedLawyer) {
+      setContactsError('');
+      setContacts([]);
+      setContactsLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
     const timer = setTimeout(async () => {
       try {
         setContactsLoading(true);
         setContactsError('');
         const params = {
-          team_scope: 'all',
-          exclude_owner_self: '1',
-          exclude_ownerless: '1',
+          team_member_id: selectedLawyer,
         };
         if (contactsSearch.trim()) {
           params.search = contactsSearch.trim();
@@ -445,7 +458,12 @@ export default function MasterDashboardPage() {
       mounted = false;
       clearTimeout(timer);
     };
-  }, [contactsSearch]);
+  }, [contactsSearch, selectedLawyer]);
+
+  function handleViewContact(contactId) {
+    setSelectedContactId(contactId);
+    setIsContactModalOpen(true);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -653,37 +671,6 @@ export default function MasterDashboardPage() {
           </button>
         </div>
 
-        {activeKpi === 'financeiro' && (
-          <div className="master-admin-filters-grid">
-            <div className="master-admin-field">
-              <label className="master-admin-label" htmlFor="master-start-date">Data inicial</label>
-              <input
-                id="master-start-date"
-                type="date"
-                className="master-admin-date"
-                value={startDate}
-                onChange={(event) => {
-                  const nextStart = event.target.value;
-                  setStartDate(nextStart);
-                  setEndDate(nextStart);
-                }}
-              />
-            </div>
-
-            <div className="master-admin-field">
-              <label className="master-admin-label" htmlFor="master-end-date">Data final</label>
-              <input
-                id="master-end-date"
-                type="date"
-                className="master-admin-date"
-                value={endDate}
-                min={startDate}
-                onChange={(event) => setEndDate(event.target.value)}
-              />
-            </div>
-          </div>
-        )}
-
         <section className="master-admin-kpi-row" aria-label="Resumo por tópico">
           <button
             type="button"
@@ -714,176 +701,50 @@ export default function MasterDashboardPage() {
             <p className="master-admin-kpi-title">Tarefas</p>
             <strong className="master-admin-kpi-value">{kpis.loading ? '...' : kpis.tarefas}</strong>
           </button>
-
-          <button
-            type="button"
-            className={`master-admin-kpi-card master-admin-kpi-card--finance ${activeKpi === 'financeiro' ? 'is-active' : ''}`}
-            aria-pressed={activeKpi === 'financeiro'}
-            onClick={() => setActiveKpi('financeiro')}
-          >
-            <p className="master-admin-kpi-title">Financeiro</p>
-            <strong className="master-admin-kpi-value">{kpis.loading ? '...' : formatCurrency(kpis.financeiro)}</strong>
-          </button>
         </section>
 
         {activeKpi === 'processos' && (
-        <section className="master-admin-cases-section" aria-label="Processos">
-          <div className="master-admin-cases-header">
-            <div>
-              <h2 className="master-admin-cases-title">Processos</h2>
-              <p className="master-admin-cases-subtitle">
-                {selectedLawyer && `Processos de ${lawyerOptions.find(o => o.id === selectedLawyer)?.label || ''}`}
-              </p>
-            </div>
-            <div className="master-admin-contacts-search-wrap">
-              <span className="master-admin-contacts-search-icon">🔍</span>
-              <input
-                type="text"
-                className="master-admin-contacts-search"
-                placeholder="Buscar por número, cliente, título..."
-                value={casesSearch}
-                onChange={(event) => setCasesSearch(event.target.value)}
-              />
-            </div>
-          </div>
-
-          {casesError ? (
-            <div className="master-admin-contacts-feedback master-admin-contacts-feedback--error">{casesError}</div>
-          ) : casesLoading ? (
-            <div className="master-admin-contacts-feedback">Carregando processos...</div>
-          ) : casesData.length === 0 ? (
-            <div className="master-admin-contacts-feedback">Nenhum processo encontrado para o filtro aplicado.</div>
-          ) : (
-            <div className="master-admin-cases-table-wrap">
-              <table className="master-admin-cases-table">
-                <thead>
-                  <tr>
-                    <th>Número</th>
-                    <th>Título / Tipo</th>
-                    <th>Tribunal</th>
-                    <th>Cliente</th>
-                    <th>Última movimentação</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {casesData.map((c) => (
-                    <tr
-                      key={c.id}
-                      className="master-admin-cases-row"
-                      onClick={() => openCaseDetailWindow(c.id)}
-                      title="Abrir processo em nova aba"
-                    >
-                      <td className="master-admin-cases-cell--numero">
-                        {c.numero_processo_formatted || c.numero_processo || '—'}
-                      </td>
-                      <td className="master-admin-cases-cell--titulo">
-                        {c.titulo || c.tipo_acao_display || '—'}
-                      </td>
-                      <td>{c.tribunal_display || c.tribunal || '—'}</td>
-                      <td>
-                        {
-                          c.cliente_nome
-                          || c.parties_summary?.find((party) => party.is_client)?.name
-                          || c.parties_summary?.[0]?.name
-                          || '—'
-                        }
-                      </td>
-                      <td>
-                        {c.data_ultima_movimentacao
-                          ? new Date(c.data_ultima_movimentacao + 'T00:00:00').toLocaleDateString('pt-BR')
-                          : '—'}
-                      </td>
-                      <td>
-                        <span
-                          className="master-admin-cases-status"
-                          data-status={c.status}
-                        >
-                          {c.status_display || c.status || '—'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+          <MasterCasesSection
+            selectedLawyer={selectedLawyer}
+            selectedLawyerOptionLabel={selectedLawyerOptionLabel}
+            casesSearch={casesSearch}
+            onCasesSearchChange={(event) => setCasesSearch(event.target.value)}
+            casesError={casesError}
+            casesLoading={casesLoading}
+            casesData={casesData}
+          />
         )}
 
         {activeKpi === 'contatos' && (
-        <section className="master-admin-contacts-section" aria-label="Contatos (somente leitura)">
-          <div className="master-admin-contacts-header">
-            <div>
-              <h2 className="master-admin-contacts-title">Contatos</h2>
-              <p className="master-admin-contacts-subtitle">Espelho read-only da página de contatos com filtro local.</p>
-            </div>
-            <div className="master-admin-contacts-search-wrap">
-              <span className="master-admin-contacts-search-icon">🔍</span>
-              <input
-                type="text"
-                className="master-admin-contacts-search"
-                placeholder="Buscar contato..."
-                value={contactsSearch}
-                onChange={(event) => setContactsSearch(event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="master-admin-contacts-readonly">
-            {contactsError ? (
-              <div className="master-admin-contacts-feedback master-admin-contacts-feedback--error">{contactsError}</div>
-            ) : contactsLoading ? (
-              <div className="master-admin-contacts-feedback">Carregando contatos...</div>
-            ) : contacts.length === 0 ? (
-              <div className="master-admin-contacts-feedback">Nenhum contato encontrado para o filtro aplicado.</div>
-            ) : (
-              contacts.map((contact) => (
-                <ContactCard
-                  key={contact.id}
-                  contact={contact}
-                  isSelected={selectedContactId === contact.id}
-                  onSelect={() => setSelectedContactId(contact.id)}
-                  onView={() => {}}
-                  onLinkToCase={() => {}}
-                />
-              ))
-            )}
-          </div>
-        </section>
+          <MasterContactsSection
+            selectedLawyer={selectedLawyer}
+            contactsSearch={contactsSearch}
+            onContactsSearchChange={(event) => setContactsSearch(event.target.value)}
+            contactsError={contactsError}
+            contactsLoading={contactsLoading}
+            contacts={contacts}
+            selectedContactId={selectedContactId}
+            onSelectContact={setSelectedContactId}
+            onViewContact={handleViewContact}
+          />
         )}
 
         {activeKpi === 'tarefas' && (
-        <section className="master-admin-tasks-section" aria-label="Tarefas">
-          <div className="master-admin-cases-header">
-            <div>
-              <h2 className="master-admin-cases-title">Tarefas</h2>
-              <p className="master-admin-cases-subtitle">
-                {selectedLawyer && `Abra a página Tarefas Agendadas em nova aba para visualizar as tarefas de ${selectedLawyerLabel}.`}
-              </p>
-            </div>
-          </div>
-
-          <div className="master-admin-contacts-feedback">
-            As tarefas continuam disponíveis na tela oficial, com os cartões e cores corretas.
-          </div>
-
-          <button
-            type="button"
-            className="master-admin-open-page-button"
-            onClick={() => {
-              const params = new URLSearchParams();
-              params.set('team_member_id', selectedLawyer);
-              params.set('scope_label', selectedLawyerLabel);
-              const query = params.toString();
-              window.open(`/deadlines${query ? `?${query}` : ''}`, '_blank', 'noopener,noreferrer');
-            }}
-          >
-            Abrir Tarefas Agendadas em nova aba
-          </button>
-        </section>
+          <MasterTasksSection
+            selectedLawyer={selectedLawyer}
+            selectedLawyerLabel={selectedLawyerLabel}
+          />
         )}
       </section>
+
+      <MasterContactDetailsModal
+        contactId={selectedContactId}
+        teamMemberId={selectedLawyer || ''}
+        isOpen={isContactModalOpen}
+        onClose={() => {
+          setIsContactModalOpen(false);
+        }}
+      />
 
       <Modal
         isOpen={isMasterAccountOpen}

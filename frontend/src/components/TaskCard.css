@@ -1,0 +1,447 @@
+/* TaskCard.css - Estilos compartilhados para TaskCard + UrgencySection
+ *
+ * Estes estilos eram originalmente definidos (e em parte escopados) em DeadlinesPage.css.
+ * Ao manter aqui, garantimos que TaskCard e UrgencySection mantenham a identificação visual
+ * (cores/urgência/seleção) em qualquer página/aba que os reutilize (ex.: CaseDetail > Tarefas).
+ */
+
+/* ========== CSS VARIABLES (shared) ========== */
+:root {
+  /* Colors - Urgency Scale */
+  --color-urgentissimo: #dc2626;
+  --color-urgentissimo-light: #fef2f2;
+  --color-urgentissimo-dark: #b91c1c;
+  --color-urgentissimo-rgb: 220, 38, 38;
+
+  --color-urgente: #f97316;
+  --color-urgente-light: #fff7ed;
+  --color-urgente-dark: #c2410c;
+  --color-urgente-rgb: 249, 115, 22;
+
+  --color-normal: #16a34a;
+  --color-normal-light: #f0fdf4;
+  --color-normal-dark: #15803d;
+  --color-normal-rgb: 22, 163, 74;
+
+  --color-total: #475569;
+  --color-total-light: #f8fafc;
+  --color-total-rgb: 71, 85, 105;
+
+  /* Neutral Colors */
+  --color-white: #ffffff;
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f9fafb;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #e2e8f0;
+  --color-gray-400: #cbd5e1;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #1e293b;
+
+  /* Shadows */
+  --shadow-hover-light: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  --shadow-hover-dark: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  --shadow-default: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  /* Transitions */
+  --transition-default: all 0.2s ease;
+  --transition-checkbox: transform 0.12s ease-in-out;
+  --transition-link: color 0.2s ease;
+
+  /* Transforms */
+  --transform-hover-normal: translateY(-1px);
+  --transform-hover-emphasis: translateY(-2px);
+}
+
+/* ========== UrgencySection base ========== */
+.urgency-section {
+  border-radius: 8px;
+  border: 1px solid var(--color-gray-200);
+  background: var(--color-white);
+  overflow: hidden;
+}
+
+.urgency-section.urgentissimo-section {
+  border-left: 6px solid var(--color-urgentissimo);
+}
+
+.urgency-section.urgente-section {
+  border-left: 6px solid var(--color-urgente);
+}
+
+.urgency-section.normal-section {
+  border-left: 6px solid var(--color-normal);
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: var(--color-gray-50);
+}
+
+/* ========== TaskCard ========== */
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px solid #ddd6fe;
+  border-radius: 8px;
+  background: var(--color-white);
+  transition: var(--transition-default);
+}
+
+.task-item:hover {
+  background: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+  box-shadow: var(--shadow-default);
+  transform: var(--transform-hover-normal);
+}
+
+.task-item.urgentissimo:hover {
+  --color-rgb: var(--color-urgentissimo-rgb);
+  background: var(--color-urgentissimo-light);
+  border-color: var(--color-urgentissimo);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
+}
+
+.task-item.urgente:hover {
+  --color-rgb: var(--color-urgente-rgb);
+  background: var(--color-urgente-light);
+  border-color: var(--color-urgente);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
+}
+
+.task-item.normal:hover {
+  --color-rgb: var(--color-normal-rgb);
+  background: var(--color-normal-light);
+  border-color: var(--color-normal);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
+}
+
+.task-item.completed {
+  opacity: 0.6;
+}
+
+.task-item.completed .task-title {
+  text-decoration: line-through;
+  color: var(--color-gray-400);
+}
+
+.task-item.urgentissimo.selected {
+  --color-rgb: var(--color-urgentissimo-rgb);
+  border: 3px solid var(--color-urgentissimo);
+  background: var(--color-urgentissimo-light);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-normal);
+}
+
+.task-item.urgentissimo.selected:hover {
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+.task-item.urgente.selected {
+  --color-rgb: var(--color-urgente-rgb);
+  border: 3px solid var(--color-urgente);
+  background: var(--color-urgente-light);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-normal);
+}
+
+.task-item.urgente.selected:hover {
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+.task-item.normal.selected {
+  --color-rgb: var(--color-normal-rgb);
+  border: 3px solid var(--color-normal);
+  background: var(--color-normal-light);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-normal);
+}
+
+.task-item.normal.selected:hover {
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+/* Checkbox */
+.task-checkbox {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.checkbox-input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid var(--color-gray-400);
+  border-radius: 4px;
+  background: var(--color-white);
+  display: grid;
+  place-content: center;
+  transition: var(--transition-default);
+}
+
+.checkbox-input::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: var(--transition-checkbox);
+  background-color: var(--color-white);
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.task-item.urgentissimo .checkbox-input {
+  border-color: var(--color-urgentissimo);
+}
+
+.task-item.urgentissimo .checkbox-input:checked {
+  background: var(--color-urgentissimo);
+  border-color: var(--color-urgentissimo);
+}
+
+.task-item.urgentissimo .checkbox-input:focus-visible {
+  outline: 2px solid #fecaca;
+  outline-offset: 1px;
+}
+
+.task-item.urgente .checkbox-input {
+  border-color: var(--color-urgente);
+}
+
+.task-item.urgente .checkbox-input:checked {
+  background: var(--color-urgente);
+  border-color: var(--color-urgente);
+}
+
+.task-item.urgente .checkbox-input:focus-visible {
+  outline: 2px solid #fed7aa;
+  outline-offset: 1px;
+}
+
+.task-item.normal .checkbox-input {
+  border-color: var(--color-normal);
+}
+
+.task-item.normal .checkbox-input:checked {
+  background: var(--color-normal);
+  border-color: var(--color-normal);
+}
+
+.task-item.normal .checkbox-input:focus-visible {
+  outline: 2px solid #bbf7d0;
+  outline-offset: 1px;
+}
+
+.checkbox-input:checked::before {
+  transform: scale(1);
+}
+
+/* Conteúdo principal */
+.task-main {
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.task-main:hover {
+  opacity: 0.8;
+}
+
+.task-title {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--color-gray-800);
+  margin: 0 0 8px 0;
+  word-break: break-word;
+}
+
+.task-item.urgentissimo:not(.completed) .task-title {
+  color: var(--color-urgentissimo-dark);
+  font-weight: 800;
+}
+
+.task-item.urgente:not(.completed) .task-title {
+  color: var(--color-urgente-dark);
+  font-weight: 800;
+}
+
+.task-item.normal:not(.completed) .task-title {
+  color: var(--color-normal-dark);
+  font-weight: 800;
+}
+
+.task-process-meta {
+  font-size: 15px;
+  margin: 8px 0 12px 0;
+  padding: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-movement-link-anchor {
+  display: inline-block;
+  color: var(--color-gray-800);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-link);
+}
+
+.task-process-link[aria-disabled='true'],
+.task-movement-link-anchor[aria-disabled='true'] {
+  opacity: 0.55;
+  text-decoration: none;
+}
+
+.task-process-link[aria-disabled='true']:hover,
+.task-movement-link-anchor[aria-disabled='true']:hover {
+  text-decoration: none;
+}
+
+.task-item.urgentissimo .task-movement-link-anchor {
+  color: var(--color-urgentissimo-dark);
+}
+
+.task-item.urgente .task-movement-link-anchor {
+  color: var(--color-urgente-dark);
+}
+
+.task-item.normal .task-movement-link-anchor {
+  color: var(--color-normal-dark);
+}
+
+.task-item.urgentissimo .task-movement-link-anchor:hover,
+.task-item.urgente .task-movement-link-anchor:hover,
+.task-item.normal .task-movement-link-anchor:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.task-description {
+  font-size: 15px;
+  color: var(--color-gray-600);
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.task-item:not(.completed) .task-description {
+  color: var(--color-gray-700);
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-gray-600);
+  align-items: center;
+}
+
+.task-item:not(.completed) .task-meta {
+  color: var(--color-gray-700);
+}
+
+.task-date,
+.task-remaining {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-meta-dot {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.task-item:not(.completed) .task-date,
+.task-item:not(.completed) .task-remaining,
+.task-item:not(.completed) .task-meta-dot {
+  color: var(--color-gray-700);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.task-date.overdue-date {
+  color: var(--color-urgentissimo-dark) !important;
+  background: var(--color-urgentissimo-light);
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.task-remaining.overdue-remaining,
+.task-meta-dot.overdue-meta-dot {
+  color: var(--color-urgentissimo-dark) !important;
+  font-weight: 700;
+}
+
+.task-date.today-date {
+  color: #b45309 !important;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.task-remaining.today-remaining,
+.task-meta-dot.today-meta-dot {
+  color: #b45309 !important;
+  font-weight: 700;
+}
+
+.task-process-link {
+  display: inline-block;
+  color: var(--color-gray-800);
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-link);
+}
+
+.task-item.urgentissimo .task-process-link {
+  color: var(--color-urgentissimo-dark);
+}
+
+.task-item.urgente .task-process-link {
+  color: var(--color-urgente-dark);
+}
+
+.task-item.normal .task-process-link {
+  color: var(--color-normal-dark);
+}
+
+.task-item.urgentissimo .task-process-link:hover,
+.task-item.urgente .task-process-link:hover,
+.task-item.normal .task-process-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .task-item {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+  }
+
+  .task-title {
+    font-size: 15px;
+  }
+
+  .task-meta {
+    width: 100%;
+    order: 3;
+  }
+}

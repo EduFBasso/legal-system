@@ -51,6 +51,12 @@ function App() {
               path="/cases/:id"
               element={isAuthenticated ? <CaseDetailPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
             />
+
+            {/* Rotas dedicadas para tarefas (full width, sem header/menu/sidebar) */}
+            <Route
+              path="/deadlines/standalone"
+              element={isAuthenticated ? <DeadlinesPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+            />
             
             {/* Rota de detalhes de publicação em nova janela */}
             <Route

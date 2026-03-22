@@ -37,6 +37,7 @@ const casesService = {
     
     if (filters.status) params.append('status', filters.status);
     if (filters.auto_status) params.append('auto_status', filters.auto_status);
+    if (filters.cliente_principal) params.append('cliente_principal', filters.cliente_principal);
     if (filters.search) params.append('search', filters.search);
     if (filters.ordering) params.append('ordering', filters.ordering);
     if (filters.comarca) params.append('comarca__icontains', filters.comarca);
@@ -52,10 +53,13 @@ const casesService = {
   /**
    * Get single case by ID
    * @param {number} id - Case ID
+   * @param {Object} [params={}] - Optional query params (e.g. team_member_id)
    * @returns {Promise<Object>} Case detail
    */
-  async getById(id) {
-    return await apiFetch(`/cases/${id}/`);
+  async getById(id, params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/cases/${id}/${queryString ? `?${queryString}` : ''}`;
+    return await apiFetch(endpoint);
   },
 
   /**

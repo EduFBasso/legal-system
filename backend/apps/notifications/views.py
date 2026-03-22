@@ -5,13 +5,22 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Q
 from apps.accounts.permissions import is_master_user
-from apps.accounts.scope import apply_user_owned_or_shared, build_owner_scope_q
+from django.contrib.auth import get_user_model
+from apps.accounts.scope import (
+    apply_master_team_scope,
+    apply_user_owned_or_shared,
+    build_owner_scope_q,
+    get_master_scope_user,
+)
 from .models import Notification
 from .serializers import (
     NotificationSerializer,
     NotificationCreateSerializer,
     NotificationMarkReadSerializer
 )
+
+
+UserModel = get_user_model()
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -38,8 +47,17 @@ class NotificationViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return queryset
+
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            return queryset.filter(build_owner_scope_q(scope_user, include_ownerless=True))
+
         if is_master_user(user):
-            return queryset
+            team_scope = self.request.query_params.get('team_scope')
+            if team_scope == 'all':
+                return apply_master_team_scope(queryset, self.request, UserModel)
+            return apply_user_owned_or_shared(queryset, user)
+
         return queryset.filter(build_owner_scope_q(user, include_ownerless=True))
 
     def _scoped_queryset(self):

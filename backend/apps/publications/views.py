@@ -18,7 +18,7 @@ from apps.accounts.scope import apply_user_owned_or_shared, build_owner_scope_q
 from services.pje_comunica import PJeComunicaService
 from apps.notifications.models import Notification
 from apps.cases.models import Case, CaseMovement
-from .models import Publication, SearchHistory
+from .models import Publication, PublicationDeletionTombstone, SearchHistory
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,36 @@ def _apply_owner_filter(queryset, user, owner_field='owner'):
     if is_master_user(user):
         return queryset.filter(build_owner_scope_q(user, owner_field=owner_field, include_ownerless=False))
     return queryset.filter(build_owner_scope_q(user, owner_field=owner_field, include_ownerless=False))
+
+
+def _should_allow_reimport_after_delete():
+    system_settings = getattr(settings, 'LEGAL_SYSTEM_SETTINGS', {})
+    return bool(system_settings.get('PUBLICATIONS_ALLOW_REIMPORT_AFTER_DELETE', True))
+
+
+def _filter_tombstoned_publications(publicacoes, owner=None):
+    """Remove publicações que foram deletadas (tombstones) quando policy bloquear reimport."""
+    if _should_allow_reimport_after_delete():
+        return publicacoes or []
+
+    if not publicacoes:
+        return []
+
+    id_apis = [pub.get('id_api') for pub in publicacoes if pub and pub.get('id_api')]
+    if not id_apis:
+        return publicacoes
+
+    tombstones = PublicationDeletionTombstone.objects.filter(id_api__in=id_apis)
+    if owner is not None:
+        tombstones = tombstones.filter(owner=owner)
+    else:
+        tombstones = tombstones.filter(owner__isnull=True)
+
+    blocked_ids = set(tombstones.values_list('id_api', flat=True))
+    if not blocked_ids:
+        return publicacoes
+
+    return [pub for pub in publicacoes if (pub or {}).get('id_api') not in blocked_ids]
 
 
 def normalize_string(text):
@@ -228,7 +258,9 @@ def fetch_today_publications(request):
         # Salvar publicações no banco e criar histórico
         total_novas = 0
         if result.get('success') and result.get('total_publicacoes', 0) > 0:
-            publicacoes = result.get('publicacoes', [])
+            publicacoes = _filter_tombstoned_publications(result.get('publicacoes', []), owner=owner)
+            result['publicacoes'] = publicacoes
+            result['total_publicacoes'] = len(publicacoes)
             
             # Salvar cada publicação (deduplicação automática via id_api unique)
             total_novas = _save_publications_to_db(publicacoes, owner=owner)
@@ -345,7 +377,9 @@ def search_publications(request):
         # Salvar publicações no banco e criar histórico
         total_novas = 0
         if result.get('success') and result.get('total_publicacoes', 0) > 0:
-            publicacoes = result.get('publicacoes', [])
+            publicacoes = _filter_tombstoned_publications(result.get('publicacoes', []), owner=owner)
+            result['publicacoes'] = publicacoes
+            result['total_publicacoes'] = len(publicacoes)
             
             # Salvar cada publicação (deduplicação automática via id_api unique)
             total_novas = _save_publications_to_db(publicacoes, owner=owner)
@@ -546,8 +580,8 @@ def _save_publications_to_db(publicacoes, owner=None):
 
             _obj, created = Publication.objects.get_or_create(
                 id_api=id_api,
+                owner=owner,
                 defaults={
-                    'owner': owner,
                     'numero_processo': pub.get('numero_processo'),
                     'tribunal': pub.get('tribunal', ''),
                     'tipo_comunicacao': pub.get('tipo_comunicacao', ''),
@@ -1864,6 +1898,7 @@ def get_publication_by_id(request, id_api):
         return Response({
             'success': True,
             'publication': {
+                'id': publication.id,
                 'id_api': publication.id_api,
                 'numero_processo': publication.numero_processo,
                 'tribunal': publication.tribunal,
@@ -1940,6 +1975,13 @@ def delete_publication(request, id_api):
         notifications_deleted = notifications_deleted.delete()[0]
         
         # Agora deletar a publicação (CASCADE delete applied)
+        PublicationDeletionTombstone.objects.get_or_create(
+            owner=user if getattr(user, 'is_authenticated', False) else None,
+            id_api=id_api,
+            defaults={
+                'reason': 'deleted_by_user',
+            },
+        )
         publication.delete()
         
         return Response({
@@ -2017,6 +2059,15 @@ def delete_multiple_publications(request):
             if user.is_authenticated and not is_master_user(user):
                 notification_qs = notification_qs.filter(owner=user)
             notifications_deleted += notification_qs.delete()[0]
+
+        # Registrar tombstones das deletadas (para política de reimportação)
+        tombstone_owner = user if getattr(user, 'is_authenticated', False) else None
+        for pub_id in deletable_ids:
+            PublicationDeletionTombstone.objects.get_or_create(
+                owner=tombstone_owner,
+                id_api=pub_id,
+                defaults={'reason': 'deleted_by_user'},
+            )
         
         # Agora deletar as publicações
         deleted_count = _apply_owner_filter(Publication.objects.filter(

@@ -14,6 +14,7 @@ function PartiesTab({
   onAddPartyClick = () => {},
   onRemoveParty = () => {},
   onEditParty = () => {},
+  readOnly = false,
 }) {
   const [selectedPartyId, setSelectedPartyId] = useState(null);
 
@@ -36,7 +37,12 @@ function PartiesTab({
           <h2 className="section-title">👥 Partes do Processo</h2>
           <button 
             className="btn btn-success"
-            onClick={onAddPartyClick}
+            onClick={() => {
+              if (readOnly) return;
+              onAddPartyClick();
+            }}
+            disabled={readOnly}
+            aria-disabled={readOnly ? 'true' : undefined}
           >
             <UserPlus size={18} />
             Adicionar Parte
@@ -103,13 +109,17 @@ function PartiesTab({
                   )}
                 </div>
 
-                <div className="party-actions">
+                <div className="party-actions" onClick={(e) => e.stopPropagation()}>
                   <button 
                     className="btn-edit-party"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (readOnly) return;
                       onEditParty(party);
                     }}
+                    disabled={readOnly}
+                    aria-disabled={readOnly ? 'true' : undefined}
+                    aria-label="Editar"
                     title="Editar papel da parte no processo"
                   >
                     <Edit2 size={18} />
@@ -118,8 +128,12 @@ function PartiesTab({
                     className="btn-remove-party"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (readOnly) return;
                       onRemoveParty(party.id, party.contact_name);
                     }}
+                    disabled={readOnly}
+                    aria-disabled={readOnly ? 'true' : undefined}
+                    aria-label="Excluir"
                     title="Remover do processo"
                   >
                     <Trash2 size={18} />

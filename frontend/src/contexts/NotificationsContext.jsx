@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
-import { getApiBaseUrl, getAuthToken } from '../utils/apiFetch';
+import { getApiBaseUrl, getAuthToken, getStoredAuth } from '../utils/apiFetch';
 
 const API_BASE_URL = getApiBaseUrl();
 const POLL_INTERVAL = 30000; // 30 segundos
@@ -14,6 +14,7 @@ export function NotificationsProvider({ children }) {
   const [error, setError] = useState(null);
   const [permission, setPermission] = useState('default');
   const [authToken, setAuthToken] = useState(() => getAuthToken());
+  const [authUserId, setAuthUserId] = useState(() => getStoredAuth()?.user?.id ?? null);
   const shownNotificationsRef = useRef(new Set()); // IDs já exibidas - usar ref para evitar re-renders
 
   const buildAuthHeaders = useCallback((json = false) => {
@@ -117,24 +118,21 @@ export function NotificationsProvider({ children }) {
         // Atualizar contador de não lidas
         setUnreadCount(data.count || 0);
         
-        // Merge inteligente: adicionar novas não lidas sem remover as lidas do estado
+        // Merge inteligente:
+        // - manter notificações já lidas no estado (para telas que dependem do histórico)
+        // - substituir completamente o conjunto de NÃO LIDAS pelo retorno do endpoint /unread/
+        //   (evita “vazar” notificações antigas ao trocar usuário/escopo)
         setNotifications(prev => {
-          // Se o estado está vazio, usar apenas as não lidas
-          if (prev.length === 0) {
-            return newNotifications;
-          }
-          
-          // Criar mapa das notificações existentes para fácil lookup
-          const existingMap = new Map(prev.map(n => [n.id, n]));
-          
-          // Adicionar/atualizar notificações não lidas
-          newNotifications.forEach(notif => {
-            existingMap.set(notif.id, notif);
+          const previousRead = (prev || []).filter((notif) => notif && notif.read);
+          const nextMap = new Map(previousRead.map((notif) => [notif.id, notif]));
+
+          (newNotifications || []).forEach((notif) => {
+            if (!notif) return;
+            nextMap.set(notif.id, notif);
           });
-          
-          // Retornar array ordenado por created_at (mais recente primeiro)
-          return Array.from(existingMap.values()).sort((a, b) => 
-            new Date(b.created_at) - new Date(a.created_at)
+
+          return Array.from(nextMap.values()).sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
           );
         });
         
@@ -422,6 +420,7 @@ export function NotificationsProvider({ children }) {
   useEffect(() => {
     const handleAuthChanged = () => {
       setAuthToken(getAuthToken());
+      setAuthUserId(getStoredAuth()?.user?.id ?? null);
       resetNotificationsState();
     };
 
@@ -434,6 +433,7 @@ export function NotificationsProvider({ children }) {
     const handleStorage = (event) => {
       if (!event || event.key === null || event.key === 'legal_system_auth') {
         setAuthToken(getAuthToken());
+        setAuthUserId(getStoredAuth()?.user?.id ?? null);
       }
     };
 
@@ -447,6 +447,7 @@ export function NotificationsProvider({ children }) {
     loading,
     error,
     permission,
+    authUserId,
     fetchUnreadNotifications,
     fetchAllNotifications,
     markAsRead,

@@ -116,6 +116,7 @@ export function useCaseCore(
             tribunal: prev.tribunal || publication.tribunal || '',
             vara: prev.vara || publication.orgao || '',
             publicacao_origem: publication.id,
+            publicacao_origem_id_api: publication.id_api || null,
             publicacao_origem_data: publication.data_disponibilizacao,
             publicacao_origem_tipo: publication.tipo_comunicacao,
           };
@@ -172,6 +173,39 @@ export function useCaseCore(
           cleanedData[key] = value;
         }
       });
+
+      // Robustez: se o processo foi aberto via ?pub_id= mas o prefill ainda não carregou,
+      // garantir que o FK `publicacao_origem` seja enviado no create.
+      // Isso evita perder a rastreabilidade (e a UI de origem em Observações).
+      let originPublicationMeta = null;
+      if (!id && publicationId && !cleanedData.publicacao_origem) {
+        try {
+          const result = await publicationsService.getPublicationById(publicationId);
+          const publication = result?.publication;
+          if (publication?.id) {
+            cleanedData.publicacao_origem = publication.id;
+            originPublicationMeta = {
+              publicacao_origem: publication.id,
+              publicacao_origem_id_api: publication.id_api || publicationId || null,
+              publicacao_origem_data: publication.data_disponibilizacao || null,
+              publicacao_origem_tipo: publication.tipo_comunicacao || null,
+              publicacao_origem_numero_processo: publication.numero_processo || null,
+            };
+          }
+        } catch (error) {
+          console.warn('Falha ao carregar publicação para preencher publicacao_origem:', error);
+        }
+      }
+
+      if (!originPublicationMeta && formData.publicacao_origem) {
+        originPublicationMeta = {
+          publicacao_origem: formData.publicacao_origem,
+          publicacao_origem_id_api: formData.publicacao_origem_id_api || publicationId || null,
+          publicacao_origem_data: formData.publicacao_origem_data || null,
+          publicacao_origem_tipo: formData.publicacao_origem_tipo || null,
+          publicacao_origem_numero_processo: formData.publicacao_origem_numero_processo || null,
+        };
+      }
 
       if (!id) {
         // Criar novo caso
@@ -234,8 +268,18 @@ export function useCaseCore(
           }
         }
 
-        setCaseData(created);
-        setFormData(created);
+        const createdWithOrigin = {
+          ...created,
+          publicacao_origem: created?.publicacao_origem ?? originPublicationMeta?.publicacao_origem ?? null,
+          publicacao_origem_id_api: created?.publicacao_origem_id_api ?? originPublicationMeta?.publicacao_origem_id_api ?? null,
+          publicacao_origem_data: created?.publicacao_origem_data ?? originPublicationMeta?.publicacao_origem_data ?? null,
+          publicacao_origem_tipo: created?.publicacao_origem_tipo ?? originPublicationMeta?.publicacao_origem_tipo ?? null,
+          publicacao_origem_numero_processo:
+            created?.publicacao_origem_numero_processo ?? originPublicationMeta?.publicacao_origem_numero_processo ?? null,
+        };
+
+        setCaseData(createdWithOrigin);
+        setFormData(createdWithOrigin);
         setIsEditing(false);
 
         if (onCaseCreated) {

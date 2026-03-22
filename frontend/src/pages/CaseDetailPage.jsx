@@ -1,23 +1,16 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { UserPlus } from 'lucide-react';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import useAutoSave from '../hooks/useAutoSave';
 import systemSettingsService from '../services/systemSettingsService';
 import contactsAPI from '../services/api';
 import caseDocumentsService from '../services/caseDocumentsService';
-import Toast from '../components/common/Toast';
-import ContactDetailModal from '../components/ContactDetailModal';
-import SelectContactModal from '../components/SelectContactModal';
-import { 
-  InformacaoTab, 
-  PartiesTab, 
-  MovimentacoesTab, 
-  DocumentosTab, 
-  FinanceiroTab,
-  PublicacoesTab,
-  TasksTab,
-} from '../components/CaseTabs';
+import CaseDetailNavbar from '../components/CaseDetail/CaseDetailNavbar';
+import CaseDetailTabContent from '../components/CaseDetail/CaseDetailTabContent';
+import CaseDetailModals from '../components/CaseDetail/CaseDetailModals';
+
+import { formatCnj } from '../utils/cnj';
+import { openPublicationDetailsWindow } from '../utils/publicationNavigation';
 
 // Custom hooks para separação de responsabilidades
 import { useModalsAndNotifications } from '../hooks/useModalsAndNotifications';
@@ -52,6 +45,10 @@ function CaseDetailPage() {
   const publicationId = new URLSearchParams(location.search).get('pub_id');
   const linkAction = new URLSearchParams(location.search).get('action');
   const linkContactId = parseInt(new URLSearchParams(location.search).get('contactId') || '', 10);
+  const isReadOnly = (() => {
+    const value = (new URLSearchParams(location.search).get('readonly') || '').trim().toLowerCase();
+    return value === '1' || value === 'true' || value === 'yes';
+  })();
 
   // System settings
   const [systemSettings, setSystemSettings] = useState(null);
@@ -78,6 +75,51 @@ function CaseDetailPage() {
     handleCaseCreated,
     handleCaseDeleted,
   );
+
+  useEffect(() => {
+    if (isReadOnly && caseCore.isEditing) {
+      caseCore.setIsEditing(false);
+    }
+  }, [isReadOnly, caseCore.isEditing, caseCore.setIsEditing]);
+
+  const [linkedCases, setLinkedCases] = useState([]);
+  const [loadingLinkedCases, setLoadingLinkedCases] = useState(false);
+
+  const [mentionedProcessLinks, setMentionedProcessLinks] = useState([]);
+
+  const currentCaseCnj = useMemo(() => {
+    const raw = caseCore.caseData?.numero_processo_formatted || caseCore.caseData?.numero_processo || '';
+    return formatCnj(raw);
+  }, [caseCore.caseData?.numero_processo_formatted, caseCore.caseData?.numero_processo]);
+
+  const handleMentionProcess = useCallback(({ cnj, sourceMovimentacaoId } = {}) => {
+    if (!cnj) return;
+
+    setMentionedProcessLinks((current) => {
+      if (current.some((item) => item.cnj === cnj)) return current;
+
+      return [
+        ...current,
+        {
+          cnj,
+          papel: '',
+          sourceMovimentacaoId: sourceMovimentacaoId || null,
+        },
+      ];
+    });
+  }, []);
+
+  const handleMentionedProcessRoleChange = useCallback((cnj, papel) => {
+    if (!cnj) return;
+    setMentionedProcessLinks((current) =>
+      current.map((item) => (item.cnj === cnj ? { ...item, papel: papel ?? '' } : item))
+    );
+  }, []);
+
+  const handleRemoveMentionedProcess = useCallback((cnj) => {
+    if (!cnj) return;
+    setMentionedProcessLinks((current) => current.filter((item) => item.cnj !== cnj));
+  }, []);
 
   // Party management
   const parties = usePartyManagement(
@@ -124,6 +166,40 @@ function CaseDetailPage() {
   );
 
   const previousSectionRef = useRef(navigation.activeSection);
+
+  useEffect(() => {
+    const loadLinkedCases = async () => {
+      const clientId = caseCore.caseData?.cliente_principal;
+      const currentCaseId = caseCore.caseData?.id;
+
+      if (!clientId || !currentCaseId) {
+        setLinkedCases([]);
+        return;
+      }
+
+      setLoadingLinkedCases(true);
+      try {
+        const { default: casesService } = await import('../services/casesService');
+        const allForClient = await casesService.getAll({
+          cliente_principal: clientId,
+          ordering: '-data_ultima_movimentacao',
+        });
+
+        const related = Array.isArray(allForClient)
+          ? allForClient.filter((c) => Number(c.id) !== Number(currentCaseId))
+          : [];
+
+        setLinkedCases(related);
+      } catch {
+        setLinkedCases([]);
+      } finally {
+        setLoadingLinkedCases(false);
+      }
+    };
+
+    loadLinkedCases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseCore.caseData?.cliente_principal, caseCore.caseData?.id]);
 
   useEffect(() => {
     const previousSection = previousSectionRef.current;
@@ -434,7 +510,12 @@ function CaseDetailPage() {
       ? Number(caseCore.sourcePublication.id_api)
       : null;
 
-    const origemPublicationPk = Number(caseCore.formData?.publicacao_origem || caseCore.caseData?.publicacao_origem_id || 0);
+    const origemPublicationPk = Number(
+      caseCore.formData?.publicacao_origem
+        || caseCore.caseData?.publicacao_origem
+        || caseCore.caseData?.publicacao_origem_id
+        || 0
+    );
     const origemPublication = !sourcePublicationApiId && origemPublicationPk && Array.isArray(publications.publicacoes)
       ? publications.publicacoes.find((pub) => Number(pub.id) === origemPublicationPk)
       : null;
@@ -450,6 +531,44 @@ function CaseDetailPage() {
       : `/cases/${id}?tab=movements`;
 
     window.open(targetUrl, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
+  };
+
+  const handleOpenOrigemPublicacao = () => {
+    const sourcePublicationApiId = caseCore.sourcePublication?.id_api
+      ? Number(caseCore.sourcePublication.id_api)
+      : null;
+
+    const origemPublicationApiId = Number(
+      caseCore.formData?.publicacao_origem_id_api
+        || caseCore.caseData?.publicacao_origem_id_api
+        || sourcePublicationApiId
+        || 0
+    ) || null;
+
+    if (origemPublicationApiId) {
+      openPublicationDetailsWindow(origemPublicationApiId);
+      return;
+    }
+
+    // Fallback: tentar resolver via lista de publicações já carregada
+    const origemPublicationPk = Number(
+      caseCore.formData?.publicacao_origem
+        || caseCore.caseData?.publicacao_origem
+        || caseCore.caseData?.publicacao_origem_id
+        || 0
+    );
+
+    const origemPublication = origemPublicationPk && Array.isArray(publications.publicacoes)
+      ? publications.publicacoes.find((pub) => Number(pub.id) === origemPublicationPk)
+      : null;
+
+    const fallbackApiId = Number(origemPublication?.id_api || 0) || null;
+    if (fallbackApiId) {
+      openPublicationDetailsWindow(fallbackApiId);
+      return;
+    }
+
+    modalsNotif.showToast('Não foi possível abrir a publicação de origem', 'warning');
   };
 
   /**
@@ -560,6 +679,11 @@ function CaseDetailPage() {
     [activeTasks]
   );
 
+  const showPublicacoesTab = !(
+    systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION &&
+    systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC
+  );
+
   if (caseCore.loading) {
     return (
       <div className="case-detail-page">
@@ -585,532 +709,71 @@ function CaseDetailPage() {
   return (
     <div className="case-detail-page">
       {/* Navigation Bar */}
-      <nav className="case-navbar">
-        <div className="case-navbar-content">
-          <div className="case-navbar-tabs">
-            <button
-              className={`nav-tab ${navigation.activeSection === 'info' ? 'active' : ''}`}
-              onClick={() => handleTabChange('info')}
-            >
-              📋 Informações{caseCore.isEditing && navigation.activeSection === 'info' && ' *'}
-            </button>
-            <button
-              className={`nav-tab ${navigation.activeSection === 'parties' ? 'active' : ''}`}
-              onClick={() => handleTabChange('parties')}
-            >
-              👥 Partes
-              {parties.parties.length > 0 && <span className="badge">{parties.parties.length}</span>}
-            </button>
-            <button
-              className={`nav-tab ${navigation.activeSection === 'movimentacoes' ? 'active' : ''}`}
-              onClick={() => handleTabChange('movimentacoes')}
-            >
-              ⚖️ Movimentações
-              {activeLinkedTasksCount > 0 && <span className="badge">{activeLinkedTasksCount}</span>}
-            </button>
-            <button
-              className={`nav-tab ${navigation.activeSection === 'documentos' ? 'active' : ''}`}
-              onClick={() => handleTabChange('documentos')}
-            >
-              📄 Documentos
-            </button>
-            {!(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
-              <button
-                className={`nav-tab ${navigation.activeSection === 'publicacoes' ? 'active' : ''}`}
-                onClick={() => handleTabChange('publicacoes')}
-              >
-                📰 Publicações
-                {publications.publicacoes.length > 0 && <span className="badge">{publications.publicacoes.length}</span>}
-              </button>
-            )}
-            <button
-              className={`nav-tab ${navigation.activeSection === 'tasks' ? 'active' : ''}`}
-              onClick={() => handleTabChange('tasks')}
-            >
-              ✅ Tarefas
-              {activeStandaloneTasksCount > 0 && <span className="badge">{activeStandaloneTasksCount}</span>}
-            </button>
-            <button
-              className={`nav-tab ${navigation.activeSection === 'financeiro' ? 'active' : ''}`}
-              onClick={() => handleTabChange('financeiro')}
-            >
-              💰 Financeiro
-            </button>
-          </div>
-        </div>
-      </nav>
+      <CaseDetailNavbar
+        activeSection={navigation.activeSection}
+        onTabChange={handleTabChange}
+        isInfoEditing={caseCore.isEditing && navigation.activeSection === 'info'}
+        partiesCount={parties.parties.length}
+        activeLinkedTasksCount={activeLinkedTasksCount}
+        showPublicacoesTab={showPublicacoesTab}
+        publicacoesCount={publications.publicacoes.length}
+        activeStandaloneTasksCount={activeStandaloneTasksCount}
+        linkedCasesCount={linkedCases.length}
+      />
 
       {/* Content */}
-      <main className="case-content">
-        {navigation.activeSection === 'info' && (
-          <InformacaoTab
-            id={id}
-            formData={caseCore.formData}
-            setFormData={caseCore.setFormData}
-            isEditing={caseCore.isEditing}
-            setIsEditing={caseCore.setIsEditing}
-            saving={caseCore.saving}
-            onSave={handleSaveCaseWithParties}
-            onCancel={caseCore.handleCancel}
-            onDelete={handleDelete}
-            setActiveSection={navigation.setActiveSection}
-            onOpenLatestMovimentacao={() => {
-              navigation.setActiveSection('movimentacoes');
-              movements.handleOpenLatestMovimentacao();
-            }}
-            onOpenOrigemMovimentacao={handleOpenOrigemMovimentacao}
-            onAddPartyClick={handleOpenContactSelection}
-            parties={parties.parties}
-            caseData={caseCore.caseData}
-            formatDate={formatDate}
-            formatCurrency={formatCurrency}
-            tribunalOptions={caseCore.tribunalOptions}
-            statusOptions={caseCore.statusOptions}
-            tipoAcaoOptions={caseCore.tipoAcaoOptions}
-            onInputChange={caseCore.handleInputChange}
-          />
-        )}
+      <CaseDetailTabContent
+        activeSection={navigation.activeSection}
+        id={id}
+        isReadOnly={isReadOnly}
+        navigation={navigation}
+        caseCore={caseCore}
+        parties={parties}
+        movements={{
+          ...movements,
+          onMentionProcess: handleMentionProcess,
+        }}
+        publications={publications}
+        financial={financial}
+        documentos={documentos}
+        loadingDocumentos={loadingDocumentos}
+        uploadingDocumento={uploadingDocumento}
+        onUploadDocument={handleUploadDocument}
+        onDeleteDocument={handleDeleteDocument}
+        formatDate={formatDate}
+        formatCurrency={formatCurrency}
+        autoSavingFinancial={autoSavingFinancial}
+        systemSettings={systemSettings}
+        showPublicacoesTab={showPublicacoesTab}
+        currentCaseCnj={currentCaseCnj}
+        linkedCases={linkedCases}
+        loadingLinkedCases={loadingLinkedCases}
+        mentionedProcessLinks={mentionedProcessLinks}
+        onMentionedProcessRoleChange={handleMentionedProcessRoleChange}
+        onRemoveMentionedProcess={handleRemoveMentionedProcess}
+        onSaveCaseWithParties={handleSaveCaseWithParties}
+        onDeleteCase={handleDelete}
+        onOpenLatestMovimentacao={() => {
+          navigation.setActiveSection('movimentacoes');
+          movements.handleOpenLatestMovimentacao();
+        }}
+        onOpenOrigemMovimentacao={handleOpenOrigemMovimentacao}
+        onOpenOrigemPublicacao={handleOpenOrigemPublicacao}
+        onAddPartyClick={handleOpenContactSelection}
+        onRemoveParty={handleRemoveParty}
+      />
 
-        {navigation.activeSection === 'movimentacoes' && (
-          <MovimentacoesTab 
-            id={id}
-            movimentacoes={movements.movimentacoes}
-            numeroProcesso={caseCore.caseData?.numero_processo}
-            tasks={movements.tasks}
-            highlightedMovimentacaoId={navigation.highlightedMovimentacaoId}
-            highlightedTaskId={navigation.highlightedTaskId}
-            formatDate={formatDate}
-            onDelete={movements.handleDeleteMovimentacao}
-            onRefreshTasks={movements.loadTasks}
-            onRefreshMovements={movements.loadMovimentacoes}
-          />
-        )}
-
-        {navigation.activeSection === 'documentos' && (
-          <DocumentosTab 
-            caseId={id}
-            documentos={documentos}
-            loading={loadingDocumentos}
-            uploading={uploadingDocumento}
-            onUploadDocument={handleUploadDocument}
-            onDeleteDocument={handleDeleteDocument}
-          />
-        )}
-
-        {navigation.activeSection === 'publicacoes' && !(systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION && systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC) && (
-          <PublicacoesTab
-            caseId={id}
-            publicacoes={publications.publicacoes}
-            loading={publications.loadingPublicacoes}
-            systemSettings={systemSettings}
-            onVincularPublicacao={(publicacao) => {
-              console.log('Vincular publicação:', publicacao);
-            }}
-            onDesvincularPublicacao={(publicacaoId) => {
-              publications.setPublicacoes(prev => prev.filter(p => p.id !== publicacaoId));
-            }}
-            onCreateMovement={movements.handleCreateMovementFromPublication}
-            onRefresh={publications.loadPublicacoes}
-          />
-        )}
-
-        {navigation.activeSection === 'tasks' && (
-          <TasksTab
-            caseId={id}
-            caseData={caseCore.caseData}
-            tasks={movements.tasks}
-            setTasks={movements.setTasks}
-            formatDate={formatDate}
-            onRefreshTasks={movements.loadTasks}
-          />
-        )}
-
-        {navigation.activeSection === 'financeiro' && (
-          <FinanceiroTab
-            id={id}
-            formData={caseCore.formData}
-            setFormData={caseCore.setFormData}
-            recebimentos={financial.recebimentos}
-            despesas={financial.despesas}
-            participacaoTipo={financial.participacaoTipo}
-            participacaoPercentual={financial.participacaoPercentual}
-            participacaoValorFixo={financial.participacaoValorFixo}
-            pagaMedianteGanho={financial.pagaMedianteGanho}
-            recebimentoForm={financial.recebimentoForm}
-            despesaForm={financial.despesaForm}
-            onInputChange={caseCore.handleInputChange}
-            setRecebimentoForm={financial.setRecebimentoForm}
-            setDespesaForm={financial.setDespesaForm}
-            setParticipacaoTipo={financial.setParticipacaoTipo}
-            setParticipacaoPercentual={financial.setParticipacaoPercentual}
-            setParticipacaoValorFixo={financial.setParticipacaoValorFixo}
-            setPagaMedianteGanho={financial.setPagaMedianteGanho}
-            onAddRecebimento={financial.handleAdicionarRecebimento}
-            onRemoveRecebimento={financial.handleRemoverRecebimento}
-            onAddDespesa={financial.handleAdicionarDespesa}
-            onRemoveDespesa={financial.handleRemoverDespesa}
-            autoSavingObservations={autoSavingFinancial}
-          />
-        )}
-
-        {navigation.activeSection === 'parties' && (
-          <PartiesTab 
-            id={id}
-            parties={parties.parties}
-            loadingParties={parties.loadingParties}
-            onAddPartyClick={handleOpenContactSelection}
-            onRemoveParty={handleRemoveParty}
-            onEditParty={parties.handleEditParty}
-          />
-        )}
-      </main>
-
-      {/* Modal de Seleção de Contato */}
-      {modalsNotif.showSelectContactModal && (
-        <SelectContactModal
-          isOpen={modalsNotif.showSelectContactModal}
-          onClose={() => modalsNotif.setShowSelectContactModal(false)}
-          onSelectContact={handleSelectContactForParty}
-          onCreateNew={handleCreateNewContactForParty}
-          existingPartyContactIds={parties.parties.map(p => p.contact)}
-        />
-      )}
-
-      {/* Modal de Novo Cliente/Parte */}
-      {modalsNotif.showContactModal && (
-        <ContactDetailModal
-          contactId={null}
-          isOpen={modalsNotif.showContactModal}
-          onClose={() => modalsNotif.setShowContactModal(false)}
-          onContactUpdated={modalsNotif.handleContactCreated}
-          showLinkToProcessButton={false}
-          onLinkToProcess={handleSelectContactForParty}
-        />
-      )}
-
-      {/* Modal de Edição de Papel da Parte */}
-      {parties.editingParty && (
-        <div className="modal-overlay" onClick={() => parties.setEditingParty(null)}>
-          <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Editar Papel da Parte</h2>
-              <button className="modal-close" onClick={() => parties.setEditingParty(null)}>×</button>
-            </div>
-
-            <div className="modal-body">
-              <div className="selected-contact-info">
-                <span className="contact-icon">
-                  {parties.editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <strong>{parties.editingParty.contact_name}</strong>
-                    <button
-                      className="btn-edit-contact-link"
-                      onClick={() => modalsNotif.setEditingContactId(parties.editingParty.contact)}
-                      title="Editar dados pessoais do contato"
-                      style={{
-                        background: 'none',
-                        border: '1px solid #2563eb',
-                        borderRadius: '4px',
-                        padding: '0.4rem 0.8rem',
-                        cursor: 'pointer',
-                        color: '#2563eb',
-                        fontSize: '0.85rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        fontWeight: '500',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#2563eb';
-                        e.target.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'none';
-                        e.target.style.color = '#2563eb';
-                      }}
-                    >
-                      ✏️ Editar dados pessoais
-                    </button>
-                  </div>
-                  {parties.editingParty.contact_document && (
-                    <span className="contact-doc"> • {parties.editingParty.contact_document}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Papel no Processo *</label>
-                <select
-                  value={parties.editingPartyFormData.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value;
-                    parties.setEditingPartyFormData(prev => ({
-                      ...prev,
-                      role: newRole,
-                    }));
-                  }}
-                >
-                  <option value="AUTOR">Autor/Requerente</option>
-                  <option value="REU">Réu/Requerido</option>
-                  <option value="TESTEMUNHA">Testemunha</option>
-                  <option value="PERITO">Perito</option>
-                  <option value="TERCEIRO">Terceiro Interessado</option>
-                  <option value="CLIENTE">Cliente/Representado</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={parties.editingPartyFormData.is_client}
-                    onChange={(e) => parties.setEditingPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
-                  />
-                  <span>É cliente do escritório neste processo</span>
-                </label>
-              </div>
-
-              <div className="form-group">
-                <label>Observações</label>
-                <textarea
-                  value={parties.editingPartyFormData.observacoes}
-                  onChange={(e) => parties.setEditingPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-                  placeholder="Ex: Cliente pela contraparte, não é nosso cliente..."
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => parties.setEditingParty(null)}>
-                Cancelar
-              </button>
-              <button className="btn btn-success" onClick={handleSavePartyChanges}>
-                Salvar Alterações
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Edição de Contato (dados pessoais) */}
-      {modalsNotif.editingContactId && (
-        <ContactDetailModal
-          contactId={modalsNotif.editingContactId}
-          isOpen={!!modalsNotif.editingContactId}
-          onClose={() => modalsNotif.setEditingContactId(null)}
-          onContactUpdated={() => {
-            modalsNotif.handleContactUpdated();
-            parties.loadParties();
-          }}
-          showLinkToProcessButton={false}
-          openInEditMode={true}
-        />
-      )}
-
-      {/* Modal de Definir Papel da Parte */}
-      {parties.showAddPartyModal && parties.selectedContact && (
-        <div className="modal-overlay" onClick={parties.handleCloseAddPartyModal}>
-          <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Adicionar ao Processo</h2>
-              <button className="modal-close" onClick={parties.handleCloseAddPartyModal}>×</button>
-            </div>
-
-            <div className="modal-body">
-              <div className="selected-contact-info">
-                <span className="contact-icon">
-                  {parties.selectedContact.person_type === 'PF' ? '👤' : '🏢'}
-                </span>
-                <div>
-                  <strong>{parties.selectedContact.name}</strong>
-                  {parties.selectedContact.document_number && (
-                    <span className="contact-doc"> • {parties.selectedContact.document_number}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Papel no Processo *</label>
-                <select
-                  value={parties.partyFormData.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value;
-                    parties.setPartyFormData(prev => ({
-                      ...prev,
-                      role: newRole,
-                      is_client: newRole === 'CLIENTE' ? true : 
-                                 (newRole === 'TESTEMUNHA' || newRole === 'PERITO') ? false : 
-                                 prev.is_client
-                    }));
-                  }}
-                >
-                  <option value="AUTOR">Autor/Requerente</option>
-                  <option value="REU">Réu/Requerido</option>
-                  <option value="TESTEMUNHA">Testemunha</option>
-                  <option value="PERITO">Perito</option>
-                  <option value="TERCEIRO">Terceiro Interessado</option>
-                  <option value="CLIENTE">Cliente/Representado</option>
-                </select>
-              </div>
-
-              {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(parties.partyFormData.role) && (() => {
-                const hasExistingClient = parties.parties.some(p => p.is_client);
-                return (
-                  <div className="form-group">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={parties.partyFormData.is_client}
-                        onChange={(e) => parties.setPartyFormData(prev => ({ ...prev, is_client: e.target.checked }))}
-                        disabled={hasExistingClient}
-                      />
-                      <span style={{ opacity: hasExistingClient ? 0.6 : 1 }}>
-                        É cliente do escritório neste processo
-                      </span>
-                    </label>
-                    {hasExistingClient && (
-                      <div className="field-hint" style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                        ⓘ Este processo já possui um cliente cadastrado
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              <div className="form-group">
-                <label>Observações</label>
-                <textarea
-                  value={parties.partyFormData.observacoes}
-                  onChange={(e) => parties.setPartyFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-                  rows="3"
-                  placeholder="Observações sobre a participação desta parte..."
-                />
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button 
-                className="btn btn-secondary"
-                onClick={parties.handleCloseAddPartyModal}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="btn btn-success"
-                onClick={handleSaveParty}
-              >
-                <UserPlus size={18} />
-                Adicionar ao Processo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {modalsNotif.showDeleteConfirmModal && (
-        <div className="modal-overlay" onClick={handleCancelDelete}>
-          <div className="modal-content modal-medium" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header" style={{ borderBottom: '2px solid #ef4444' }}>
-              <h2 style={{ color: '#7f1d1d', margin: 0 }}>🗑️ Deletar Processo</h2>
-              <button
-                className="modal-close"
-                onClick={handleCancelDelete}
-                style={{ color: '#ef4444' }}
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="modal-body" style={{ padding: '1.5rem' }}>
-              <p style={{ fontSize: '1rem', marginBottom: '1rem', color: '#374151' }}>
-                Tem certeza que deseja deletar este processo <strong>{caseCore.caseData?.numero_processo}</strong>?
-              </p>
-              
-              {caseCore.caseData?.publicacao_origem_id && (
-                <div style={{
-                  background: '#fef3c7',
-                  border: '1px solid #fcd34d',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  marginBottom: '1rem'
-                }}>
-                  <p style={{ margin: '0 0 0.75rem 0', fontWeight: 600, color: '#92400e' }}>
-                    ⚠️ Este processo está vinculado a uma publicação:
-                  </p>
-                  <p style={{ margin: 0, color: '#78350f', fontSize: '0.95rem' }}>
-                    <strong>{caseCore.caseData?.publicacao_origem_numero_processo}</strong> - {caseCore.caseData?.publicacao_origem_tipo}
-                  </p>
-                </div>
-              )}
-              
-              {caseCore.caseData?.publicacao_origem_id && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={modalsNotif.deletePublicationToo}
-                      onChange={(e) => modalsNotif.setDeletePublicationToo(e.target.checked)}
-                      style={{ marginTop: '0.25rem', cursor: 'pointer' }}
-                    />
-                    <span style={{ color: '#374151' }}>
-                      <strong>Deletar também a publicação de origem</strong>
-                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem', color: '#6b7280' }}>
-                        {modalsNotif.deletePublicationToo 
-                          ? '✓ A publicação será deletada do sistema e não poderá ser recuperada'
-                          : 'A publicação será desvinculada e retornará à lista "Publicações Não Vinculadas"'
-                        }
-                      </p>
-                    </span>
-                  </label>
-                </div>
-              )}
-              
-              <div style={{
-                background: '#f3f4f6',
-                padding: '0.75rem',
-                borderRadius: '6px',
-                fontSize: '0.9rem',
-                color: '#6b7280',
-                marginTop: '1rem'
-              }}>
-                ℹ️ Esta ação é irreversível. O processo será marcado como deletado por segurança.
-              </div>
-            </div>
-            
-            <div className="modal-footer" style={{ borderTop: '1px solid #e5e7eb' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={handleCancelDelete}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={handleConfirmDelete}
-                style={{ background: '#ef4444' }}
-              >
-                🗑️ Deletar Processo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast - Renderizado por último para ficar visualmente acima */}
-      {modalsNotif.toast && (
-        <Toast
-          isOpen={true}
-          message={modalsNotif.toast.message}
-          type={modalsNotif.toast.type}
-          autoCloseMs={modalsNotif.toast.duration || 3000}
-          onClose={() => modalsNotif.setToast(null)}
-        />
-      )}
+      <CaseDetailModals
+        modalsNotif={modalsNotif}
+        parties={parties}
+        caseData={caseCore.caseData}
+        onSelectContactForParty={handleSelectContactForParty}
+        onCreateNewContactForParty={handleCreateNewContactForParty}
+        onSavePartyChanges={handleSavePartyChanges}
+        onSaveParty={handleSaveParty}
+        onCancelDelete={handleCancelDelete}
+        onConfirmDelete={handleConfirmDelete}
+      />
     </div>
   );
 }

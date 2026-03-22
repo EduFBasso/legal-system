@@ -502,7 +502,6 @@
   transform: none;
 }
 
-.master-admin-contacts-readonly .btn-view,
 .master-admin-contacts-readonly .btn-link-case,
 .master-admin-contacts-readonly .btn-phone,
 .master-admin-contacts-readonly .btn-whatsapp {
@@ -633,6 +632,39 @@
 .master-admin-cases-status[data-status='ENCERRADO'] {
   background: #dbeafe;
   color: #1e40af;
+}
+
+.master-admin-cases-finance-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+  margin-right: 0.45rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
+}
+
+.master-admin-cases-finance-link:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.master-admin-cases-finance-link:active {
+  transform: translateY(0);
+}
+
+.master-admin-cases-finance-link:focus-visible {
+  outline: 2px solid rgba(30, 58, 95, 0.22);
+  outline-offset: 2px;
 }
 
 @media (max-width: 900px) {

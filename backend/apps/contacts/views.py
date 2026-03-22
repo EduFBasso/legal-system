@@ -142,6 +142,12 @@ class ContactViewSet(viewsets.ModelViewSet):
         Override do create para retornar ContactDetailSerializer.
         Garante que o frontend receba todos os campos calculados após CREATE.
         """
+        if is_master_user(request.user):
+            return Response(
+                {'detail': 'Usuário MASTER possui acesso somente leitura a contatos.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         # Valida e cria usando ContactCreateUpdateSerializer
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -161,6 +167,12 @@ class ContactViewSet(viewsets.ModelViewSet):
         Override do update para retornar ContactDetailSerializer.
         Garante que o frontend receba todos os campos calculados após UPDATE.
         """
+        if is_master_user(request.user):
+            return Response(
+                {'detail': 'Usuário MASTER possui acesso somente leitura a contatos.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         
@@ -172,6 +184,14 @@ class ContactViewSet(viewsets.ModelViewSet):
         # Retorna usando ContactDetailSerializer (com campos calculados)
         detail_serializer = ContactDetailSerializer(contact, context={'request': request})
         return Response(detail_serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            return Response(
+                {'detail': 'Usuário MASTER possui acesso somente leitura a contatos.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().destroy(request, *args, **kwargs)
     
     def perform_create(self, serializer):
         """
@@ -215,6 +235,12 @@ class ContactViewSet(viewsets.ModelViewSet):
         curl -X POST http://localhost:8000/api/contacts/1/upload-photo/ \
              -F "photo=@foto.jpg"
         """
+        if is_master_user(request.user):
+            return Response(
+                {'detail': 'Usuário MASTER possui acesso somente leitura a contatos.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         contact = self.get_object()
         
         if 'photo' not in request.FILES:
@@ -256,6 +282,12 @@ class ContactViewSet(viewsets.ModelViewSet):
         
         DELETE /api/contacts/{id}/remove-photo/
         """
+        if is_master_user(request.user):
+            return Response(
+                {'detail': 'Usuário MASTER possui acesso somente leitura a contatos.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         contact = self.get_object()
         
         if contact.photo:

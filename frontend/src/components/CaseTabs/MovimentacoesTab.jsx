@@ -28,6 +28,9 @@ function MovimentacoesTab({
   tasks = [],
   onRefreshTasks = () => {},
   onRefreshMovements = () => {},
+  onMentionProcess = null,
+  excludeCnj = null,
+  readOnly = false,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -72,6 +75,7 @@ function MovimentacoesTab({
 
   // ========== HANDLERS MOVIMENTAÇÃO ==========
   const handleOpenEditMovimentacao = (mov) => {
+    if (readOnly) return;
     setEditingMovimentacaoId(mov.id);
     setEditMovimentacaoForm({
       data: mov.data,
@@ -96,6 +100,7 @@ function MovimentacoesTab({
   };
 
   const handleSaveMovimentacao = async (movId) => {
+    if (readOnly) return;
     if (!editMovimentacaoForm.titulo.trim()) {
       alert('Título é obrigatório');
       return;
@@ -124,6 +129,7 @@ function MovimentacoesTab({
   };
 
   const handleOpenCreateMovimentacao = () => {
+    if (readOnly) return;
     if (!id) {
       alert('Salve o processo antes de adicionar movimentações.');
       return;
@@ -154,6 +160,7 @@ function MovimentacoesTab({
   };
 
   const handleSaveNewMovimentacao = async () => {
+    if (readOnly) return;
     if (!newMovimentacaoForm.titulo.trim()) {
       alert('Título é obrigatório');
       return;
@@ -184,6 +191,7 @@ function MovimentacoesTab({
 
   // ========== HANDLERS TAREFAS ==========
   const handleOpenAddTask = (movementId) => {
+    if (readOnly) return;
     setEditingTaskId(null);
     setAddingTaskForMovement(movementId);
     setNewTaskForm({
@@ -203,6 +211,7 @@ function MovimentacoesTab({
   };
 
   const handleSaveTask = async (movementId, formData = newTaskForm) => {
+    if (readOnly) return;
     if (!formData.titulo.trim()) {
       alert('Título da tarefa é obrigatório');
       return;
@@ -240,6 +249,7 @@ function MovimentacoesTab({
   };
 
   const handleOpenEditTask = (task) => {
+    if (readOnly) return;
     setAddingTaskForMovement(null);
     setEditingTaskId(task.id);
     setEditTaskForm({
@@ -259,6 +269,7 @@ function MovimentacoesTab({
   };
 
   const handleSaveEditedTask = async (taskId, formData = editTaskForm) => {
+    if (readOnly) return;
     if (!formData.titulo.trim()) {
       alert('Título da tarefa é obrigatório');
       return;
@@ -292,6 +303,7 @@ function MovimentacoesTab({
   };
 
   const handleToggleTaskStatus = async (task) => {
+    if (readOnly) return;
     try {
       const nextStatus = task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA';
       await caseTasksService.patchTask(task.id, { status: nextStatus });
@@ -359,6 +371,15 @@ function MovimentacoesTab({
     };
   }, [highlightedMovimentacaoId, filteredMovimentacoes]);
 
+  useEffect(() => {
+    if (!readOnly) return;
+
+    setEditingMovimentacaoId(null);
+    setCreatingMovimentacao(false);
+    setAddingTaskForMovement(null);
+    setEditingTaskId(null);
+  }, [readOnly]);
+
   // Highlight tarefa
   useEffect(() => {
     if (!highlightedTaskId) return;
@@ -395,7 +416,12 @@ function MovimentacoesTab({
           </div>
           {id && (
             <button
-              onClick={handleOpenCreateMovimentacao}
+              onClick={() => {
+                if (readOnly) return;
+                handleOpenCreateMovimentacao();
+              }}
+              disabled={readOnly}
+              aria-disabled={readOnly ? 'true' : undefined}
               style={{
                 background: '#166534',
                 color: 'white',
@@ -404,19 +430,22 @@ function MovimentacoesTab({
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '600',
-                cursor: 'pointer',
+                cursor: readOnly ? 'not-allowed' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                opacity: readOnly ? 0.6 : 1,
               }}
               onMouseEnter={(e) => {
+                if (readOnly) return;
                 e.target.style.background = '#15803d';
                 e.target.style.transform = 'translateY(-1px)';
                 e.target.style.boxShadow = '0 2px 8px rgba(22, 101, 52, 0.3)';
               }}
               onMouseLeave={(e) => {
+                if (readOnly) return;
                 e.target.style.background = '#166534';
                 e.target.style.transform = 'translateY(0)';
                 e.target.style.boxShadow = 'none';
@@ -478,6 +507,9 @@ function MovimentacoesTab({
                 onEditCancel={handleCancelEditMovimentacao}
                 onEditSave={() => handleSaveMovimentacao(mov.id)}
                 saving={savingMovimentacao}
+                onMentionProcess={onMentionProcess}
+                excludeCnj={excludeCnj}
+                readOnly={readOnly}
                 // Task props
                 tasks={tasks}
                 addingTaskForMovement={addingTaskForMovement}

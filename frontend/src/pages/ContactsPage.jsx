@@ -1,5 +1,5 @@
 // src/pages/ContactsPage.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -14,6 +14,7 @@ export default function ContactsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasRunSearchEffectRef = useRef(false);
   
   // Modal state
   const [selectedContactId, setSelectedContactId] = useState(null);
@@ -43,6 +44,14 @@ export default function ContactsPage() {
 
   // Search effect with debounce
   useEffect(() => {
+    // Evita disparar loadContacts 2x no mount:
+    // - 1x no useEffect de mount
+    // - 1x aqui (debounce) mesmo com searchTerm vazio
+    if (!hasRunSearchEffectRef.current) {
+      hasRunSearchEffectRef.current = true;
+      return;
+    }
+
     const timer = setTimeout(() => {
       loadContacts();
     }, 300); // Wait 300ms after user stops typing

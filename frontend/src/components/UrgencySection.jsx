@@ -36,6 +36,7 @@ export default function UrgencySection({
   formatDate,
   formatDaysRemaining,
   showBorder,
+  readOnly = false,
 }) {
   return (
     <div className={`urgency-section ${showBorder ? sectionClassName : ''}`}>
@@ -54,6 +55,7 @@ export default function UrgencySection({
             isToday={isToday}
             formatDate={formatDate}
             formatDaysRemaining={formatDaysRemaining}
+            readOnly={readOnly}
           />
         ))}
       </div>

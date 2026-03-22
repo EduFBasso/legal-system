@@ -105,7 +105,8 @@ describe('ContactsPage', () => {
   ];
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGetAll.mockReset();
+    mockNavigate.mockReset();
     mockGetAll.mockResolvedValue(mockContacts);
   });
 
@@ -116,6 +117,10 @@ describe('ContactsPage', () => {
   describe('Initial Rendering', () => {
     it('renders search input', async () => {
       renderWithRouter(<ContactsPage />);
+
+      await waitFor(() => {
+        expect(mockGetAll).toHaveBeenCalledTimes(1);
+      });
       
       const searchInput = screen.getByPlaceholderText(/Buscar por nome/i);
       expect(searchInput).toBeInTheDocument();
@@ -123,15 +128,23 @@ describe('ContactsPage', () => {
 
     it('renders new contact button', async () => {
       renderWithRouter(<ContactsPage />);
+
+      await waitFor(() => {
+        expect(mockGetAll).toHaveBeenCalledTimes(1);
+      });
       
       const newButton = screen.getByRole('button', { name: /Novo Contato/i });
       expect(newButton).toBeInTheDocument();
     });
 
-    it('shows loading state initially', () => {
+    it('shows loading state initially', async () => {
       renderWithRouter(<ContactsPage />);
       
       expect(screen.getByText(/Carregando contatos/i)).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(mockGetAll).toHaveBeenCalledTimes(1);
+      });
     });
 
     it('loads and displays contacts on mount', async () => {

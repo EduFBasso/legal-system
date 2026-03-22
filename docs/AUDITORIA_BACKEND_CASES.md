@@ -2,7 +2,7 @@
 
 **Data:** 04/03/2026  
 **Etapa:** Fase 1 - Auditoria Backend (Etapas 1.1, 1.2, 1.3)  
-**Status:** ✅ Concluída
+**Status:** ✅ Concluída (estrutura) — escopo reforçado em 22/03/2026
 
 ---
 
@@ -11,6 +11,7 @@
 O backend do sistema Cases está **bem estruturado** com modelos relacionados corretamente, serializers organizados, e ViewSets completos. Código bem documentado com validações robustas. Identificamos alguns pontos de melhoria para padronização e otimização futura.
 
 **Métricas:**
+
 - ✅ 7 modelos Django
 - ✅ 8 serializers DRF
 - ✅ 7 ViewSets com filtros
@@ -20,11 +21,43 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
 
 ---
 
+## Segurança: Escopo do Master (team_scope / team_member_id)
+
+O backend implementa um contrato de escopo para o perfil **MASTER**, suportando (via query params):
+
+- `team_scope=all`: amplia a listagem para a equipe.
+- `team_member_id=<id>`: restringe a listagem a um membro específico (apenas MASTER).
+
+Para usuários **não-MASTER**, `team_member_id` não amplia escopo (não pode “ver dados do outro”).
+
+**Helpers centrais:** `apps.accounts.scope` (`get_master_scope_user`, `apply_master_team_scope`, `apply_user_owned_or_shared`).
+
+**Endpoints de Cases com escopo aplicado em `get_queryset()`:**
+
+- `/api/cases/`
+- `/api/case-parties/`
+- `/api/case-movements/`
+- `/api/case-prazos/`
+- `/api/case-tasks/`
+- `/api/payments/` (observação: `team_scope=all` não inclui ownerless)
+- `/api/expenses/` (observação: `team_scope=all` não inclui ownerless)
+- `/api/case-documents/`
+
+**Testes de regressão (anti-vazamento) adicionados/atualizados:**
+
+- `CaseTaskScopeTests`
+- `MasterCaseScopeTests`
+- `PaymentExpenseScopeTests` (inclui `Payment` e `Expense`)
+- `CasePrazoScopeTests`
+
+---
+
 ## Etapa 1.1: Auditoria Models (models.py)
 
 ### Estrutura de Modelos
 
 #### 1. **Case** (Linhas 7-360)
+
 - **Propósito:** Núcleo central do sistema - representa processo judicial
 - **Campos principais:**
   - `numero_processo` (CNJ format com validação regex)
@@ -56,6 +89,7 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
   - `save()` - auto-preenche numero_processo_unformatted + sincroniza cliente_principal com CaseParty
 
 #### 2. **CaseParty** (Linhas 360-413)
+
 - **Propósito:** Tabela intermediária ManyToMany entre Case e Contact
 - **Campos principais:**
   - `case` (FK)
@@ -69,6 +103,7 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
   - ✅ Related names bem definidos (parties, case_roles)
 
 #### 3. **CaseMovement** (Linhas 413-551)
+
 - **Propósito:** Movimentações processuais (despachos, decisões, audiências)
 - **Campos principais:**
   - `case` (FK)
@@ -92,6 +127,7 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
   - Avaliar se CasePrazo é necessário ou se pode ser consolidado
 
 #### 4. **CasePrazo** (Linhas 551-635)
+
 - **Propósito:** Prazos processuais vinculados a movimentação (múltiplos prazos por movimentação)
 - **Campos principais:**
   - `movimentacao` (FK)
@@ -109,6 +145,7 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
   - Usa `URGENTISSIMO` (linha 632) - planejar padronização para `CRITICAL` (Phase 4)
 
 #### 5. **CaseTask** (Linhas 635-750)
+
 - **Propósito:** Tarefas operacionais vinculadas ao processo
 - **Campos principais:**
   - `case` (FK obrigatório)
@@ -134,12 +171,14 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
     - Tarefas independentes do caso (movimentacao=NULL)
 
 #### 6. **Payment** (Linhas ~750-800)
+
 - **Propósito:** Recebimentos de honorários do cliente
 - **Campos principais:**
   - `case` (FK)
   - `date`, `description`, `value` (DecimalField)
 
 #### 7. **Expense** (Linhas ~800-863)
+
 - **Propósito:** Despesas/custos do processo
 - **Campos principais:**
   - `case` (FK)
@@ -152,6 +191,7 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
 ### Estrutura de Serializers
 
 #### Resumo
+
 - ✅ 8 serializers bem organizados
 - ✅ Separação list vs detail para otimização (CaseListSerializer vs CaseDetailSerializer)
 - ✅ Nested serializers (CasePrazoSerializer dentro de CaseMovementSerializer)
@@ -159,6 +199,7 @@ O backend do sistema Cases está **bem estruturado** com modelos relacionados co
 - ✅ Validações customizadas
 
 #### 1. **CasePrazoSerializer** (Linhas 19-40)
+
 ```python
 fields = [
     'id', 'movimentacao', 'prazo_dias', 'data_limite', 'descricao', 'completed',
@@ -168,6 +209,7 @@ read_only_fields = ['id', 'data_limite', 'dias_restantes', 'status_urgencia', 'c
 ```
 
 #### 2. **CaseMovementSerializer** (Linhas 41-105)
+
 ```python
 fields = [
     'id', 'case', 'data', 'tipo', 'tipo_display', 'titulo', 'descricao',
@@ -181,6 +223,7 @@ fields = [
 - ✅ **Validação:** data não pode ser futura (linha 95-103)
 
 #### 3. **CaseTaskSerializer** (Linhas 106-150)
+
 ```python
 fields = [
     'id', 'case', 'case_numero', 'movimentacao', 'movimentacao_titulo',
@@ -199,6 +242,7 @@ fields = [
   - Campos `_display` aumentam payload desnecessariamente
 
 #### 4. **CasePartySerializer** (Linhas 151-180)
+
 ```python
 fields = [
     'id', 'case', 'contact', 'contact_name', 'contact_document',
@@ -210,17 +254,21 @@ fields = [
 - ✅ **Nested contact data:** Desnormaliza dados de Contact para evitar queries extras
 
 #### 5. **PaymentSerializer** (Linhas 181-197)
+
 - Simples, apenas campos básicos
 
 #### 6. **ExpenseSerializer** (Linhas 198-214)
+
 - Simples, apenas campos básicos
 
 #### 7. **CaseListSerializer** (Linhas 215-262)
+
 - **Propósito:** Versão leve para lista (sem nested serializers)
 - ✅ Campos essenciais: numero_processo, titulo, status, tribunal, cliente_nome
 - ✅ Properties úteis: dias_sem_movimentacao, esta_ativo
 
 #### 8. **CaseDetailSerializer** (Linhas 263-373)
+
 - **Propósito:** Versão completa para detalhes
 - ✅ Nested: `parties = CasePartySerializer(many=True, read_only=True)`
 - ✅ Campos financeiros incluídos
@@ -235,6 +283,7 @@ fields = [
 ### Estrutura de ViewSets
 
 #### Resumo
+
 - ✅ 7 ViewSets bem configurados
 - ✅ Todos usam ModelViewSet (padrão DRF)
 - ✅ Filtros completos (DjangoFilterBackend, SearchFilter, OrderingFilter)
@@ -242,10 +291,12 @@ fields = [
 - ✅ Soft delete implementado corretamente
 
 #### 1. **CaseViewSet** (Linhas 24-155)
+
 - **Queryset base:** `Case.objects.filter(deleted=False)`
 - **Serializers:** CaseListSerializer (list) vs CaseDetailSerializer (retrieve)
 
 **Filtros:**
+
 ```python
 filterset_fields = {
     'tribunal': ['exact', 'in'],
@@ -262,21 +313,23 @@ ordering_fields = ['data_distribuicao', 'data_ultima_movimentacao', 'data_encerr
 ```
 
 **Custom Actions:**
+
 - `@action(detail=True, methods=['post']) restore()` - Restaura soft-deleted case
 - `@action(detail=True, methods=['post']) update_status()` - Atualiza status automaticamente
 - `@action(detail=False, methods=['get']) stats()` - Estatísticas (total, by_status, by_tribunal)
 
 **Soft Delete:**
+
 ```python
 def perform_destroy(self, instance):
     # Parâmetro: delete_linked_publication (bool)
     # True: Soft-delete publicação vinculada também
     # False: Desvincula publicação (volta status PENDING)
-    
+
     # Renomeia numero_processo para liberar constraint UNIQUE
     timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
     instance.numero_processo = f"{instance.numero_processo}_deleted_{timestamp}"
-    
+
     instance.deleted = True
     instance.deleted_at = timezone.now()
     instance.save()
@@ -285,21 +338,25 @@ def perform_destroy(self, instance):
 - ✅ Implementação robusta: desvincula publicações, renomeia número para liberar unique constraint
 
 #### 2. **CasePartyViewSet** (Linhas 156-171)
+
 - Simples, apenas filtros básicos (case, contact, role)
 
 #### 3. **CaseMovementViewSet** (Linhas 172-208)
+
 - **Filtros:** case, tipo, origem, data, data_limite_prazo
-- **Search:** titulo, descricao, case__numero_processo
+- **Search:** titulo, descricao, case\_\_numero_processo
 - **get_queryset customizado:** Filtra por case_id do query param
 
 #### 4. **CasePrazoViewSet** (Linhas 209-248)
-- **Filtros:** movimentacao, movimentacao__case, data_limite, completed
-- **Search:** descricao, movimentacao__titulo, movimentacao__case__numero_processo
+
+- **Filtros:** movimentacao, movimentacao\_\_case, data_limite, completed
+- **Search:** descricao, movimentacao**titulo, movimentacao**case\_\_numero_processo
 - **get_queryset customizado:** Filtra por movimentacao_id ou case_id
 
 #### 5. **CaseTaskViewSet** (Linhas 249-287)
+
 - **Filtros:** case, movimentacao (exact, **isnull**), urgencia, status, data_vencimento
-- **Search:** titulo, descricao, case__numero_processo, movimentacao__titulo
+- **Search:** titulo, descricao, case**numero_processo, movimentacao**titulo
 - **get_queryset customizado:** Filtra por case_id ou movimentacao_id
 
 - **✅ KEY INSIGHT - 3 Tipos de Tarefas:**
@@ -309,9 +366,11 @@ def perform_destroy(self, instance):
     3. **Tarefa de Agenda** (modelo separado, feature/agenda) - ⏸️ **FUTURA**
 
 #### 6. **PaymentViewSet** (Linhas 288-316)
+
 - Simples: filtro por case e date
 
 #### 7. **ExpenseViewSet** (Linhas 317-344)
+
 - Simples: filtro por case e date
 
 ---
@@ -319,12 +378,14 @@ def perform_destroy(self, instance):
 ## Clarificações e Design Decisions (Feedback do Usuário)
 
 ### 1. ManyToMany Relationships (CaseParty)
+
 - **Aprendizado:** Relacionamento complexo mas necessário para flexibilidade
 - **Implementação:** CaseParty funciona como bridge table entre Case e Contact
 - **Valor:** Permite múltiplos roles (CLIENTE/AUTOR/REU/TESTEMUNHA/PERITO/TERCEIRO) por contato
 - **Status:** ✅ **BEM IMPLEMENTADO** - unique_together garante integridade
 
 ### 2. Backend-First Architecture
+
 - **Rationale:** Máxima lógica concentrada no backend permite:
   - Portabilidade para múltiplos clientes (web, mobile Swift, etc)
   - Consistência de validações entre plataformas
@@ -335,6 +396,7 @@ def perform_destroy(self, instance):
 - **Status:** ✅ **POR DESIGN** - mantém assim para flexibilidade
 
 ### 3. Integridade Referencial em Contacts
+
 - **Problema:** CPF, CNPJ, TEL não devem ser duplicados
 - **Status:** ⏸️ **REQUER UX FLOW IMPLEMENTATION**
 - **Sugestão:** Quando cliente tenta criar contact duplicado:
@@ -343,6 +405,7 @@ def perform_destroy(self, instance):
 - **Timing:** Implementar em próxima fase (Contact Management refactor)
 
 ### 4. Soft Delete - Deferred Decision
+
 - **Status:** ✅ **ADIADO PARA PHASE 4** (Estudo Integrado)
 - **Contexto:**
   - Sistema começará em **modo LOCAL**
@@ -355,16 +418,17 @@ def perform_destroy(self, instance):
 - **Timeline:** Final do projeto (após refatorações core)
 
 ### 5. Três Tipos de Tarefas (CaseTask Model)
+
 - **Status:** ✅ **ARQUITETURA JÁ SUPORTA**
 - **Clarificação:** "Tarefas soltas" foi nomenclatura de brainstorm - correto é "Tarefas vinculadas ao Processo"
 
 **Matriz de Implementação:**
 
-| Tipo | movimentacao FK | Status | Localização | Branch |
-|------|-----------------|--------|-------------|--------|
-| 1. Tarefa Vinculada a Movimentação | = ID | ✅ **IMPLEMENTADO** | MovimentacoesTab, DeadlinesPage | main |
-| 2. Tarefa Vinculada ao Processo | = NULL | ⏸️ **SERÁ IMPLEMENTAR** (Etapa 3.5) | TasksTab (refactor) | main |
-| 3. Tarefa de Agenda | Outro modelo (CaseAgendaTask) | ⏸️ **FUTURA** | feature/agenda | nova |
+| Tipo                               | movimentacao FK               | Status                              | Localização                     | Branch |
+| ---------------------------------- | ----------------------------- | ----------------------------------- | ------------------------------- | ------ |
+| 1. Tarefa Vinculada a Movimentação | = ID                          | ✅ **IMPLEMENTADO**                 | MovimentacoesTab, DeadlinesPage | main   |
+| 2. Tarefa Vinculada ao Processo    | = NULL                        | ⏸️ **SERÁ IMPLEMENTAR** (Etapa 3.5) | TasksTab (refactor)             | main   |
+| 3. Tarefa de Agenda                | Outro modelo (CaseAgendaTask) | ⏸️ **FUTURA**                       | feature/agenda                  | nova   |
 
 - **Etapa 3.5 (TasksTab Rebuild):** Implementará tipo 2 com:
   - Task criada diretamente no caso (sem movimento específico)
@@ -416,6 +480,7 @@ def perform_destroy(self, instance):
 ### ⚠️ Pontos de Melhoria (Para Fase 3 / Phase 4)
 
 #### 1. **Nomenclatura: URGENTISSIMO → CRITICAL**
+
 - **Localização:**
   - `CasePrazo.status_urgencia` (linha 632)
   - `CaseTask.urgencia` choices (linha 671)
@@ -424,6 +489,7 @@ def perform_destroy(self, instance):
 - **Justificativa:** Padrão internacional, melhor compatibilidade com código futuro
 
 #### 2. **Redundância: CaseMovement.prazo vs CasePrazo**
+
 - **Problema:** Dois modelos controlam prazos
   - CaseMovement: prazo + data_limite_prazo (campo único)
   - CasePrazo: prazo_dias + data_limite (múltiplos prazos por movimentação)
@@ -434,18 +500,21 @@ def perform_destroy(self, instance):
   - Se < 5% dos casos usam múltiplos prazos, considerar consolidação
   - Se > 5%, mantém separação por flexibilidade
 
-#### 3. **Serializers: Campos _display**
+#### 3. **Serializers: Campos \_display**
+
 - **Observação:** `urgencia_display`, `status_display`, `tipo_display` aumentam payload
 - **Status:** ✅ **POR DESIGN** - mantém para compatibilidade multi-cliente
 - **Justificativa:** Backend-first architecture (compatibilidade com múltiplos clientes/linguagens)
 - **Otimização futura:** Frontend pode calcular localmente se necessário reduzir bandwidth
 
 #### 4. **Soft delete apenas em Case**
+
 - **Status:** ✅ **DEFERRED para Phase 4** (Estudo Integrado de Backup)
 - **Contexto:** Projeto local-first, estudará backup com soft-delete performance
 - **Nota:** Outros modelos podem usar cascade delete se auditoria via FK suficiente
 
 #### 5. **Contact Integrity Flow (UX)**
+
 - **Status:** ⏸️ **REQUER IMPLEMENTAÇÃO em próxima iteração**
 - **Problema:** CPF, CNPJ, TEL duplicados sem validação UX
 - **Solução:** Dialog quando duplicate é detectado
@@ -454,6 +523,7 @@ def perform_destroy(self, instance):
 - **Impacto:** Reduz duplicação no banco + melhoria UX
 
 #### 6. **CaseTask: Settings como defaults**
+
 - **Status:** ✅ **LOW PRIORITY** (micro-otimização)
 - **Otimização possível:** Cache settings em class variable em vez de ler em todo save()
 - **Benefício:** Reduz leitura de configuração repetida
@@ -463,15 +533,15 @@ def perform_destroy(self, instance):
 
 ## Métricas de Qualidade
 
-| Métrica | Valor | Status |
-|---------|-------|--------|
-| **Models cobertura** | 7/7 modelos | ✅ 100% |
-| **Serializers cobertura** | 8/8 | ✅ 100% |
-| **ViewSets cobertura** | 7/7 | ✅ 100% |
-| **Validações** | 5 custom validators | ✅ Bom |
-| **Indexes** | 12 indexes otimizados | ✅ Bom |
-| **Soft delete** | 1/7 modelos | ⚠️ Parcial |
-| **Documentação** | Docstrings em 100% | ✅ Excelente |
+| Métrica                   | Valor                 | Status       |
+| ------------------------- | --------------------- | ------------ |
+| **Models cobertura**      | 7/7 modelos           | ✅ 100%      |
+| **Serializers cobertura** | 8/8                   | ✅ 100%      |
+| **ViewSets cobertura**    | 7/7                   | ✅ 100%      |
+| **Validações**            | 5 custom validators   | ✅ Bom       |
+| **Indexes**               | 12 indexes otimizados | ✅ Bom       |
+| **Soft delete**           | 1/7 modelos           | ⚠️ Parcial   |
+| **Documentação**          | Docstrings em 100%    | ✅ Excelente |
 
 ---
 
@@ -511,12 +581,14 @@ CaseTask - 3 Tipos Suportados:
 ✅ **Fase 1 Concluída:** Backend auditado e documentado
 
 **Roadmap Completo:**
+
 - ✅ **Fase 1:** Auditoria Backend (modelos, serializers, views)
 - ⏳ **Fase 2:** Auditoria Frontend (DeadlinesPage, CaseDetailPage, CSS)
 - ⏳ **Fase 3:** Refactor Execution (modularize TaskCard, consolidate CSS, rebuild TasksTab)
 - ⏳ **Phase 4:** Future Scope (URGENTISSIMO→CRITICAL, Google Calendar, Contact UX)
 
 **Validação de Testes:**
+
 - ✅ Existe test suite em `backend/apps/cases/tests.py` (793 linhas)
 - ✅ Cobertura: Models, APIs, soft delete
 - ✅ 20+ test methods covering critical functionality
@@ -532,4 +604,5 @@ git commit -m "docs: complete backend audit for Cases system (Phase 1)"
 ```
 
 **Próximo commit:**
+
 - Fase 2: Frontend audit document

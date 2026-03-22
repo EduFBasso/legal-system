@@ -27,6 +27,48 @@ function resolveApiBaseUrl() {
 const API_BASE_URL = resolveApiBaseUrl();
 const AUTH_STORAGE_KEY = 'legal_system_auth';
 
+function getWindowQueryParams() {
+  if (typeof window === 'undefined') {
+    return new URLSearchParams();
+  }
+
+  try {
+    return new URLSearchParams(window.location?.search || '');
+  } catch {
+    return new URLSearchParams();
+  }
+}
+
+function withScopedParams(endpoint) {
+  const windowParams = getWindowQueryParams();
+  const teamMemberId = windowParams.get('team_member_id');
+  const teamScope = windowParams.get('team_scope');
+
+  if (!teamMemberId && !teamScope) {
+    return endpoint;
+  }
+
+  const [pathPart, queryPart = ''] = String(endpoint || '').split('?');
+  const endpointParams = new URLSearchParams(queryPart);
+
+  if (teamMemberId && !endpointParams.has('team_member_id')) {
+    endpointParams.set('team_member_id', teamMemberId);
+  }
+
+  if (teamScope && !endpointParams.has('team_scope')) {
+    endpointParams.set('team_scope', teamScope);
+  }
+
+  const nextQuery = endpointParams.toString();
+  return nextQuery ? `${pathPart}?${nextQuery}` : pathPart;
+}
+
+function isReadOnlyWindow() {
+  const windowParams = getWindowQueryParams();
+  const flag = (windowParams.get('readonly') || '').trim().toLowerCase();
+  return flag === '1' || flag === 'true' || flag === 'yes';
+}
+
 export function getStoredAuth() {
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -74,7 +116,15 @@ export function getAuthToken() {
  * await apiFetch('/cases/123/', { method: 'DELETE' });
  */
 export async function apiFetch(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const method = String(options.method || 'GET').toUpperCase();
+  if (isReadOnlyWindow() && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const readOnlyError = new Error('Modo somente leitura: operação não permitida.');
+    readOnlyError.status = 403;
+    throw readOnlyError;
+  }
+
+  const scopedEndpoint = withScopedParams(endpoint);
+  const url = `${API_BASE_URL}${scopedEndpoint}`;
   const token = getAuthToken();
   const headers = {
     'Content-Type': 'application/json',

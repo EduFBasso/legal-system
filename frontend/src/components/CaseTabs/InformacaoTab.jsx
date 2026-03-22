@@ -13,10 +13,11 @@ import PartyRoleBadge from '../common/PartyRoleBadge';
  */
 function InformacaoTab({
   id,
-  formData = {},
+  formData: rawFormData = {},
   setFormData = () => {},
   isEditing = false,
   setIsEditing = () => {},
+  readOnly = false,
   saving = false,
   onSave = () => {},
   onCancel = () => {},
@@ -24,6 +25,7 @@ function InformacaoTab({
   setActiveSection = () => {},
   onOpenLatestMovimentacao = () => {},
   onOpenOrigemMovimentacao = null,
+  onOpenOrigemPublicacao = null,
   onAddPartyClick,
   parties = [],
   formatCurrency = (value) => {
@@ -38,6 +40,8 @@ function InformacaoTab({
   tipoAcaoOptions = [],
   onInputChange = () => {},
 }) {
+  const formData = rawFormData || {};
+
   const sanitizeHTML = (html) => {
     if (!html) return '';
     return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
@@ -45,7 +49,12 @@ function InformacaoTab({
 
   const hasPublicationOrigin = Boolean(formData.publicacao_origem && (formData.publicacao_origem_tipo || formData.publicacao_origem_data));
 
-  const handleOpenMovimentacoesFromOrigem = () => {
+  const handleOpenOrigemPublicationDetails = () => {
+    if (typeof onOpenOrigemPublicacao === 'function') {
+      onOpenOrigemPublicacao();
+      return;
+    }
+
     if (typeof onOpenOrigemMovimentacao === 'function') {
       onOpenOrigemMovimentacao();
       return;
@@ -133,7 +142,7 @@ function InformacaoTab({
                 {formData.owner_name}{formData.owner_oab ? ` ${formData.owner_oab}` : ''}
               </span>
             )}
-            {!isEditing && (
+            {!isEditing && !readOnly && (
               <>
                 <EditButton onClick={() => {
                   setActiveSection('info');
@@ -486,8 +495,8 @@ function InformacaoTab({
                       <button
                         type="button"
                         className="observacoes-origem-link"
-                        onClick={handleOpenMovimentacoesFromOrigem}
-                        title="Abrir aba Movimentações em nova janela"
+                        onClick={handleOpenOrigemPublicationDetails}
+                        title="Abrir detalhes da publicação de origem em nova janela"
                       >
                         🔗 Origem: {formData.publicacao_origem_tipo || 'Publicação'} • {formatDate(formData.publicacao_origem_data) || '-'}
                       </button>
@@ -519,7 +528,7 @@ function InformacaoTab({
         </div>
         
         {/* Botões de Ação - Modo Edição */}
-        {isEditing && (
+        {isEditing && !readOnly && (
           <div className="form-actions" style={{
             display: 'flex',
             gap: '1rem',
