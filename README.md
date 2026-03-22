@@ -38,7 +38,6 @@ legal-system/
 │   ├── apps/            # Domain apps (feature-based)
 │   │   └── contacts/    # ✅ Gestão de contatos (IMPLEMENTADO)
 │   ├── config/          # Settings, URLs, WSGI/ASGI
-│   ├── api/             # Serializers, viewsets (planejado)
 │   ├── services/        # Business logic e integrações
 │   └── storage/         # Upload de arquivos
 │
@@ -59,7 +58,6 @@ legal-system/
 │           └── masks.js # Input masks (CPF, CNPJ, Phone, CEP)
 │
 ├── docs/                # Documentação técnica
-├── data/                # Dados de desenvolvimento
 ├── tools/               # Scripts e utilitários
 │   └── pub_fetcher/     # Scraper de publicações TJSP
 └── infra/               # Scripts operacionais

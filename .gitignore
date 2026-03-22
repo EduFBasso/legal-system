@@ -61,7 +61,9 @@ data/*.db
 # === Dados sensíveis do escritório (nunca versionar) ===
 *.csv
 processos.csv
-NotificationsContext.backup.jsx
+
+# === Arquivos legados (arquivo local, não versionar por enquanto) ===
+files-legado/
 
 # === Documentação de Desenvolvimento (temporária) ===
 backend/info/
