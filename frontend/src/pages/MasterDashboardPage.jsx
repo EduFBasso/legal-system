@@ -68,14 +68,6 @@ function getTodayIsoDate() {
   return localDate.toISOString().slice(0, 10);
 }
 
-function formatCurrency(value) {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-  });
-}
-
 function sumValues(items, field) {
   if (!Array.isArray(items)) return 0;
   return items.reduce((acc, item) => {
@@ -97,8 +89,8 @@ export default function MasterDashboardPage() {
 
   const today = getTodayIsoDate();
   const [selectedLawyer, setSelectedLawyer] = useState('');
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState(today);
+  const [startDate, _setStartDate] = useState(today);
+  const [endDate, _setEndDate] = useState(today);
   const [activeKpi, setActiveKpi] = useState('contatos');
   const [contactsSearch, setContactsSearch] = useState('');
   const [contacts, setContacts] = useState([]);

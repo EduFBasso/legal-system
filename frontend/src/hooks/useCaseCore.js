@@ -24,7 +24,7 @@ export function useCaseCore(
   onCaseCreated,
   onCaseDeleted,
 ) {
-  const { settings } = useSettings();
+  const { settings: _settings } = useSettings();
 
   // Estado principal do caso
   const [caseData, setCaseData] = useState(null);

@@ -37,11 +37,6 @@ function loadSettingsForCurrentUser() {
   return getDefaultSettings();
 }
 
-function isAuthenticatedUser() {
-  const auth = safeJsonParse(localStorage.getItem(AUTH_STORAGE_KEY), null);
-  return Boolean(auth?.access && auth?.user);
-}
-
 export function SettingsProvider({ children }) {
   // Carrega configurações do localStorage ou usa padrões
   const [settings, setSettings] = useState(() => loadSettingsForCurrentUser());
