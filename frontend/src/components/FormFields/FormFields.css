@@ -123,6 +123,121 @@
   cursor: not-allowed;
 }
 
+/* Searchable + Creatable Select */
+.searchable-select {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.searchable-select-input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.searchable-select-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-left: 0;
+  background: var(--color-bg, #fff);
+  color: var(--color-text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 0;
+}
+
+.searchable-select-btn:hover {
+  background: var(--color-bg-secondary, #f3f4f6);
+}
+
+.searchable-select-btn.is-confirm {
+  color: var(--color-success, #10b981);
+}
+
+/* Confirm icon: slightly larger and thinner stroke for better legibility */
+.searchable-select-btn.is-confirm svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.6px;
+}
+
+/* Confirm text label: only shown in contexts that opt-in (ex.: Case Detail wrapper) */
+.searchable-select-confirm-label {
+  display: none;
+}
+
+.searchable-select-btn:disabled {
+  background: var(--color-bg-secondary, #f3f4f6);
+  cursor: not-allowed;
+}
+
+.searchable-select-btn:last-of-type {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.searchable-select:focus-within .searchable-select-input {
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.searchable-select:focus-within .searchable-select-btn {
+  border-color: var(--color-primary, #3b82f6);
+}
+
+.searchable-select-dropdown {
+  max-height: 240px;
+  overflow: auto;
+  background: var(--color-bg-section, #ffffff);
+  border: 1px solid var(--color-text, #222);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.searchable-select-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--color-text, #333);
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.searchable-select-item:hover {
+  background: var(--color-bg-secondary, #f3f4f6);
+}
+
+.searchable-select-item.is-active {
+  background: var(--color-border-focus, #3b82f6);
+  color: white;
+}
+
+.searchable-select-item.is-selected {
+  font-weight: 600;
+  background: var(--color-border-focus, #3b82f6);
+  color: white;
+}
+
+.searchable-select-item.is-active:hover,
+.searchable-select-item.is-selected:hover {
+  background: var(--color-border-focus, #3b82f6);
+  color: white;
+}
+
+.searchable-select-empty {
+  padding: 10px;
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 0.9rem;
+}
+
 /* TextArea Input */
 .textarea-input {
   resize: vertical;

@@ -59,7 +59,7 @@ export function useCaseCore(
     { value: 'ENCERRADO', label: 'Encerrado' },
   ];
 
-  const tipoAcaoOptions = [
+  const defaultTipoAcaoOptions = [
     { value: '', label: 'Selecione...' },
     { value: 'CIVEL', label: 'Cível' },
     { value: 'CRIMINAL', label: 'Criminal' },
@@ -69,6 +69,60 @@ export function useCaseCore(
     { value: 'CONSUMIDOR', label: 'Consumidor' },
     { value: 'OUTROS', label: 'Outros' },
   ];
+
+  const [tipoAcaoOptions, setTipoAcaoOptions] = useState(defaultTipoAcaoOptions);
+
+  const loadTipoAcaoOptions = useCallback(async () => {
+    try {
+      const options = await casesService.getTipoAcaoOptions();
+      if (Array.isArray(options) && options.length > 0) {
+        setTipoAcaoOptions(options);
+      }
+    } catch (error) {
+      // Fallback silencioso para defaults (ex: offline)
+      console.warn('Error loading tipo_acao options:', error);
+    }
+  }, []);
+
+  const createTipoAcaoOption = useCallback(async (label) => {
+    const created = await casesService.createTipoAcaoOption(label);
+    if (created && typeof created === 'object') {
+      setTipoAcaoOptions((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const exists = next.some((opt) => String(opt?.value) === String(created.value));
+        if (!exists) next.push(created);
+        return next;
+      });
+    }
+    return created;
+  }, []);
+
+  const updateTipoAcaoOption = useCallback(async (idToUpdate, label) => {
+    try {
+      const updated = await casesService.updateTipoAcaoOption(idToUpdate, label);
+      if (updated && typeof updated === 'object') {
+        setTipoAcaoOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const index = next.findIndex((opt) => Number(opt?.id) === Number(updated.id));
+          if (index >= 0) {
+            next[index] = { ...next[index], ...updated };
+            return next;
+          }
+          // Fallback: se não encontrou por id (opções antigas), tenta por value/label
+          const byValue = next.findIndex((opt) => String(opt?.value) === String(updated.value));
+          if (byValue >= 0) {
+            next[byValue] = { ...next[byValue], ...updated };
+            return next;
+          }
+          return [...next, updated];
+        });
+      }
+      return updated;
+    } catch (error) {
+      showToast?.(error?.message || 'Erro ao editar Tipo de Ação', 'error');
+      return null;
+    }
+  }, [showToast]);
 
   /**
    * Carregar dados do caso
@@ -95,6 +149,10 @@ export function useCaseCore(
   useEffect(() => {
     loadCaseData();
   }, [loadCaseData]);
+
+  useEffect(() => {
+    loadTipoAcaoOptions();
+  }, [loadTipoAcaoOptions]);
 
   /**
    * Pré-preenchimento via publicação
@@ -361,6 +419,8 @@ export function useCaseCore(
     tribunalOptions,
     statusOptions,
     tipoAcaoOptions,
+    createTipoAcaoOption,
+    updateTipoAcaoOption,
 
     // Funções
     handleInputChange,

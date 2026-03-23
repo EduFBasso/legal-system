@@ -1,3 +1,5 @@
+import unicodedata
+
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -419,6 +421,58 @@ class Case(models.Model):
                     'observacoes': 'Cliente principal (sincronizado automaticamente)'
                 }
             )
+
+
+class CaseTipoAcaoOption(models.Model):
+    """Opções compartilhadas (persistidas) para o campo `Case.tipo_acao`.
+
+    Permite cadastrar novos tipos/descrições (ex: "Ação De Cobrança") e
+    disponibilizar para todos os usuários na mesma instância.
+    """
+
+    label = models.CharField(max_length=100, help_text='Texto exibido na lista')
+    key = models.CharField(
+        max_length=140,
+        unique=True,
+        db_index=True,
+        help_text='Chave normalizada (sem acento, minúscula, espaços colapsados) para deduplicação',
+    )
+
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_tipo_acao_options',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Opção de Tipo de Ação'
+        verbose_name_plural = 'Opções de Tipo de Ação'
+        ordering = ['label']
+
+    @staticmethod
+    def normalize_key(value: str) -> str:
+        raw = str(value or '').strip()
+        if not raw:
+            return ''
+        nfd = unicodedata.normalize('NFD', raw)
+        no_marks = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+        collapsed = ' '.join(no_marks.split())
+        return collapsed.lower()
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.normalize_key(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
 
 
 class CaseParty(models.Model):

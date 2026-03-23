@@ -1,4 +1,4 @@
-import { SelectField, DateInputMasked, CurrencyInput } from '../FormFields';
+import { SelectField, SearchableCreatableSelectField, DateInputMasked, CurrencyInput } from '../FormFields';
 
 /**
  * EditableDetailField - Campo de detalhe que alterna entre visualização e edição inline
@@ -8,7 +8,7 @@ function EditableDetailField({
   label, 
   value, 
   isEditing, 
-  type = 'text', // 'text' | 'select' | 'date' | 'currency' | 'textarea'
+  type = 'text', // 'text' | 'select' | 'searchable-select' | 'date' | 'currency' | 'textarea'
   onChange,
   options = [], // Para selects
   placeholder = '',
@@ -16,6 +16,7 @@ function EditableDetailField({
   required = false,
   className = '',
   rows = 3, // Para textarea
+  selectProps = {},
 }) {
   return (
     <div className={`detail-item editable-field ${className}`} data-editing={isEditing}>
@@ -48,6 +49,19 @@ function EditableDetailField({
                 value={value}
                 onChange={onChange}
                 options={options}
+                {...selectProps}
+              />
+            </div>
+          )}
+
+          {type === 'searchable-select' && (
+            <div className="detail-select-wrapper">
+              <SearchableCreatableSelectField
+                value={value}
+                onChange={onChange}
+                options={options}
+                placeholder={placeholder || 'Pesquisar...'}
+                {...selectProps}
               />
             </div>
           )}
