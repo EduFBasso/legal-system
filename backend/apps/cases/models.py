@@ -660,6 +660,118 @@ class CaseParty(models.Model):
             case.sync_cliente_principal_from_parties(save=True)
 
 
+class CaseLink(models.Model):
+    """Vínculos flexíveis entre processos.
+
+    Complementa o atalho `Case.case_principal`.
+    Permite múltiplos vínculos por processo (apenso, recurso, incidente, etc.),
+    com tipo, observação e data.
+    """
+
+    from_case = models.ForeignKey(
+        'Case',
+        on_delete=models.CASCADE,
+        related_name='links_out',
+        help_text='Processo de origem do vínculo'
+    )
+
+    to_case = models.ForeignKey(
+        'Case',
+        on_delete=models.CASCADE,
+        related_name='links_in',
+        help_text='Processo de destino do vínculo'
+    )
+
+    link_type = models.CharField(
+        max_length=20,
+        choices=Case.VINCULO_TIPO_CHOICES,
+        help_text='Tipo do vínculo'
+    )
+
+    link_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text='Data do vínculo (quando aplicável)'
+    )
+
+    notes = models.TextField(
+        blank=True,
+        default='',
+        help_text='Observação/justificativa do vínculo'
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_case_links',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Vínculo entre Processos'
+        verbose_name_plural = 'Vínculos entre Processos'
+        ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(from_case=models.F('to_case')),
+                name='case_link_no_self_link',
+            ),
+            models.UniqueConstraint(
+                fields=['from_case', 'to_case', 'link_type'],
+                name='unique_case_link_per_type',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['from_case', 'to_case']),
+            models.Index(fields=['link_type']),
+        ]
+
+    def __str__(self):
+        return f"{self.from_case_id} -> {self.to_case_id} ({self.link_type})"
+
+    def clean(self):
+        super().clean()
+
+        if self.from_case_id and self.to_case_id and self.from_case_id == self.to_case_id:
+            raise ValidationError({'to_case': 'Um processo não pode ser vinculado a si mesmo.'})
+
+        # Regra de segurança/escopo: processos de owners diferentes não devem ser vinculados.
+        if self.from_case_id and self.to_case_id:
+            from_owner_id = getattr(self.from_case, 'owner_id', None)
+            to_owner_id = getattr(self.to_case, 'owner_id', None)
+            if from_owner_id != to_owner_id:
+                raise ValidationError({'to_case': 'Não é permitido vincular processos de responsáveis/escopos diferentes.'})
+
+        # Evitar ciclos no grafo de vínculos direcionados.
+        # Se já existe caminho to_case -> ... -> from_case, adicionar from_case -> to_case criaria ciclo.
+        if not self.from_case_id or not self.to_case_id:
+            return
+
+        from_id = self.from_case_id
+        target_id = from_id
+        frontier = {self.to_case_id}
+        visited = set()
+
+        # Exclui self em updates.
+        base_qs = CaseLink.objects.all()
+        if self.pk:
+            base_qs = base_qs.exclude(pk=self.pk)
+
+        while frontier:
+            if target_id in frontier:
+                raise ValidationError({'to_case': 'Vínculo inválido: criaria um ciclo entre processos.'})
+
+            visited |= frontier
+
+            next_ids = set(
+                base_qs.filter(from_case_id__in=frontier).values_list('to_case_id', flat=True)
+            )
+            frontier = next_ids - visited
+
+
 class CaseMovement(models.Model):
     """
     Movimentações processuais - despachos, decisões, audiências, publicações.

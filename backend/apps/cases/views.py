@@ -44,6 +44,7 @@ def _capitalize_words(text: str) -> str:
 from .models import (
     Case,
     CaseParty,
+    CaseLink,
     CaseMovement,
     CasePrazo,
     CaseTask,
@@ -58,6 +59,7 @@ from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
     CasePartySerializer,
+    CaseLinkSerializer,
     CaseMovementSerializer,
     CasePrazoSerializer,
     CaseTaskSerializer,
@@ -567,6 +569,86 @@ class CasePartyViewSet(viewsets.ModelViewSet):
                 return apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner')
             return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
         return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+
+
+class CaseLinkViewSet(viewsets.ModelViewSet):
+    """ViewSet para vínculos flexíveis entre processos (CaseLink)."""
+
+    queryset = CaseLink.objects.select_related('from_case', 'to_case').all().order_by('-created_at')
+    serializer_class = CaseLinkSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = {
+        'from_case': ['exact'],
+        'to_case': ['exact'],
+        'link_type': ['exact'],
+    }
+    ordering_fields = ['created_at', 'link_date']
+    ordering = ['-created_at']
+
+    def _allowed_cases_queryset(self):
+        """Retorna queryset de processos acessíveis no escopo atual."""
+        qs = Case.objects.filter(deleted=False)
+        user = self.request.user
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            return qs.filter(owner=scope_user)
+        if user.is_authenticated and is_master_user(user):
+            team_scope = self.request.query_params.get('team_scope')
+            if team_scope == 'all':
+                return apply_master_team_scope(qs, self.request, UserModel)
+            return apply_user_owned_or_shared(qs, user)
+        if user.is_authenticated and not is_master_user(user):
+            return apply_user_owned_or_shared(qs, user)
+        return qs
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return queryset
+
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            return queryset.filter(from_case__owner=scope_user)
+
+        if is_master_user(user):
+            team_scope = self.request.query_params.get('team_scope')
+            if team_scope == 'all':
+                return apply_master_team_scope(queryset, self.request, UserModel, owner_field='from_case__owner')
+            return apply_user_owned_or_shared(queryset, user, owner_field='from_case__owner')
+
+        return apply_user_owned_or_shared(queryset, user, owner_field='from_case__owner')
+
+    def perform_create(self, serializer):
+        allowed_cases = self._allowed_cases_queryset()
+        from_case = serializer.validated_data.get('from_case')
+        to_case = serializer.validated_data.get('to_case')
+
+        if from_case is None or to_case is None:
+            raise ValidationError({'detail': 'from_case e to_case são obrigatórios.'})
+
+        if not allowed_cases.filter(id=from_case.id).exists():
+            raise ValidationError({'from_case': 'Processo de origem inválido ou fora do seu escopo.'})
+        if not allowed_cases.filter(id=to_case.id).exists():
+            raise ValidationError({'to_case': 'Processo de destino inválido ou fora do seu escopo.'})
+
+        user = self.request.user
+        if getattr(user, 'is_authenticated', False):
+            serializer.save(created_by=user)
+        else:
+            serializer.save()
+
+    def perform_update(self, serializer):
+        allowed_cases = self._allowed_cases_queryset()
+        from_case = serializer.validated_data.get('from_case', getattr(serializer.instance, 'from_case', None))
+        to_case = serializer.validated_data.get('to_case', getattr(serializer.instance, 'to_case', None))
+
+        if from_case is not None and not allowed_cases.filter(id=from_case.id).exists():
+            raise ValidationError({'from_case': 'Processo de origem inválido ou fora do seu escopo.'})
+        if to_case is not None and not allowed_cases.filter(id=to_case.id).exists():
+            raise ValidationError({'to_case': 'Processo de destino inválido ou fora do seu escopo.'})
+
+        serializer.save()
 
 
 class CaseMovementViewSet(viewsets.ModelViewSet):

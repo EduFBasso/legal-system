@@ -2,7 +2,7 @@
 import unicodedata
 from datetime import date
 from rest_framework import serializers
-from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
+from .models import Case, CaseParty, CaseLink, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
 
 
 def normalize_text(text):
@@ -244,6 +244,47 @@ class CasePartySerializer(serializers.ModelSerializer):
         return data
 
 
+class CaseLinkSerializer(serializers.ModelSerializer):
+    """Serializer para vínculos flexíveis entre processos."""
+
+    link_type_display = serializers.CharField(source='get_link_type_display', read_only=True)
+    from_case_numero = serializers.CharField(source='from_case.numero_processo_formatted', read_only=True)
+    to_case_numero = serializers.CharField(source='to_case.numero_processo_formatted', read_only=True)
+
+    class Meta:
+        model = CaseLink
+        fields = [
+            'id',
+            'from_case',
+            'from_case_numero',
+            'to_case',
+            'to_case_numero',
+            'link_type',
+            'link_type_display',
+            'link_date',
+            'notes',
+            'created_by',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_by', 'created_at', 'from_case_numero', 'to_case_numero', 'link_type_display']
+
+    def validate(self, attrs):
+        instance = getattr(self, 'instance', None)
+
+        from_case = attrs.get('from_case', getattr(instance, 'from_case', None))
+        to_case = attrs.get('to_case', getattr(instance, 'to_case', None))
+        link_type = attrs.get('link_type', getattr(instance, 'link_type', None))
+
+        obj = instance if instance is not None else CaseLink(from_case=from_case, to_case=to_case, link_type=link_type)
+        obj.from_case = from_case
+        obj.to_case = to_case
+        obj.link_type = link_type
+        obj.link_date = attrs.get('link_date', getattr(instance, 'link_date', None))
+        obj.notes = attrs.get('notes', getattr(instance, 'notes', ''))
+        obj.clean()
+        return attrs
+
+
 class PaymentSerializer(serializers.ModelSerializer):
     """Serializer for Payment (Recebimentos)"""
     
@@ -439,6 +480,10 @@ class CaseDetailSerializer(serializers.ModelSerializer):
 
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
+
+    # Vínculos flexíveis (N:N) entre processos
+    links_out = CaseLinkSerializer(many=True, read_only=True)
+    links_in = CaseLinkSerializer(many=True, read_only=True)
     
     def get_ultima_movimentacao_resumo(self, obj):
         """
@@ -496,6 +541,8 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'owner_name',
             'owner_oab',
             'parties',
+            'links_out',
+            'links_in',
             'case_principal',
             'case_principal_numero',
             'vinculo_tipo',

@@ -10,7 +10,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import timedelta
 from apps.contacts.models import Contact
-from apps.cases.models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense
+from apps.cases.models import Case, CaseParty, CaseLink, CaseMovement, CasePrazo, CaseTask, Payment, Expense
 
 
 class CaseModelTest(TestCase):
@@ -220,13 +220,13 @@ class CaseModelTest(TestCase):
 
         with self.assertRaises(ValidationError):
             case_a.clean()
-    
+
     def test_str_representation(self):
         """Test string representation"""
         case = Case.objects.create(**self.case_data)
         expected = '0000001-23.2024.8.26.0100 - Ação de Cobrança'
         self.assertEqual(str(case), expected)
-    
+
     def test_str_representation_no_numero_processo(self):
         """Test string representation without numero_processo"""
         data = self.case_data.copy()
@@ -234,6 +234,37 @@ class CaseModelTest(TestCase):
         data['titulo'] = ''
         case = Case.objects.create(**data)
         self.assertEqual(str(case), '')
+
+
+class CaseLinkModelTest(TestCase):
+    def setUp(self):
+        self.case_a = Case.objects.create(
+            numero_processo='0000100-23.2024.8.26.0100',
+            titulo='A',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+        self.case_b = Case.objects.create(
+            numero_processo='0000101-23.2024.8.26.0100',
+            titulo='B',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+
+    def test_case_link_no_self_link(self):
+        link = CaseLink(from_case=self.case_a, to_case=self.case_a, link_type='DERIVADO')
+        with self.assertRaises(ValidationError):
+            link.clean()
+
+    def test_case_link_cycle_prevention(self):
+        CaseLink.objects.create(from_case=self.case_a, to_case=self.case_b, link_type='DERIVADO')
+        reverse = CaseLink(from_case=self.case_b, to_case=self.case_a, link_type='DERIVADO')
+        with self.assertRaises(ValidationError):
+            reverse.clean()
 
 
 class CasePartyModelTest(TestCase):
@@ -476,6 +507,72 @@ class CaseAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['case_principal'], self.case1.id)
         self.assertEqual(response.data['vinculo_tipo'], 'DERIVADO')
+
+    def test_create_case_link_ok(self):
+        from_case = Case.objects.create(
+            owner=self.user,
+            numero_processo='0000200-23.2024.8.26.0100',
+            titulo='Origem',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+        to_case = Case.objects.create(
+            owner=self.user,
+            numero_processo='0000201-23.2024.8.26.0100',
+            titulo='Destino',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+
+        payload = {
+            'from_case': from_case.id,
+            'to_case': to_case.id,
+            'link_type': 'APENSO',
+            'notes': 'Apenso para controle interno',
+        }
+        response = self.client.post('/api/case-links/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['from_case'], from_case.id)
+        self.assertEqual(response.data['to_case'], to_case.id)
+        self.assertEqual(response.data['link_type'], 'APENSO')
+
+    def test_create_case_link_blocks_cycle(self):
+        a = Case.objects.create(
+            owner=self.user,
+            numero_processo='0000202-23.2024.8.26.0100',
+            titulo='A',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+        b = Case.objects.create(
+            owner=self.user,
+            numero_processo='0000203-23.2024.8.26.0100',
+            titulo='B',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+        )
+
+        first = self.client.post(
+            '/api/case-links/',
+            {'from_case': a.id, 'to_case': b.id, 'link_type': 'DERIVADO'},
+            format='json',
+        )
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+
+        cycle = self.client.post(
+            '/api/case-links/',
+            {'from_case': b.id, 'to_case': a.id, 'link_type': 'DERIVADO'},
+            format='json',
+        )
+        self.assertEqual(cycle.status_code, status.HTTP_400_BAD_REQUEST)
     
     def test_create_case_invalid_cnj_format(self):
         """Test creating a case with invalid CNJ format"""
