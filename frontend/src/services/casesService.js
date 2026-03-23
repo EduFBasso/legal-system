@@ -173,6 +173,42 @@ const casesService = {
   },
 
   /**
+   * Get shared "Título" options (persisted + dynamic suggestions)
+   * @param {string} q - Optional query to reduce results
+   * @returns {Promise<Array<{id?:number,value:string,label:string,editable?:boolean}>>}
+   */
+  async getTituloOptions(q = '') {
+    const qs = String(q || '').trim();
+    const endpoint = qs ? `/cases/titulo-options/?q=${encodeURIComponent(qs)}` : '/cases/titulo-options/';
+    return await apiFetch(endpoint);
+  },
+
+  /**
+   * Create a new shared "Título" option
+   * @param {string} label
+   * @returns {Promise<{id:number, value: string, label: string, editable: boolean}>}
+   */
+  async createTituloOption(label) {
+    return await apiFetch('/cases/titulo-options/', {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Rename an existing shared "Título" option
+   * @param {number} id
+   * @param {string} label
+   * @returns {Promise<{id:number, value: string, label: string, editable: boolean}>}
+   */
+  async updateTituloOption(id, label) {
+    return await apiFetch(`/cases/titulo-options/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
    * Get case parties (contacts) for a specific case
    * @param {number} caseId - Case ID
    * @returns {Promise<Object>} Paginated case parties

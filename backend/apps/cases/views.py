@@ -40,7 +40,18 @@ def _capitalize_words(text: str) -> str:
         return ''
     return ' '.join(word[:1].upper() + word[1:].lower() for word in raw.split(' ') if word)
 
-from .models import Case, CaseParty, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument, CaseTipoAcaoOption
+from .models import (
+    Case,
+    CaseParty,
+    CaseMovement,
+    CasePrazo,
+    CaseTask,
+    Payment,
+    Expense,
+    CaseDocument,
+    CaseTipoAcaoOption,
+    CaseTituloOption,
+)
 from apps.publications.models import Publication
 from .serializers import (
     CaseListSerializer,
@@ -255,6 +266,115 @@ class CaseViewSet(viewsets.ModelViewSet):
             {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True},
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=False, methods=['get', 'post'], url_path='titulo-options')
+    def titulo_options(self, request):
+        """Lista e cadastra opções compartilhadas para `titulo`.
+
+        - GET: retorna opções persistidas + sugestões dinâmicas dos próprios Cases
+        - POST: cria (ou retorna existente) com dedup por label normalizada
+
+        Suporta `?q=` para reduzir resultados (útil quando a lista cresce).
+        """
+
+        query = _collapse_spaces(request.query_params.get('q') or '').strip()
+        normalized_q = _normalize(query)
+
+        if request.method.upper() == 'GET':
+            persisted_qs = CaseTituloOption.objects.filter(is_active=True)
+            if query:
+                persisted_qs = persisted_qs.filter(label__icontains=query)
+
+            persisted = [
+                {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True}
+                for opt in persisted_qs.order_by('label')[:200]
+            ]
+
+            # Sugestões dinâmicas: títulos já usados em processos.
+            cases_qs = Case.objects.filter(deleted=False).exclude(titulo__isnull=True).exclude(titulo='')
+            if query:
+                # Pré-filtro por icontains (rápido) e depois refina com normalize (sem acento).
+                cases_qs = cases_qs.filter(titulo__icontains=query)
+
+            raw_titles = list(cases_qs.values_list('titulo', flat=True).distinct()[:400])
+
+            dynamic = []
+            for title in raw_titles:
+                cleaned = _collapse_spaces(title).strip()
+                if not cleaned:
+                    continue
+                if normalized_q and normalized_q not in _normalize(cleaned):
+                    continue
+                dynamic.append({'value': cleaned, 'label': cleaned, 'editable': False})
+
+            # Dedup por label normalizada; persistidas têm prioridade.
+            seen = set()
+            merged = []
+            for opt in persisted + dynamic:
+                key = _collapse_spaces(_normalize(opt.get('label')))
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                merged.append(opt)
+
+            return Response(merged[:250])
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        label = _collapse_spaces(raw_label).strip()
+        if not label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        key = _collapse_spaces(_normalize(label))
+
+        existing = CaseTituloOption.objects.filter(key=key).first()
+        if existing:
+            return Response({'id': existing.id, 'value': existing.label, 'label': existing.label, 'editable': True}, status=status.HTTP_200_OK)
+
+        try:
+            created = CaseTituloOption.objects.create(
+                label=label,
+                key=key,
+                created_by=request.user if getattr(request.user, 'is_authenticated', False) else None,
+            )
+        except IntegrityError:
+            created = CaseTituloOption.objects.filter(key=key).first()
+
+        if not created:
+            return Response({'error': 'Falha ao criar opção'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'id': created.id, 'value': created.label, 'label': created.label, 'editable': True}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['patch'], url_path='titulo-options/(?P<option_id>\\d+)')
+    def update_titulo_option(self, request, option_id=None):
+        """Edita (rename) uma opção persistida de `titulo` e ajusta Cases existentes."""
+        try:
+            option_id_int = int(option_id)
+        except (TypeError, ValueError):
+            return Response({'error': 'ID inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        opt = CaseTituloOption.objects.filter(id=option_id_int, is_active=True).first()
+        if not opt:
+            return Response({'error': 'Opção não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        new_label = _collapse_spaces(raw_label).strip()
+        if not new_label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_key = _collapse_spaces(_normalize(new_label))
+        collision = CaseTituloOption.objects.filter(key=new_key).exclude(id=opt.id).first()
+        if collision:
+            return Response({'error': 'Já existe uma opção com este nome.'}, status=status.HTTP_409_CONFLICT)
+
+        old_label = opt.label
+        opt.label = new_label
+        opt.key = new_key
+        opt.save(update_fields=['label', 'key', 'updated_at'])
+
+        if old_label and old_label != new_label:
+            Case.objects.filter(titulo=old_label).update(titulo=new_label)
+
+        return Response({'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True}, status=status.HTTP_200_OK)
 
     def filter_queryset(self, queryset):
         """

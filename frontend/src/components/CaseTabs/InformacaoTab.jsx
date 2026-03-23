@@ -3,6 +3,7 @@ import { Edit2, Save, X, Trash2, UserPlus, Plus } from 'lucide-react';
 import { formatDate, maskNumeroProcesso } from '../../utils/formatters';
 import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
+import SearchableCreatableSelectField from '../FormFields/SearchableCreatableSelectField';
 import EditableDetailField from '../EditableDetailField';
 import { SaveButton, CancelButton, DeleteButton, EditButton } from '../common/Button';
 import PartyRoleBadge from '../common/PartyRoleBadge';
@@ -40,6 +41,9 @@ function InformacaoTab({
   tipoAcaoOptions = [],
   onCreateTipoAcaoOption = null,
   onEditTipoAcaoOption = null,
+  tituloOptions = [],
+  onCreateTituloOption = null,
+  onEditTituloOption = null,
   onInputChange = () => {},
 }) {
   const formData = rawFormData || {};
@@ -226,13 +230,18 @@ function InformacaoTab({
                   ) : (
                     <>
                       <span className="detail-label">TÍTULO</span>
-                      <input
-                        type="text"
-                        value={formData.titulo || ''}
-                        onChange={(e) => handleInputChange('titulo', e.target.value)}
-                        placeholder="Ex: Ação de Cobrança"
-                        className="detail-input detail-input-medium"
-                      />
+                      <div className="detail-select-wrapper">
+                        <SearchableCreatableSelectField
+                          value={formData.titulo || ''}
+                          onChange={(v) => handleInputChange('titulo', v)}
+                          options={tituloOptions}
+                          placeholder="Pesquisar ou digitar..."
+                          allowCreate={true}
+                          onCreateOption={onCreateTituloOption || null}
+                          onEditOption={onEditTituloOption || null}
+                          reduceListOnQuery={true}
+                        />
+                      </div>
                     </>
                   )}
                 </div>
