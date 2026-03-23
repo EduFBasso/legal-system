@@ -77,6 +77,8 @@ export default function CaseDetailTabContent({
           tribunalOptions={caseCore.tribunalOptions}
           statusOptions={caseCore.statusOptions}
           tipoAcaoOptions={caseCore.tipoAcaoOptions}
+          onCreateTipoAcaoOption={caseCore.createTipoAcaoOption}
+          onEditTipoAcaoOption={caseCore.updateTipoAcaoOption}
           onInputChange={caseCore.handleInputChange}
           readOnly={isReadOnly}
         />

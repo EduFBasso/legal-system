@@ -140,6 +140,39 @@ const casesService = {
   },
 
   /**
+   * Get shared "Tipo de Ação" options (dynamic + defaults)
+   * @returns {Promise<Array<{value: string, label: string}>>}
+   */
+  async getTipoAcaoOptions() {
+    return await apiFetch('/cases/tipo-acao-options/');
+  },
+
+  /**
+   * Create a new shared "Tipo de Ação" option
+   * @param {string} label
+   * @returns {Promise<{value: string, label: string}>}
+   */
+  async createTipoAcaoOption(label) {
+    return await apiFetch('/cases/tipo-acao-options/', {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Rename an existing shared "Tipo de Ação" option
+   * @param {number} id
+   * @param {string} label
+   * @returns {Promise<{id:number, value:string, label:string, editable:boolean}>}
+   */
+  async updateTipoAcaoOption(id, label) {
+    return await apiFetch(`/cases/tipo-acao-options/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
    * Get case parties (contacts) for a specific case
    * @param {number} caseId - Case ID
    * @returns {Promise<Object>} Paginated case parties

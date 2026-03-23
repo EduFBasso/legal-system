@@ -19,9 +19,12 @@
  * />
  */
 
+import { useEffect, useRef } from 'react';
+
 import FormField from './FormField';
 import FormMaskedField from './FormMaskedField';
-import { maskCEP } from '../../utils/masks';
+import { maskCEP, unmask } from '../../utils/masks';
+import { lookupCep } from '../../services/cepService';
 import './AddressFieldGroup.css';
 
 /**
@@ -56,11 +59,62 @@ export default function AddressFieldGroup({
     city = '',
     state = '',
   } = address;
+
+  const lastLookupCepRef = useRef('');
+  const abortRef = useRef(null);
   
   // Helper: só renderiza campo se estiver em modo edit OU showEmptyFields=true OU tiver valor
   const shouldShowField = (value) => {
     return !readOnly || showEmptyFields || (value && value.trim() !== '');
   };
+
+  useEffect(() => {
+    if (readOnly) return;
+    if (typeof onChange !== 'function') return;
+
+    const cepDigits = unmask(zip_code || '');
+    if (cepDigits.length !== 8) {
+      lastLookupCepRef.current = '';
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+      return;
+    }
+
+    if (lastLookupCepRef.current === cepDigits) return;
+    lastLookupCepRef.current = cepDigits;
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    (async () => {
+      const data = await lookupCep(cepDigits, { signal: controller.signal });
+      if (!data) return;
+
+      // ViaCEP fields: logradouro, bairro, localidade, uf
+      if (typeof data.logradouro === 'string' && data.logradouro.trim()) {
+        onChange('address_line1', data.logradouro);
+      }
+      if (typeof data.bairro === 'string' && data.bairro.trim()) {
+        onChange('neighborhood', data.bairro);
+      }
+      if (typeof data.localidade === 'string' && data.localidade.trim()) {
+        onChange('city', data.localidade);
+      }
+      if (typeof data.uf === 'string' && data.uf.trim()) {
+        onChange('state', data.uf);
+      }
+    })();
+
+    return () => {
+      controller.abort();
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
+    };
+  }, [zip_code, readOnly, onChange]);
 
   return (
     <div className={`address-field-group ${className}`}>

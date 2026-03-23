@@ -38,9 +38,34 @@ function InformacaoTab({
   tribunalOptions = [],
   statusOptions = [],
   tipoAcaoOptions = [],
+  onCreateTipoAcaoOption = null,
+  onEditTipoAcaoOption = null,
   onInputChange = () => {},
 }) {
   const formData = rawFormData || {};
+
+  const normalizeBadgeKey = (value) => {
+    if (!value) return '';
+    return String(value)
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  };
+
+  const getTipoAcaoBadgeVariant = (tipoAcaoValue) => {
+    const normalized = normalizeBadgeKey(tipoAcaoValue);
+    const variants = new Set([
+      'consumidor',
+      'civel',
+      'criminal',
+      'trabalhista',
+      'tributaria',
+      'familia',
+      'outros',
+    ]);
+    return variants.has(normalized) ? normalized : 'custom';
+  };
 
   const sanitizeHTML = (html) => {
     if (!html) return '';
@@ -177,7 +202,9 @@ function InformacaoTab({
                   ) : (
                     <>
                       <span className="detail-label">
-                        PROCESSO Nº <span style={{color: '#ef4444'}}>*</span>
+                        <span style={{ whiteSpace: 'nowrap' }}>
+                          PROCESSO Nº <span style={{ color: '#ef4444' }}>*</span>
+                        </span>
                       </span>
                       <input
                         type="text"
@@ -211,9 +238,36 @@ function InformacaoTab({
                 </div>
               </div>
               
-              {/* Tribunal, Status, Tipo - apenas no modo edição para evitar duplicidade */}
+              {/* Tipo, Status, Tribunal - apenas no modo edição para evitar duplicidade */}
               {isEditing && (
                 <div className="detail-grid-3">
+                  <EditableDetailField
+                    label="Tipo de Ação"
+                    value={formData.tipo_acao}
+                    isEditing={isEditing}
+                    type="searchable-select"
+                    options={tipoAcaoOptions}
+                    onChange={(value) => handleInputChange('tipo_acao', value)}
+                    formatDisplay={(v) => formData.tipo_acao_display || v}
+                    placeholder="Selecione..."
+                    selectProps={{
+                      allowCreate: true,
+                      onCreateOption: onCreateTipoAcaoOption || null,
+                      onEditOption: onEditTipoAcaoOption || null,
+                      placeholder: 'Pesquisar ou cadastrar...'
+                    }}
+                  />
+
+                  <EditableDetailField
+                    label="Status"
+                    value={formData.status || 'ATIVO'}
+                    isEditing={isEditing}
+                    type="select"
+                    options={statusOptions}
+                    onChange={(value) => handleInputChange('status', value)}
+                    formatDisplay={(v) => formData.status_display || v}
+                  />
+
                   <EditableDetailField
                     label="Tribunal"
                     value={formData.tribunal}
@@ -224,27 +278,7 @@ function InformacaoTab({
                     formatDisplay={(v) => formData.tribunal_display || v}
                     placeholder="Selecione..."
                     required={true}
-                  />
-                  
-                  <EditableDetailField
-                    label="Status"
-                    value={formData.status || 'ATIVO'}
-                    isEditing={isEditing}
-                    type="select"
-                    options={statusOptions}
-                    onChange={(value) => handleInputChange('status', value)}
-                    formatDisplay={(v) => formData.status_display || v}
-                  />
-                  
-                  <EditableDetailField
-                    label="Tipo de Ação"
-                    value={formData.tipo_acao}
-                    isEditing={isEditing}
-                    type="select"
-                    options={tipoAcaoOptions}
-                    onChange={(value) => handleInputChange('tipo_acao', value)}
-                    formatDisplay={(v) => formData.tipo_acao_display || v}
-                    placeholder="Selecione..."
+                    selectProps={{ placeholder: 'Selecione...' }}
                   />
                 </div>
               )}
@@ -255,7 +289,7 @@ function InformacaoTab({
                   {formData.tipo_acao && (
                     <div className="detail-badge-item">
                       <span className="detail-label-small">Tipo</span>
-                      <span className={`process-tipo-badge tipo-${formData.tipo_acao.toLowerCase()}`}>
+                      <span className={`process-tipo-badge tipo-${getTipoAcaoBadgeVariant(formData.tipo_acao)}`}>
                         {formData.tipo_acao_display || formData.tipo_acao}
                       </span>
                     </div>

@@ -413,6 +413,8 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     tribunal_display = serializers.CharField(source='get_tribunal_display', read_only=True)
     tipo_acao_display = serializers.CharField(source='get_tipo_acao_display', read_only=True)
+    # Allow saving custom case types (outside Django choices) while keeping display mapping for known ones.
+    tipo_acao = serializers.CharField(required=False, allow_blank=True)
     cliente_nome = serializers.CharField(source='cliente_principal.name', read_only=True)
     cliente_document = serializers.CharField(source='cliente_principal.document_number', read_only=True)
     cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
