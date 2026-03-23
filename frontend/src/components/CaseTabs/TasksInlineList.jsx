@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { calculateUrgency } from '../../utils/movementUtils';
 import { formatDaysRemaining } from '../../utils/taskUrgency';
+import { htmlToText } from '../../utils/htmlToText';
 import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
 import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle, getButtonHoverHandlers } from './caseTheme';
@@ -133,12 +134,12 @@ export default function TasksInlineList({
 
                   <div style={{ flex: 1 }}>
                     <div style={{ ...tasksInlineStyles.taskTitle, color: isDone ? '#9ca3af' : taskToneColor }}>
-                      {task.titulo}
+                      {htmlToText(task.titulo)}
                     </div>
 
                     {task.descricao && (
                       <div style={{ ...tasksInlineStyles.taskDescription, color: isDone ? '#9ca3af' : taskToneColor }}>
-                        {task.descricao}
+                        {htmlToText(task.descricao)}
                       </div>
                     )}
 

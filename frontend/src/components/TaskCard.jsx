@@ -1,4 +1,5 @@
 import React from 'react';
+import { htmlToText } from '../utils/htmlToText';
 import './TaskCard.css';
 
 /**
@@ -35,6 +36,10 @@ export default function TaskCard({
   
   // Normaliza urgency para lowercase (CSS classes são minúsculas)
   const urgencyClass = urgency.toLowerCase();
+
+  const titleText = htmlToText(task.titulo);
+  const descriptionText = htmlToText(task.descricao);
+  const movementTitleText = htmlToText(task.movimentacao_titulo);
 
   const handleSelectClick = () => {
     onSelectTask(isSelected ? null : task.id);
@@ -73,8 +78,8 @@ export default function TaskCard({
       </div>
 
       <div className="task-main" onClick={handleSelectClick}>
-        <div className="task-title">{task.titulo}</div>
-        {task.descricao && <div className="task-description">{task.descricao}</div>}
+        <div className="task-title">{titleText}</div>
+        {descriptionText && <div className="task-description">{descriptionText}</div>}
 
         <div className="task-process-meta">
           <a
@@ -94,7 +99,7 @@ export default function TaskCard({
                 style={{ cursor: readOnly ? 'default' : 'pointer', pointerEvents: readOnly ? 'none' : 'auto' }}
                 aria-disabled={readOnly}
               >
-                📋 {task.movimentacao_titulo}
+                📋 {movementTitleText}
               </a>
             </>
           )}
