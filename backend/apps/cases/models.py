@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.conf import settings
 
 
@@ -91,6 +92,33 @@ class Case(models.Model):
         through='CaseParty',
         related_name='cases',
         help_text='Clientes/partes envolvidas no processo'
+    )
+
+    # ========== VÍNCULO (PROCESSO PRINCIPAL / DERIVADO) ==========
+    VINCULO_TIPO_CHOICES = [
+        ('DERIVADO', 'Derivado'),
+        ('APENSO', 'Apenso'),
+        ('INCIDENTE', 'Incidente'),
+        ('CUMPRIMENTO', 'Cumprimento de Sentença'),
+        ('RECURSO', 'Recurso'),
+        ('OUTRO', 'Outro'),
+    ]
+
+    case_principal = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cases_derivados',
+        help_text='Se preenchido, indica que este processo é derivado e aponta para o processo principal.'
+    )
+
+    vinculo_tipo = models.CharField(
+        max_length=20,
+        choices=VINCULO_TIPO_CHOICES,
+        blank=True,
+        default='',
+        help_text='Tipo do vínculo com o processo principal (somente quando case_principal está preenchido).'
     )
 
     # ========== STATUS ==========
@@ -403,10 +431,44 @@ class Case(models.Model):
             return f"{self.numero_processo} - {self.titulo}"
         return self.numero_processo
 
+    def clean(self):
+        super().clean()
+
+        if self.case_principal_id is None:
+            # Processo principal: não deve carregar tipo de vínculo.
+            if self.vinculo_tipo:
+                raise ValidationError({'vinculo_tipo': 'vinculo_tipo só pode ser preenchido quando case_principal estiver definido.'})
+            return
+
+        # Processo derivado.
+        if self.pk and self.case_principal_id == self.pk:
+            raise ValidationError({'case_principal': 'Um processo não pode ser principal de si mesmo.'})
+
+        if not self.vinculo_tipo:
+            raise ValidationError({'vinculo_tipo': 'vinculo_tipo é obrigatório quando case_principal estiver definido.'})
+
+        # Evitar ciclos (A -> B -> ... -> A)
+        cursor = self.case_principal
+        visited = set()
+        while cursor is not None:
+            if cursor.pk is None:
+                break
+            if cursor.pk in visited:
+                # Cycle already present in DB (defensive).
+                break
+            visited.add(cursor.pk)
+            if self.pk and cursor.pk == self.pk:
+                raise ValidationError({'case_principal': 'Vínculo inválido: criaria um ciclo de processos.'})
+            cursor = cursor.case_principal
+
     def save(self, *args, **kwargs):
         # Auto-preencher numero_processo_unformatted
         if self.numero_processo:
             self.numero_processo_unformatted = ''.join(filter(str.isdigit, self.numero_processo))
+
+        # Normalização do vínculo: se não houver principal, zera vinculo_tipo.
+        if not self.case_principal_id and self.vinculo_tipo:
+            self.vinculo_tipo = ''
         
         super().save(*args, **kwargs)
         

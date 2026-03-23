@@ -5,6 +5,7 @@ import unicodedata
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count, Prefetch
@@ -118,6 +119,7 @@ class CaseViewSet(viewsets.ModelViewSet):
         'status': ['exact'],
         'auto_status': ['exact'],
         'cliente_principal': ['exact'],
+        'case_principal': ['exact'],
         'data_distribuicao': ['gte', 'lte', 'exact'],
         'data_ultima_movimentacao': ['gte', 'lte', 'exact'],
     }
@@ -422,11 +424,24 @@ class CaseViewSet(viewsets.ModelViewSet):
         return queryset.filter(q).distinct()
 
     def perform_create(self, serializer):
+        case_principal = serializer.validated_data.get('case_principal')
+        if case_principal is not None:
+            # Bloqueia vínculo para processos fora do escopo do usuário.
+            if not self.get_queryset().filter(id=case_principal.id).exists():
+                raise ValidationError({'case_principal': 'Processo principal inválido ou fora do seu escopo.'})
+
         user = self.request.user
         if user.is_authenticated:
             serializer.save(owner=user)
         else:
             serializer.save()
+
+    def perform_update(self, serializer):
+        case_principal = serializer.validated_data.get('case_principal', None)
+        if case_principal is not None:
+            if not self.get_queryset().filter(id=case_principal.id).exists():
+                raise ValidationError({'case_principal': 'Processo principal inválido ou fora do seu escopo.'})
+        serializer.save()
 
     def get_serializer_class(self):
         """Use different serializers for list and detail views"""

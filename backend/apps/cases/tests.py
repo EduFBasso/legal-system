@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import timedelta
@@ -157,6 +158,68 @@ class CaseModelTest(TestCase):
         case.save()
         case.refresh_from_db()
         self.assertEqual(case.payment_terms, '3 parcelas mensais de R$ 5.000,00')
+
+    def test_case_principal_derivado_valid(self):
+        """Processo pode apontar para um principal com vinculo_tipo."""
+        principal = Case.objects.create(**self.case_data)
+
+        derived = Case.objects.create(
+            numero_processo='0000009-23.2024.8.26.0100',
+            titulo='Derivado',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=10),
+            case_principal=principal,
+            vinculo_tipo='DERIVADO',
+        )
+
+        self.assertEqual(derived.case_principal_id, principal.id)
+        self.assertEqual(derived.vinculo_tipo, 'DERIVADO')
+
+    def test_case_principal_requires_vinculo_tipo(self):
+        principal = Case.objects.create(**self.case_data)
+
+        derived = Case(
+            numero_processo='0000010-23.2024.8.26.0100',
+            titulo='Derivado',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=10),
+            case_principal=principal,
+            vinculo_tipo='',
+        )
+
+        with self.assertRaises(ValidationError):
+            derived.clean()
+
+    def test_case_principal_cannot_be_self(self):
+        case = Case.objects.create(**self.case_data)
+        case.case_principal = case
+        case.vinculo_tipo = 'DERIVADO'
+
+        with self.assertRaises(ValidationError):
+            case.clean()
+
+    def test_case_principal_cannot_create_cycle(self):
+        case_a = Case.objects.create(**self.case_data)
+        case_b = Case.objects.create(
+            numero_processo='0000011-23.2024.8.26.0100',
+            titulo='B',
+            tribunal='TJSP',
+            comarca='São Paulo',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=5),
+            case_principal=case_a,
+            vinculo_tipo='DERIVADO',
+        )
+
+        case_a.case_principal = case_b
+        case_a.vinculo_tipo = 'DERIVADO'
+
+        with self.assertRaises(ValidationError):
+            case_a.clean()
     
     def test_str_representation(self):
         """Test string representation"""
@@ -383,6 +446,36 @@ class CaseAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Case.objects.count(), 3)
         self.assertEqual(response.data['titulo'], 'Novo Caso')
+
+    def test_create_case_derivado_requires_vinculo_tipo(self):
+        data = {
+            'numero_processo': '0000012-23.2024.8.26.0100',
+            'titulo': 'Caso Derivado Sem Tipo',
+            'tribunal': 'TJSP',
+            'comarca': 'São Paulo',
+            'status': 'ATIVO',
+            'data_distribuicao': timezone.now().date().isoformat(),
+            'case_principal': self.case1.id,
+        }
+        response = self.client.post('/api/cases/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('vinculo_tipo', response.data)
+
+    def test_create_case_derivado_ok(self):
+        data = {
+            'numero_processo': '0000013-23.2024.8.26.0100',
+            'titulo': 'Caso Derivado',
+            'tribunal': 'TJSP',
+            'comarca': 'São Paulo',
+            'status': 'ATIVO',
+            'data_distribuicao': timezone.now().date().isoformat(),
+            'case_principal': self.case1.id,
+            'vinculo_tipo': 'DERIVADO',
+        }
+        response = self.client.post('/api/cases/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['case_principal'], self.case1.id)
+        self.assertEqual(response.data['vinculo_tipo'], 'DERIVADO')
     
     def test_create_case_invalid_cnj_format(self):
         """Test creating a case with invalid CNJ format"""

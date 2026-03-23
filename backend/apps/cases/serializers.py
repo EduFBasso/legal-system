@@ -347,6 +347,8 @@ class CaseListSerializer(serializers.ModelSerializer):
     cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
     parties_summary = serializers.SerializerMethodField()
     active_tasks_count = serializers.IntegerField(read_only=True, default=0)
+    vinculo_tipo_display = serializers.CharField(source='get_vinculo_tipo_display', read_only=True)
+    case_principal_numero = serializers.CharField(source='case_principal.numero_processo_formatted', read_only=True, allow_null=True)
 
     def get_parties_summary(self, obj):
         return [
@@ -394,6 +396,10 @@ class CaseListSerializer(serializers.ModelSerializer):
             'attorney_fee_installments',
             'observacoes',
             'tags',
+            'case_principal',
+            'case_principal_numero',
+            'vinculo_tipo',
+            'vinculo_tipo_display',
             'parties_summary',
             'active_tasks_count',
             'created_at',
@@ -427,6 +433,9 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     # Owner (advogado responsável)
     owner_name = serializers.CharField(source='owner.profile.full_name_oab', read_only=True, default='')
     owner_oab = serializers.CharField(source='owner.profile.oab_number', read_only=True, default='')
+
+    vinculo_tipo_display = serializers.CharField(source='get_vinculo_tipo_display', read_only=True)
+    case_principal_numero = serializers.CharField(source='case_principal.numero_processo_formatted', read_only=True, allow_null=True)
 
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
@@ -487,6 +496,10 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'owner_name',
             'owner_oab',
             'parties',
+            'case_principal',
+            'case_principal_numero',
+            'vinculo_tipo',
+            'vinculo_tipo_display',
             'participation_type',
             'participation_percentage',
             'participation_fixed_value',
@@ -508,6 +521,27 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def validate(self, attrs):
+        """Aplica validações do model (principal/derivado) também via DRF."""
+        instance = getattr(self, 'instance', None)
+
+        case_principal = attrs.get('case_principal', getattr(instance, 'case_principal', None))
+        vinculo_tipo = attrs.get('vinculo_tipo', getattr(instance, 'vinculo_tipo', ''))
+
+        # Monta um objeto temporário para rodar `clean()`.
+        obj = instance if instance is not None else Case(**{})
+        if instance is None:
+            for k, v in attrs.items():
+                setattr(obj, k, v)
+        else:
+            obj.case_principal = case_principal
+            obj.vinculo_tipo = vinculo_tipo
+
+        obj.case_principal = case_principal
+        obj.vinculo_tipo = vinculo_tipo
+        obj.clean()
+        return attrs
     
     def validate_numero_processo(self, value):
         """Validate CNJ number format"""
