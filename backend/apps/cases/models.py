@@ -475,6 +475,58 @@ class CaseTipoAcaoOption(models.Model):
         return self.label
 
 
+class CaseTituloOption(models.Model):
+    """Opções compartilhadas (persistidas) para o campo `Case.titulo`.
+
+    Serve como lista de sugestões de títulos padronizados que evolui com o uso.
+    Diferente de `tipo_acao`, o `titulo` continua sendo texto livre no Case.
+    """
+
+    label = models.CharField(max_length=200, help_text='Texto exibido na lista')
+    key = models.CharField(
+        max_length=260,
+        unique=True,
+        db_index=True,
+        help_text='Chave normalizada (sem acento, minúscula, espaços colapsados) para deduplicação',
+    )
+
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_titulo_options',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Opção de Título do Processo'
+        verbose_name_plural = 'Opções de Título do Processo'
+        ordering = ['label']
+
+    @staticmethod
+    def normalize_key(value: str) -> str:
+        raw = str(value or '').strip()
+        if not raw:
+            return ''
+        nfd = unicodedata.normalize('NFD', raw)
+        no_marks = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+        collapsed = ' '.join(no_marks.split())
+        return collapsed.lower()
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.normalize_key(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
+
+
 class CaseParty(models.Model):
     """
     Tabela intermediária para relacionamento ManyToMany entre Case e Contact.

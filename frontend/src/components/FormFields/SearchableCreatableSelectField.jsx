@@ -44,6 +44,7 @@ export default function SearchableCreatableSelectField({
   allowCreate = true,
   onCreateOption = null,
   onEditOption = null,
+  reduceListOnQuery = false,
 }) {
   const rootRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -87,8 +88,15 @@ export default function SearchableCreatableSelectField({
 
   const inputValue = isDirty ? query : (selectedLabel || '');
 
-  // UX: não reduzir a lista ao digitar; apenas destacar/rolar para o melhor match.
-  const visibleOptions = allOptions;
+  // UX: por padrão, não reduzir a lista ao digitar; apenas destacar/rolar para o melhor match.
+  // Para campos com muitos itens (ex: títulos), pode reduzir/filtrar via prop.
+  const visibleOptions = useMemo(() => {
+    if (!reduceListOnQuery) return allOptions;
+    if (!isDirty) return allOptions;
+    const q = normalizeText(query).trim();
+    if (!q) return allOptions;
+    return allOptions.filter((opt) => normalizeText(opt.label).includes(q));
+  }, [reduceListOnQuery, allOptions, isDirty, query]);
 
   const suppressSelectedStyle = useMemo(() => {
     if (!isOpen) return false;

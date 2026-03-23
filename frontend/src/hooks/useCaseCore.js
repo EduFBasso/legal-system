@@ -72,6 +72,8 @@ export function useCaseCore(
 
   const [tipoAcaoOptions, setTipoAcaoOptions] = useState(defaultTipoAcaoOptions);
 
+  const [tituloOptions, setTituloOptions] = useState([]);
+
   const loadTipoAcaoOptions = useCallback(async () => {
     try {
       const options = await casesService.getTipoAcaoOptions();
@@ -83,6 +85,57 @@ export function useCaseCore(
       console.warn('Error loading tipo_acao options:', error);
     }
   }, []);
+
+  const loadTituloOptions = useCallback(async () => {
+    try {
+      const options = await casesService.getTituloOptions();
+      if (Array.isArray(options) && options.length > 0) {
+        setTituloOptions(options);
+      }
+    } catch (error) {
+      // Fallback silencioso (ex: offline)
+      console.warn('Error loading titulo options:', error);
+    }
+  }, []);
+
+  const createTituloOption = useCallback(async (label) => {
+    const created = await casesService.createTituloOption(label);
+    if (created && typeof created === 'object') {
+      setTituloOptions((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const exists = next.some((opt) => String(opt?.value) === String(created.value));
+        if (!exists) next.unshift(created);
+        return next;
+      });
+    }
+    return created;
+  }, []);
+
+  const updateTituloOption = useCallback(async (idToUpdate, label) => {
+    try {
+      const updated = await casesService.updateTituloOption(idToUpdate, label);
+      if (updated && typeof updated === 'object') {
+        setTituloOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const index = next.findIndex((opt) => Number(opt?.id) === Number(updated.id));
+          if (index >= 0) {
+            next[index] = { ...next[index], ...updated };
+            return next;
+          }
+          const byValue = next.findIndex((opt) => String(opt?.value) === String(updated.value));
+          if (byValue >= 0) {
+            next[byValue] = { ...next[byValue], ...updated };
+            return next;
+          }
+          return [updated, ...next];
+        });
+      }
+      return updated;
+    } catch (error) {
+      showToast?.(error?.message || 'Erro ao editar Título', 'error');
+      return null;
+    }
+  }, [showToast]);
 
   const createTipoAcaoOption = useCallback(async (label) => {
     const created = await casesService.createTipoAcaoOption(label);
@@ -153,6 +206,10 @@ export function useCaseCore(
   useEffect(() => {
     loadTipoAcaoOptions();
   }, [loadTipoAcaoOptions]);
+
+  useEffect(() => {
+    loadTituloOptions();
+  }, [loadTituloOptions]);
 
   /**
    * Pré-preenchimento via publicação
@@ -421,6 +478,10 @@ export function useCaseCore(
     tipoAcaoOptions,
     createTipoAcaoOption,
     updateTipoAcaoOption,
+
+    tituloOptions,
+    createTituloOption,
+    updateTituloOption,
 
     // Funções
     handleInputChange,
