@@ -497,6 +497,37 @@ class PublicationsDebugSearchGatingTests(TestCase):
 		self.assertEqual(response.status_code, 404)
 
 
+class PublicationsSearchIdentityValidationTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='master_no_oab', password='123456', email='master_no_oab@example.com')
+		profile = self.user.profile
+		profile.role = UserProfile.ROLE_MASTER
+		profile.full_name_oab = 'Master Sem OAB'
+		profile.oab_number = ''
+		profile.save(update_fields=['role', 'full_name_oab', 'oab_number'])
+		self.client.force_login(self.user)
+
+	def test_fetch_today_requires_oab_and_name(self):
+		url = reverse('publications:fetch_today')
+		response = self.client.get(url)
+		self.assertEqual(response.status_code, 400)
+		payload = response.json()
+		self.assertFalse(payload.get('success'))
+		self.assertIn('Nome completo e o Número da OAB', payload.get('error', ''))
+
+	def test_search_requires_oab_and_name(self):
+		url = reverse('publications:search')
+		response = self.client.get(url, data={
+			'data_inicio': '2026-02-20',
+			'data_fim': '2026-02-20',
+			'tribunais': ['TJSP'],
+		})
+		self.assertEqual(response.status_code, 400)
+		payload = response.json()
+		self.assertFalse(payload.get('success'))
+		self.assertIn('Nome completo e o Número da OAB', payload.get('error', ''))
+
+
 class PublicationsSearchCaseSuggestionTests(TestCase):
 	def setUp(self):
 		self.user = User.objects.create_user(username='pub_search_user', password='123456', email='pub_search_user@example.com')

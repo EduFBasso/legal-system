@@ -220,11 +220,11 @@ def fetch_today_publications(request):
         oab_number, advogada_nome, tribunais_configurados = _get_user_publication_identity(user)
         excluded_oabs, excluded_keywords = _get_user_publication_exclusion_rules(user)
 
-        if not (str(oab_number).strip() or str(advogada_nome).strip()):
+        if not (str(oab_number).strip() and str(advogada_nome).strip()):
             return Response(
                 {
                     'success': False,
-                    'error': 'Para buscar publicações, configure o Nome completo e/ou o Número da OAB no seu perfil (Meu Acesso).'
+                    'error': 'Para buscar publicações, configure o Nome completo e o Número da OAB no seu perfil (Meu Acesso).'
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -330,11 +330,11 @@ def search_publications(request):
         oab_number, advogada_nome, tribunais_configurados = _get_user_publication_identity(user)
         excluded_oabs, excluded_keywords = _get_user_publication_exclusion_rules(user)
 
-        if not (str(oab_number).strip() or str(advogada_nome).strip()):
+        if not (str(oab_number).strip() and str(advogada_nome).strip()):
             return Response(
                 {
                     'success': False,
-                    'error': 'Para buscar publicações, configure o Nome completo e/ou o Número da OAB no seu perfil (Meu Acesso).'
+                    'error': 'Para buscar publicações, configure o Nome completo e o Número da OAB no seu perfil (Meu Acesso).'
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
