@@ -239,7 +239,6 @@ function InformacaoTab({
                           allowCreate={true}
                           onCreateOption={onCreateTituloOption || null}
                           onEditOption={onEditTituloOption || null}
-                          reduceListOnQuery={true}
                         />
                       </div>
                     </>
