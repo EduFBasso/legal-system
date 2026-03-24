@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import ConfirmDialog from './common/ConfirmDialog';
 import { FormField, FormSelect, FormMaskedField, AddressFieldGroup, PartyRoleBadge } from './common';
+import { Button, CancelButton, DeleteButton, EditButton, SaveButton } from './common/Button';
 import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
 import { deleteParty } from '../services/casePartiesService';
@@ -514,13 +515,14 @@ export default function ContactDetailModal({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h3>📋 Processos Vinculados</h3>
                   {onLinkToCase && (
-                    <button 
-                      className="btn-add-link"
+                    <Button
+                      variant="success"
+                      size="sm"
                       onClick={() => onLinkToCase(contact)}
                       title="Vincular a outro processo"
                     >
                       ➕ Vincular Processo
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {contact.linked_cases && contact.linked_cases.length > 0 ? (
@@ -588,12 +590,10 @@ export default function ContactDetailModal({
                 <>
                   {showLinkToProcessButton ? (
                     <>
-                      <button className="btn-cancel-edit" onClick={onClose}>
-                        ❌ Cancelar
-                      </button>
-                      <button className="btn-link-to-process" onClick={() => onLinkToProcess?.(contact)}>
+                      <CancelButton onClick={onClose}>❌ Cancelar</CancelButton>
+                      <Button variant="success" size="md" onClick={() => onLinkToProcess?.(contact)}>
                         ✅ Adicionar ao Processo
-                      </button>
+                      </Button>
                     </>
                   ) : !allowModification ? (
                     <div className="read-only-notice">
@@ -619,35 +619,25 @@ export default function ContactDetailModal({
                     </div>
                   ) : (
                     <>
-                      <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
-                        🗑️ Excluir
-                      </button>
-                      <button className="btn-edit" onClick={handleEdit}>
-                        ✏️ Editar
-                      </button>
+                      <DeleteButton onClick={() => setShowDeleteConfirm(true)}>🗑️ Excluir</DeleteButton>
+                      <EditButton onClick={handleEdit}>✏️ Editar</EditButton>
                     </>
                   )}
                 </>
               ) : isEditing && !isCreating ? (
                 <>
-                  <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
-                    🗑️ Excluir
-                  </button>
-                  <button className="btn-cancel-edit" onClick={handleCancel} disabled={saving}>
-                    ❌ Cancelar
-                  </button>
-                  <button className="btn-save-edit" onClick={handleSave} disabled={saving}>
+                  <DeleteButton onClick={() => setShowDeleteConfirm(true)}>🗑️ Excluir</DeleteButton>
+                  <CancelButton onClick={handleCancel} disabled={saving}>❌ Cancelar</CancelButton>
+                  <SaveButton onClick={handleSave} disabled={saving}>
                     {saving ? '⏳ Salvando...' : '💾 Atualizar Informações'}
-                  </button>
+                  </SaveButton>
                 </>
               ) : (
                 <>
-                  <button className="btn-cancel-edit" onClick={handleCancel} disabled={saving}>
-                    ❌ Cancelar
-                  </button>
-                  <button className="btn-save-edit" onClick={handleSave} disabled={saving}>
+                  <CancelButton onClick={handleCancel} disabled={saving}>❌ Cancelar</CancelButton>
+                  <SaveButton onClick={handleSave} disabled={saving}>
                     {saving ? '⏳ Salvando...' : '➕ Criar Contato'}
-                  </button>
+                  </SaveButton>
                 </>
               )}
             </div>

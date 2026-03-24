@@ -117,7 +117,6 @@ class CaseViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = {
         'tribunal': ['exact', 'in'],
-        'comarca': ['exact', 'icontains'],
         'status': ['exact'],
         'auto_status': ['exact'],
         'cliente_principal': ['exact'],
@@ -130,7 +129,6 @@ class CaseViewSet(viewsets.ModelViewSet):
         'numero_processo_unformatted',
         'titulo',
         'observacoes',
-        'comarca',
         'vara',
         'tipo_acao',
         # parties__contact__name é tratado via _normalize em filter_queryset
@@ -404,7 +402,6 @@ class CaseViewSet(viewsets.ModelViewSet):
             | Q(numero_processo_unformatted__icontains=search)
             | Q(titulo__icontains=search)
             | Q(observacoes__icontains=search)
-            | Q(comarca__icontains=search)
             | Q(vara__icontains=search)
             | Q(tipo_acao__icontains=search)
         )

@@ -199,14 +199,9 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
 
         {/* Location */}
         <div className="case-location">
-          {caseData.comarca && (
-            <span className="location-item">
-              📍 {caseData.comarca}
-            </span>
-          )}
           {caseData.vara && (
             <span className="location-item">
-              🏛️ {caseData.vara}
+              📍 {caseData.vara}
             </span>
           )}
         </div>

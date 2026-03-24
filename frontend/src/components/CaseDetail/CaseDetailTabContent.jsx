@@ -82,6 +82,7 @@ export default function CaseDetailTabContent({
           tituloOptions={caseCore.tituloOptions}
           onCreateTituloOption={caseCore.createTituloOption}
           onEditTituloOption={caseCore.updateTituloOption}
+          onSearchTituloOptions={caseCore.searchTituloOptions}
           onInputChange={caseCore.handleInputChange}
           readOnly={isReadOnly}
         />

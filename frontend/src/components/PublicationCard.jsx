@@ -1,6 +1,7 @@
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import { getPublicationActionState } from '../utils/publicationActionState';
 import { openCaseDetailWindow } from '../utils/publicationNavigation';
+import { Button } from './common/Button';
 import './PublicationCard.css';
 
 export default function PublicationCard({ 
@@ -209,8 +210,9 @@ export default function PublicationCard({
       {/* Action Buttons Section (Integrar, Criar caso, etc.) */}
       {showActionButtons && (
         <div className="publication-actions">
-          <button
-            className={actionState.className}
+          <Button
+            variant={actionState.key === 'integrated' ? 'success-soft' : 'warning-soft'}
+            size="lg"
             onClick={(e) => {
               e.stopPropagation();
               if (actionState.key === 'integrated') {
@@ -230,7 +232,7 @@ export default function PublicationCard({
             title={actionState.title}
           >
             {actionState.label}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -244,25 +246,27 @@ export default function PublicationCard({
         
         {/* Link oficial (ESAJ ou principal) */}
         {consultaLinks.linkOficial && (
-          <button 
-            className="btn-official-link"
+          <Button
+            variant="primary-soft"
+            size="lg"
             onClick={(e) => handleConsultarProcesso(e, consultaLinks.linkOficial)}
             title="Copia o número e abre o portal do tribunal"
           >
-            🔍 Consultar ({publication.tribunal})
-          </button>
+            {publication.tribunal || 'Consultar'}
+          </Button>
         )}
         
         {/* Links alternativos (eProc, TRF3, TRT15, etc.) */}
         {consultaLinks.linksAlternativos.map((system, index) => (
-          <button 
+          <Button
             key={index}
-            className="btn-alternative-link"
+            variant="secondary-soft"
+            size="lg"
             onClick={(e) => handleConsultarProcesso(e, system.url)}
             title={system.description}
           >
             {system.icon} {system.shortName}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

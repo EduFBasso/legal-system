@@ -6,6 +6,7 @@ import { htmlToText } from '../../utils/htmlToText';
 import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
 import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle, getButtonHoverHandlers } from './caseTheme';
+import { Button } from '../common/Button';
 import './TasksInlineList.css';
 
 export default function TasksInlineList({
@@ -29,11 +30,6 @@ export default function TasksInlineList({
 }) {
   const taskList = (tasks || []).filter((task) => Number(task.movimentacao) === Number(movimentoId));
   const isCreating = addingTaskForMovement === movimentoId;
-  const addTaskButtonInteractions = getButtonHoverHandlers({
-    base: caseTheme.button.primary,
-    hover: caseTheme.button.primaryDark,
-    shadow: '0 2px 8px rgba(22, 101, 52, 0.3)',
-  });
 
   return (
     <div style={tasksInlineStyles.wrapper}>
@@ -41,19 +37,19 @@ export default function TasksInlineList({
       <div style={tasksInlineStyles.titleRow}>
         <span style={tasksInlineStyles.sectionTitle}>Tarefas vinculadas a esta movimentação</span>
         {!isCreating && (
-          <button
+          <Button
+            variant="success"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
               if (readOnly) return;
               onOpenAddTask(movimentoId);
             }}
-            style={tasksInlineStyles.addButton}
             disabled={readOnly}
             aria-disabled={readOnly ? 'true' : undefined}
-            {...(readOnly ? {} : addTaskButtonInteractions)}
           >
             <Plus size={16} /> Nova Tarefa
-          </button>
+          </Button>
         )}
       </div>
 

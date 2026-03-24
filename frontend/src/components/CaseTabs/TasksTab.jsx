@@ -14,6 +14,7 @@ import {
 import TaskCard from '../TaskCard';
 import UrgencySection from '../UrgencySection';
 import CreateTaskModal from '../CreateTaskModal';
+import { Button } from '../common/Button';
 import './TasksTab.css';
 
 /**
@@ -228,14 +229,15 @@ export default function TasksTab({
           </p>
         </div>
         {!readOnly && (
-          <button 
-            className="btn-add-task"
+          <Button
+            variant="success"
+            size="sm"
             onClick={() => setIsCreateTaskModalOpen(true)}
             disabled={creatingTask}
             title="Criar nova tarefa do processo"
           >
             + Adicionar Tarefa
-          </button>
+          </Button>
         )}
       </div>
 

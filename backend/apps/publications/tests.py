@@ -25,7 +25,6 @@ class PublicationMovementDeadlineTests(TestCase):
 			numero_processo='0000618-47.2026.8.26.0320',
 			titulo='Cumprimento de sentença',
 			tribunal='TJSP',
-			comarca='Limeira',
 			status='ATIVO',
 		)
 
@@ -72,7 +71,6 @@ class PublicationAutoIntegrateRelatedTests(TestCase):
 			numero_processo='0000618-47.2026.8.26.0320',
 			titulo='Cumprimento de sentença',
 			tribunal='TJSP',
-			comarca='Limeira',
 			status='ATIVO',
 		)
 
@@ -242,7 +240,6 @@ class PublicationCaseSuggestionScopeTests(TestCase):
 			numero_processo='1000000-00.2026.8.26.0001',
 			titulo='Caso do advogado',
 			tribunal='TJSP',
-			comarca='São Paulo',
 			status='ATIVO',
 			owner=self.advogado,
 		)
@@ -256,7 +253,6 @@ class PublicationCaseSuggestionScopeTests(TestCase):
 			numero_processo='2000000-00.2026.8.26.0001',
 			titulo='Caso do master',
 			tribunal='TJSP',
-			comarca='São Paulo',
 			status='ATIVO',
 			owner=self.master,
 		)
@@ -310,7 +306,6 @@ class PublicationDeleteTests(TestCase):
 			numero_processo='1000000-00.2026.8.26.0002',
 			titulo='Caso vinculado',
 			tribunal='TJSP',
-			comarca='São Paulo',
 			status='ATIVO',
 			owner=self.user,
 			publicacao_origem=publication,
@@ -511,7 +506,6 @@ class PublicationsSearchCaseSuggestionTests(TestCase):
 			numero_processo='1000000-00.2026.8.26.0001',
 			titulo='Caso existente',
 			tribunal='TJSP',
-			comarca='São Paulo',
 			status='ATIVO',
 			owner=self.user,
 		)
@@ -632,7 +626,6 @@ class PublicationsSearchHistoryDetailCaseSuggestionTests(TestCase):
 			numero_processo='1000000-00.2026.8.26.0001',
 			titulo='Caso existente (histórico)',
 			tribunal='TJSP',
-			comarca='São Paulo',
 			status='ATIVO',
 			owner=self.user,
 		)

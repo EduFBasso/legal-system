@@ -1,6 +1,7 @@
 import { Check, X } from 'lucide-react';
 import { MOVIMENTO_TIPOS } from '../../utils/movementUtils';
 import { caseTheme } from './caseTheme';
+import { Button } from '../common/Button';
 import './MovimentacaoEditForm.css';
 
 /**
@@ -239,71 +240,12 @@ export default function MovimentacaoEditForm({
 
       {/* Botões Salvar / Cancelar */}
       <div style={{ display: 'flex', gap: '0.75rem' }}>
-        <button
-          onClick={onSave}
-          disabled={!canSave || saving}
-          style={{
-            background: caseTheme.button.primary,
-            color: 'white',
-            border: 'none',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '6px',
-            cursor: (saving || !canSave) ? 'not-allowed' : 'pointer',
-            fontWeight: '600',
-            fontSize: '0.9375rem',
-            opacity: (saving || !canSave) ? 0.6 : 1,
-            transition: '0.2s',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-          onMouseEnter={(e) => { 
-            if (!saving && canSave) {
-              e.target.style.background = caseTheme.button.primaryDark;
-            }
-          }}
-          onMouseLeave={(e) => { 
-            if (!saving && canSave) {
-              e.target.style.background = caseTheme.button.primary;
-            }
-          }}
-        >
+        <Button variant="success" size="md" onClick={onSave} disabled={!canSave || saving}>
           <Check size={16} /> {saving ? 'Salvando...' : '✓ Salvar'}
-        </button>
-        <button
-          onClick={onCancel}
-          disabled={saving}
-          style={{
-            background: caseTheme.button.neutral,
-            color: '#fff',
-            border: 'none',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '6px',
-            cursor: saving ? 'not-allowed' : 'pointer',
-            fontWeight: '600',
-            fontSize: '0.9375rem',
-            transition: '0.2s',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-          onMouseEnter={(e) => { 
-            if (!saving) {
-              e.target.style.background = caseTheme.button.neutralDark;
-              e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 2px 8px rgba(71, 85, 105, 0.3)';
-            }
-          }}
-          onMouseLeave={(e) => { 
-            if (!saving) {
-              e.target.style.background = caseTheme.button.neutral;
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = 'none';
-            }
-          }}
-        >
+        </Button>
+        <Button variant="secondary" size="md" onClick={onCancel} disabled={saving}>
           <X size={16} /> ✕ Cancelar
-        </button>
+        </Button>
       </div>
     </div>
   );

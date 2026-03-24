@@ -45,13 +45,6 @@ class Case(models.Model):
         help_text='Ex: TJSP, TRF3, TST'
     )
 
-    comarca = models.CharField(
-        max_length=100,
-        blank=True,
-        default='',
-        help_text='Comarca/Subseção judiciária'
-    )
-
     vara = models.CharField(
         max_length=200,
         blank=True,

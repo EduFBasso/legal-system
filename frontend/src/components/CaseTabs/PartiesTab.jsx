@@ -3,6 +3,7 @@ import { Users, UserPlus, Trash2, Edit2 } from 'lucide-react';
 import { formatCPF, formatCNPJ, formatPhone } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
 import PartyRoleBadge from '../common/PartyRoleBadge';
+import { Button } from '../common/Button';
 
 /**
  * PartiesTab - Aba de Partes do Processo
@@ -35,8 +36,9 @@ function PartiesTab({
       <div className="section-card">
         <div className="section-header">
           <h2 className="section-title">👥 Partes do Processo</h2>
-          <button 
-            className="btn btn-success"
+          <Button
+            variant="success"
+            size="md"
             onClick={() => {
               if (readOnly) return;
               onAddPartyClick();
@@ -46,7 +48,7 @@ function PartiesTab({
           >
             <UserPlus size={18} />
             Adicionar Parte
-          </button>
+          </Button>
         </div>
 
         {loadingParties ? (
@@ -110,8 +112,9 @@ function PartiesTab({
                 </div>
 
                 <div className="party-actions" onClick={(e) => e.stopPropagation()}>
-                  <button 
-                    className="btn-edit-party"
+                  <Button
+                    variant="edit"
+                    size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (readOnly) return;
@@ -123,9 +126,10 @@ function PartiesTab({
                     title="Editar papel da parte no processo"
                   >
                     <Edit2 size={18} />
-                  </button>
-                  <button 
-                    className="btn-remove-party"
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (readOnly) return;
@@ -137,7 +141,7 @@ function PartiesTab({
                     title="Remover do processo"
                   >
                     <Trash2 size={18} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

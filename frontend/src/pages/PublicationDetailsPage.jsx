@@ -9,6 +9,7 @@ import {
   openCreateCaseFromPublicationWindow,
 } from '../utils/publicationNavigation';
 import { getPublicationActionState } from '../utils/publicationActionState';
+import { Button } from '../components/common/Button';
 import './PublicationDetailsPage.css';
 
 console.log('📦 PublicationsService importado:', publicationsService);
@@ -181,13 +182,11 @@ export default function PublicationDetailsPage() {
             <h2>⚠️ Erro ao Carregar</h2>
             <p className="error-message">{error || 'Publicação não encontrada'}</p>
             <p className="error-detail">ID da publicação: {idApi}</p>
-            <button 
-              className="btn btn-secondary" 
-              onClick={() => window.close()}
-              style={{marginTop: '1.5rem'}}
-            >
-              Fechar
-            </button>
+            <div className="error-actions">
+              <Button variant="secondary" size="md" onClick={() => window.close()}>
+                Fechar
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -222,13 +221,14 @@ export default function PublicationDetailsPage() {
             </div>
           </div>
           <div className="header-actions">
-            <button
-              className="btn-create-case-top"
+            <Button
+              variant={actionState.key === 'integrated' ? 'success-soft' : 'warning-soft'}
+              size="lg"
               onClick={handleActionClick}
               title={actionState.title}
             >
               {actionState.label}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -286,32 +286,31 @@ export default function PublicationDetailsPage() {
         <div className="details-footer">
           <div className="action-buttons">
             {consultaLinks.linkOficial && (
-              <button 
-                className="btn btn-primary"
+              <Button
+                variant="primary-soft"
+                size="md"
                 onClick={(e) => handleConsultarProcesso(e, consultaLinks.linkOficial)}
                 title="Copia o número e abre o portal do tribunal"
               >
-                🔍 {publication.tribunal || 'Consultar'} Oficial
-              </button>
+                {publication.tribunal || 'Consultar'}
+              </Button>
             )}
             
             {consultaLinks.linksAlternativos.map((system, index) => (
-              <button 
+              <Button
                 key={index}
-                className="btn btn-secondary"
+                variant="secondary-soft"
+                size="md"
                 onClick={(e) => handleConsultarProcesso(e, system.url)}
                 title={system.description}
               >
                 {system.icon} {system.shortName}
-              </button>
+              </Button>
             ))}
           </div>
-          <button 
-            className="btn btn-secondary"
-            onClick={() => window.close()}
-          >
+          <Button variant="secondary" size="md" onClick={() => window.close()}>
             Fechar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

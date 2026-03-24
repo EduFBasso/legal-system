@@ -21,6 +21,7 @@ import { useMovementsAndTasks } from '../hooks/useMovementsAndTasks';
 import { usePublicationsForCase } from '../hooks/usePublicationsForCase';
 import { useFinancialData } from '../hooks/useFinancialData';
 
+import '../components/common/Button/Button.css';
 import './CaseDetailPage.css';
 
 /**
@@ -76,11 +77,13 @@ function CaseDetailPage() {
     handleCaseDeleted,
   );
 
+  const { isEditing: isCaseEditing, setIsEditing: setIsCaseEditing } = caseCore;
+
   useEffect(() => {
-    if (isReadOnly && caseCore.isEditing) {
-      caseCore.setIsEditing(false);
+    if (isReadOnly && isCaseEditing) {
+      setIsCaseEditing(false);
     }
-  }, [isReadOnly, caseCore.isEditing, caseCore.setIsEditing]);
+  }, [isReadOnly, isCaseEditing, setIsCaseEditing]);
 
   const [linkedCases, setLinkedCases] = useState([]);
   const [loadingLinkedCases, setLoadingLinkedCases] = useState(false);
@@ -198,7 +201,6 @@ function CaseDetailPage() {
     };
 
     loadLinkedCases();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseCore.caseData?.cliente_principal, caseCore.caseData?.id]);
 
   useEffect(() => {
@@ -652,6 +654,8 @@ function CaseDetailPage() {
     }
   }, [loadDocumentos, modalsNotif]);
 
+  const showToast = modalsNotif.showToast;
+
   useEffect(() => {
     const shouldAutoLoadDocuments = systemSettings?.AUTO_LOAD_DOCUMENTS_ON_CASE !== false;
     if (navigation.activeSection === 'documentos' && shouldAutoLoadDocuments && id) {
@@ -659,10 +663,10 @@ function CaseDetailPage() {
       setLoadingDocumentos(true);
       caseDocumentsService.getByCase(id)
         .then(docs => setDocumentos(Array.isArray(docs) ? docs : []))
-        .catch(() => modalsNotif.showToast('Erro ao carregar documentos do processo', 'error'))
+        .catch(() => showToast('Erro ao carregar documentos do processo', 'error'))
         .finally(() => setLoadingDocumentos(false));
     }
-  }, [id, navigation.activeSection, systemSettings]);
+  }, [id, navigation.activeSection, systemSettings, showToast]);
 
   const activeTasks = useMemo(
     () => (movements.tasks || []).filter((task) => task.status !== 'CONCLUIDA'),

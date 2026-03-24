@@ -44,6 +44,10 @@ export default function SearchableCreatableSelectField({
   allowCreate = true,
   onCreateOption = null,
   onEditOption = null,
+  allowCreateWhenExactMatchIsNotPersisted = false,
+  onSearchOptions = null,
+  remoteSearchDebounceMs = 300,
+  remoteSearchMinChars = 2,
   reduceListOnQuery = false,
 }) {
   const rootRef = useRef(null);
@@ -61,23 +65,6 @@ export default function SearchableCreatableSelectField({
     });
   }, [options]);
 
-  const [extraOptions, setExtraOptions] = useState([]);
-  const allOptions = useMemo(() => {
-    const map = new Map();
-    for (const opt of normalizedOptions) {
-      map.set(String(opt.value), opt);
-    }
-    for (const opt of extraOptions) {
-      map.set(String(opt.value), opt);
-    }
-    return Array.from(map.values());
-  }, [normalizedOptions, extraOptions]);
-
-  const selectedLabel = useMemo(() => {
-    const selected = allOptions.find((opt) => String(opt.value) === String(value));
-    return selected?.label ?? (value ?? '');
-  }, [allOptions, value]);
-
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [isDirty, setIsDirty] = useState(false);
@@ -85,6 +72,89 @@ export default function SearchableCreatableSelectField({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isEditingSelected, setIsEditingSelected] = useState(false);
   const [editingTarget, setEditingTarget] = useState(null);
+
+  const [remoteOptions, setRemoteOptions] = useState(null);
+  const lastRemoteRequestIdRef = useRef(0);
+  const lastRemoteQueryRef = useRef('');
+
+  const shouldUseRemote = useMemo(() => {
+    return typeof onSearchOptions === 'function' && !disabled;
+  }, [onSearchOptions, disabled]);
+
+  const rawUserQuery = useMemo(() => {
+    // Use raw keystrokes (before autocomplete mutates `query`) to avoid sending
+    // the autocompleted label to the backend.
+    return String(lastUserInputRef.current || '').trim();
+  }, [isDirty, query]);
+
+  useEffect(() => {
+    if (!shouldUseRemote) return;
+    if (!isOpen) return;
+    if (!isDirty) return;
+    if (isEditingSelected) return;
+
+    const q = rawUserQuery;
+    if (q.length < remoteSearchMinChars) {
+      setRemoteOptions(null);
+      lastRemoteQueryRef.current = '';
+      return;
+    }
+
+    if (q === lastRemoteQueryRef.current && Array.isArray(remoteOptions)) {
+      return;
+    }
+
+    const requestId = ++lastRemoteRequestIdRef.current;
+    const timerId = window.setTimeout(() => {
+      Promise.resolve(onSearchOptions(q))
+        .then((result) => {
+          if (requestId !== lastRemoteRequestIdRef.current) return;
+          lastRemoteQueryRef.current = q;
+          setRemoteOptions(Array.isArray(result) ? result : []);
+        })
+        .catch(() => {
+          // Silencioso: fallback para opções atuais.
+        });
+    }, Math.max(0, Number(remoteSearchDebounceMs) || 0));
+
+    return () => window.clearTimeout(timerId);
+  }, [
+    shouldUseRemote,
+    isOpen,
+    isDirty,
+    isEditingSelected,
+    rawUserQuery,
+    onSearchOptions,
+    remoteSearchDebounceMs,
+    remoteSearchMinChars,
+    remoteOptions,
+  ]);
+
+  const activeOptions = useMemo(() => {
+    if (!shouldUseRemote) return normalizedOptions;
+    if (!isDirty) return normalizedOptions;
+    const q = rawUserQuery;
+    if (q.length < remoteSearchMinChars) return normalizedOptions;
+    if (Array.isArray(remoteOptions)) return remoteOptions;
+    return normalizedOptions;
+  }, [shouldUseRemote, normalizedOptions, isDirty, rawUserQuery, remoteSearchMinChars, remoteOptions]);
+
+  const [extraOptions, setExtraOptions] = useState([]);
+  const allOptions = useMemo(() => {
+    const map = new Map();
+    for (const opt of activeOptions) {
+      map.set(String(opt.value), opt);
+    }
+    for (const opt of extraOptions) {
+      map.set(String(opt.value), opt);
+    }
+    return Array.from(map.values());
+  }, [activeOptions, extraOptions]);
+
+  const selectedLabel = useMemo(() => {
+    const selected = allOptions.find((opt) => String(opt.value) === String(value));
+    return selected?.label ?? (value ?? '');
+  }, [allOptions, value]);
 
   const inputValue = isDirty ? query : (selectedLabel || '');
 
@@ -213,18 +283,34 @@ export default function SearchableCreatableSelectField({
     }
   }, [isOpen, activeIndex, visibleOptions]);
 
-  const hasExactLabelMatch = useMemo(() => {
+  const exactMatchMeta = useMemo(() => {
     const trimmed = String((isDirty ? query : selectedLabel) || '').trim();
-    if (!trimmed) return false;
+    if (!trimmed) return { hasAny: false, hasPersisted: false };
+
     const normalizedQuery = normalizeText(trimmed);
-    return allOptions.some((opt) => normalizeText(opt.label) === normalizedQuery);
+    const exactMatches = allOptions.filter((opt) => normalizeText(opt.label) === normalizedQuery);
+    if (exactMatches.length === 0) return { hasAny: false, hasPersisted: false };
+
+    const hasPersisted = exactMatches.some((opt) => opt && opt.editable && opt.id != null);
+    return { hasAny: true, hasPersisted };
   }, [allOptions, isDirty, query, selectedLabel]);
+
+  const hasExactLabelMatch = exactMatchMeta.hasAny;
+  const hasExactPersistedLabelMatch = exactMatchMeta.hasPersisted;
 
   const shouldShowConfirm = allowCreate && !disabled && !creating && (() => {
     if (isEditingSelected) return false;
     const trimmed = String((isDirty ? query : selectedLabel) || '').trim();
     if (!trimmed) return false;
-    return !hasExactLabelMatch;
+    if (!hasExactLabelMatch) return true;
+
+    // Opt-in: permitir cadastrar mesmo com match exato quando o match é apenas sugestão
+    // (sem persistência/id). Limitado a `isDirty` para evitar mostrar "Cadastrar" após seleção.
+    if (allowCreateWhenExactMatchIsNotPersisted && isDirty && !hasExactPersistedLabelMatch) {
+      return true;
+    }
+
+    return false;
   })();
 
   const selectedOption = useMemo(() => {
@@ -383,8 +469,15 @@ export default function SearchableCreatableSelectField({
     const normalizedQuery = normalizeText(trimmed);
     const existingByLabel = allOptions.find((opt) => normalizeText(opt.label) === normalizedQuery);
     if (existingByLabel) {
-      handleSelect(existingByLabel);
-      return;
+      const isPersisted = !!(existingByLabel && existingByLabel.editable && existingByLabel.id != null);
+      const shouldPersistEvenIfExists = allowCreateWhenExactMatchIsNotPersisted && isDirty && !isPersisted;
+
+      // Default behavior: if it already exists, just select.
+      if (!shouldPersistEvenIfExists || typeof onCreateOption !== 'function') {
+        handleSelect(existingByLabel);
+        return;
+      }
+      // If opt-in is active and the match is only a suggestion (not persisted), fall through to persist it.
     }
 
     let createdLabel = capitalizeWords(trimmed);

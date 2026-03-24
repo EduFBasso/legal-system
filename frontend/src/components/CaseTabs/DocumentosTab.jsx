@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Plus, FileText } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
+import { Button } from '../common/Button';
 
 /**
  * DocumentosTab - Aba de Documentos do Processo
@@ -99,15 +100,16 @@ function DocumentosTab({
             <h2 className="section-title">📄 Documentos do Processo</h2>
             <p className="section-subtitle">Petições, sentenças, contratos e outros documentos</p>
           </div>
-          <button
-            className="btn btn-primary"
+          <Button
+            variant="primary"
+            size="md"
             onClick={handleOpenFilePicker}
             disabled={!caseId || uploading}
             title={!caseId ? 'Salve o processo antes de anexar documentos' : 'Anexar documento'}
           >
             <Plus size={18} />
             {uploading ? 'Enviando...' : 'Upload Documento'}
-          </button>
+          </Button>
           <input
             ref={fileInputRef}
             type="file"
@@ -150,8 +152,9 @@ function DocumentosTab({
                   </div>
                 </div>
                 <div className="documento-actions">
-                  <button
-                    className="btn btn-success btn-doc-open"
+                  <Button
+                    variant="success"
+                    size="sm"
                     title="Abrir no aplicativo padrao do sistema"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -159,9 +162,10 @@ function DocumentosTab({
                     }}
                   >
                     Abrir
-                  </button>
-                  <button
-                    className="btn btn-secondary btn-doc-open"
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     title="Download do arquivo"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -169,9 +173,10 @@ function DocumentosTab({
                     }}
                   >
                     Download
-                  </button>
-                  <button
-                    className="btn btn-danger btn-doc-open"
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
                     title="Excluir"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -180,7 +185,7 @@ function DocumentosTab({
                     disabled={deletingDocumentId === doc.id}
                   >
                     {deletingDocumentId === doc.id ? 'Apagando...' : 'Apagar'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

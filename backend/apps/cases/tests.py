@@ -27,7 +27,6 @@ class CaseModelTest(TestCase):
             'numero_processo': '0000001-23.2024.8.26.0100',
             'titulo': 'Ação de Cobrança',
             'tribunal': 'TJSP',
-            'comarca': 'São Paulo',
             'status': 'ATIVO',
             'data_distribuicao': timezone.now().date() - timedelta(days=30),
         }
@@ -167,7 +166,6 @@ class CaseModelTest(TestCase):
             numero_processo='0000009-23.2024.8.26.0100',
             titulo='Derivado',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date() - timedelta(days=10),
             case_principal=principal,
@@ -184,7 +182,6 @@ class CaseModelTest(TestCase):
             numero_processo='0000010-23.2024.8.26.0100',
             titulo='Derivado',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date() - timedelta(days=10),
             case_principal=principal,
@@ -208,7 +205,6 @@ class CaseModelTest(TestCase):
             numero_processo='0000011-23.2024.8.26.0100',
             titulo='B',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date() - timedelta(days=5),
             case_principal=case_a,
@@ -242,7 +238,6 @@ class CaseLinkModelTest(TestCase):
             numero_processo='0000100-23.2024.8.26.0100',
             titulo='A',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -250,7 +245,6 @@ class CaseLinkModelTest(TestCase):
             numero_processo='0000101-23.2024.8.26.0100',
             titulo='B',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -284,7 +278,6 @@ class CasePartyModelTest(TestCase):
             numero_processo='0000001-23.2024.8.26.0100',
             titulo='Ação Teste',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -411,7 +404,6 @@ class CaseAPITest(APITestCase):
             numero_processo='0000001-23.2024.8.26.0100',
             titulo='Caso 1',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date() - timedelta(days=30),
         )
@@ -420,7 +412,6 @@ class CaseAPITest(APITestCase):
             numero_processo='0000002-23.2024.8.26.0100',
             titulo='Caso 2',
             tribunal='STF',
-            comarca='Brasília',
             status='INATIVO',
             data_distribuicao=timezone.now().date() - timedelta(days=60),
         )
@@ -469,7 +460,6 @@ class CaseAPITest(APITestCase):
             'numero_processo': '0000003-23.2024.8.26.0100',
             'titulo': 'Novo Caso',
             'tribunal': 'TJSP',
-            'comarca': 'São Paulo',
             'status': 'ATIVO',
             'data_distribuicao': timezone.now().date().isoformat(),
         }
@@ -483,7 +473,6 @@ class CaseAPITest(APITestCase):
             'numero_processo': '0000012-23.2024.8.26.0100',
             'titulo': 'Caso Derivado Sem Tipo',
             'tribunal': 'TJSP',
-            'comarca': 'São Paulo',
             'status': 'ATIVO',
             'data_distribuicao': timezone.now().date().isoformat(),
             'case_principal': self.case1.id,
@@ -497,7 +486,6 @@ class CaseAPITest(APITestCase):
             'numero_processo': '0000013-23.2024.8.26.0100',
             'titulo': 'Caso Derivado',
             'tribunal': 'TJSP',
-            'comarca': 'São Paulo',
             'status': 'ATIVO',
             'data_distribuicao': timezone.now().date().isoformat(),
             'case_principal': self.case1.id,
@@ -514,7 +502,6 @@ class CaseAPITest(APITestCase):
             numero_processo='0000200-23.2024.8.26.0100',
             titulo='Origem',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -523,7 +510,6 @@ class CaseAPITest(APITestCase):
             numero_processo='0000201-23.2024.8.26.0100',
             titulo='Destino',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -546,7 +532,6 @@ class CaseAPITest(APITestCase):
             numero_processo='0000202-23.2024.8.26.0100',
             titulo='A',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -555,7 +540,6 @@ class CaseAPITest(APITestCase):
             numero_processo='0000203-23.2024.8.26.0100',
             titulo='B',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -580,7 +564,6 @@ class CaseAPITest(APITestCase):
             'numero_processo': '123456',  # Invalid format
             'titulo': 'Caso Inválido',
             'tribunal': 'TJSP',
-            'comarca': 'São Paulo',
             'status': 'ATIVO',
             'data_distribuicao': timezone.now().date().isoformat(),
         }
@@ -656,7 +639,6 @@ class CaseAPITest(APITestCase):
             'numero_processo': '0000005-23.2024.8.26.0100',
             'titulo': 'Caso com Dados Financeiros',
             'tribunal': 'TJSP',
-            'comarca': 'São Paulo',
             'status': 'ATIVO',
             'data_distribuicao': timezone.now().date().isoformat(),
             'valor_causa': '100000.00',
@@ -762,7 +744,6 @@ class CasePartyAPITest(APITestCase):
             numero_processo='0000001-23.2024.8.26.0100',
             titulo='Caso Teste',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -771,7 +752,6 @@ class CasePartyAPITest(APITestCase):
             numero_processo='0000002-23.2024.8.26.0100',
             titulo='Caso Teste 2',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -1224,7 +1204,6 @@ class CaseTaskScopeTests(APITestCase):
             numero_processo='0000001-23.2026.8.26.0100',
             titulo='Case A',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
             owner=self.user_a,
@@ -1271,7 +1250,6 @@ class MasterCaseScopeTests(APITestCase):
             numero_processo='0000001-23.2026.8.26.0100',
             titulo='Case Master',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
             owner=self.master,
@@ -1280,7 +1258,6 @@ class MasterCaseScopeTests(APITestCase):
             numero_processo='0000002-23.2026.8.26.0100',
             titulo='Case A',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
             owner=self.user_a,
@@ -1289,7 +1266,6 @@ class MasterCaseScopeTests(APITestCase):
             numero_processo='0000003-23.2026.8.26.0100',
             titulo='Case Ownerless',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -1379,7 +1355,6 @@ class PaymentExpenseScopeTests(APITestCase):
             numero_processo='0000100-23.2026.8.26.0100',
             titulo='Case Master Pay',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
             owner=self.master,
@@ -1388,7 +1363,6 @@ class PaymentExpenseScopeTests(APITestCase):
             numero_processo='0000101-23.2026.8.26.0100',
             titulo='Case A Pay',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
             owner=self.user_a,
@@ -1397,7 +1371,6 @@ class PaymentExpenseScopeTests(APITestCase):
             numero_processo='0000102-23.2026.8.26.0100',
             titulo='Case Ownerless Pay',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
         )
@@ -1545,7 +1518,6 @@ class CasePrazoScopeTests(APITestCase):
             numero_processo='0000201-23.2026.8.26.0100',
             titulo='Case A Prazo',
             tribunal='TJSP',
-            comarca='São Paulo',
             status='ATIVO',
             data_distribuicao=timezone.now().date(),
             owner=self.user_a,

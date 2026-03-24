@@ -98,6 +98,12 @@ export function useCaseCore(
     }
   }, []);
 
+  const searchTituloOptions = useCallback(async (q) => {
+    // Busca remota (server-side) para listas grandes.
+    // Não mexe no state global automaticamente para evitar “piscar” a lista base.
+    return await casesService.getTituloOptions(q);
+  }, []);
+
   const createTituloOption = useCallback(async (label) => {
     const created = await casesService.createTituloOption(label);
     if (created && typeof created === 'object') {
@@ -482,6 +488,7 @@ export function useCaseCore(
     tituloOptions,
     createTituloOption,
     updateTituloOption,
+    searchTituloOptions,
 
     // Funções
     handleInputChange,

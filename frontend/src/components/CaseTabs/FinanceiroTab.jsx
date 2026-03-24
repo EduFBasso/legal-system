@@ -143,7 +143,7 @@ function FinanceiroTab({
       valorFixo: valorFixoPreenchido || participacaoTipo === 'fixed',
       honorarios: parseCurrencyValue(formData.attorney_fee_amount || '') > 0,
     };
-  }, [participacaoPercentual, participacaoValorFixo, participacaoTipo, parseCurrencyValue, formData.attorney_fee_amount]);
+  }, [participacaoPercentual, participacaoValorFixo, participacaoTipo, formData.attorney_fee_amount]);
 
   const [participacaoChecks, setParticipacaoChecks] = useState(buildInitialChecks);
   const [manualCheckControl, setManualCheckControl] = useState(false);

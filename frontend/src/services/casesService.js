@@ -40,7 +40,6 @@ const casesService = {
     if (filters.cliente_principal) params.append('cliente_principal', filters.cliente_principal);
     if (filters.search) params.append('search', filters.search);
     if (filters.ordering) params.append('ordering', filters.ordering);
-    if (filters.comarca) params.append('comarca__icontains', filters.comarca);
     if (filters.data_distribuicao__gte) params.append('data_distribuicao__gte', filters.data_distribuicao__gte);
     if (filters.data_distribuicao__lte) params.append('data_distribuicao__lte', filters.data_distribuicao__lte);
     
