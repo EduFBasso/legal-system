@@ -2,7 +2,19 @@
 import unicodedata
 from datetime import date
 from rest_framework import serializers
-from .models import Case, CaseParty, CaseLink, CaseMovement, CasePrazo, CaseTask, Payment, Expense, CaseDocument
+from apps.contacts.models import Contact
+from .models import (
+    Case,
+    CaseParty,
+    CaseLink,
+    CaseMovement,
+    CasePrazo,
+    CaseTask,
+    Payment,
+    Expense,
+    CaseDocument,
+    CaseRepresentation,
+)
 
 
 def normalize_text(text):
@@ -199,6 +211,16 @@ class CasePartySerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source='get_role_display', read_only=True)
     # Allow saving custom roles (outside Django choices) while keeping display mapping for known ones.
     role = serializers.CharField(required=False, allow_blank=True)
+
+    # Representation (write-only). If `is_represented=True`, representative + type become required.
+    is_represented = serializers.BooleanField(write_only=True, required=False)
+    representative_contact = serializers.PrimaryKeyRelatedField(
+        queryset=Contact.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+    representation_type = serializers.CharField(write_only=True, required=False, allow_blank=True)
     
     class Meta:
         model = CaseParty
@@ -215,6 +237,9 @@ class CasePartySerializer(serializers.ModelSerializer):
             'role_display',
             'is_client',
             'observacoes',
+            'is_represented',
+            'representative_contact',
+            'representation_type',
             'created_at',
         ]
         read_only_fields = ['id', 'created_at']
@@ -242,8 +267,109 @@ class CasePartySerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'is_client': 'Já existe um cliente cadastrado para este processo. Um processo só pode ter um cliente.'
                 })
+
+        # Representação: quando marcado como representado, exige representante + tipo.
+        is_represented = data.get('is_represented', None)
+        if is_represented is True:
+            is_client = data.get('is_client', getattr(self.instance, 'is_client', False))
+            if not is_client:
+                raise serializers.ValidationError({
+                    'is_represented': 'Representação só é permitida quando a parte está marcada como cliente.'
+                })
+
+            representative_contact = data.get('representative_contact')
+            if not representative_contact:
+                raise serializers.ValidationError({
+                    'representative_contact': 'Representante é obrigatório quando a parte é representada.'
+                })
+
+            representation_type = (data.get('representation_type') or '').strip()
+            if not representation_type:
+                raise serializers.ValidationError({
+                    'representation_type': 'Tipo de representação é obrigatório quando a parte é representada.'
+                })
+
+            represented_contact = data.get('contact') or getattr(self.instance, 'contact', None)
+            if represented_contact and representative_contact and represented_contact.id == representative_contact.id:
+                raise serializers.ValidationError({
+                    'representative_contact': 'Representante não pode ser o mesmo contato do representado.'
+                })
         
         return data
+
+    def _apply_representation(self, party: CaseParty, *, is_represented, representative_contact, representation_type: str):
+        if is_represented is None and representative_contact is None and not (representation_type or '').strip():
+            return
+
+        if is_represented is False:
+            CaseRepresentation.objects.filter(
+                case=party.case,
+                represented_contact=party.contact,
+            ).delete()
+            return
+
+        if is_represented is True:
+            request = self.context.get('request')
+            user = getattr(request, 'user', None)
+            created_by = user if getattr(user, 'is_authenticated', False) else None
+
+            CaseRepresentation.objects.update_or_create(
+                case=party.case,
+                represented_contact=party.contact,
+                defaults={
+                    'representative_contact': representative_contact,
+                    'representation_type': (representation_type or '').strip(),
+                    'created_by': created_by,
+                },
+            )
+
+    def create(self, validated_data):
+        is_represented = validated_data.pop('is_represented', None)
+        representative_contact = validated_data.pop('representative_contact', None)
+        representation_type = validated_data.pop('representation_type', '')
+
+        party = super().create(validated_data)
+        self._apply_representation(
+            party,
+            is_represented=is_represented,
+            representative_contact=representative_contact,
+            representation_type=representation_type,
+        )
+        return party
+
+    def update(self, instance, validated_data):
+        is_represented = validated_data.pop('is_represented', None)
+        representative_contact = validated_data.pop('representative_contact', None)
+        representation_type = validated_data.pop('representation_type', '')
+
+        party = super().update(instance, validated_data)
+        self._apply_representation(
+            party,
+            is_represented=is_represented,
+            representative_contact=representative_contact,
+            representation_type=representation_type,
+        )
+        return party
+
+
+class CaseRepresentationSerializer(serializers.ModelSerializer):
+    represented_contact_name = serializers.CharField(source='represented_contact.name', read_only=True)
+    representative_contact_name = serializers.CharField(source='representative_contact.name', read_only=True)
+
+    class Meta:
+        model = CaseRepresentation
+        fields = [
+            'id',
+            'case',
+            'represented_contact',
+            'represented_contact_name',
+            'representative_contact',
+            'representative_contact_name',
+            'representation_type',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class CaseLinkSerializer(serializers.ModelSerializer):
@@ -482,6 +608,9 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
 
+    # Representações (cliente -> representante) no processo
+    representations = CaseRepresentationSerializer(many=True, read_only=True)
+
     # Vínculos flexíveis (N:N) entre processos
     links_out = CaseLinkSerializer(many=True, read_only=True)
     links_in = CaseLinkSerializer(many=True, read_only=True)
@@ -541,6 +670,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'owner_name',
             'owner_oab',
             'parties',
+            'representations',
             'links_out',
             'links_in',
             'case_principal',

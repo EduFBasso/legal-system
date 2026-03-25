@@ -635,6 +635,125 @@ class CasePartyRoleOption(models.Model):
         return self.label
 
 
+class CaseRepresentationTypeOption(models.Model):
+    """Opções compartilhadas (persistidas) para o campo `CaseRepresentation.representation_type`.
+
+    Mantém uma lista evolutiva de tipos de representação (ex: "Procurador", "Responsável")
+    para uso no cadastro de representante do cliente.
+    """
+
+    label = models.CharField(max_length=100, help_text='Texto exibido na lista')
+    key = models.CharField(
+        max_length=140,
+        unique=True,
+        db_index=True,
+        help_text='Chave normalizada (sem acento, minúscula, espaços colapsados) para deduplicação',
+    )
+
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_representation_type_options',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Opção de Tipo de Representação'
+        verbose_name_plural = 'Opções de Tipo de Representação'
+        ordering = ['label']
+
+    @staticmethod
+    def normalize_key(value: str) -> str:
+        raw = str(value or '').strip()
+        if not raw:
+            return ''
+        nfd = unicodedata.normalize('NFD', raw)
+        no_marks = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+        collapsed = ' '.join(no_marks.split())
+        return collapsed.lower()
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.normalize_key(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
+
+
+class CaseRepresentation(models.Model):
+    """Representação do cliente em um processo.
+
+    Registra a relação entre um contato representado (cliente do processo) e
+    um contato representante/responsável, com um tipo livre (sugerido por opções).
+    """
+
+    case = models.ForeignKey(
+        'Case',
+        on_delete=models.CASCADE,
+        related_name='representations',
+    )
+
+    represented_contact = models.ForeignKey(
+        'contacts.Contact',
+        on_delete=models.CASCADE,
+        related_name='case_representations_as_represented',
+        help_text='Contato representado (normalmente o cliente do processo)',
+    )
+
+    representative_contact = models.ForeignKey(
+        'contacts.Contact',
+        on_delete=models.CASCADE,
+        related_name='case_representations_as_representative',
+        help_text='Contato representante/responsável no contexto deste processo',
+    )
+
+    representation_type = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text='Tipo de representação (texto livre; pode vir da lista de opções)',
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_case_representations',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Representação no Processo'
+        verbose_name_plural = 'Representações no Processo'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['case', 'represented_contact'],
+                name='unique_representation_per_case_and_represented_contact',
+            ),
+            models.CheckConstraint(
+                check=~Q(represented_contact=models.F('representative_contact')),
+                name='case_representation_no_self_representation',
+            ),
+        ]
+
+    def __str__(self):
+        try:
+            case_label = self.case.numero_processo
+        except Exception:
+            case_label = ''
+        return f"{self.represented_contact_id} -> {self.representative_contact_id} ({case_label})"
+
+
 class CaseParty(models.Model):
     """
     Tabela intermediária para relacionamento ManyToMany entre Case e Contact.

@@ -44,6 +44,8 @@ def _capitalize_words(text: str) -> str:
 from .models import (
     Case,
     CaseParty,
+    CaseRepresentation,
+    CaseRepresentationTypeOption,
     CaseLink,
     CaseMovement,
     CasePrazo,
@@ -60,6 +62,7 @@ from .serializers import (
     CaseListSerializer,
     CaseDetailSerializer,
     CasePartySerializer,
+    CaseRepresentationSerializer,
     CaseLinkSerializer,
     CaseMovementSerializer,
     CasePrazoSerializer,
@@ -106,12 +109,20 @@ class CaseViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             qs = qs.prefetch_related(
                 Prefetch('parties', queryset=CaseParty.objects.select_related('contact'))
+            ).prefetch_related(
+                'representations__represented_contact',
+                'representations__representative_contact',
             ).annotate(
                 active_tasks_count=Count(
                     'tasks',
                     filter=~Q(tasks__status='CONCLUIDA'),
                     distinct=True
                 )
+            )
+        else:
+            qs = qs.prefetch_related(
+                'representations__represented_contact',
+                'representations__representative_contact',
             )
         return qs
 
@@ -516,6 +527,102 @@ class CaseViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(detail=False, methods=['get', 'post'], url_path='representation-type-options')
+    def representation_type_options(self, request):
+        """Lista e cadastra opções compartilhadas para tipo de representação.
+
+        - GET: retorna opções persistidas
+        - POST: cria (ou retorna existente) com normalização/descrição capitalizada
+
+        Suporta `?q=` para reduzir resultados.
+        """
+
+        query = _collapse_spaces(request.query_params.get('q') or '').strip()
+        normalized_q = _normalize(query)
+
+        if request.method.upper() == 'GET':
+            qs = CaseRepresentationTypeOption.objects.filter(is_active=True)
+            if query:
+                qs = qs.filter(label__icontains=query)
+            items = [
+                {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True}
+                for opt in qs.order_by('label')[:250]
+            ]
+            if not normalized_q:
+                return Response(items)
+            filtered = []
+            for opt in items:
+                label = _collapse_spaces(opt.get('label') or '').strip()
+                if label and normalized_q in _normalize(label):
+                    filtered.append(opt)
+            return Response(filtered[:250])
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        label = _capitalize_words(raw_label)
+        if not label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        key = _collapse_spaces(_normalize(label))
+
+        existing = CaseRepresentationTypeOption.objects.filter(key=key).first()
+        if existing:
+            return Response(
+                {'id': existing.id, 'value': existing.label, 'label': existing.label, 'editable': True},
+                status=status.HTTP_200_OK,
+            )
+
+        try:
+            created = CaseRepresentationTypeOption.objects.create(
+                label=label,
+                key=key,
+                created_by=request.user if getattr(request.user, 'is_authenticated', False) else None,
+            )
+        except IntegrityError:
+            created = CaseRepresentationTypeOption.objects.filter(key=key).first()
+
+        if not created:
+            return Response({'error': 'Falha ao criar opção'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(
+            {'id': created.id, 'value': created.label, 'label': created.label, 'editable': True},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=['patch'], url_path='representation-type-options/(?P<option_id>\\d+)')
+    def update_representation_type_option(self, request, option_id=None):
+        """Edita (rename) uma opção persistida e ajusta registros existentes."""
+        try:
+            option_id_int = int(option_id)
+        except (TypeError, ValueError):
+            return Response({'error': 'ID inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        opt = CaseRepresentationTypeOption.objects.filter(id=option_id_int, is_active=True).first()
+        if not opt:
+            return Response({'error': 'Opção não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        new_label = _capitalize_words(raw_label)
+        if not new_label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_key = _collapse_spaces(_normalize(new_label))
+        collision = CaseRepresentationTypeOption.objects.filter(key=new_key).exclude(id=opt.id).first()
+        if collision:
+            return Response({'error': 'Já existe uma opção com este nome.'}, status=status.HTTP_409_CONFLICT)
+
+        old_label = opt.label
+        opt.label = new_label
+        opt.key = new_key
+        opt.save(update_fields=['label', 'key', 'updated_at'])
+
+        if old_label and old_label != new_label:
+            CaseRepresentation.objects.filter(representation_type=old_label).update(representation_type=new_label)
+
+        return Response(
+            {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True},
+            status=status.HTTP_200_OK,
+        )
+
     def filter_queryset(self, queryset):
         """
         Override para aplicar busca normalizada (sem acento) nos nomes das partes.
@@ -704,6 +811,56 @@ class CasePartyViewSet(viewsets.ModelViewSet):
                 return apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner')
             return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
         return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+
+
+class CaseRepresentationViewSet(viewsets.ModelViewSet):
+    """ViewSet para representações (cliente -> representante) dentro de um processo."""
+
+    queryset = CaseRepresentation.objects.select_related(
+        'case',
+        'represented_contact',
+        'representative_contact',
+    ).all().order_by('-created_at')
+    serializer_class = CaseRepresentationSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = {
+        'case': ['exact'],
+        'represented_contact': ['exact'],
+        'representative_contact': ['exact'],
+    }
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return queryset
+
+        scope_user = get_master_scope_user(self.request, UserModel)
+        if scope_user is not None:
+            return queryset.filter(case__owner=scope_user)
+
+        if is_master_user(user):
+            team_scope = self.request.query_params.get('team_scope')
+            if team_scope == 'all':
+                return apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner')
+            return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+
+        return apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
+
+    def perform_create(self, serializer):
+        represented_contact = serializer.validated_data.get('represented_contact')
+        case = serializer.validated_data.get('case')
+
+        # Mantém consistência com a regra de negócio: representado deve ser o cliente do processo.
+        if represented_contact and case:
+            if not CaseParty.objects.filter(case=case, contact=represented_contact, is_client=True).exists():
+                raise ValidationError({'represented_contact': 'O contato representado deve estar marcado como cliente no processo.'})
+
+        user = self.request.user
+        created_by = user if getattr(user, 'is_authenticated', False) else None
+        serializer.save(created_by=created_by)
 
 
 class CaseLinkViewSet(viewsets.ModelViewSet):

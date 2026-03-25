@@ -6,6 +6,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CaseViewSet,
     CasePartyViewSet,
+    CaseRepresentationViewSet,
     CaseLinkViewSet,
     CaseMovementViewSet,
     CasePrazoViewSet,
@@ -18,6 +19,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'cases', CaseViewSet, basename='case')
 router.register(r'case-parties', CasePartyViewSet, basename='caseparty')
+router.register(r'case-representations', CaseRepresentationViewSet, basename='caserepresentation')
 router.register(r'case-links', CaseLinkViewSet, basename='caselink')
 router.register(r'case-movements', CaseMovementViewSet, basename='casemovement')
 router.register(r'case-prazos', CasePrazoViewSet, basename='caseprazo')

@@ -10,7 +10,17 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import timedelta
 from apps.contacts.models import Contact
-from apps.cases.models import Case, CaseParty, CaseLink, CaseMovement, CasePrazo, CaseTask, Payment, Expense
+from apps.cases.models import (
+    Case,
+    CaseParty,
+    CaseRepresentation,
+    CaseLink,
+    CaseMovement,
+    CasePrazo,
+    CaseTask,
+    Payment,
+    Expense,
+)
 
 
 class CaseModelTest(TestCase):
@@ -845,6 +855,75 @@ class CasePartyAPITest(APITestCase):
 
         self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
+
+    def test_api_requires_representative_when_represented(self):
+        """Se is_represented=True, deve exigir representative_contact e representation_type."""
+        payload_missing_rep = {
+            'case': self.case.id,
+            'contact': self.contact.id,
+            'role': 'CLIENTE',
+            'is_client': True,
+            'is_represented': True,
+            'representation_type': 'Procurador',
+        }
+        resp = self.client.post('/api/case-parties/', payload_missing_rep, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('representative_contact', resp.data)
+
+        representative = Contact.objects.create(name='Representante', person_type='PF')
+        payload_missing_type = {
+            'case': self.case.id,
+            'contact': self.contact.id,
+            'role': 'CLIENTE',
+            'is_client': True,
+            'is_represented': True,
+            'representative_contact': representative.id,
+        }
+        resp2 = self.client.post('/api/case-parties/', payload_missing_type, format='json')
+        self.assertEqual(resp2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('representation_type', resp2.data)
+
+    def test_api_creates_representation_when_represented_client(self):
+        representative = Contact.objects.create(name='Representante', person_type='PF')
+
+        payload = {
+            'case': self.case.id,
+            'contact': self.contact.id,
+            'role': 'CLIENTE',
+            'is_client': True,
+            'is_represented': True,
+            'representative_contact': representative.id,
+            'representation_type': 'Procurador',
+        }
+
+        response = self.client.post('/api/case-parties/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(CaseParty.objects.count(), 1)
+        self.assertEqual(CaseRepresentation.objects.count(), 1)
+
+        rep = CaseRepresentation.objects.first()
+        self.assertEqual(rep.case_id, self.case.id)
+        self.assertEqual(rep.represented_contact_id, self.contact.id)
+        self.assertEqual(rep.representative_contact_id, representative.id)
+        self.assertEqual(rep.representation_type, 'Procurador')
+
+    def test_api_blocks_representation_for_non_client_party(self):
+        """Representação só é permitida se is_client=True."""
+        representative = Contact.objects.create(name='Representante', person_type='PF')
+
+        payload = {
+            'case': self.case.id,
+            'contact': self.contact.id,
+            'role': 'AUTOR',
+            'is_client': False,
+            'is_represented': True,
+            'representative_contact': representative.id,
+            'representation_type': 'Procurador',
+        }
+
+        response = self.client.post('/api/case-parties/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('is_represented', response.data)
 
 
 class CaseMovementModelTest(TestCase):
