@@ -1,0 +1,83 @@
+/* CaseDetailSections - shared styles for Case Detail tabs */
+
+.case-detail-page .section-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 3px solid #1e293b;
+  transition: all 0.2s;
+}
+
+.case-detail-page .section-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.case-detail-page .section-title {
+  margin: 0 0 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Quando .section-title está dentro de .section-header, remove bordas */
+.case-detail-page .section-header .section-title {
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.case-detail-page .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.case-detail-page .section-header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.case-detail-page .section-owner-label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-right: 0.5rem;
+}
+
+/* Party contact links (usado em InformacaoTab e PartiesTab) */
+.case-detail-page .party-contact-link {
+  color: #059669;
+  text-decoration: none;
+  font-weight: 700;
+  transition: all 0.2s;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: inline;
+}
+
+.case-detail-page .party-contact-link:hover {
+  color: #047857;
+  border-bottom-color: #047857;
+}
+
+/* Nome do cliente - destaque maior */
+.case-detail-page .party-name-client {
+  font-size: 1.45rem !important;
+  font-weight: 700 !important;
+}
+
+@media (max-width: 768px) {
+  .case-detail-page .section-card {
+    padding: 1.5rem;
+  }
+}

@@ -3,6 +3,8 @@ import { Plus, FileText } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
 import { Button } from '../common/Button';
 
+import './DocumentosTab.css';
+
 /**
  * DocumentosTab - Aba de Documentos do Processo
  * Exibe documentos anexados: petições, sentenças, contratos, etc.

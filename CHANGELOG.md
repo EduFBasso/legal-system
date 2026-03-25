@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated frontend/README.md with component documentation and conventions
 - This CHANGELOG.md
 
+### ♻️ Refactor
+
+- CaseDetail: extração de lógica de orquestração para hooks dedicados (documentos, vínculos, auto-refresh, guards de auto-save do financeiro, e fluxo de link por query params)
+- CaseDetail: redução de prop-drilling no conteúdo das abas (objeto `caseDetail` memoizado)
+
 ## [0.2.0] - 2026-02-27 - "Cases & Publications Complete"
 
 ### ✨ Features

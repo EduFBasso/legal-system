@@ -78,7 +78,7 @@ export default function CasesPage() {
    */
   useEffect(() => {
     loadStats();
-  }, [allTribunals]);
+  }, [loadStats]);
 
   /**
    * Handle filter changes (search has debounce, ordering is immediate)
@@ -104,7 +104,7 @@ export default function CasesPage() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filters]);
+  }, [filters, loadCases]);
 
   /**
    * Handle filter changes (search and ordering)

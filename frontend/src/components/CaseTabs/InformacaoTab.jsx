@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Edit2, Save, X, Trash2, UserPlus, Plus } from 'lucide-react';
+import './InformacaoTab.css';
 import { formatDate, maskNumeroProcesso } from '../../utils/formatters';
 import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';

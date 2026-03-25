@@ -3,6 +3,8 @@ import Toast from '../common/Toast';
 import ContactDetailModal from '../ContactDetailModal';
 import SelectContactModal from '../SelectContactModal';
 
+import './CaseDetailModals.css';
+
 export default function CaseDetailModals({
   modalsNotif,
   parties,
@@ -44,7 +46,7 @@ export default function CaseDetailModals({
 
       {/* Modal de Edição de Papel da Parte */}
       {parties.editingParty && (
-        <div className="modal-overlay" onClick={() => parties.setEditingParty(null)}>
+        <div className="modal-overlay case-detail-modal-overlay" onClick={() => parties.setEditingParty(null)}>
           <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Editar Papel da Parte</h2>
@@ -171,7 +173,7 @@ export default function CaseDetailModals({
 
       {/* Modal de Definir Papel da Parte */}
       {parties.showAddPartyModal && parties.selectedContact && (
-        <div className="modal-overlay" onClick={parties.handleCloseAddPartyModal}>
+        <div className="modal-overlay case-detail-modal-overlay" onClick={parties.handleCloseAddPartyModal}>
           <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Adicionar ao Processo</h2>
@@ -271,7 +273,7 @@ export default function CaseDetailModals({
 
       {/* Delete Confirmation Modal */}
       {modalsNotif.showDeleteConfirmModal && (
-        <div className="modal-overlay" onClick={onCancelDelete}>
+        <div className="modal-overlay case-detail-modal-overlay" onClick={onCancelDelete}>
           <div className="modal-content modal-medium" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ borderBottom: '2px solid #ef4444' }}>
               <h2 style={{ color: '#7f1d1d', margin: 0 }}>🗑️ Deletar Processo</h2>

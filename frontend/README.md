@@ -71,6 +71,18 @@ src/
 └── palette.css       # Design system (CSS Variables)
 ```
 
+### Case Detail (Cases)
+
+O fluxo de detalhes de processo foi modularizado para facilitar manutenção, com separação por domínio + hooks de orquestração.
+
+- Página: `src/pages/CaseDetailPage.jsx`
+- Componentes: `src/components/CaseDetail/`
+  - Navbar (abas), conteúdo das abas, e modais
+- Abas: `src/components/CaseTabs/`
+- Hooks (domínios): `src/hooks/`
+  - Core do caso, partes, movimentações/tarefas, publicações, financeiro
+  - Orquestração: documentos, vínculos, auto-refresh (foco/visibilidade), guards de auto-save do financeiro, e deep-link `?action=link&contactId=`
+
 ## 🎨 Design System
 
 ### CSS Variables (palette.css)

@@ -1,0 +1,97 @@
+/* PartiesTab - styles scoped near component */
+
+.parties-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.party-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.party-card:hover {
+  border: 3px solid #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.party-card.selected {
+  border: 3px solid #2563eb !important;
+  background: #eff6ff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
+}
+
+.party-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.party-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.party-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.party-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.party-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.party-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.party-contact-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.party-detail {
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.party-notes {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.party-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}

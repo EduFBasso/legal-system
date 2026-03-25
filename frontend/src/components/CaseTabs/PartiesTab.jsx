@@ -5,6 +5,8 @@ import EmptyState from '../common/EmptyState';
 import PartyRoleBadge from '../common/PartyRoleBadge';
 import { Button } from '../common/Button';
 
+import './PartiesTab.css';
+
 /**
  * PartiesTab - Aba de Partes do Processo
  * Exibe lista de partes vinculadas ao case com formatação de documentos

@@ -1,5 +1,5 @@
 // src/components/ContactDetailModal.jsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import ConfirmDialog from './common/ConfirmDialog';
@@ -38,6 +38,38 @@ export default function ContactDetailModal({
   // Don't check contact state - it gets populated with empty object during creation
   const isCreating = !contactId;
 
+  // Helper: Apply masks to contact data for editing
+  // Maps backend field names to frontend field names + applies masks
+  const applyMasksToContact = useCallback((contactData) => {
+    return {
+      ...contactData,
+      // Map backend field names to frontend names
+      trading_name: contactData.trading_name || '',
+      document: contactData.document_number ? maskDocument(contactData.document_number, contactData.person_type) : '',
+      address_line1: contactData.street || '',
+      address_number: contactData.number || '',
+      // Apply masks to phone fields
+      phone: contactData.phone ? maskPhone(contactData.phone) : '',
+      mobile: contactData.mobile ? maskPhone(contactData.mobile) : '',
+      zip_code: contactData.zip_code ? maskCEP(contactData.zip_code) : '',
+    };
+  }, []);
+
+  const loadContactDetails = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await contactsAPI.getById(contactId);
+      setContact(data);
+      setEditedContact(applyMasksToContact(data)); // Apply masks for editing
+    } catch (err) {
+      setError('Erro ao carregar detalhes do contato');
+      console.error('Load contact details error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [applyMasksToContact, contactId]);
+
   useEffect(() => {
     if (isOpen) {
       if (contactId) {
@@ -75,39 +107,7 @@ export default function ContactDetailModal({
       setIsEditing(false);
       setError(null);
     }
-  }, [isOpen, contactId]);
-
-  // Helper: Apply masks to contact data for editing
-  // Maps backend field names to frontend field names + applies masks
-  const applyMasksToContact = (contactData) => {
-    return {
-      ...contactData,
-      // Map backend field names to frontend names
-      trading_name: contactData.trading_name || '',
-      document: contactData.document_number ? maskDocument(contactData.document_number, contactData.person_type) : '',
-      address_line1: contactData.street || '',
-      address_number: contactData.number || '',
-      // Apply masks to phone fields
-      phone: contactData.phone ? maskPhone(contactData.phone) : '',
-      mobile: contactData.mobile ? maskPhone(contactData.mobile) : '',
-      zip_code: contactData.zip_code ? maskCEP(contactData.zip_code) : '',
-    };
-  };
-
-  const loadContactDetails = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await contactsAPI.getById(contactId);
-      setContact(data);
-      setEditedContact(applyMasksToContact(data)); // Apply masks for editing
-    } catch (err) {
-      setError('Erro ao carregar detalhes do contato');
-      console.error('Load contact details error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [contactId, isOpen, loadContactDetails, openInEditMode]);
 
   const handleEdit = () => {
     setEditedContact(applyMasksToContact(contact)); // Apply masks when entering edit mode

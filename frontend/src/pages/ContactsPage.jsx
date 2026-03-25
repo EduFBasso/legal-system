@@ -1,5 +1,5 @@
 // src/pages/ContactsPage.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -15,6 +15,7 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const hasRunSearchEffectRef = useRef(false);
+  const searchTermRef = useRef('');
   
   // Modal state
   const [selectedContactId, setSelectedContactId] = useState(null);
@@ -37,10 +38,35 @@ export default function ContactsPage() {
     setShowToast(true);
   };
 
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+
+  const loadContacts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Pass search parameter to backend
+      const effectiveSearch = searchTermRef.current;
+      const params = effectiveSearch ? { search: effectiveSearch } : {};
+      const data = await contactsAPI.getAll(params);
+      setContacts(data);
+    } catch (err) {
+      if (err?.status === 401) {
+        setError('Sessão expirada. Faça login novamente para carregar os contatos.');
+      } else {
+        setError('Erro ao carregar contatos. Verifique se o backend está rodando.');
+      }
+      console.error('Load contacts error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Load all contacts on mount
   useEffect(() => {
     loadContacts();
-  }, []);
+  }, [loadContacts]);
 
   // Search effect with debounce
   useEffect(() => {
@@ -53,11 +79,13 @@ export default function ContactsPage() {
     }
 
     const timer = setTimeout(() => {
+      // Garante que buscamos com o termo que disparou o debounce.
+      searchTermRef.current = searchTerm;
       loadContacts();
     }, 300); // Wait 300ms after user stops typing
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, loadContacts]);
 
   // Auto-reload contacts when user returns from linking in another tab
   useEffect(() => {
@@ -70,7 +98,7 @@ export default function ContactsPage() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [loadContacts]);
 
   // Auto-open modal if "open" query param is present
   useEffect(() => {
@@ -110,26 +138,6 @@ export default function ContactsPage() {
     params.delete('focus');
     setSearchParams(params);
   }, [searchParams, contacts, setSearchParams]);
-
-  const loadContacts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Pass search parameter to backend
-      const params = searchTerm ? { search: searchTerm } : {};
-      const data = await contactsAPI.getAll(params);
-      setContacts(data);
-    } catch (err) {
-      if (err?.status === 401) {
-        setError('Sessão expirada. Faça login novamente para carregar os contatos.');
-      } else {
-        setError('Erro ao carregar contatos. Verifique se o backend está rodando.');
-      }
-      console.error('Load contacts error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleViewContact = (contactId) => {
     setSelectedContactId(contactId);

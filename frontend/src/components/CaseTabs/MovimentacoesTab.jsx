@@ -9,6 +9,8 @@ import caseMovementsService from '../../services/caseMovementsService';
 import MovimentacaoCard from './MovimentacaoCard';
 import MovimentacaoEditForm from './MovimentacaoEditForm';
 
+import './MovimentacoesTab.css';
+
 const HIGHLIGHT_DURATION_MS = 3000;
 const getTodayIsoDate = () => new Date().toISOString().split('T')[0];
 

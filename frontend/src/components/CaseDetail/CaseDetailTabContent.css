@@ -1,0 +1,14 @@
+/* CaseDetailTabContent - layout/padding do conteúdo */
+
+@media (max-width: 1024px) {
+  .case-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .case-content {
+    padding: 1rem;
+  }
+}

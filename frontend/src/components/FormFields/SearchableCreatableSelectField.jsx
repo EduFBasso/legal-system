@@ -81,11 +81,9 @@ export default function SearchableCreatableSelectField({
     return typeof onSearchOptions === 'function' && !disabled;
   }, [onSearchOptions, disabled]);
 
-  const rawUserQuery = useMemo(() => {
-    // Use raw keystrokes (before autocomplete mutates `query`) to avoid sending
-    // the autocompleted label to the backend.
-    return String(lastUserInputRef.current || '').trim();
-  }, [isDirty, query]);
+  // Use raw keystrokes (before autocomplete mutates `query`) to avoid sending
+  // the autocompleted label to the backend.
+  const rawUserQuery = String(lastUserInputRef.current || '').trim();
 
   useEffect(() => {
     if (!shouldUseRemote) return;

@@ -9,38 +9,11 @@ import {
   VinculosTab,
 } from '../CaseTabs';
 
+import './CaseDetailSections.css';
+import './CaseDetailTabContent.css';
+
 export default function CaseDetailTabContent({
-  activeSection,
-  id,
-  isReadOnly,
-
-  navigation,
-  caseCore,
-  parties,
-  movements,
-  publications,
-  financial,
-
-  documentos,
-  loadingDocumentos,
-  uploadingDocumento,
-  onUploadDocument,
-  onDeleteDocument,
-
-  formatDate,
-  formatCurrency,
-
-  autoSavingFinancial,
-  systemSettings,
-  showPublicacoesTab,
-
-  currentCaseCnj,
-
-  linkedCases,
-  loadingLinkedCases,
-  mentionedProcessLinks,
-  onMentionedProcessRoleChange,
-  onRemoveMentionedProcess,
+  caseDetail,
 
   onSaveCaseWithParties,
   onDeleteCase,
@@ -52,6 +25,40 @@ export default function CaseDetailTabContent({
 
   onRemoveParty,
 }) {
+  const {
+    activeSection,
+    id,
+    isReadOnly,
+
+    navigation,
+    caseCore,
+    parties,
+    movements,
+    publications,
+    financial,
+
+    documentos,
+    loadingDocumentos,
+    uploadingDocumento,
+    onUploadDocument,
+    onDeleteDocument,
+
+    formatDate,
+    formatCurrency,
+
+    autoSavingFinancial,
+    systemSettings,
+    showPublicacoesTab,
+
+    currentCaseCnj,
+
+    linkedCases,
+    loadingLinkedCases,
+    mentionedProcessLinks,
+    onMentionedProcessRoleChange,
+    onRemoveMentionedProcess,
+  } = caseDetail;
+
   return (
     <main className="case-content">
       {activeSection === 'info' && (
