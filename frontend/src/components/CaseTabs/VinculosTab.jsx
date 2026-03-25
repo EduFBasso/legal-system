@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import './VinculosTab.css';
+
 import EmptyState from '../common/EmptyState';
 import PartyRoleBadge from '../common/PartyRoleBadge';
 import { contactsAPI } from '../../services/api';
@@ -111,8 +113,8 @@ function VinculosTab({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <div style={{ fontWeight: 700, marginBottom: '6px' }}>👥 Vínculos por contato</div>
+          <div className="vinculos-section vinculos-section--contacts">
+            <div className="vinculos-subtitle vinculos-subtitle--lg">👥 Vínculos por contato</div>
 
             {parties.length === 0 ? (
               <EmptyState
@@ -148,10 +150,9 @@ function VinculosTab({
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
                         <button
                           type="button"
-                          className="btn btn-secondary"
+                          className="btn btn-secondary vinculos-contact-button"
                           onClick={(e) => handleOpenPartyContact(e, contactId)}
                           title="Abrir contato em nova aba"
-                          style={{ textAlign: 'left' }}
                           disabled={readOnly}
                         >
                           👁 {party?.contact_name || `Contato #${contactId || ''}`}
@@ -208,11 +209,11 @@ function VinculosTab({
           </div>
 
           <div>
-            <div style={{ fontWeight: 700, marginBottom: '6px' }}>🔗 Vínculos por processo</div>
+            <div className="vinculos-subtitle vinculos-subtitle--lg">🔗 Vínculos por processo</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <div style={{ fontWeight: 700, marginBottom: '6px' }}>Processos mencionados em movimentações</div>
+                <div className="vinculos-subtitle">Processos mencionados em movimentações</div>
 
                 {mentionedProcessLinks.length === 0 ? (
                   <EmptyState
@@ -267,11 +268,11 @@ function VinculosTab({
               </div>
 
               <div>
-                <div style={{ fontWeight: 700, marginBottom: '6px' }}>Cliente principal</div>
+                <div className="vinculos-subtitle vinculos-subtitle--lg vinculos-subtitle--mb-lg">Cliente principal</div>
                 {clientId ? (
                   <button
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-secondary vinculos-contact-button"
                     onClick={handleOpenContact}
                     title="Abrir contato em nova aba"
                     disabled={readOnly}
@@ -284,7 +285,7 @@ function VinculosTab({
               </div>
 
               <div>
-                <div style={{ fontWeight: 700, marginBottom: '6px' }}>Outros processos do mesmo cliente</div>
+                <div className="vinculos-subtitle vinculos-subtitle--lg vinculos-subtitle--mb-lg">Outros processos do mesmo cliente</div>
 
                 {loading ? (
                   <div>Carregando vínculos…</div>

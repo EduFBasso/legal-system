@@ -197,6 +197,8 @@ class CasePartySerializer(serializers.ModelSerializer):
     contact_phone = serializers.CharField(source='contact.mobile', read_only=True)
     contact_email = serializers.CharField(source='contact.email', read_only=True)
     role_display = serializers.CharField(source='get_role_display', read_only=True)
+    # Allow saving custom roles (outside Django choices) while keeping display mapping for known ones.
+    role = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = CaseParty

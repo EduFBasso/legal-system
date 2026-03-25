@@ -153,6 +153,11 @@
   color: #1e293b;
 }
 
+/* Observações: manter quebras de linha coladas no textarea */
+.case-detail-page .detail-value.detail-value-prewrap {
+  white-space: pre-wrap;
+}
+
 .case-detail-page .detail-value-large {
   font-size: 1.8rem;
   font-weight: 800;

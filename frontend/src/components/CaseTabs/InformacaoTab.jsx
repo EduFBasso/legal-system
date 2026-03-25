@@ -546,7 +546,7 @@ function InformacaoTab({
 
                 {!isEditing ? (
                   <div className="detail-item full">
-                    <p className="detail-value">{formData.observacoes || '-'}</p>
+                    <p className="detail-value detail-value-prewrap">{formData.observacoes || '-'}</p>
                   </div>
                 ) : (
                   <EditableDetailField

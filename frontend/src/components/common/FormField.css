@@ -28,6 +28,11 @@
   padding: 2px 0;
 }
 
+.form-field-value.form-field-value-prewrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .form-field-value.field-empty {
   color: var(--color-text-muted);
   font-style: italic;

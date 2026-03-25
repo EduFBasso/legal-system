@@ -86,8 +86,13 @@
   padding: 1rem;
   background: #f8fafc;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #475569;
+}
+
+.party-notes-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .party-actions {

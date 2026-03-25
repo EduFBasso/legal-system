@@ -517,7 +517,9 @@ function CaseDetailPage() {
     [activeTasks]
   );
 
-  if (caseCore.loading) {
+  // Evita "piscar" a tela inteira durante recarregamentos de background.
+  // Mantém o spinner apenas no carregamento inicial (quando ainda não há dados).
+  if (caseCore.loading && !caseCore.caseData) {
     return (
       <div className="case-detail-page">
         <div className="loading-container">

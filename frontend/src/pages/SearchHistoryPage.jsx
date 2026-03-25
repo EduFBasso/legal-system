@@ -39,7 +39,9 @@ function SearchHistoryPage() {
   const [isSearchingBackend, setIsSearchingBackend] = useState(false);
   const [isBackendQuery, setIsBackendQuery] = useState(false); // Indica se query atual é tipo backend (nome/processo)
   const [backendMatchIds, setBackendMatchIds] = useState(new Set()); // IDs dos cartões encontrados no backend
+  const [showLoadingUi, setShowLoadingUi] = useState(false);
   const debounceTimerRef = useRef(null);
+  const loadingUiTimerRef = useRef(null);
   const detailPanelRef = useRef(null);
 
   // Verificar se ordenação é crescente
@@ -339,6 +341,32 @@ function SearchHistoryPage() {
     }
   }, [location.state, loading, searches, selectedSearch, loadSearchDetail, navigate]);
 
+  // Anti-flash: só mostra o loading após um pequeno atraso
+  // (especialmente útil quando navega e o backend responde muito rápido).
+  useEffect(() => {
+    const isInitialLoading = loading && searches.length === 0;
+
+    if (loadingUiTimerRef.current) {
+      clearTimeout(loadingUiTimerRef.current);
+    }
+
+    if (!isInitialLoading) {
+      setShowLoadingUi(false);
+      return;
+    }
+
+    setShowLoadingUi(false);
+    loadingUiTimerRef.current = setTimeout(() => {
+      setShowLoadingUi(true);
+    }, 150);
+
+    return () => {
+      if (loadingUiTimerRef.current) {
+        clearTimeout(loadingUiTimerRef.current);
+      }
+    };
+  }, [loading, searches.length]);
+
   return (
     <div className="search-history-page">
       {/* Cabeçalho */}
@@ -367,12 +395,12 @@ function SearchHistoryPage() {
       )}
 
       {/* Loading */}
-      {loading ? (
+      {loading && searches.length === 0 && showLoadingUi ? (
         <div className="loading-container">
           <div className="spinner"></div>
           <p>Carregando histórico...</p>
         </div>
-      ) : (
+      ) : loading && searches.length === 0 ? null : (
         <>
           {/* Lista de buscas */}
           {filteredSearches.length === 0 ? (
@@ -444,5 +472,4 @@ function SearchHistoryPage() {
     </div>
   );
 }
-
 export default SearchHistoryPage;

@@ -53,6 +53,7 @@ from .models import (
     CaseDocument,
     CaseTipoAcaoOption,
     CaseTituloOption,
+    CasePartyRoleOption,
 )
 from apps.publications.models import Publication
 from .serializers import (
@@ -377,6 +378,143 @@ class CaseViewSet(viewsets.ModelViewSet):
             Case.objects.filter(titulo=old_label).update(titulo=new_label)
 
         return Response({'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get', 'post'], url_path='party-role-options')
+    def party_role_options(self, request):
+        """Lista e cadastra opções compartilhadas para `CaseParty.role`.
+
+        - GET: retorna opções padrão (roles hardcoded) + opções persistidas
+        - POST: cria (ou retorna existente) com normalização/descrição capitalizada
+
+        Suporta `?q=` para reduzir resultados (útil quando a lista cresce).
+        """
+
+        query = _collapse_spaces(request.query_params.get('q') or '').strip()
+        normalized_q = _normalize(query)
+
+        default_options = [
+            {'value': 'AUTOR', 'label': 'Autor/Requerente', 'editable': False},
+            {'value': 'REU', 'label': 'Réu/Requerido', 'editable': False},
+            {'value': 'TESTEMUNHA', 'label': 'Testemunha', 'editable': False},
+            {'value': 'PERITO', 'label': 'Perito', 'editable': False},
+            {'value': 'TERCEIRO', 'label': 'Terceiro Interessado', 'editable': False},
+            {'value': 'CLIENTE', 'label': 'Cliente/Representado', 'editable': False},
+        ]
+
+        if request.method.upper() == 'GET':
+            persisted_qs = CasePartyRoleOption.objects.filter(is_active=True)
+            if query:
+                persisted_qs = persisted_qs.filter(label__icontains=query)
+
+            persisted = [
+                {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True}
+                for opt in persisted_qs.order_by('label')[:200]
+            ]
+
+            merged = []
+            seen = set()
+            for opt in default_options + persisted:
+                label = _collapse_spaces(opt.get('label') or '').strip()
+                if not label:
+                    continue
+                if normalized_q and normalized_q not in _normalize(label):
+                    continue
+                key = _collapse_spaces(_normalize(label))
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                merged.append(opt)
+
+            return Response(merged[:250])
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        label = _capitalize_words(raw_label)
+        if not label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        key = _collapse_spaces(_normalize(label))
+
+        # Se bater com uma opção padrão, não persiste: retorna a default.
+        for opt in default_options:
+            if _collapse_spaces(_normalize(opt['label'])) == key:
+                return Response(opt, status=status.HTTP_200_OK)
+
+        existing = CasePartyRoleOption.objects.filter(key=key).first()
+        if existing:
+            return Response(
+                {'id': existing.id, 'value': existing.label, 'label': existing.label, 'editable': True},
+                status=status.HTTP_200_OK,
+            )
+
+        try:
+            created = CasePartyRoleOption.objects.create(
+                label=label,
+                key=key,
+                created_by=request.user if getattr(request.user, 'is_authenticated', False) else None,
+            )
+        except IntegrityError:
+            created = CasePartyRoleOption.objects.filter(key=key).first()
+
+        if not created:
+            return Response({'error': 'Falha ao criar opção'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(
+            {'id': created.id, 'value': created.label, 'label': created.label, 'editable': True},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=['patch'], url_path='party-role-options/(?P<option_id>\\d+)')
+    def update_party_role_option(self, request, option_id=None):
+        """Edita (rename) uma opção persistida de papel e ajusta CaseParty existentes."""
+        try:
+            option_id_int = int(option_id)
+        except (TypeError, ValueError):
+            return Response({'error': 'ID inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        opt = CasePartyRoleOption.objects.filter(id=option_id_int, is_active=True).first()
+        if not opt:
+            return Response({'error': 'Opção não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        new_label = _capitalize_words(raw_label)
+        if not new_label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        default_labels_normalized = {
+            _collapse_spaces(_normalize(item['label']))
+            for item in [
+                {'label': 'Autor/Requerente'},
+                {'label': 'Réu/Requerido'},
+                {'label': 'Testemunha'},
+                {'label': 'Perito'},
+                {'label': 'Terceiro Interessado'},
+                {'label': 'Cliente/Representado'},
+            ]
+        }
+
+        new_key = _collapse_spaces(_normalize(new_label))
+        if new_key in default_labels_normalized:
+            return Response(
+                {'error': 'Não é permitido renomear para um papel padronizado (lista fixa).'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        collision = CasePartyRoleOption.objects.filter(key=new_key).exclude(id=opt.id).first()
+        if collision:
+            return Response({'error': 'Já existe uma opção com este nome.'}, status=status.HTTP_409_CONFLICT)
+
+        old_label = opt.label
+        opt.label = new_label
+        opt.key = new_key
+        opt.save(update_fields=['label', 'key', 'updated_at'])
+
+        if old_label and old_label != new_label:
+            CaseParty.objects.filter(role=old_label).update(role=new_label)
+
+        return Response(
+            {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True},
+            status=status.HTTP_200_OK,
+        )
 
     def filter_queryset(self, queryset):
         """

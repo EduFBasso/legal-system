@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
  * useCaseDetailAutoRefresh
@@ -26,6 +26,22 @@ export function useCaseDetailAutoRefresh({
   loadMovimentacoes,
   loadTasks,
 }) {
+  const lastFinanceiroRefreshStartedAtRef = useRef(0);
+
+  const shouldTrace = () => {
+    try {
+      return String(window?.localStorage?.getItem('debug_flicker') || '') === '1';
+    } catch {
+      return false;
+    }
+  };
+
+  const trace = (...args) => {
+    if (!shouldTrace()) return;
+    const ts = new Date().toISOString();
+    console.log(`[CaseDetailFlickerTrace ${ts}]`, ...args);
+  };
+
   // Recarrega movimentações/tarefas ao entrar na aba.
   useEffect(() => {
     if (activeSection !== 'movimentacoes' || !caseId) return;
@@ -40,6 +56,8 @@ export function useCaseDetailAutoRefresh({
     if (activeSection !== 'financeiro' || !caseId) return;
     if (caseSaving || autoSavingFinancial) return;
 
+    trace('financeiro:enter -> loadCaseData');
+    lastFinanceiroRefreshStartedAtRef.current = Date.now();
     loadCaseData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection, caseId]);
@@ -48,22 +66,39 @@ export function useCaseDetailAutoRefresh({
   useEffect(() => {
     if (activeSection !== 'financeiro' || !caseId) return;
 
-    const refreshFinanceiroData = () => {
+    const shouldSkipRefresh = (reason) => {
+      const now = Date.now();
+      const elapsed = now - (lastFinanceiroRefreshStartedAtRef.current || 0);
+      if (elapsed < 1200) {
+        trace(`financeiro:${reason} -> skip (elapsed=${elapsed}ms)`);
+        return true;
+      }
+      return false;
+    };
+
+    const refreshFinanceiroData = (reason) => {
       if (caseSaving || autoSavingFinancial) return;
+      if (shouldSkipRefresh(reason)) return;
+      lastFinanceiroRefreshStartedAtRef.current = Date.now();
+      trace(`financeiro:${reason} -> loadCaseData`);
       loadCaseData();
+    };
+
+    const handleFocus = () => {
+      refreshFinanceiroData('focus');
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshFinanceiroData();
+        refreshFinanceiroData('visible');
       }
     };
 
-    window.addEventListener('focus', refreshFinanceiroData);
+    window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('focus', refreshFinanceiroData);
+      window.removeEventListener('focus', handleFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

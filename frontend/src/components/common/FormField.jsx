@@ -56,7 +56,9 @@ export default function FormField({
       
       {readOnly ? (
         // VIEW mode
-        <span className={`form-field-value ${!hasValue ? 'field-empty' : ''}`}>
+        <span
+          className={`form-field-value ${!hasValue ? 'field-empty' : ''} ${type === 'textarea' ? 'form-field-value-prewrap' : ''}`}
+        >
           {hasValue ? value : emptyText}
         </span>
       ) : (

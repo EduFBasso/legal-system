@@ -12,7 +12,9 @@ import publicationsService from '../services/publicationsService';
 export function useSearchHistory() {
   // Estado
   const [searches, setSearches] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // Começa como "loading" para evitar flash de empty-state no primeiro paint
+  // (o efeito de mount ainda vai buscar o histórico e setar loading=false ao terminar).
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
     count: 0,

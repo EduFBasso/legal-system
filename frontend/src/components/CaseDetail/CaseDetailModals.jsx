@@ -1,7 +1,10 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import Toast from '../common/Toast';
 import ContactDetailModal from '../ContactDetailModal';
 import SelectContactModal from '../SelectContactModal';
+import SearchableCreatableSelectField from '../FormFields/SearchableCreatableSelectField';
+import casesService from '../../services/casesService';
 
 import './CaseDetailModals.css';
 
@@ -19,6 +22,82 @@ export default function CaseDetailModals({
   onCancelDelete,
   onConfirmDelete,
 }) {
+  const defaultPartyRoleOptions = useMemo(() => ([
+    { value: 'AUTOR', label: 'Autor/Requerente', editable: false },
+    { value: 'REU', label: 'Réu/Requerido', editable: false },
+    { value: 'TESTEMUNHA', label: 'Testemunha', editable: false },
+    { value: 'PERITO', label: 'Perito', editable: false },
+    { value: 'TERCEIRO', label: 'Terceiro Interessado', editable: false },
+    { value: 'CLIENTE', label: 'Cliente/Representado', editable: false },
+  ]), []);
+
+  const [partyRoleOptions, setPartyRoleOptions] = useState(defaultPartyRoleOptions);
+
+  useEffect(() => {
+    const shouldLoad = !!parties.editingParty || !!parties.showAddPartyModal;
+    if (!shouldLoad) return;
+
+    let isActive = true;
+    Promise.resolve(casesService.getPartyRoleOptions())
+      .then((options) => {
+        if (!isActive) return;
+        if (Array.isArray(options) && options.length > 0) {
+          setPartyRoleOptions(options);
+        }
+      })
+      .catch(() => {
+        // Fallback silencioso para defaults.
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [parties.editingParty, parties.showAddPartyModal]);
+
+  const onCreatePartyRoleOption = useCallback(async (label) => {
+    try {
+      const created = await casesService.createPartyRoleOption(label);
+      if (created && typeof created === 'object') {
+        setPartyRoleOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const exists = next.some((opt) => String(opt?.value) === String(created.value));
+          if (!exists) next.push(created);
+          return next;
+        });
+      }
+      return created;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao cadastrar papel no processo', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
+  const onEditPartyRoleOption = useCallback(async (idToUpdate, label) => {
+    try {
+      const updated = await casesService.updatePartyRoleOption(idToUpdate, label);
+      if (updated && typeof updated === 'object') {
+        setPartyRoleOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const index = next.findIndex((opt) => Number(opt?.id) === Number(updated.id));
+          if (index >= 0) {
+            next[index] = { ...next[index], ...updated };
+            return next;
+          }
+          const byValue = next.findIndex((opt) => String(opt?.value) === String(updated.value));
+          if (byValue >= 0) {
+            next[byValue] = { ...next[byValue], ...updated };
+            return next;
+          }
+          return [...next, updated];
+        });
+      }
+      return updated;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao editar papel no processo', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
   return (
     <>
       {/* Modal de Seleção de Contato */}
@@ -69,10 +148,10 @@ export default function CaseDetailModals({
                         background: 'none',
                         border: '1px solid #2563eb',
                         borderRadius: '4px',
-                        padding: '0.4rem 0.8rem',
+                         padding: '0.5rem 0.9rem',
                         cursor: 'pointer',
                         color: '#2563eb',
-                        fontSize: '0.85rem',
+                         fontSize: '1rem',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.4rem',
@@ -99,27 +178,25 @@ export default function CaseDetailModals({
 
               <div className="form-group">
                 <label>Papel no Processo *</label>
-                <select
+                <SearchableCreatableSelectField
                   value={parties.editingPartyFormData.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value;
+                  onChange={(newRole) => {
                     parties.setEditingPartyFormData((prev) => ({
                       ...prev,
                       role: newRole,
                     }));
                   }}
-                >
-                  <option value="AUTOR">Autor/Requerente</option>
-                  <option value="REU">Réu/Requerido</option>
-                  <option value="TESTEMUNHA">Testemunha</option>
-                  <option value="PERITO">Perito</option>
-                  <option value="TERCEIRO">Terceiro Interessado</option>
-                  <option value="CLIENTE">Cliente/Representado</option>
-                </select>
+                  options={partyRoleOptions}
+                  placeholder="Pesquisar ou selecionar..."
+                  allowCreate={true}
+                  onCreateOption={onCreatePartyRoleOption}
+                  onEditOption={onEditPartyRoleOption}
+                  reduceListOnQuery={true}
+                />
               </div>
 
               <div className="form-group">
-                <label className="checkbox-label">
+                <label className="checkbox-label checkbox-label-strong">
                   <input
                     type="checkbox"
                     checked={parties.editingPartyFormData.is_client}
@@ -145,10 +222,10 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => parties.setEditingParty(null)}>
+              <button className="btn btn-secondary btn-md" onClick={() => parties.setEditingParty(null)}>
                 Cancelar
               </button>
-              <button className="btn btn-success" onClick={onSavePartyChanges}>
+              <button className="btn btn-success btn-md" onClick={onSavePartyChanges}>
                 Salvar Alterações
               </button>
             </div>
@@ -195,10 +272,9 @@ export default function CaseDetailModals({
 
               <div className="form-group">
                 <label>Papel no Processo *</label>
-                <select
+                <SearchableCreatableSelectField
                   value={parties.partyFormData.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value;
+                  onChange={(newRole) => {
                     parties.setPartyFormData((prev) => ({
                       ...prev,
                       role: newRole,
@@ -210,21 +286,20 @@ export default function CaseDetailModals({
                             : prev.is_client,
                     }));
                   }}
-                >
-                  <option value="AUTOR">Autor/Requerente</option>
-                  <option value="REU">Réu/Requerido</option>
-                  <option value="TESTEMUNHA">Testemunha</option>
-                  <option value="PERITO">Perito</option>
-                  <option value="TERCEIRO">Terceiro Interessado</option>
-                  <option value="CLIENTE">Cliente/Representado</option>
-                </select>
+                  options={partyRoleOptions}
+                  placeholder="Pesquisar ou selecionar..."
+                  allowCreate={true}
+                  onCreateOption={onCreatePartyRoleOption}
+                  onEditOption={onEditPartyRoleOption}
+                  reduceListOnQuery={true}
+                />
               </div>
 
               {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(parties.partyFormData.role) && (() => {
                 const hasExistingClient = parties.parties.some((p) => p.is_client);
                 return (
                   <div className="form-group">
-                    <label className="checkbox-label">
+                    <label className="checkbox-label checkbox-label-strong">
                       <input
                         type="checkbox"
                         checked={parties.partyFormData.is_client}
@@ -259,10 +334,10 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={parties.handleCloseAddPartyModal}>
+              <button className="btn btn-secondary btn-md" onClick={parties.handleCloseAddPartyModal}>
                 Cancelar
               </button>
-              <button className="btn btn-success" onClick={onSaveParty}>
+              <button className="btn btn-success btn-md" onClick={onSaveParty}>
                 <UserPlus size={18} />
                 Adicionar ao Processo
               </button>

@@ -108,7 +108,8 @@ function PartiesTab({
 
                   {party.observacoes && (
                     <div className="party-notes">
-                      <strong>Observações:</strong> {party.observacoes}
+                      <strong>Observações:</strong>{' '}
+                      <span className="party-notes-text">{party.observacoes}</span>
                     </div>
                   )}
                 </div>

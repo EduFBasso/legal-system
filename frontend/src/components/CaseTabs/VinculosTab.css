@@ -1,0 +1,23 @@
+/* VinculosTab - scoped styles */
+
+.vinculos-subtitle {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.vinculos-subtitle.vinculos-subtitle--mb-lg {
+  margin-bottom: 2rem;
+}
+
+.vinculos-subtitle.vinculos-subtitle--lg {
+  font-size: 1.4rem;
+}
+
+.vinculos-contact-button {
+  text-align: left;
+  font-size: 1.2rem;
+}
+
+.vinculos-section.vinculos-section--contacts {
+  margin-bottom: 2rem;
+}

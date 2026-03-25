@@ -1,6 +1,6 @@
 // src/pages/ContactsPage.test.jsx
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import ContactsPage from './ContactsPage';
@@ -138,13 +138,32 @@ describe('ContactsPage', () => {
     });
 
     it('shows loading state initially', async () => {
-      renderWithRouter(<ContactsPage />);
-      
-      expect(screen.getByText(/Carregando contatos/i)).toBeInTheDocument();
+      vi.useFakeTimers();
+      try {
+        // Keep the request pending so loading persists beyond the anti-flash delay.
+        mockGetAll.mockReturnValueOnce(new Promise(() => {}));
 
-      await waitFor(() => {
+        renderWithRouter(<ContactsPage />);
+
+        // Let mount effects run (schedules API call + loading UI timer)
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(0);
+        });
+
         expect(mockGetAll).toHaveBeenCalledTimes(1);
-      });
+
+        // Loading UI is delayed to avoid flash on fast responses.
+        expect(screen.queryByText(/Carregando contatos/i)).not.toBeInTheDocument();
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(200);
+        });
+
+        expect(screen.getByText(/Carregando contatos/i)).toBeInTheDocument();
+      } finally {
+        vi.clearAllTimers();
+        vi.useRealTimers();
+      }
     });
 
     it('loads and displays contacts on mount', async () => {
@@ -154,9 +173,11 @@ describe('ContactsPage', () => {
         expect(mockGetAll).toHaveBeenCalledWith({});
       });
 
-      expect(screen.getByText('João Silva')).toBeInTheDocument();
-      expect(screen.getByText('Maria Santos')).toBeInTheDocument();
-      expect(screen.getByText('Empresa XYZ Ltda')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('João Silva')).toBeInTheDocument();
+        expect(screen.getByText('Maria Santos')).toBeInTheDocument();
+        expect(screen.getByText('Empresa XYZ Ltda')).toBeInTheDocument();
+      });
     });
 
     it('displays error message when API fails', async () => {

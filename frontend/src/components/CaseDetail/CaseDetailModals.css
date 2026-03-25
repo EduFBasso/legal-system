@@ -22,7 +22,7 @@
 
 .case-detail-modal-overlay .contact-doc {
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 1.14rem;
 }
 
 .case-detail-modal-overlay .form-group {
@@ -91,6 +91,11 @@
   color: #94a3b8;
 }
 
+/* Placeholder de Observações: nunca menor que 1rem */
+.case-detail-modal-overlay .form-group textarea::placeholder {
+  font-size: 1rem;
+}
+
 .case-detail-modal-overlay .form-group input[type="text"]:focus,
 .case-detail-modal-overlay .form-group input[type="date"]:focus,
 .case-detail-modal-overlay .form-group input[type="number"]:focus,
@@ -104,10 +109,14 @@
 .case-detail-modal-overlay .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.25rem;
   cursor: pointer;
   font-weight: normal !important;
   margin: 0;
+}
+
+.case-detail-modal-overlay .checkbox-label.checkbox-label-strong span {
+  font-weight: 700;
 }
 
 .case-detail-modal-overlay .checkbox-label input[type="checkbox"] {
@@ -130,6 +139,30 @@
 .case-detail-modal-overlay .checkbox-label span {
   line-height: 1.5;
   user-select: none;
+}
+
+/* Searchable select dentro do modal: alinhar altura/borda com inputs do modal */
+.case-detail-modal-overlay .searchable-select-input.form-input {
+  padding: 0.75rem;
+  font-size: 1.14rem;
+  border: 2px solid #e2e8f0;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.case-detail-modal-overlay .searchable-select-btn {
+  border: 2px solid #e2e8f0;
+  border-left: 0;
+}
+
+.case-detail-modal-overlay .searchable-select-btn:last-of-type {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.case-detail-modal-overlay .searchable-select-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 .case-detail-modal-overlay .modal-footer {
@@ -230,23 +263,7 @@
 
 .case-detail-modal-overlay .modal-body {
   padding: 1.5rem;
-  font-size: 1.14rem;
+  font-size: 1.3rem;
   line-height: 1.6;
   color: #1e293b;
-}
-
-/* ========================================
-   DESTAQUE PARA CAMPO PRAZO (IMPORTANTE)
-   ======================================== */
-/* Destaque por posição no formulário (evita seletor não-padrão como :contains). */
-.case-detail-modal-overlay .modal-body .form-group:nth-last-child(2) {
-  background: #fffbeb;
-  border-left: 4px solid #f59e0b;
-  padding: 1.25rem;
-  border-radius: 4px;
-}
-
-.case-detail-modal-overlay .modal-body .form-group:nth-last-child(2) label {
-  color: #b45309;
-  font-weight: 600;
 }

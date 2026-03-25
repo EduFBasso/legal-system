@@ -582,6 +582,59 @@ class CaseTituloOption(models.Model):
         return self.label
 
 
+class CasePartyRoleOption(models.Model):
+    """Opções compartilhadas (persistidas) para o campo `CaseParty.role`.
+
+    Mantém uma lista evolutiva de papéis (ex: "Assistente Técnico") para uso
+    no cadastro de partes. Diferente das opções padrão (choices), estas opções
+    são editáveis e podem ser renomeadas.
+    """
+
+    label = models.CharField(max_length=100, help_text='Texto exibido na lista')
+    key = models.CharField(
+        max_length=140,
+        unique=True,
+        db_index=True,
+        help_text='Chave normalizada (sem acento, minúscula, espaços colapsados) para deduplicação',
+    )
+
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_party_role_options',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Opção de Papel da Parte'
+        verbose_name_plural = 'Opções de Papel da Parte'
+        ordering = ['label']
+
+    @staticmethod
+    def normalize_key(value: str) -> str:
+        raw = str(value or '').strip()
+        if not raw:
+            return ''
+        nfd = unicodedata.normalize('NFD', raw)
+        no_marks = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+        collapsed = ' '.join(no_marks.split())
+        return collapsed.lower()
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.normalize_key(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
+
+
 class CaseParty(models.Model):
     """
     Tabela intermediária para relacionamento ManyToMany entre Case e Contact.
@@ -601,7 +654,7 @@ class CaseParty(models.Model):
     )
 
     role = models.CharField(
-        max_length=20,
+        max_length=100,
         choices=[
             ('CLIENTE', 'Cliente/Representado'),
             ('AUTOR', 'Autor'),
