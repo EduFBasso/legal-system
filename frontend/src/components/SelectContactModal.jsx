@@ -157,7 +157,7 @@ export default function SelectContactModal({
                     />
                     {isDisabled && (
                       <div className="already-linked-badge">
-                        ⛔ {disabledReason}
+                        BLOQUEADO
                       </div>
                     )}
                   </div>

@@ -93,9 +93,13 @@ export default function ContactCard({
                 contact.linked_cases
                   .filter(lc => !lc.is_client && lc.role_display)
                   .forEach((lc) => {
-                    const key = `${lc.role || ''}-${lc.role_display}`;
+                    const isRepresentation = lc.link_type === 'representation' || lc.role === 'REPRESENTANTE';
+                    const repTypeLabel = String(lc.representation_type || '').trim();
+                    const label = isRepresentation && repTypeLabel ? repTypeLabel : lc.role_display;
+                    const role = isRepresentation && repTypeLabel ? 'REPRESENTANTE' : lc.role;
+                    const key = `${role || ''}-${label}`;
                     if (!nonClientRolesMap.has(key)) {
-                      nonClientRolesMap.set(key, { role: lc.role, label: lc.role_display });
+                      nonClientRolesMap.set(key, { role, label });
                     }
                   });
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Users, UserPlus, Trash2, Edit2 } from 'lucide-react';
 import { formatCPF, formatCNPJ, formatPhone } from '../../utils/formatters';
 import EmptyState from '../common/EmptyState';
@@ -36,6 +36,56 @@ function PartiesTab({
   const handleSelectParty = (partyId) => {
     setSelectedPartyId(selectedPartyId === partyId ? null : partyId);
   };
+
+  const orderedParties = (() => {
+    if (!Array.isArray(parties) || parties.length === 0) return [];
+
+    const clientParty = parties.find((p) => p?.is_client);
+    if (!clientParty) return parties;
+
+    const rest = parties.filter((p) => Number(p?.id) !== Number(clientParty.id));
+    return [clientParty, ...rest];
+  })();
+
+  const shouldShowRepresentativeCardInlineAfter = useCallback((party) => {
+    if (!party?.is_client) return true;
+    const rep = representations.find((r) => Number(r?.represented_contact) === Number(party.contact));
+    return !rep;
+  }, [representations]);
+
+  const clientRepresentativeCard = useMemo(() => {
+    const clientParty = orderedParties.find((p) => p?.is_client);
+    if (!clientParty?.contact) return null;
+
+    const rep = representations.find((r) => Number(r?.represented_contact) === Number(clientParty.contact));
+    if (!rep) return null;
+
+    const representativeParty = parties.find((p) => Number(p?.contact) === Number(rep?.representative_contact));
+    const representativeName = representativeParty?.contact_name || rep?.representative_contact_name || 'Representante';
+    const representativePersonType = representativeParty?.contact_person_type || 'PF';
+    const repTypeLabel = (rep?.representation_type || '').trim();
+
+    return (
+      <div
+        className={`party-card party-card--representative${selectedPartyId === `rep-client-${clientParty.id}` ? ' selected' : ''}`}
+        onClick={() => handleSelectParty(`rep-client-${clientParty.id}`)}
+      >
+        <div className="party-info">
+          <div className="party-header">
+            <span className="party-icon">{representativePersonType === 'PF' ? '👤' : '🏢'}</span>
+            <div className="party-details">
+              <h3 className="party-name">{representativeName}</h3>
+              <div className="party-badges">
+                <PartyRoleBadge label="REPRESENTANTE" size="md" />
+                {repTypeLabel && <PartyRoleBadge label={repTypeLabel} size="md" />}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }, [handleSelectParty, orderedParties, parties, representations, selectedPartyId]);
+
   return (
     <div className="case-section">
       <div className="section-card">
@@ -69,7 +119,7 @@ function PartiesTab({
           />
         ) : (
           <div className="parties-list">
-            {parties.map(party => (
+            {orderedParties.map(party => (
               <div key={party.id}>
                 <div 
                   className={`party-card${selectedPartyId === party.id ? ' selected' : ''}`}
@@ -151,7 +201,9 @@ function PartiesTab({
                   </div>
                 </div>
 
-                {party.is_client && party.contact != null && (() => {
+                {party.is_client && clientRepresentativeCard}
+
+                {party.contact != null && shouldShowRepresentativeCardInlineAfter(party) && (() => {
                   const rep = representations.find((r) => Number(r?.represented_contact) === Number(party.contact));
                   if (!rep) return null;
 
@@ -161,7 +213,10 @@ function PartiesTab({
                   const repTypeLabel = (rep?.representation_type || '').trim();
 
                   return (
-                    <div className="party-card party-card--representative">
+                    <div
+                      className={`party-card party-card--representative${selectedPartyId === `rep-${party.id}` ? ' selected' : ''}`}
+                      onClick={() => handleSelectParty(`rep-${party.id}`)}
+                    >
                       <div className="party-info">
                         <div className="party-header">
                           <span className="party-icon">{representativePersonType === 'PF' ? '👤' : '🏢'}</span>

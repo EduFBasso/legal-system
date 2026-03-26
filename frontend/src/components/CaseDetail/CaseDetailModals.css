@@ -8,15 +8,10 @@
 
 .case-detail-modal-overlay .party-modal__section {
   border-radius: 12px;
-  border: 3px solid var(--publication-contrast-border, #111827);
-  background: var(--publication-contrast-surface-2, #f8fafc);
+  background: var(--color-success-soft-bg, #f0fdf4);
+  border: 3px solid var(--color-success-soft-border, #166534);
   margin-bottom: 1rem;
   overflow: hidden;
-}
-
-.case-detail-modal-overlay .party-modal__section--success {
-  background: var(--color-success-soft-bg, #f0fdf4);
-  border-color: var(--color-success-soft-border, #166534);
 }
 
 .case-detail-modal-overlay .party-modal__section-header {
@@ -25,13 +20,8 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 1.1rem 1.5rem;
-  background: var(--publication-contrast-border, #111827);
-  border-bottom: 3px solid var(--publication-contrast-text, #111827);
-}
-
-.case-detail-modal-overlay .party-modal__section--success .party-modal__section-header {
   background: var(--color-success-soft-border, #166534);
-  border-bottom-color: var(--color-success, #065f46);
+  border-bottom: 3px solid var(--color-success, #065f46);
 }
 
 .case-detail-modal-overlay .party-modal__section-title {
@@ -58,6 +48,64 @@
 
 .case-detail-modal-overlay .party-modal__field:last-child {
   margin-bottom: 0;
+}
+
+.case-detail-modal-overlay .party-modal__radio-label {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.case-detail-modal-overlay .party-modal__radio-row {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+/* Radios: evitar depender de .checkbox-label (tem várias sobrescritas globais) */
+.case-detail-modal-overlay .party-modal__radio-row > label.checkbox-label {
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  min-height: 36px;
+  gap: 0.75rem;
+}
+
+.case-detail-modal-overlay .party-modal__radio-row > label.checkbox-label:hover {
+  background: rgba(22, 101, 52, 0.08);
+}
+
+.case-detail-modal-overlay .party-modal__radio-row > label.checkbox-label span {
+  line-height: 1.2;
+  margin-left: 0.5rem;
+}
+
+.case-detail-modal-overlay .party-modal__radio-row input[type="radio"] {
+  margin: 0;
+  margin-top: 0.05rem;
+}
+
+/* Checkbox "cliente do escritório": alvo específico para evitar briga no cascade */
+.case-detail-modal-overlay .party-modal__client-flag .party-modal__client-flag-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+.case-detail-modal-overlay .party-modal__client-flag .party-modal__client-flag-label input[type="checkbox"] {
+  margin: 0;
+  margin-top: 0.18rem;
+}
+
+.case-detail-modal-overlay .party-modal__hint {
+  margin-top: 0.35rem;
+  color: #64748b;
+  font-size: 0.9rem;
 }
 
 .case-detail-modal-overlay .selected-contact-info {
@@ -119,31 +167,7 @@
   letter-spacing: 0.02em;
 }
 
-/* Form row for side-by-side fields */
-.case-detail-modal-overlay .form-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-}
-
-@media (max-width: 600px) {
-  .case-detail-modal-overlay .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Form helper text/small print */
-.case-detail-modal-overlay .form-helper-text {
-  display: block;
-  color: #6b7280;
-  font-size: 0.97rem;
-  margin-top: 0.5rem;
-  line-height: 1.5;
-}
-
 .case-detail-modal-overlay .form-group input[type="text"],
-.case-detail-modal-overlay .form-group input[type="date"],
-.case-detail-modal-overlay .form-group input[type="number"],
 .case-detail-modal-overlay .form-group select,
 .case-detail-modal-overlay .form-group textarea {
   width: 100%;
@@ -159,8 +183,6 @@
 }
 
 .case-detail-modal-overlay .form-group input[type="text"]::placeholder,
-.case-detail-modal-overlay .form-group input[type="date"]::placeholder,
-.case-detail-modal-overlay .form-group input[type="number"]::placeholder,
 .case-detail-modal-overlay .form-group textarea::placeholder {
   color: #94a3b8;
 }
@@ -171,8 +193,6 @@
 }
 
 .case-detail-modal-overlay .form-group input[type="text"]:focus,
-.case-detail-modal-overlay .form-group input[type="date"]:focus,
-.case-detail-modal-overlay .form-group input[type="number"]:focus,
 .case-detail-modal-overlay .form-group select:focus,
 .case-detail-modal-overlay .form-group textarea:focus {
   outline: none;

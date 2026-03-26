@@ -21,6 +21,15 @@
 .party-card--representative {
   margin-top: 0.75rem;
   cursor: default;
+  border: 2px solid #e2e8f0;
+  background: white;
+}
+
+/* Quando selecionado, seguir o mesmo padrão azul do card principal */
+.party-card.party-card--representative.selected {
+  border: 3px solid #2563eb !important;
+  background: #eff6ff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
 }
 
 .party-card.party-card--representative:hover {
@@ -28,6 +37,12 @@
   background: white;
   box-shadow: none;
   transform: none;
+}
+
+.party-card.party-card--representative.selected:hover {
+  border: 3px solid #2563eb !important;
+  background: #eff6ff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
 }
 
 .party-card:hover {

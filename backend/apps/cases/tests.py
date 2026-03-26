@@ -346,7 +346,7 @@ class CasePartyModelTest(TestCase):
             contact=self.contact1,
             role='CLIENTE',
         )
-        expected = f'{self.contact1.name} - Cliente/Representado ({self.case.numero_processo})'
+        expected = f'{self.contact1.name} - Cliente ({self.case.numero_processo})'
         self.assertEqual(str(party), expected)
 
     def test_caseparty_client_syncs_case_shortcut_fields(self):
@@ -968,8 +968,8 @@ class CasePartyAPITest(APITestCase):
         self.assertEqual(rep.representative_contact_id, representative.id)
         self.assertEqual(rep.representation_type, 'Procurador')
 
-    def test_api_blocks_representation_for_non_client_party(self):
-        """Representação só é permitida se is_client=True."""
+    def test_api_allows_representation_for_non_client_party(self):
+        """Representação é permitida mesmo quando is_client=False."""
         representative = Contact.objects.create(name='Representante', person_type='PF')
 
         payload = {
@@ -983,8 +983,15 @@ class CasePartyAPITest(APITestCase):
         }
 
         response = self.client.post('/api/case-parties/', payload, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('is_represented', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(CaseParty.objects.count(), 1)
+        self.assertEqual(CaseRepresentation.objects.count(), 1)
+
+        rep = CaseRepresentation.objects.first()
+        self.assertEqual(rep.case_id, self.case.id)
+        self.assertEqual(rep.represented_contact_id, self.contact.id)
+        self.assertEqual(rep.representative_contact_id, representative.id)
+        self.assertEqual(rep.representation_type, 'Procurador')
 
 
 class CaseMovementModelTest(TestCase):

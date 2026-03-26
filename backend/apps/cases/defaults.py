@@ -18,7 +18,7 @@ CASE_TIPO_ACAO_CHOICES: list[tuple[str, str]] = [
 
 
 CASE_PARTY_ROLE_CHOICES: list[tuple[str, str]] = [
-    ('CLIENTE', 'Cliente/Representado'),
+    ('CLIENTE', 'Cliente'),
     ('AUTOR', 'Autor'),
     ('REU', 'Réu'),
     ('TESTEMUNHA', 'Testemunha'),
@@ -36,7 +36,6 @@ DEFAULT_CASE_PARTY_ROLE_OPTIONS: list[dict[str, str]] = [
     {'value': 'TESTEMUNHA', 'label': 'Testemunha'},
     {'value': 'PERITO', 'label': 'Perito'},
     {'value': 'TERCEIRO', 'label': 'Terceiro Interessado'},
-    {'value': 'CLIENTE', 'label': 'Cliente/Representado'},
 ]
 
 

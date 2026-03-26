@@ -124,6 +124,7 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
+
     // Wait team members load and option is available
     expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
 
@@ -168,6 +169,7 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
+
     expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
 
     await act(async () => {
@@ -197,6 +199,7 @@ describe('MasterDashboardPage', () => {
         <MasterDashboardPage />
       </MemoryRouter>
     );
+
 
     expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
 
@@ -230,6 +233,7 @@ describe('MasterDashboardPage', () => {
         <MasterDashboardPage />
       </MemoryRouter>
     );
+
 
     expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
 
@@ -280,6 +284,7 @@ describe('MasterDashboardPage', () => {
         <MasterDashboardPage />
       </MemoryRouter>
     );
+
 
     expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
 

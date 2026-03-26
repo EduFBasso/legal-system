@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from django.db.models import Q, Count, Prefetch
+from django.db.models import Q, Count, Prefetch, Sum
 from django.db import IntegrityError, transaction
 from django.contrib.auth import get_user_model
 from apps.accounts.permissions import is_master_user
@@ -144,6 +144,8 @@ class CaseViewSet(viewsets.ModelViewSet):
                     filter=~Q(tasks__status='CONCLUIDA'),
                     distinct=True
                 )
+            ).annotate(
+                total_payments=Sum('payments__value')
             )
         else:
             qs = qs.prefetch_related(

@@ -268,15 +268,29 @@ class CasePartySerializer(serializers.ModelSerializer):
                     'is_client': 'Já existe um cliente cadastrado para este processo. Um processo só pode ter um cliente.'
                 })
 
+        # Regra de negócio: um processo só pode ter 1 AUTOR.
+        incoming_role = data.get('role', None)
+        if incoming_role is None and self.instance is not None:
+            incoming_role = getattr(self.instance, 'role', None)
+        incoming_role = (incoming_role or '').strip().upper()
+
+        if incoming_role == 'AUTOR':
+            case = data.get('case') or (self.instance.case if self.instance else None)
+            if case is not None:
+                existing_author_query = CaseParty.objects.filter(
+                    case=case,
+                    role='AUTOR',
+                )
+                if self.instance:
+                    existing_author_query = existing_author_query.exclude(id=self.instance.id)
+                if existing_author_query.exists():
+                    raise serializers.ValidationError({
+                        'role': 'Já existe um Autor/Requerente cadastrado para este processo. Edite o Autor existente.'
+                    })
+
         # Representação: quando marcado como representado, exige representante + tipo.
         is_represented = data.get('is_represented', None)
         if is_represented is True:
-            is_client = data.get('is_client', getattr(self.instance, 'is_client', False))
-            if not is_client:
-                raise serializers.ValidationError({
-                    'is_represented': 'Representação só é permitida quando a parte está marcada como cliente.'
-                })
-
             representative_contact = data.get('representative_contact')
             if not representative_contact:
                 raise serializers.ValidationError({
@@ -516,6 +530,7 @@ class CaseListSerializer(serializers.ModelSerializer):
     cliente_posicao_display = serializers.CharField(source='get_cliente_posicao_display', read_only=True)
     parties_summary = serializers.SerializerMethodField()
     active_tasks_count = serializers.IntegerField(read_only=True, default=0)
+    total_payments = serializers.DecimalField(read_only=True, max_digits=15, decimal_places=2, allow_null=True)
     vinculo_tipo_display = serializers.CharField(source='get_vinculo_tipo_display', read_only=True)
     case_principal_numero = serializers.CharField(source='case_principal.numero_processo_formatted', read_only=True, allow_null=True)
 
@@ -570,6 +585,7 @@ class CaseListSerializer(serializers.ModelSerializer):
             'vinculo_tipo_display',
             'parties_summary',
             'active_tasks_count',
+            'total_payments',
             'created_at',
             'updated_at',
         ]

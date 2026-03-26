@@ -23,6 +23,8 @@ export default function CaseDetailTabContent({
   onOpenOrigemPublicacao,
   onAddPartyClick,
 
+  onOpenContactModal = null,
+
   onRemoveParty,
 }) {
   const {
@@ -92,6 +94,7 @@ export default function CaseDetailTabContent({
           onSearchTituloOptions={caseCore.searchTituloOptions}
           onInputChange={caseCore.handleInputChange}
           readOnly={isReadOnly}
+          onOpenContactModal={onOpenContactModal}
         />
       )}
 

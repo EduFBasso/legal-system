@@ -29,6 +29,7 @@ function InformacaoTab({
   onOpenOrigemMovimentacao = null,
   onOpenOrigemPublicacao = null,
   onAddPartyClick,
+  onOpenContactModal = null,
   parties = [],
   caseData = null,
   formatCurrency = (value) => {
@@ -49,6 +50,14 @@ function InformacaoTab({
   onSearchTituloOptions = null,
   onInputChange = () => {},
 }) {
+    const openContact = (e, contactId) => {
+      if (!onOpenContactModal) return;
+      const parsed = Number(contactId);
+      if (!parsed) return;
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      onOpenContactModal(parsed);
+    };
   const formData = rawFormData || {};
   const representations = Array.isArray(formData.representations)
     ? formData.representations
@@ -341,10 +350,17 @@ function InformacaoTab({
                   <div className="detail-partes-col">
                     {(() => {
                       const clientParty = parties.find(p => p.is_client);
-                      const rep = clientParty
+                      const clientRep = clientParty
                         ? representations.find((r) => Number(r?.represented_contact) === Number(clientParty.contact))
                         : null;
-                      const repTypeLabel = (rep?.representation_type || '').trim();
+                      const clientRepTypeLabel = (clientRep?.representation_type || '').trim();
+                      const otherReps = representations
+                        .filter((r) => {
+                          const representedId = Number(r?.represented_contact);
+                          if (!representedId) return false;
+                          if (clientParty && representedId === Number(clientParty.contact)) return false;
+                          return parties.some((p) => Number(p?.contact) === representedId);
+                        });
                       const dynamicLabel = 'CLIENTE/REPRESENTADO DA AÇÃO';
                       
                       return (
@@ -357,30 +373,65 @@ function InformacaoTab({
                                   to={`/contacts?open=${clientParty.contact}`}
                                   className="party-contact-link detail-client-link"
                                   title="Ver detalhes, selecionar ou criar outro processo com vínculo"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  onClick={(e) => openContact(e, clientParty.contact)}
                                 >
                                   <span className="detail-client-name">{clientParty.contact_name}</span> ↗
                                 </Link>
                                 <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="md" />
                               </div>
 
-                              {rep && (
+                              {clientRep && (
                                 <div className="detail-representative-block">
                                   <span className="detail-label detail-representative-title">REPRESENTADO POR</span>
                                   <div className="detail-representative-row">
                                     <Link
-                                      to={`/contacts?open=${rep?.representative_contact}`}
+                                      to={`/contacts?open=${clientRep?.representative_contact}`}
                                       className="party-contact-link detail-representative-link"
                                       title="Abrir representante em nova aba"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                      onClick={(e) => openContact(e, clientRep?.representative_contact)}
                                     >
-                                      <span className="detail-representative-name">{rep?.representative_contact_name}</span> ↗
+                                      <span className="detail-representative-name">{clientRep?.representative_contact_name}</span> ↗
                                     </Link>
-                                    {repTypeLabel && (
-                                      <PartyRoleBadge label={repTypeLabel} size="md" />
+                                    {clientRepTypeLabel && (
+                                      <PartyRoleBadge label={clientRepTypeLabel} size="md" />
                                     )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {otherReps.length > 0 && (
+                                <div className="detail-representative-block">
+                                  <span className="detail-label detail-representative-title">OUTROS REPRESENTADOS</span>
+                                  <div className="detail-partes-list" style={{ marginTop: '0.5rem' }}>
+                                    {otherReps.map((rep) => {
+                                      const repTypeLabel = (rep?.representation_type || '').trim();
+                                      return (
+                                        <div key={`${rep?.represented_contact}-${rep?.representative_contact}`} className="detail-partes-item">
+                                          <Link
+                                            to={`/contacts?open=${rep?.represented_contact}`}
+                                            className="party-contact-link"
+                                            title="Abrir representado em nova aba"
+                                            onClick={(e) => openContact(e, rep?.represented_contact)}
+                                          >
+                                            <strong>{rep?.represented_contact_name}</strong> ↗
+                                          </Link>
+                                          <span className="detail-value-sub"> → </span>
+                                          <Link
+                                            to={`/contacts?open=${rep?.representative_contact}`}
+                                            className="party-contact-link"
+                                            title="Abrir representante em nova aba"
+                                            onClick={(e) => openContact(e, rep?.representative_contact)}
+                                          >
+                                            <strong>{rep?.representative_contact_name}</strong> ↗
+                                          </Link>
+                                          {repTypeLabel && (
+                                            <span style={{ marginLeft: '0.5rem' }}>
+                                              <PartyRoleBadge label={repTypeLabel} size="sm" />
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}
@@ -423,8 +474,7 @@ function InformacaoTab({
                                   to={`/contacts?open=${party.contact}`}
                                   className="party-contact-link"
                                   title="Ver detalhes, selecionar ou criar outro processo com vínculo"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  onClick={(e) => openContact(e, party.contact)}
                                 >
                                   <strong>{party.contact_name}</strong> ↗
                                 </Link>

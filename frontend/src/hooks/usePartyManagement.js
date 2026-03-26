@@ -55,7 +55,6 @@ export function usePartyManagement(id, showToast, initialParties = []) {
       TESTEMUNHA: 'Testemunha',
       PERITO: 'Perito',
       TERCEIRO: 'Terceiro Interessado',
-      CLIENTE: 'Cliente/Representado',
     };
     return labels[role] || role;
   };
@@ -102,9 +101,27 @@ export function usePartyManagement(id, showToast, initialParties = []) {
     }
 
     try {
-      if (partyFormData.is_client && partyFormData.is_represented) {
+      // Regra de negócio: 1 cliente por processo.
+      // Se já existe um cliente na lista de partes carregadas, não permitir marcar outro como cliente neste fluxo.
+      const hasExistingClient = Array.isArray(parties)
+        ? parties.some((p) => p?.is_client)
+        : false;
+
+      // Regra de negócio: 1 AUTOR por processo.
+      const hasExistingAuthor = Array.isArray(parties)
+        ? parties.some((p) => String(p?.role || '').toUpperCase() === 'AUTOR')
+        : false;
+
+      if (hasExistingAuthor && String(partyFormData.role || '').toUpperCase() === 'AUTOR') {
+        showToast('Já existe um Autor/Requerente neste processo. Edite o Autor existente.', 'error', 7000);
+        return;
+      }
+
+      const effectiveIsClient = hasExistingClient ? false : !!partyFormData.is_client;
+
+      if (partyFormData.is_represented) {
         if (!partyFormData.representative_contact?.id) {
-          showToast('Selecione o representante do cliente.', 'error', 7000);
+          showToast('Selecione o representante.', 'error', 7000);
           return;
         }
         if (!String(partyFormData.representation_type || '').trim()) {
@@ -112,7 +129,7 @@ export function usePartyManagement(id, showToast, initialParties = []) {
           return;
         }
         if (Number(partyFormData.representative_contact.id) === Number(contact?.id)) {
-          showToast('Representante não pode ser o mesmo contato do cliente.', 'error', 7000);
+          showToast('Representante não pode ser o mesmo contato da parte.', 'error', 7000);
           return;
         }
       }
@@ -130,7 +147,7 @@ export function usePartyManagement(id, showToast, initialParties = []) {
           contact_email: contact.email,
           role: partyFormData.role,
           role_display: getRoleDisplay(partyFormData.role),
-          is_client: partyFormData.is_client,
+          is_client: effectiveIsClient,
           observacoes: partyFormData.observacoes,
           is_represented: !!partyFormData.is_represented,
           representative_contact: partyFormData.representative_contact,
@@ -156,19 +173,15 @@ export function usePartyManagement(id, showToast, initialParties = []) {
         case: parseInt(id),
         contact: contact.id,
         role: partyFormData.role,
-        is_client: partyFormData.is_client,
+        is_client: effectiveIsClient,
         observacoes: partyFormData.observacoes,
-        ...(partyFormData.is_client
-          ? {
-            is_represented: !!partyFormData.is_represented,
-            representative_contact: partyFormData.is_represented
-              ? partyFormData.representative_contact?.id || null
-              : null,
-            representation_type: partyFormData.is_represented
-              ? String(partyFormData.representation_type || '').trim()
-              : '',
-          }
-          : {}),
+        is_represented: !!partyFormData.is_represented,
+        representative_contact: partyFormData.is_represented
+          ? partyFormData.representative_contact?.id || null
+          : null,
+        representation_type: partyFormData.is_represented
+          ? String(partyFormData.representation_type || '').trim()
+          : '',
       });
 
       showToast('Parte adicionada com sucesso!', 'success');
@@ -254,9 +267,9 @@ export function usePartyManagement(id, showToast, initialParties = []) {
     if (!editingParty) return;
 
     try {
-      if (editingPartyFormData.is_client && editingPartyFormData.is_represented) {
+      if (editingPartyFormData.is_represented) {
         if (!editingPartyFormData.representative_contact?.id) {
-          showToast('Selecione o representante do cliente.', 'error', 7000);
+          showToast('Selecione o representante.', 'error', 7000);
           return;
         }
         if (!String(editingPartyFormData.representation_type || '').trim()) {
@@ -264,7 +277,7 @@ export function usePartyManagement(id, showToast, initialParties = []) {
           return;
         }
         if (Number(editingPartyFormData.representative_contact.id) === Number(editingParty?.contact)) {
-          showToast('Representante não pode ser o mesmo contato do cliente.', 'error', 7000);
+          showToast('Representante não pode ser o mesmo contato da parte.', 'error', 7000);
           return;
         }
       }
@@ -304,20 +317,13 @@ export function usePartyManagement(id, showToast, initialParties = []) {
         role: editingPartyFormData.role,
         is_client: editingPartyFormData.is_client,
         observacoes: editingPartyFormData.observacoes,
-        ...(editingPartyFormData.is_client
-          ? {
-            is_represented: !!editingPartyFormData.is_represented,
-            representative_contact: editingPartyFormData.is_represented
-              ? editingPartyFormData.representative_contact?.id || null
-              : null,
-            representation_type: editingPartyFormData.is_represented
-              ? String(editingPartyFormData.representation_type || '').trim()
-              : '',
-          }
-          : {
-            // Se deixar de ser cliente, remove qualquer representação associada.
-            is_represented: false,
-          }),
+        is_represented: !!editingPartyFormData.is_represented,
+        representative_contact: editingPartyFormData.is_represented
+          ? editingPartyFormData.representative_contact?.id || null
+          : null,
+        representation_type: editingPartyFormData.is_represented
+          ? String(editingPartyFormData.representation_type || '').trim()
+          : '',
       };
 
       await casePartiesService.updateParty(editingParty.id, payload);

@@ -141,6 +141,7 @@ class ContactListSerializer(serializers.ModelSerializer):
                 'case_id': rep.case.id,
                 'role': 'REPRESENTANTE',
                 'role_display': 'Representante',
+                'representation_type': rep.representation_type,
                 'is_client': False,
                 'can_unlink': False,
                 'link_type': 'representation',

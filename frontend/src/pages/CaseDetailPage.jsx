@@ -6,6 +6,7 @@ import systemSettingsService from '../services/systemSettingsService';
 import CaseDetailNavbar from '../components/CaseDetail/CaseDetailNavbar';
 import CaseDetailTabContent from '../components/CaseDetail/CaseDetailTabContent';
 import CaseDetailModals from '../components/CaseDetail/CaseDetailModals';
+import ContactDetailModal from '../components/ContactDetailModal';
 
 import { formatCnj } from '../utils/cnj';
 import { openPublicationDetailsWindow } from '../utils/publicationNavigation';
@@ -88,6 +89,21 @@ function CaseDetailPage() {
   }, [isReadOnly, isCaseEditing, setIsCaseEditing]);
 
   const [mentionedProcessLinks, setMentionedProcessLinks] = useState([]);
+
+  const [openContactId, setOpenContactId] = useState(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
+  const handleOpenContactModal = useCallback((contactId) => {
+    const parsed = Number(contactId);
+    if (!parsed) return;
+    setOpenContactId(parsed);
+    setIsContactModalOpen(true);
+  }, []);
+
+  const handleCloseContactModal = useCallback(() => {
+    setIsContactModalOpen(false);
+    setOpenContactId(null);
+  }, []);
 
   const currentCaseCnj = useMemo(() => {
     const raw = caseCore.caseData?.numero_processo_formatted || caseCore.caseData?.numero_processo || '';
@@ -289,6 +305,18 @@ function CaseDetailPage() {
     parties.setSelectedContact(contact);
     modalsNotif.setShowSelectContactModal(false);
     modalsNotif.setShowContactModal(false);
+
+    // Regra: 1 cliente por processo. Se já existe cliente, garante que o form não abre com is_client marcado.
+    const hasExistingClient = Array.isArray(parties.parties)
+      ? parties.parties.some((p) => p?.is_client)
+      : false;
+    if (hasExistingClient) {
+      parties.setPartyFormData((prev) => ({
+        ...prev,
+        is_client: false,
+      }));
+    }
+
     parties.setShowAddPartyModal(true);
   };
 
@@ -319,6 +347,7 @@ function CaseDetailPage() {
    */
   const handleSavePartyChanges = async () => {
     await parties.handleSavePartyChanges(modalsNotif.loadContacts);
+    await caseCore.loadCaseData();
   };
 
   /**
@@ -569,7 +598,18 @@ function CaseDetailPage() {
         onOpenOrigemPublicacao={handleOpenOrigemPublicacao}
         onAddPartyClick={handleOpenContactSelection}
         onRemoveParty={handleRemoveParty}
+        onOpenContactModal={handleOpenContactModal}
       />
+
+      {isContactModalOpen && !!openContactId && (
+        <ContactDetailModal
+          contactId={openContactId}
+          isOpen={isContactModalOpen}
+          onClose={handleCloseContactModal}
+          onContactUpdated={() => {}}
+          showLinkToProcessButton={false}
+        />
+      )}
 
       <CaseDetailModals
         modalsNotif={modalsNotif}
