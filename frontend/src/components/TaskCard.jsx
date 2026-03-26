@@ -67,6 +67,11 @@ export default function TaskCard({
       key={task.id}
       className={`task-item ${urgencyClass} ${isCompleted ? 'completed' : ''} ${isSelected ? 'selected' : ''}`}
     >
+      {isCompleted && (
+        <div className="task-stamp task-stamp--completed" aria-label="Tarefa concluída">
+          CONCLUÍDA
+        </div>
+      )}
       <div className="task-checkbox">
         <input
           type="checkbox"

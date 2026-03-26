@@ -84,6 +84,7 @@
 
 /* ========== TaskCard ========== */
 .task-item {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -92,6 +93,44 @@
   border-radius: 8px;
   background: var(--color-white);
   transition: var(--transition-default);
+}
+
+.task-stamp {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  border: 2px solid transparent;
+  background: var(--color-white);
+  color: var(--color-gray-800);
+  user-select: none;
+}
+
+.task-stamp--completed {
+  border-color: var(--color-gray-300);
+  background: var(--color-white);
+}
+
+.task-item.urgentissimo .task-stamp--completed {
+  border-color: var(--color-urgentissimo);
+  background: var(--color-urgentissimo-light);
+  color: var(--color-urgentissimo-dark);
+}
+
+.task-item.urgente .task-stamp--completed {
+  border-color: var(--color-urgente);
+  background: var(--color-urgente-light);
+  color: var(--color-urgente-dark);
+}
+
+.task-item.normal .task-stamp--completed {
+  border-color: var(--color-normal);
+  background: var(--color-normal-light);
+  color: var(--color-normal-dark);
 }
 
 .task-item:hover {
