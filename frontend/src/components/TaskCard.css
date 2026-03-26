@@ -117,20 +117,20 @@
 
 .task-item.urgentissimo .task-stamp--completed {
   border-color: var(--color-urgentissimo);
-  background: var(--color-urgentissimo-light);
-  color: var(--color-urgentissimo-dark);
+  background: var(--color-urgentissimo);
+  color: var(--color-white);
 }
 
 .task-item.urgente .task-stamp--completed {
   border-color: var(--color-urgente);
-  background: var(--color-urgente-light);
-  color: var(--color-urgente-dark);
+  background: var(--color-urgente);
+  color: var(--color-white);
 }
 
 .task-item.normal .task-stamp--completed {
   border-color: var(--color-normal);
-  background: var(--color-normal-light);
-  color: var(--color-normal-dark);
+  background: var(--color-normal);
+  color: var(--color-white);
 }
 
 .task-item:hover {
