@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib
 from typing import Iterable
 
 from django.core.management.base import BaseCommand
@@ -8,12 +7,15 @@ from django.db import transaction
 
 
 def _load_seed_titles() -> list[str]:
-    """Load TITULOS_SEED from the migration module to avoid duplication."""
+    """Load default titles from application domain defaults.
+
+    Do not use migrations as a runtime source of truth.
+    """
     try:
-        module = importlib.import_module('apps.cases.migrations.0018_seed_casetitulooption')
-        values = getattr(module, 'TITULOS_SEED', None)
-        if isinstance(values, list) and values:
-            return [str(v) for v in values]
+        from apps.cases.defaults import DEFAULT_CASE_TITULOS
+
+        if isinstance(DEFAULT_CASE_TITULOS, list) and DEFAULT_CASE_TITULOS:
+            return [str(v) for v in DEFAULT_CASE_TITULOS]
     except Exception:
         pass
 
@@ -27,11 +29,15 @@ def _load_seed_titles() -> list[str]:
 
 
 def _load_seed_tipo_acao() -> list[str]:
-    """Load TIPO_ACAO_SEED from the migration module to avoid duplication."""
+    """Load default tipo_acao labels from application domain defaults.
+
+    Do not use migrations as a runtime source of truth.
+    """
     try:
-        module = importlib.import_module('apps.cases.migrations.0021_seed_casetipoacaooption')
-        values = getattr(module, 'TIPO_ACAO_SEED', None)
-        if isinstance(values, list) and values:
+        from apps.cases.defaults import CASE_TIPO_ACAO_CHOICES
+
+        values = [label for _, label in (CASE_TIPO_ACAO_CHOICES or [])]
+        if values:
             return [str(v) for v in values]
     except Exception:
         pass

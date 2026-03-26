@@ -7,6 +7,8 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
+from apps.cases.defaults import CASE_PARTY_ROLE_CHOICES, CASE_TIPO_ACAO_CHOICES
+
 
 class Case(models.Model):
     """
@@ -56,15 +58,7 @@ class Case(models.Model):
         max_length=100,
         blank=True,
         default='',
-        choices=[
-            ('CIVEL', 'Cível'),
-            ('CRIMINAL', 'Criminal'),
-            ('TRABALHISTA', 'Trabalhista'),
-            ('TRIBUTARIA', 'Tributária'),
-            ('FAMILIA', 'Família'),
-            ('CONSUMIDOR', 'Consumidor'),
-            ('OUTROS', 'Outros'),
-        ],
+        choices=CASE_TIPO_ACAO_CHOICES,
         help_text='Área do direito'
     )
 
@@ -774,14 +768,7 @@ class CaseParty(models.Model):
 
     role = models.CharField(
         max_length=100,
-        choices=[
-            ('CLIENTE', 'Cliente/Representado'),
-            ('AUTOR', 'Autor'),
-            ('REU', 'Réu'),
-            ('TESTEMUNHA', 'Testemunha'),
-            ('PERITO', 'Perito'),
-            ('TERCEIRO', 'Terceiro Interessado'),
-        ],
+        choices=CASE_PARTY_ROLE_CHOICES,
         default='CLIENTE',
         help_text='Papel da parte no processo'
     )

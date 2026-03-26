@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import publicationsService from '../services/publicationsService';
+import { subscribePublicationSync } from '../services/publicationSync';
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
 import {
   openCaseDetailWindow,
@@ -20,40 +21,52 @@ export default function PublicationDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const loadPublication = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        console.log('📥 Carregando publicação ID:', idApi);
-        const data = await publicationsService.getPublicationById(idApi);
-        console.log('✅ Resposta da API:', data);
-        
-        // A API retorna { publication: {...}, success: true }
-        const pubData = data?.publication || data;
-        console.log('📊 Dados extraídos:', pubData);
-        
-        setPublication(pubData);
-      } catch (err) {
-        console.error('❌ Erro ao carregar publicação:', err);
-        console.error('Detalhes do erro:', {
-          message: err.message,
-          status: err.status,
-          response: err.response
-        });
-        setError(`Erro ao carregar: ${err.message || 'Publicação não encontrada'}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (idApi) {
-      loadPublication();
-    } else {
+  const loadPublication = useCallback(async () => {
+    if (!idApi) {
       setError('ID da publicação não fornecido');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('📥 Carregando publicação ID:', idApi);
+      const data = await publicationsService.getPublicationById(idApi);
+      console.log('✅ Resposta da API:', data);
+
+      // A API retorna { publication: {...}, success: true }
+      const pubData = data?.publication || data;
+      console.log('📊 Dados extraídos:', pubData);
+
+      setPublication(pubData);
+    } catch (err) {
+      console.error('❌ Erro ao carregar publicação:', err);
+      console.error('Detalhes do erro:', {
+        message: err.message,
+        status: err.status,
+        response: err.response
+      });
+      setError(`Erro ao carregar: ${err.message || 'Publicação não encontrada'}`);
+    } finally {
       setLoading(false);
     }
   }, [idApi]);
+
+  useEffect(() => {
+    loadPublication();
+  }, [loadPublication]);
+
+  useEffect(() => {
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (event?.type !== 'PUBLICATION_INTEGRATED') return;
+      if (!event?.idApi) return;
+      if (Number(event.idApi) !== Number(idApi)) return;
+      loadPublication();
+    });
+
+    return unsubscribe;
+  }, [idApi, loadPublication]);
 
   const handleConsultarProcesso = (e, url) => {
     e.preventDefault();

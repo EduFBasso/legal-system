@@ -144,6 +144,24 @@ python manage.py migrate
 python manage.py runserver  # Roda em http://127.0.0.1:8000
 ```
 
+### Dropdowns dinâmicos (Cases)
+
+Alguns campos usam endpoints `*-options` para oferecer uma lista base (defaults) + permitir crescimento via opções persistidas.
+
+- Defaults (fonte de verdade): `backend/apps/cases/defaults.py`
+- Mesmo após `purge_system_data` ou base vazia, os dropdowns continuam com baseline via API.
+
+Endpoints principais:
+
+- `GET /api/cases/titulo-options/` → defaults + persistidos + sugestões de títulos já usados
+- `GET /api/cases/tipo-acao-options/` → defaults (choices) + persistidos
+- `GET /api/cases/party-role-options/` → defaults + persistidos
+- `GET /api/cases/representation-type-options/` → defaults + persistidos
+
+Seed opcional (para popular tabelas persistidas desde o início):
+
+- `python manage.py seed_case_select_options`
+
 ### 3. Frontend (React + Vite)
 
 ```bash

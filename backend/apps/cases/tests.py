@@ -20,6 +20,8 @@ from apps.cases.models import (
     CaseTask,
     Payment,
     Expense,
+    CaseTituloOption,
+    CaseRepresentationTypeOption,
 )
 
 
@@ -834,6 +836,65 @@ class CasePartyAPITest(APITestCase):
         self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response2.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('is_client', response2.data)
+
+    def test_titulo_options_returns_defaults_when_empty(self):
+        """Mesmo com base “zerada”, o dropdown de TÍTULO não pode ficar vazio."""
+        Case.objects.all().delete()
+        CaseTituloOption.objects.all().delete()
+
+        response = self.client.get('/api/cases/titulo-options/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
+        self.assertGreater(len(response.data), 0)
+
+        # Deve conter pelo menos um item padrão conhecido.
+        self.assertTrue(
+            any(
+                item.get('label') == 'Ação de Cobrança' and item.get('editable') is False
+                for item in response.data
+            )
+        )
+
+    def test_titulo_options_post_default_does_not_persist(self):
+        """Criar uma opção que já existe na lista fixa deve apenas retornar o default."""
+        Case.objects.all().delete()
+        CaseTituloOption.objects.all().delete()
+
+        response = self.client.post('/api/cases/titulo-options/', {'label': 'Ação de Cobrança'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('label'), 'Ação de Cobrança')
+        self.assertEqual(response.data.get('editable'), False)
+        self.assertEqual(CaseTituloOption.objects.count(), 0)
+
+    def test_representation_type_options_returns_defaults_when_empty(self):
+        """Mesmo com base “zerada”, o dropdown de tipo de representação não pode ficar vazio."""
+        CaseRepresentationTypeOption.objects.all().delete()
+
+        response = self.client.get('/api/cases/representation-type-options/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
+        self.assertGreater(len(response.data), 0)
+
+        self.assertTrue(
+            any(
+                item.get('label') == 'Procurador' and item.get('editable') is False
+                for item in response.data
+            )
+        )
+
+    def test_representation_type_options_post_default_does_not_persist(self):
+        """Criar uma opção que já existe na lista fixa deve apenas retornar o default."""
+        CaseRepresentationTypeOption.objects.all().delete()
+
+        response = self.client.post(
+            '/api/cases/representation-type-options/',
+            {'label': 'Procurador'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('label'), 'Procurador')
+        self.assertEqual(response.data.get('editable'), False)
+        self.assertEqual(CaseRepresentationTypeOption.objects.count(), 0)
 
     def test_api_allows_same_client_in_multiple_cases(self):
         """Mesmo contato pode ser cliente em processos diferentes"""

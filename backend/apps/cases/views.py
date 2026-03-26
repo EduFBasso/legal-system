@@ -41,6 +41,30 @@ def _capitalize_words(text: str) -> str:
         return ''
     return ' '.join(word[:1].upper() + word[1:].lower() for word in raw.split(' ') if word)
 
+
+def _get_default_titulo_labels() -> list[str]:
+    """Retorna uma lista fixa de sugestões para o campo `titulo`.
+
+    Mantém o dropdown útil mesmo em bases recém-inicializadas/zeradas.
+    Fonte de verdade em runtime: `apps.cases.defaults`.
+    """
+
+    try:
+        from apps.cases.defaults import DEFAULT_CASE_TITULOS
+
+        values = [str(v) for v in (DEFAULT_CASE_TITULOS or [])]
+        if values:
+            return values
+    except Exception:
+        pass
+
+    return [
+        'Ação de Cobrança',
+        'Cumprimento de Sentença',
+        'Execução Fiscal',
+        'Inventário',
+    ]
+
 from .models import (
     Case,
     CaseParty,
@@ -57,6 +81,8 @@ from .models import (
     CaseTituloOption,
     CasePartyRoleOption,
 )
+
+from apps.cases.defaults import DEFAULT_CASE_PARTY_ROLE_OPTIONS, DEFAULT_CASE_REPRESENTATION_TYPES
 from apps.publications.models import Publication
 from .serializers import (
     CaseListSerializer,
@@ -285,14 +311,20 @@ class CaseViewSet(viewsets.ModelViewSet):
     def titulo_options(self, request):
         """Lista e cadastra opções compartilhadas para `titulo`.
 
-        - GET: retorna opções persistidas + sugestões dinâmicas dos próprios Cases
-        - POST: cria (ou retorna existente) com dedup por label normalizada
+        - GET: retorna opções padrão (lista fixa) + opções persistidas + sugestões dinâmicas dos próprios Cases
+        - POST: cria (ou retorna existente) com dedup por label normalizada; se bater com padrão, não persiste
 
         Suporta `?q=` para reduzir resultados (útil quando a lista cresce).
         """
 
         query = _collapse_spaces(request.query_params.get('q') or '').strip()
         normalized_q = _normalize(query)
+
+        default_options = [
+            {'value': label, 'label': label, 'editable': False}
+            for label in (_collapse_spaces(v).strip() for v in _get_default_titulo_labels())
+            if label
+        ]
 
         if request.method.upper() == 'GET':
             persisted_qs = CaseTituloOption.objects.filter(is_active=True)
@@ -321,10 +353,10 @@ class CaseViewSet(viewsets.ModelViewSet):
                     continue
                 dynamic.append({'value': cleaned, 'label': cleaned, 'editable': False})
 
-            # Dedup por label normalizada; persistidas têm prioridade.
+            # Dedup por label normalizada; defaults têm prioridade (lista fixa).
             seen = set()
             merged = []
-            for opt in persisted + dynamic:
+            for opt in default_options + persisted + dynamic:
                 key = _collapse_spaces(_normalize(opt.get('label')))
                 if not key or key in seen:
                     continue
@@ -339,6 +371,11 @@ class CaseViewSet(viewsets.ModelViewSet):
             return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
 
         key = _collapse_spaces(_normalize(label))
+
+        # Se bater com uma opção padrão, não persiste: retorna a default.
+        for opt in default_options:
+            if _collapse_spaces(_normalize(opt['label'])) == key:
+                return Response(opt, status=status.HTTP_200_OK)
 
         existing = CaseTituloOption.objects.filter(key=key).first()
         if existing:
@@ -375,7 +412,19 @@ class CaseViewSet(viewsets.ModelViewSet):
         if not new_label:
             return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
 
+        default_labels_normalized = {
+            _collapse_spaces(_normalize(v))
+            for v in _get_default_titulo_labels()
+            if _collapse_spaces(str(v or '')).strip()
+        }
+
         new_key = _collapse_spaces(_normalize(new_label))
+        if new_key in default_labels_normalized:
+            return Response(
+                {'error': 'Não é permitido renomear para um título padronizado (lista fixa).'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
         collision = CaseTituloOption.objects.filter(key=new_key).exclude(id=opt.id).first()
         if collision:
             return Response({'error': 'Já existe uma opção com este nome.'}, status=status.HTTP_409_CONFLICT)
@@ -404,12 +453,9 @@ class CaseViewSet(viewsets.ModelViewSet):
         normalized_q = _normalize(query)
 
         default_options = [
-            {'value': 'AUTOR', 'label': 'Autor/Requerente', 'editable': False},
-            {'value': 'REU', 'label': 'Réu/Requerido', 'editable': False},
-            {'value': 'TESTEMUNHA', 'label': 'Testemunha', 'editable': False},
-            {'value': 'PERITO', 'label': 'Perito', 'editable': False},
-            {'value': 'TERCEIRO', 'label': 'Terceiro Interessado', 'editable': False},
-            {'value': 'CLIENTE', 'label': 'Cliente/Representado', 'editable': False},
+            {'value': str(opt.get('value')), 'label': str(opt.get('label')), 'editable': False}
+            for opt in (DEFAULT_CASE_PARTY_ROLE_OPTIONS or [])
+            if opt and opt.get('value') and opt.get('label')
         ]
 
         if request.method.upper() == 'GET':
@@ -492,15 +538,9 @@ class CaseViewSet(viewsets.ModelViewSet):
             return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
 
         default_labels_normalized = {
-            _collapse_spaces(_normalize(item['label']))
-            for item in [
-                {'label': 'Autor/Requerente'},
-                {'label': 'Réu/Requerido'},
-                {'label': 'Testemunha'},
-                {'label': 'Perito'},
-                {'label': 'Terceiro Interessado'},
-                {'label': 'Cliente/Representado'},
-            ]
+            _collapse_spaces(_normalize(item.get('label')))
+            for item in (DEFAULT_CASE_PARTY_ROLE_OPTIONS or [])
+            if item and item.get('label')
         }
 
         new_key = _collapse_spaces(_normalize(new_label))
@@ -531,8 +571,8 @@ class CaseViewSet(viewsets.ModelViewSet):
     def representation_type_options(self, request):
         """Lista e cadastra opções compartilhadas para tipo de representação.
 
-        - GET: retorna opções persistidas
-        - POST: cria (ou retorna existente) com normalização/descrição capitalizada
+        - GET: retorna opções padrão (lista fixa) + opções persistidas
+        - POST: cria (ou retorna existente) com normalização/descrição capitalizada; se bater com padrão, não persiste
 
         Suporta `?q=` para reduzir resultados.
         """
@@ -540,22 +580,40 @@ class CaseViewSet(viewsets.ModelViewSet):
         query = _collapse_spaces(request.query_params.get('q') or '').strip()
         normalized_q = _normalize(query)
 
+        default_options = [
+            {'value': label, 'label': label, 'editable': False}
+            for label in (
+                _capitalize_words(_collapse_spaces(v).strip())
+                for v in (DEFAULT_CASE_REPRESENTATION_TYPES or [])
+            )
+            if label
+        ]
+
         if request.method.upper() == 'GET':
             qs = CaseRepresentationTypeOption.objects.filter(is_active=True)
             if query:
                 qs = qs.filter(label__icontains=query)
-            items = [
+
+            persisted = [
                 {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True}
                 for opt in qs.order_by('label')[:250]
             ]
-            if not normalized_q:
-                return Response(items)
-            filtered = []
-            for opt in items:
+
+            merged = []
+            seen = set()
+            for opt in default_options + persisted:
                 label = _collapse_spaces(opt.get('label') or '').strip()
-                if label and normalized_q in _normalize(label):
-                    filtered.append(opt)
-            return Response(filtered[:250])
+                if not label:
+                    continue
+                if normalized_q and normalized_q not in _normalize(label):
+                    continue
+                key = _collapse_spaces(_normalize(label))
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                merged.append(opt)
+
+            return Response(merged[:250])
 
         raw_label = request.data.get('label') or request.data.get('value') or ''
         label = _capitalize_words(raw_label)
@@ -563,6 +621,11 @@ class CaseViewSet(viewsets.ModelViewSet):
             return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
 
         key = _collapse_spaces(_normalize(label))
+
+        # Se bater com uma opção padrão, não persiste: retorna a default.
+        for opt in default_options:
+            if _collapse_spaces(_normalize(opt['label'])) == key:
+                return Response(opt, status=status.HTTP_200_OK)
 
         existing = CaseRepresentationTypeOption.objects.filter(key=key).first()
         if existing:
@@ -605,7 +668,19 @@ class CaseViewSet(viewsets.ModelViewSet):
         if not new_label:
             return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
 
+        default_labels_normalized = {
+            _collapse_spaces(_normalize(v))
+            for v in (DEFAULT_CASE_REPRESENTATION_TYPES or [])
+            if _collapse_spaces(str(v or '')).strip()
+        }
+
         new_key = _collapse_spaces(_normalize(new_label))
+        if new_key in default_labels_normalized:
+            return Response(
+                {'error': 'Não é permitido renomear para um tipo padronizado (lista fixa).'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
         collision = CaseRepresentationTypeOption.objects.filter(key=new_key).exclude(id=opt.id).first()
         if collision:
             return Response({'error': 'Já existe uma opção com este nome.'}, status=status.HTTP_409_CONFLICT)

@@ -244,6 +244,44 @@ const casesService = {
   },
 
   /**
+   * Get shared representation type options (persisted)
+   * @param {string} q - Optional query to reduce results
+   * @returns {Promise<Array<{id?:number,value:string,label:string,editable?:boolean}>>}
+   */
+  async getRepresentationTypeOptions(q = '') {
+    const qs = String(q || '').trim();
+    const endpoint = qs
+      ? `/cases/representation-type-options/?q=${encodeURIComponent(qs)}`
+      : '/cases/representation-type-options/';
+    return await apiFetch(endpoint);
+  },
+
+  /**
+   * Create a new shared representation type option
+   * @param {string} label
+   * @returns {Promise<{id?:number,value:string,label:string,editable?:boolean}>}
+   */
+  async createRepresentationTypeOption(label) {
+    return await apiFetch('/cases/representation-type-options/', {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Rename an existing shared representation type option
+   * @param {number} id
+   * @param {string} label
+   * @returns {Promise<{id:number,value:string,label:string,editable:boolean}>}
+   */
+  async updateRepresentationTypeOption(id, label) {
+    return await apiFetch(`/cases/representation-type-options/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
    * Get case parties (contacts) for a specific case
    * @param {number} caseId - Case ID
    * @returns {Promise<Object>} Paginated case parties

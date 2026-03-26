@@ -92,7 +92,11 @@ export function NotificationsProvider({ children }) {
       }
       
       if (notification.link) {
-        window.location.href = notification.link;
+        const opened = window.open(notification.link, '_blank', 'noopener,noreferrer');
+        // Fallback se o navegador bloquear popup (raro, mas possível)
+        if (!opened) {
+          window.location.href = notification.link;
+        }
       }
       webNotification.close();
     };

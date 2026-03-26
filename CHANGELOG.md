@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CaseDetail: extração de lógica de orquestração para hooks dedicados (documentos, vínculos, auto-refresh, guards de auto-save do financeiro, e fluxo de link por query params)
 - CaseDetail: redução de prop-drilling no conteúdo das abas (objeto `caseDetail` memoizado)
 
+### ✨ Features
+
+- Cases: padronização de dropdowns dinâmicos com baseline fixa via `backend/apps/cases/defaults.py` (não fica vazio após purge/reset)
+- API: `GET /cases/titulo-options/` agora retorna defaults + persistidos + sugestões dinâmicas (com dedup + `?q=`)
+- API: `GET /cases/representation-type-options/` agora retorna defaults + persistidos (POST não persiste default; PATCH bloqueia renomear para default)
+- Maintenance: migration `cases.0025_sync_case_select_options_defaults` desativa opções persistidas antigas/não usadas e duplicatas que batem com defaults
+
+### ✅ Tests
+
+- Backend: cobertura para `titulo-options` e `representation-type-options` garantindo defaults mesmo com tabelas vazias
+
 ## [0.2.0] - 2026-02-27 - "Cases & Publications Complete"
 
 ### ✨ Features

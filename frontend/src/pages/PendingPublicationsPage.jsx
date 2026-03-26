@@ -32,6 +32,7 @@ export default function PendingPublicationsPage() {
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
   const loadRunIdRef = useRef(0);
+  const lastFocusRefreshAtRef = useRef(0);
 
   const notifyPublicationsUpdated = useCallback(() => {
     window.dispatchEvent(new Event('publicationsSearchCompleted'));
@@ -49,6 +50,34 @@ export default function PendingPublicationsPage() {
     });
 
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const shouldSkip = () => {
+      const now = Date.now();
+      const elapsed = now - (lastFocusRefreshAtRef.current || 0);
+      if (elapsed < 800) return true;
+      lastFocusRefreshAtRef.current = now;
+      return false;
+    };
+
+    const refresh = () => {
+      if (shouldSkip()) return;
+      loadPending();
+    };
+
+    const handleFocus = () => refresh();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const loadPending = async () => {

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✅ Implementado (2026-03-25): Dropdowns dinâmicos com defaults em código
+
+- Padronização: defaults centralizados em `backend/apps/cases/defaults.py`
+- `GET /cases/titulo-options/`: defaults + persistidos + sugestões dinâmicas (dedup + `?q=`)
+- `GET /cases/party-role-options/`: defaults + persistidos
+- `GET /cases/representation-type-options/`: defaults + persistidos (POST não persiste default)
+- Migration de manutenção: `cases.0025_sync_case_select_options_defaults` (desativa opções antigas/não usadas e duplicatas que batem com defaults)
+
 ### � Documentação: Features Futuras para Tarefas (2026-03-03)
 
 #### Added
@@ -55,7 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reflete realidade: cálculo automático (data + prazo) pode não ser exato
   - Advogada valida e interpreta conforme regras legais tributárias
   - Exemplo: Caso 9 com múltiplos prazos no mesmo texto
-  
 - **Justificativa de design**: Por qué 3-level urgency system?
   - Não é apenas classificação, é criação de hierarquia visual
   - Habilita: dashboard filtering, alerting, smart ordering, auditoria histórica

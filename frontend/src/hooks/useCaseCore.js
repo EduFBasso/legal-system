@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import casesService from '../services/casesService';
 import publicationsService from '../services/publicationsService';
-import { notifyPublicationSync } from '../services/publicationSync';
 import { useSettings } from '../contexts/SettingsContext';
 
 /**
@@ -377,12 +376,6 @@ export function useCaseCore(
                 console.warn('Fallback de criação de movimentação falhou:', fallbackError);
               }
             }
-
-            notifyPublicationSync({
-              type: 'PUBLICATION_INTEGRATED',
-              idApi: Number(pubId),
-              caseId: created.id,
-            });
           } catch (integrationError) {
             console.error('Error integrating source publication:', integrationError);
             showToast('Processo criado, mas houve falha ao vincular a publicação de origem', 'warning');

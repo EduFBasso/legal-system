@@ -6,6 +6,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 import publicationsService from '../services/publicationsService';
+import { subscribePublicationSync } from '../services/publicationSync';
 import SearchHistoryList from '../components/SearchHistoryList';
 import SearchHistoryControls from '../components/SearchHistoryControls';
 import SearchHistoryDetailPanel from '../components/SearchHistoryDetailPanel';
@@ -262,6 +263,18 @@ function SearchHistoryPage() {
     if (!selectedSearch?.id) return;
     await loadSearchDetail(selectedSearch.id);
   }, [selectedSearch?.id, loadSearchDetail]);
+
+  // Sync cross-tab: se uma publicação for integrada em outra aba/janela,
+  // recarregar o painel de detalhes aberto para refletir o novo status.
+  useEffect(() => {
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (event?.type !== 'PUBLICATION_INTEGRATED') return;
+      if (!selectedSearch?.id) return;
+      refreshSelectedDetail();
+    });
+
+    return unsubscribe;
+  }, [refreshSelectedDetail, selectedSearch?.id]);
 
   const handleCreateCaseFromPublication = useCallback((publication) => {
     if (!publication?.id_api) return;
