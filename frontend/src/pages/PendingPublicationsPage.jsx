@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { FileText } from 'lucide-react';
 import EmptyState from '../components/common/EmptyState';
 import PublicationCard from '../components/PublicationCard';
@@ -22,6 +22,7 @@ import './PendingPublicationsPage.css';
 export default function PendingPublicationsPage() {
   const markPublicationNotificationAsRead = usePublicationNotificationRead();
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [error, setError] = useState('');
   const [pendingPublications, setPendingPublications] = useState([]);
   const [toast, setToast] = useState(null);
@@ -30,6 +31,8 @@ export default function PendingPublicationsPage() {
   const [pendingDeletePublication, setPendingDeletePublication] = useState(null);
   const [showDeleteBlockedDialog, setShowDeleteBlockedDialog] = useState(false);
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
+  const loadRunIdRef = useRef(0);
+  const lastFocusRefreshAtRef = useRef(0);
 
   const notifyPublicationsUpdated = useCallback(() => {
     window.dispatchEvent(new Event('publicationsSearchCompleted'));
@@ -49,9 +52,46 @@ export default function PendingPublicationsPage() {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    const shouldSkip = () => {
+      const now = Date.now();
+      const elapsed = now - (lastFocusRefreshAtRef.current || 0);
+      if (elapsed < 800) return true;
+      lastFocusRefreshAtRef.current = now;
+      return false;
+    };
+
+    const refresh = () => {
+      if (shouldSkip()) return;
+      loadPending();
+    };
+
+    const handleFocus = () => refresh();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
   const loadPending = async () => {
+    const runId = ++loadRunIdRef.current;
     setLoading(true);
+    setShowSkeleton(false);
     setError('');
+
+    const skeletonTimer = window.setTimeout(() => {
+      if (loadRunIdRef.current === runId) {
+        setShowSkeleton(true);
+      }
+    }, 150);
+
     try {
       const result = await publicationsService.getPendingPublications();
       if (result.success) {
@@ -62,7 +102,11 @@ export default function PendingPublicationsPage() {
     } catch (err) {
       setError(err.message || 'Erro ao carregar pendencias');
     } finally {
-      setLoading(false);
+      window.clearTimeout(skeletonTimer);
+      if (loadRunIdRef.current === runId) {
+        setShowSkeleton(false);
+        setLoading(false);
+      }
     }
   };
 
@@ -200,7 +244,7 @@ export default function PendingPublicationsPage() {
         </div>
       </header>
 
-      {loading ? (
+      {loading && showSkeleton ? (
         <div className="pending-publications-grid">
           {/* Skeleton loading cards */}
           {[1, 2, 3, 4, 5, 6].map((i) => (

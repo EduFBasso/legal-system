@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { generateAllConsultaLinks, openConsultaWithCopy } from '../utils/consultaLinksHelper';
+import { Button } from './common/Button';
 import './PublicationDetailModal.css';
 
 export default function PublicationDetailModal({ publication, onClose }) {
@@ -155,30 +156,32 @@ export default function PublicationDetailModal({ publication, onClose }) {
           <div className="modal-actions">
             {/* Link oficial (ESAJ ou principal) */}
             {consultaLinks.linkOficial && (
-              <button 
-                className="btn btn-primary-link"
+              <Button
+                variant="primary-soft"
+                size="sm"
                 onClick={(e) => handleConsultarProcesso(e, consultaLinks.linkOficial)}
                 title="Copia o número e abre o portal do tribunal"
               >
-                🔍 {publication.tribunal || 'Consultar'}
-              </button>
+                {publication.tribunal || 'Consultar'}
+              </Button>
             )}
             
             {/* Links alternativos (eProc, TRF3, TRT15, etc.) */}
             {consultaLinks.linksAlternativos.map((system, index) => (
-              <button 
+              <Button
                 key={index}
-                className="btn btn-alternative-link"
+                variant="secondary-soft"
+                size="sm"
                 onClick={(e) => handleConsultarProcesso(e, system.url)}
                 title={system.description}
               >
                 {system.icon} {system.shortName}
-              </button>
+              </Button>
             ))}
           </div>
-          <button className="btn btn-secondary" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={onClose}>
             Fechar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 import publicationsService from '../services/publicationsService';
+import { subscribePublicationSync } from '../services/publicationSync';
 import SearchHistoryList from '../components/SearchHistoryList';
 import SearchHistoryControls from '../components/SearchHistoryControls';
 import SearchHistoryDetailPanel from '../components/SearchHistoryDetailPanel';
@@ -39,7 +40,9 @@ function SearchHistoryPage() {
   const [isSearchingBackend, setIsSearchingBackend] = useState(false);
   const [isBackendQuery, setIsBackendQuery] = useState(false); // Indica se query atual é tipo backend (nome/processo)
   const [backendMatchIds, setBackendMatchIds] = useState(new Set()); // IDs dos cartões encontrados no backend
+  const [showLoadingUi, setShowLoadingUi] = useState(false);
   const debounceTimerRef = useRef(null);
+  const loadingUiTimerRef = useRef(null);
   const detailPanelRef = useRef(null);
 
   // Verificar se ordenação é crescente
@@ -261,6 +264,18 @@ function SearchHistoryPage() {
     await loadSearchDetail(selectedSearch.id);
   }, [selectedSearch?.id, loadSearchDetail]);
 
+  // Sync cross-tab: se uma publicação for integrada em outra aba/janela,
+  // recarregar o painel de detalhes aberto para refletir o novo status.
+  useEffect(() => {
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (event?.type !== 'PUBLICATION_INTEGRATED') return;
+      if (!selectedSearch?.id) return;
+      refreshSelectedDetail();
+    });
+
+    return unsubscribe;
+  }, [refreshSelectedDetail, selectedSearch?.id]);
+
   const handleCreateCaseFromPublication = useCallback((publication) => {
     if (!publication?.id_api) return;
     openCreateCaseFromPublicationWindow(publication.id_api);
@@ -339,6 +354,32 @@ function SearchHistoryPage() {
     }
   }, [location.state, loading, searches, selectedSearch, loadSearchDetail, navigate]);
 
+  // Anti-flash: só mostra o loading após um pequeno atraso
+  // (especialmente útil quando navega e o backend responde muito rápido).
+  useEffect(() => {
+    const isInitialLoading = loading && searches.length === 0;
+
+    if (loadingUiTimerRef.current) {
+      clearTimeout(loadingUiTimerRef.current);
+    }
+
+    if (!isInitialLoading) {
+      setShowLoadingUi(false);
+      return;
+    }
+
+    setShowLoadingUi(false);
+    loadingUiTimerRef.current = setTimeout(() => {
+      setShowLoadingUi(true);
+    }, 150);
+
+    return () => {
+      if (loadingUiTimerRef.current) {
+        clearTimeout(loadingUiTimerRef.current);
+      }
+    };
+  }, [loading, searches.length]);
+
   return (
     <div className="search-history-page">
       {/* Cabeçalho */}
@@ -367,12 +408,12 @@ function SearchHistoryPage() {
       )}
 
       {/* Loading */}
-      {loading ? (
+      {loading && searches.length === 0 && showLoadingUi ? (
         <div className="loading-container">
           <div className="spinner"></div>
           <p>Carregando histórico...</p>
         </div>
-      ) : (
+      ) : loading && searches.length === 0 ? null : (
         <>
           {/* Lista de buscas */}
           {filteredSearches.length === 0 ? (
@@ -444,5 +485,4 @@ function SearchHistoryPage() {
     </div>
   );
 }
-
 export default SearchHistoryPage;

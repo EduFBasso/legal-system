@@ -40,7 +40,6 @@ const casesService = {
     if (filters.cliente_principal) params.append('cliente_principal', filters.cliente_principal);
     if (filters.search) params.append('search', filters.search);
     if (filters.ordering) params.append('ordering', filters.ordering);
-    if (filters.comarca) params.append('comarca__icontains', filters.comarca);
     if (filters.data_distribuicao__gte) params.append('data_distribuicao__gte', filters.data_distribuicao__gte);
     if (filters.data_distribuicao__lte) params.append('data_distribuicao__lte', filters.data_distribuicao__lte);
     
@@ -203,6 +202,80 @@ const casesService = {
    */
   async updateTituloOption(id, label) {
     return await apiFetch(`/cases/titulo-options/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Get shared "Papel no Processo" options (defaults + persisted)
+   * @param {string} q - Optional query to reduce results
+   * @returns {Promise<Array<{id?:number,value:string,label:string,editable?:boolean}>>}
+   */
+  async getPartyRoleOptions(q = '') {
+    const qs = String(q || '').trim();
+    const endpoint = qs ? `/cases/party-role-options/?q=${encodeURIComponent(qs)}` : '/cases/party-role-options/';
+    return await apiFetch(endpoint);
+  },
+
+  /**
+   * Create a new shared "Papel no Processo" option
+   * @param {string} label
+   * @returns {Promise<{id?:number,value:string,label:string,editable?:boolean}>}
+   */
+  async createPartyRoleOption(label) {
+    return await apiFetch('/cases/party-role-options/', {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Rename an existing shared "Papel no Processo" option
+   * @param {number} id
+   * @param {string} label
+   * @returns {Promise<{id:number,value:string,label:string,editable:boolean}>}
+   */
+  async updatePartyRoleOption(id, label) {
+    return await apiFetch(`/cases/party-role-options/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Get shared representation type options (persisted)
+   * @param {string} q - Optional query to reduce results
+   * @returns {Promise<Array<{id?:number,value:string,label:string,editable?:boolean}>>}
+   */
+  async getRepresentationTypeOptions(q = '') {
+    const qs = String(q || '').trim();
+    const endpoint = qs
+      ? `/cases/representation-type-options/?q=${encodeURIComponent(qs)}`
+      : '/cases/representation-type-options/';
+    return await apiFetch(endpoint);
+  },
+
+  /**
+   * Create a new shared representation type option
+   * @param {string} label
+   * @returns {Promise<{id?:number,value:string,label:string,editable?:boolean}>}
+   */
+  async createRepresentationTypeOption(label) {
+    return await apiFetch('/cases/representation-type-options/', {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Rename an existing shared representation type option
+   * @param {number} id
+   * @param {string} label
+   * @returns {Promise<{id:number,value:string,label:string,editable:boolean}>}
+   */
+  async updateRepresentationTypeOption(id, label) {
+    return await apiFetch(`/cases/representation-type-options/${id}/`, {
       method: 'PATCH',
       body: JSON.stringify({ label }),
     });

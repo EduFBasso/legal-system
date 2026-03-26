@@ -40,12 +40,16 @@
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 600;
   display: inline-block;
   white-space: nowrap;
+}
+
+/* Default visual (evita overrides quando for status/tribunal) */
+.case-card .info-badge:not(.status):not(.tribunal) {
   background: #f8fafc;
   color: #1e293b;
   border: 2px solid #cbd5e1;
+  font-weight: 600;
 }
 
 .case-card .info-badge.status {

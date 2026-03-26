@@ -1,7 +1,12 @@
-import { UserPlus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pencil, UserPlus } from 'lucide-react';
 import Toast from '../common/Toast';
 import ContactDetailModal from '../ContactDetailModal';
 import SelectContactModal from '../SelectContactModal';
+import SearchableCreatableSelectField from '../FormFields/SearchableCreatableSelectField';
+import casesService from '../../services/casesService';
+
+import './CaseDetailModals.css';
 
 export default function CaseDetailModals({
   modalsNotif,
@@ -17,6 +22,221 @@ export default function CaseDetailModals({
   onCancelDelete,
   onConfirmDelete,
 }) {
+  const defaultPartyRoleOptions = useMemo(() => ([
+    { value: 'AUTOR', label: 'Autor/Requerente', editable: false },
+    { value: 'REU', label: 'Réu/Requerido', editable: false },
+    { value: 'TESTEMUNHA', label: 'Testemunha', editable: false },
+    { value: 'PERITO', label: 'Perito', editable: false },
+    { value: 'TERCEIRO', label: 'Terceiro Interessado', editable: false },
+  ]), []);
+
+  const [partyRoleOptions, setPartyRoleOptions] = useState(defaultPartyRoleOptions);
+
+  const [representationTypeOptions, setRepresentationTypeOptions] = useState([]);
+  const [showSelectRepresentativeModal, setShowSelectRepresentativeModal] = useState(false);
+  const [showCreateRepresentativeModal, setShowCreateRepresentativeModal] = useState(false);
+  const [representativeTarget, setRepresentativeTarget] = useState(null); // 'add' | 'edit'
+  const [editingRepresentativeContactId, setEditingRepresentativeContactId] = useState(null);
+  const [editingRepresentativeTarget, setEditingRepresentativeTarget] = useState(null); // 'add' | 'edit'
+
+  useEffect(() => {
+    const shouldLoad = !!parties.editingParty || !!parties.showAddPartyModal;
+    if (!shouldLoad) return;
+
+    let isActive = true;
+    Promise.resolve(casesService.getPartyRoleOptions())
+      .then((options) => {
+        if (!isActive) return;
+        if (Array.isArray(options) && options.length > 0) {
+          setPartyRoleOptions(options);
+        }
+      })
+      .catch(() => {
+        // Fallback silencioso para defaults.
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [parties.editingParty, parties.showAddPartyModal]);
+
+  useEffect(() => {
+    const shouldLoad = !!parties.editingParty || !!parties.showAddPartyModal;
+    if (!shouldLoad) return;
+
+    let isActive = true;
+    Promise.resolve(casesService.getRepresentationTypeOptions())
+      .then((options) => {
+        if (!isActive) return;
+        if (Array.isArray(options)) {
+          setRepresentationTypeOptions(options);
+        }
+      })
+      .catch(() => {
+        // Fallback silencioso.
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [parties.editingParty, parties.showAddPartyModal]);
+
+  const onCreatePartyRoleOption = useCallback(async (label) => {
+    try {
+      const created = await casesService.createPartyRoleOption(label);
+      if (created && typeof created === 'object') {
+        setPartyRoleOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const exists = next.some((opt) => String(opt?.value) === String(created.value));
+          if (!exists) next.push(created);
+          return next;
+        });
+      }
+      return created;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao cadastrar papel no processo', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
+  const onEditPartyRoleOption = useCallback(async (idToUpdate, label) => {
+    try {
+      const updated = await casesService.updatePartyRoleOption(idToUpdate, label);
+      if (updated && typeof updated === 'object') {
+        setPartyRoleOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const index = next.findIndex((opt) => Number(opt?.id) === Number(updated.id));
+          if (index >= 0) {
+            next[index] = { ...next[index], ...updated };
+            return next;
+          }
+          const byValue = next.findIndex((opt) => String(opt?.value) === String(updated.value));
+          if (byValue >= 0) {
+            next[byValue] = { ...next[byValue], ...updated };
+            return next;
+          }
+          return [...next, updated];
+        });
+      }
+      return updated;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao editar papel no processo', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
+  const onCreateRepresentationTypeOption = useCallback(async (label) => {
+    try {
+      const created = await casesService.createRepresentationTypeOption(label);
+      if (created && typeof created === 'object') {
+        setRepresentationTypeOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const exists = next.some((opt) => String(opt?.value) === String(created.value));
+          if (!exists) next.push(created);
+          return next;
+        });
+      }
+      return created;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao cadastrar tipo de representação', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
+  const onEditRepresentationTypeOption = useCallback(async (idToUpdate, label) => {
+    try {
+      const updated = await casesService.updateRepresentationTypeOption(idToUpdate, label);
+      if (updated && typeof updated === 'object') {
+        setRepresentationTypeOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const index = next.findIndex((opt) => Number(opt?.id) === Number(updated.id));
+          if (index >= 0) {
+            next[index] = { ...next[index], ...updated };
+            return next;
+          }
+          const byValue = next.findIndex((opt) => String(opt?.value) === String(updated.value));
+          if (byValue >= 0) {
+            next[byValue] = { ...next[byValue], ...updated };
+            return next;
+          }
+          return [...next, updated];
+        });
+      }
+      return updated;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao editar tipo de representação', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
+  const openRepresentativePicker = useCallback((target) => {
+    setRepresentativeTarget(target);
+    setShowSelectRepresentativeModal(true);
+  }, []);
+
+  const openEditRepresentativeContact = useCallback((target, contactId) => {
+    if (!contactId) return;
+    setEditingRepresentativeTarget(target);
+    setEditingRepresentativeContactId(contactId);
+  }, []);
+
+  const handleRepresentativeContactUpdated = useCallback((updatedContact) => {
+    if (!updatedContact || !updatedContact.id) return;
+
+    if (editingRepresentativeTarget === 'edit') {
+      parties.setEditingPartyFormData((prev) => {
+        const prevId = prev?.representative_contact?.id;
+        if (!prevId || Number(prevId) !== Number(updatedContact.id)) return prev;
+        return {
+          ...prev,
+          representative_contact: updatedContact,
+        };
+      });
+    } else {
+      parties.setPartyFormData((prev) => {
+        const prevId = prev?.representative_contact?.id;
+        if (!prevId || Number(prevId) !== Number(updatedContact.id)) return prev;
+        return {
+          ...prev,
+          representative_contact: updatedContact,
+        };
+      });
+    }
+
+    modalsNotif?.showToast?.('Dados do representante atualizados!', 'success');
+  }, [editingRepresentativeTarget, modalsNotif, parties]);
+
+  const applyRepresentativeSelection = useCallback((contact) => {
+    if (!contact) return;
+
+    const representedContactId = representativeTarget === 'edit'
+      ? parties.editingParty?.contact
+      : parties.selectedContact?.id;
+
+    if (representedContactId && Number(contact.id) === Number(representedContactId)) {
+      modalsNotif?.showToast?.('Representante não pode ser o mesmo contato do cliente.', 'error', 6000);
+      return;
+    }
+
+    if (representativeTarget === 'edit') {
+      parties.setEditingPartyFormData((prev) => ({
+        ...prev,
+        representative_contact: contact,
+      }));
+    } else {
+      parties.setPartyFormData((prev) => ({
+        ...prev,
+        representative_contact: contact,
+      }));
+    }
+    setShowSelectRepresentativeModal(false);
+  }, [modalsNotif, parties, representativeTarget]);
+
+  const openCreateRepresentativeContact = useCallback(() => {
+    setShowSelectRepresentativeModal(false);
+    setShowCreateRepresentativeModal(true);
+  }, []);
+
   return (
     <>
       {/* Modal de Seleção de Contato */}
@@ -26,7 +246,14 @@ export default function CaseDetailModals({
           onClose={() => modalsNotif.setShowSelectContactModal(false)}
           onSelectContact={onSelectContactForParty}
           onCreateNew={onCreateNewContactForParty}
-          existingPartyContactIds={parties.parties.map((p) => p.contact)}
+          existingPartyContactIds={(() => {
+            const partyContactIds = parties.parties.map((p) => p.contact);
+            const representativeContactIds = (caseData?.representations || [])
+              .map((r) => r?.representative_contact)
+              .filter(Boolean);
+            return Array.from(new Set([...partyContactIds, ...representativeContactIds]));
+          })()}
+          disabledContactReason="Este contato já está sendo usado neste processo (como parte ou representante)."
         />
       )}
 
@@ -42,9 +269,74 @@ export default function CaseDetailModals({
         />
       )}
 
+      {/* Modal de Seleção de Representante */}
+      {showSelectRepresentativeModal && (
+        <SelectContactModal
+          isOpen={showSelectRepresentativeModal}
+          onClose={() => setShowSelectRepresentativeModal(false)}
+          onSelectContact={applyRepresentativeSelection}
+          onCreateNew={openCreateRepresentativeContact}
+          existingPartyContactIds={[]}
+          disabledContactIds={(() => {
+            const representedContactId = representativeTarget === 'edit'
+              ? parties.editingParty?.contact
+              : parties.selectedContact?.id;
+            const partyContactIds = Array.isArray(parties.parties)
+              ? parties.parties.map((p) => p?.contact).filter(Boolean)
+              : [];
+
+            const blockedIds = [
+              ...partyContactIds,
+              ...(representedContactId ? [representedContactId] : []),
+            ];
+
+            // Permitir apenas o próprio representado (se estiver na lista) ser filtrado via regra específica.
+            // Aqui a regra é: ninguém que já é parte pode ser selecionado como representante.
+            return Array.from(new Set(blockedIds));
+          })()}
+          disabledContactReason="Este contato já está vinculado a este processo como parte e não pode ser escolhido como representante."
+        />
+      )}
+
+      {/* Modal de Criar Representante */}
+      {showCreateRepresentativeModal && (
+        <ContactDetailModal
+          contactId={null}
+          isOpen={showCreateRepresentativeModal}
+          onClose={() => setShowCreateRepresentativeModal(false)}
+          onContactUpdated={modalsNotif.handleContactCreated}
+          showLinkToProcessButton={false}
+          modalOverlayClassName="modal-overlay--top"
+          onLinkToProcess={(created) => {
+            applyRepresentativeSelection(created);
+            setShowCreateRepresentativeModal(false);
+          }}
+        />
+      )}
+
+      {/* Modal de Editar Representante (dados pessoais) */}
+      {!!editingRepresentativeContactId && (
+        <ContactDetailModal
+          contactId={editingRepresentativeContactId}
+          isOpen={!!editingRepresentativeContactId}
+          onClose={() => {
+            setEditingRepresentativeContactId(null);
+            setEditingRepresentativeTarget(null);
+          }}
+          onContactUpdated={(updated) => {
+            handleRepresentativeContactUpdated(updated);
+            setEditingRepresentativeContactId(null);
+            setEditingRepresentativeTarget(null);
+          }}
+          showLinkToProcessButton={false}
+          openInEditMode={true}
+          modalOverlayClassName="modal-overlay--top"
+        />
+      )}
+
       {/* Modal de Edição de Papel da Parte */}
       {parties.editingParty && (
-        <div className="modal-overlay" onClick={() => parties.setEditingParty(null)}>
+        <div className="modal-overlay case-detail-modal-overlay" onClick={() => parties.setEditingParty(null)}>
           <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Editar Papel da Parte</h2>
@@ -52,82 +344,188 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-body">
-              <div className="selected-contact-info">
-                <span className="contact-icon">
-                  {parties.editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <strong>{parties.editingParty.contact_name}</strong>
-                    <button
-                      className="btn-edit-contact-link"
-                      onClick={() => modalsNotif.setEditingContactId(parties.editingParty.contact)}
-                      title="Editar dados pessoais do contato"
-                      style={{
-                        background: 'none',
-                        border: '1px solid #2563eb',
-                        borderRadius: '4px',
-                        padding: '0.4rem 0.8rem',
-                        cursor: 'pointer',
-                        color: '#2563eb',
-                        fontSize: '0.85rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        fontWeight: '500',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#2563eb';
-                        e.target.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'none';
-                        e.target.style.color = '#2563eb';
-                      }}
-                    >
-                      ✏️ Editar dados pessoais
-                    </button>
-                  </div>
-                  {parties.editingParty.contact_document && (
-                    <span className="contact-doc"> • {parties.editingParty.contact_document}</span>
-                  )}
+              <section className="party-modal__section">
+                <div className="party-modal__section-header">
+                  <h3 className="party-modal__section-title">📌 Parte no Processo</h3>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Papel no Processo *</label>
-                <select
-                  value={parties.editingPartyFormData.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value;
-                    parties.setEditingPartyFormData((prev) => ({
-                      ...prev,
-                      role: newRole,
-                    }));
-                  }}
-                >
-                  <option value="AUTOR">Autor/Requerente</option>
-                  <option value="REU">Réu/Requerido</option>
-                  <option value="TESTEMUNHA">Testemunha</option>
-                  <option value="PERITO">Perito</option>
-                  <option value="TERCEIRO">Terceiro Interessado</option>
-                  <option value="CLIENTE">Cliente/Representado</option>
-                </select>
-              </div>
+                <div className="party-modal__section-body">
+                  <div className="selected-contact-info party-modal__contact-card">
+                    <span className="contact-icon">
+                      {parties.editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
+                    </span>
+                    <div className="party-modal__grow">
+                      <div className="party-modal__contact-header">
+                        <strong className="party-modal__contact-name">{parties.editingParty.contact_name}</strong>
+                      </div>
+                      {parties.editingParty.contact_document && (
+                        <span className="contact-doc"> • {parties.editingParty.contact_document}</span>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={parties.editingPartyFormData.is_client}
-                    onChange={(e) =>
-                      parties.setEditingPartyFormData((prev) => ({ ...prev, is_client: e.target.checked }))
-                    }
-                  />
-                  <span>É cliente do escritório neste processo</span>
-                </label>
-              </div>
+                  <div className="form-group party-modal__field party-modal__client-flag">
+                    <label className="checkbox-label checkbox-label-strong party-modal__client-flag-label">
+                      <input
+                        type="checkbox"
+                        checked={parties.editingPartyFormData.is_client}
+                        onChange={(e) =>
+                          parties.setEditingPartyFormData((prev) => ({
+                            ...prev,
+                            is_client: e.target.checked,
+                            ...(e.target.checked
+                              ? {}
+                              : {
+                                is_represented: false,
+                                representative_contact: null,
+                                representation_type: '',
+                              }),
+                          }))
+                        }
+                      />
+                      <span>É cliente do escritório neste processo</span>
+                    </label>
+                  </div>
+
+                  <div className="form-group party-modal__field">
+                    <label>Papel no Processo *</label>
+                    <SearchableCreatableSelectField
+                      value={parties.editingPartyFormData.role}
+                      onChange={(newRole) => {
+                        parties.setEditingPartyFormData((prev) => ({
+                          ...prev,
+                          role: newRole,
+                          ...(prev.is_client
+                            ? {}
+                            : {
+                              is_represented: false,
+                              representative_contact: null,
+                              representation_type: '',
+                            }),
+                        }));
+                      }}
+                      options={partyRoleOptions}
+                      placeholder="Pesquisar ou selecionar..."
+                      allowCreate={true}
+                      onCreateOption={onCreatePartyRoleOption}
+                      onEditOption={onEditPartyRoleOption}
+                      reduceListOnQuery={true}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {!['TESTEMUNHA', 'PERITO'].includes(parties.editingPartyFormData.role) && (
+                <section className="party-modal__section">
+                  <div className="party-modal__section-header">
+                    <h3 className="party-modal__section-title">🛡️ Representação</h3>
+                    <span className="party-modal__section-subtitle">(quando aplicável)</span>
+                  </div>
+
+                  <div className="party-modal__section-body">
+                    <div className="party-modal__hint">
+                      ⓘ A representação é cadastrada apenas para o cliente do escritório neste processo
+                    </div>
+                    <div className="form-group party-modal__field">
+                      <label className="party-modal__radio-label">
+                        Tem representante legal?
+                      </label>
+                      <div className="party-modal__radio-row">
+                        <label className="checkbox-label">
+                          <input
+                            type="radio"
+                            name="edit-party-has-representative"
+                            checked={!parties.editingPartyFormData.is_represented}
+                            onChange={() =>
+                              parties.setEditingPartyFormData((prev) => ({
+                                ...prev,
+                                is_represented: false,
+                                representative_contact: null,
+                                representation_type: '',
+                              }))
+                            }
+                          />
+                          <span>Não</span>
+                        </label>
+                        <label className="checkbox-label">
+                          <input
+                            type="radio"
+                            name="edit-party-has-representative"
+                            checked={!!parties.editingPartyFormData.is_represented}
+                            onChange={() =>
+                              parties.setEditingPartyFormData((prev) => ({
+                                ...prev,
+                                is_represented: true,
+                              }))
+                            }
+                          />
+                          <span>Sim</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {parties.editingPartyFormData.is_represented && (
+                      <>
+                        <div className="form-group party-modal__field">
+                          <label>Representante *</label>
+
+                          {parties.editingPartyFormData.representative_contact ? (
+                            <div className="selected-contact-info selected-contact-info--representative party-modal__representative-row">
+                              <span className="contact-icon">👤</span>
+                              <div className="party-modal__grow">
+                                <strong className="party-modal__representative-name">{parties.editingPartyFormData.representative_contact.name}</strong>
+                              </div>
+                              <button
+                                type="button"
+                                className="party-modal__icon-button"
+                                onClick={() => openEditRepresentativeContact('edit', parties.editingPartyFormData.representative_contact?.id)}
+                                title="Editar dados do representante"
+                              >
+                                <Pencil size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-md"
+                                onClick={() => openRepresentativePicker('edit')}
+                              >
+                                Trocar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-success btn-md"
+                              onClick={() => openRepresentativePicker('edit')}
+                            >
+                              Selecionar Representante
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="form-group party-modal__field">
+                          <label>Tipo de representação *</label>
+                          <SearchableCreatableSelectField
+                            value={parties.editingPartyFormData.representation_type}
+                            onChange={(newValue) => {
+                              parties.setEditingPartyFormData((prev) => ({
+                                ...prev,
+                                representation_type: newValue,
+                              }));
+                            }}
+                            options={representationTypeOptions}
+                            placeholder="Pesquisar ou selecionar..."
+                            allowCreate={true}
+                            onCreateOption={onCreateRepresentationTypeOption}
+                            onEditOption={onEditRepresentationTypeOption}
+                            onSearchOptions={(q) => casesService.getRepresentationTypeOptions(q)}
+                            reduceListOnQuery={true}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </section>
+              )}
 
               <div className="form-group">
                 <label>Observações</label>
@@ -143,10 +541,10 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => parties.setEditingParty(null)}>
+              <button className="btn btn-secondary btn-md" onClick={() => parties.setEditingParty(null)}>
                 Cancelar
               </button>
-              <button className="btn btn-success" onClick={onSavePartyChanges}>
+              <button className="btn btn-success btn-md" onClick={onSavePartyChanges}>
                 Salvar Alterações
               </button>
             </div>
@@ -166,12 +564,13 @@ export default function CaseDetailModals({
           }}
           showLinkToProcessButton={false}
           openInEditMode={true}
+          modalOverlayClassName="modal-overlay--top"
         />
       )}
 
       {/* Modal de Definir Papel da Parte */}
       {parties.showAddPartyModal && parties.selectedContact && (
-        <div className="modal-overlay" onClick={parties.handleCloseAddPartyModal}>
+        <div className="modal-overlay case-detail-modal-overlay" onClick={parties.handleCloseAddPartyModal}>
           <div className="modal-content party-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Adicionar ao Processo</h2>
@@ -179,73 +578,208 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-body">
-              <div className="selected-contact-info">
-                <span className="contact-icon">
-                  {parties.selectedContact.person_type === 'PF' ? '👤' : '🏢'}
-                </span>
-                <div>
-                  <strong>{parties.selectedContact.name}</strong>
-                  {parties.selectedContact.document_number && (
-                    <span className="contact-doc"> • {parties.selectedContact.document_number}</span>
-                  )}
+              <section className="party-modal__section">
+                <div className="party-modal__section-header">
+                  <h3 className="party-modal__section-title">📌 Parte no Processo</h3>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Papel no Processo *</label>
-                <select
-                  value={parties.partyFormData.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value;
-                    parties.setPartyFormData((prev) => ({
-                      ...prev,
-                      role: newRole,
-                      is_client:
-                        newRole === 'CLIENTE'
-                          ? true
-                          : newRole === 'TESTEMUNHA' || newRole === 'PERITO'
-                            ? false
-                            : prev.is_client,
-                    }));
-                  }}
-                >
-                  <option value="AUTOR">Autor/Requerente</option>
-                  <option value="REU">Réu/Requerido</option>
-                  <option value="TESTEMUNHA">Testemunha</option>
-                  <option value="PERITO">Perito</option>
-                  <option value="TERCEIRO">Terceiro Interessado</option>
-                  <option value="CLIENTE">Cliente/Representado</option>
-                </select>
-              </div>
-
-              {!['TESTEMUNHA', 'PERITO', 'CLIENTE'].includes(parties.partyFormData.role) && (() => {
-                const hasExistingClient = parties.parties.some((p) => p.is_client);
-                return (
-                  <div className="form-group">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={parties.partyFormData.is_client}
-                        onChange={(e) => parties.setPartyFormData((prev) => ({ ...prev, is_client: e.target.checked }))}
-                        disabled={hasExistingClient}
-                      />
-                      <span style={{ opacity: hasExistingClient ? 0.6 : 1 }}>
-                        É cliente do escritório neste processo
-                      </span>
-                    </label>
-                    {hasExistingClient && (
-                      <div
-                        className="field-hint"
-                        style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem' }}
-                      >
-                        ⓘ Este processo já possui um cliente cadastrado
+                <div className="party-modal__section-body">
+                  <div className="selected-contact-info party-modal__contact-card">
+                    <span className="contact-icon">
+                      {parties.selectedContact.person_type === 'PF' ? '👤' : '🏢'}
+                    </span>
+                    <div className="party-modal__grow">
+                      <div className="party-modal__contact-header">
+                        <strong className="party-modal__contact-name">{parties.selectedContact.name}</strong>
                       </div>
+                      {parties.selectedContact.document_number && (
+                        <span className="contact-doc"> • {parties.selectedContact.document_number}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const hasExistingClient = parties.parties.some((p) => p.is_client);
+                    if (hasExistingClient) {
+                      return (
+                        <div className="party-modal__hint">
+                          ⓘ Este processo já possui um cliente cadastrado
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="form-group party-modal__field party-modal__client-flag">
+                        <label className="checkbox-label checkbox-label-strong party-modal__client-flag-label">
+                          <input
+                            type="checkbox"
+                            checked={parties.partyFormData.is_client}
+                            onChange={(e) => parties.setPartyFormData((prev) => ({
+                              ...prev,
+                              is_client: e.target.checked,
+                              ...(e.target.checked
+                                ? {}
+                                : {
+                                  is_represented: false,
+                                  representative_contact: null,
+                                  representation_type: '',
+                                }),
+                            }))}
+                          />
+                          <span>É cliente do escritório neste processo</span>
+                        </label>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="form-group party-modal__field">
+                    <label>Papel no Processo *</label>
+                    <SearchableCreatableSelectField
+                      value={parties.partyFormData.role}
+                      onChange={(newRole) => {
+                        parties.setPartyFormData((prev) => {
+                          const nextIsClient =
+                            newRole === 'CLIENTE'
+                              ? true
+                              : newRole === 'TESTEMUNHA' || newRole === 'PERITO'
+                                ? false
+                                : prev.is_client;
+
+                          return {
+                            ...prev,
+                            role: newRole,
+                            is_client: nextIsClient,
+                            ...(nextIsClient
+                              ? {}
+                              : {
+                                is_represented: false,
+                                representative_contact: null,
+                                representation_type: '',
+                              }),
+                          };
+                        });
+                      }}
+                      options={partyRoleOptions}
+                      placeholder="Pesquisar ou selecionar..."
+                      allowCreate={true}
+                      onCreateOption={onCreatePartyRoleOption}
+                      onEditOption={onEditPartyRoleOption}
+                      reduceListOnQuery={true}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {!['TESTEMUNHA', 'PERITO'].includes(parties.partyFormData.role) && parties.partyFormData.is_client && (
+                <section className="party-modal__section">
+                  <div className="party-modal__section-header">
+                    <h3 className="party-modal__section-title">🛡️ Representação</h3>
+                    <span className="party-modal__section-subtitle">(quando aplicável)</span>
+                  </div>
+
+                  <div className="party-modal__section-body">
+                    <div className="form-group party-modal__field">
+                      <label className="party-modal__radio-label">
+                        Tem representante legal?
+                      </label>
+                      <div className="party-modal__radio-row">
+                        <label className="checkbox-label">
+                          <input
+                            type="radio"
+                            name="add-party-has-representative"
+                            checked={!parties.partyFormData.is_represented}
+                            onChange={() =>
+                              parties.setPartyFormData((prev) => ({
+                                ...prev,
+                                is_represented: false,
+                                representative_contact: null,
+                                representation_type: '',
+                              }))
+                            }
+                          />
+                          <span>Não</span>
+                        </label>
+                        <label className="checkbox-label">
+                          <input
+                            type="radio"
+                            name="add-party-has-representative"
+                            checked={!!parties.partyFormData.is_represented}
+                            onChange={() =>
+                              parties.setPartyFormData((prev) => ({
+                                ...prev,
+                                is_represented: true,
+                              }))
+                            }
+                          />
+                          <span>Sim</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {parties.partyFormData.is_represented && (
+                      <>
+                        <div className="form-group party-modal__field">
+                          <label>Representante *</label>
+
+                          {parties.partyFormData.representative_contact ? (
+                            <div className="selected-contact-info selected-contact-info--representative party-modal__representative-row">
+                              <span className="contact-icon">👤</span>
+                              <div className="party-modal__grow">
+                                <strong className="party-modal__representative-name">{parties.partyFormData.representative_contact.name}</strong>
+                              </div>
+                              <button
+                                type="button"
+                                className="party-modal__icon-button"
+                                onClick={() => openEditRepresentativeContact('add', parties.partyFormData.representative_contact?.id)}
+                                title="Editar dados do representante"
+                              >
+                                <Pencil size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-md"
+                                onClick={() => openRepresentativePicker('add')}
+                              >
+                                Trocar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-success btn-md"
+                              onClick={() => openRepresentativePicker('add')}
+                            >
+                              Selecionar Representante
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="form-group party-modal__field">
+                          <label>Tipo de representação *</label>
+                          <SearchableCreatableSelectField
+                            value={parties.partyFormData.representation_type}
+                            onChange={(newValue) => {
+                              parties.setPartyFormData((prev) => ({
+                                ...prev,
+                                representation_type: newValue,
+                              }));
+                            }}
+                            options={representationTypeOptions}
+                            placeholder="Pesquisar ou selecionar..."
+                            allowCreate={true}
+                            onCreateOption={onCreateRepresentationTypeOption}
+                            onEditOption={onEditRepresentationTypeOption}
+                            onSearchOptions={(q) => casesService.getRepresentationTypeOptions(q)}
+                            reduceListOnQuery={true}
+                          />
+                        </div>
+                      </>
                     )}
                   </div>
-                );
-              })()}
+                </section>
+              )}
 
-              <div className="form-group">
+              <div className="form-group party-modal__field">
                 <label>Observações</label>
                 <textarea
                   value={parties.partyFormData.observacoes}
@@ -257,10 +791,10 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={parties.handleCloseAddPartyModal}>
+              <button className="btn btn-secondary btn-md" onClick={parties.handleCloseAddPartyModal}>
                 Cancelar
               </button>
-              <button className="btn btn-success" onClick={onSaveParty}>
+              <button className="btn btn-success btn-md" onClick={onSaveParty}>
                 <UserPlus size={18} />
                 Adicionar ao Processo
               </button>
@@ -271,7 +805,7 @@ export default function CaseDetailModals({
 
       {/* Delete Confirmation Modal */}
       {modalsNotif.showDeleteConfirmModal && (
-        <div className="modal-overlay" onClick={onCancelDelete}>
+        <div className="modal-overlay case-detail-modal-overlay" onClick={onCancelDelete}>
           <div className="modal-content modal-medium" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ borderBottom: '2px solid #ef4444' }}>
               <h2 style={{ color: '#7f1d1d', margin: 0 }}>🗑️ Deletar Processo</h2>

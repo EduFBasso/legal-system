@@ -6,6 +6,12 @@
     --color-primary-light: #e6f0fa;
     --color-secondary: #3b82f6; /* Azul médio */
     --color-accent: #ffb300;
+
+    /* Primary Soft (alto contraste, para botões informativos com nome de tribunal) */
+    --color-primary-soft-bg: #eff6ff; /* blue-50 */
+    --color-primary-soft-bg-hover: #dbeafe; /* blue-100 */
+    --color-primary-soft-text: #1e40af; /* blue-800 */
+    --color-primary-soft-border: #1e40af; /* blue-800 */
     
     /* Backgrounds */
     --color-bg: #f7f7f7; /* Fundo cinza claro do main */
@@ -27,10 +33,29 @@
     /* Status colors */
     --color-success: #065f46;
     --color-success-bg: #ecfdf5;
+    --color-success-button: #166534; /* green-800 (padrão de botões verdes) */
+    --color-success-button-hover: #15803d; /* green-700 */
+    --color-success-button-shadow: rgba(22, 101, 52, 0.3);
+    --color-success-soft-bg: #f0fdf4; /* green-50 (alto contraste, fundo bem claro) */
+    --color-success-soft-bg-hover: #dcfce7; /* green-100 */
+    --color-success-soft-text: #166534; /* green-800 */
+    --color-success-soft-border: #166534; /* green-800 */
+
+    /* Soft neutral (para botões informativos tipo eProc / Publicações) */
+    --color-secondary-soft-bg: #e2e8f0; /* slate-200 */
+    --color-secondary-soft-bg-hover: #cbd5e1; /* slate-300 */
+    --color-secondary-soft-text: #111827; /* gray-900 */
+    --color-secondary-soft-border: #111827; /* gray-900 */
     --color-danger: #b91c1c;
     --color-danger-bg: #fef2f2;
     --color-warning: #f59e0b;
     --color-warning-bg: #fef3c7;
+
+    /* Warning Soft (alto contraste, para CTA laranja tipo "Criar Caso") */
+    --color-warning-soft-bg: #fffbeb; /* amber-50 */
+    --color-warning-soft-bg-hover: #fef3c7; /* amber-100 */
+    --color-warning-soft-text: #92400e; /* amber-800 */
+    --color-warning-soft-border: #92400e; /* amber-800 */
     
     /* Módulo: NOTIFICAÇÕES - Verde */
     --notification-primary: #10b981;      /* emerald-500 */
@@ -48,6 +73,24 @@
     --publication-glow: rgba(99, 102, 241, 0.3);
     --publication-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     --publication-bg-gradient: linear-gradient(to bottom, #f5f3ff 0%, #ffffff 100%);
+
+    /* Módulo: PUBLICAÇÕES - Alto contraste (Black) */
+    /* “Preto claro”: superfícies claras + texto/bordas em preto */
+    --publication-contrast-surface: #ffffff;
+    --publication-contrast-surface-2: #f8fafc;
+    --publication-contrast-surface-hover: #f1f5f9;
+    --publication-contrast-surface-3: #e2e8f0;
+    --publication-contrast-border: #111827;
+    --publication-contrast-text: #111827;
+    --publication-contrast-muted: #374151;
+    --publication-contrast-subtle: #4b5563;
+
+    /* PublicationCard surfaces (ajuste fino rápido, sem mexer no CSS do componente) */
+    --publication-card-header-bg: #e2e8f0;
+    --publication-card-body-bg: #e2e8f0;
+    --publication-card-body-hover-bg: #e2e8f0;
+    --publication-card-actions-bg: #f8fafc;
+    --publication-card-footer-bg: #f8fafc;
     
     /* Typography */
     --font-title-lg: 22px;

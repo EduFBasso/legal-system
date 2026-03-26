@@ -79,7 +79,6 @@ export const PARTY_ROLES = {
 };
 
 export const PARTY_ROLES_CHOICES = [
-  { value: 'CLIENTE', label: 'Cliente/Representado' },
   { value: 'AUTOR', label: 'Autor' },
   { value: 'REU', label: 'Réu' },
   { value: 'TESTEMUNHA', label: 'Testemunha' },
@@ -88,7 +87,6 @@ export const PARTY_ROLES_CHOICES = [
 ];
 
 export const PARTY_ROLES_DISPLAY = {
-  CLIENTE: 'Cliente/Representado',
   AUTOR: 'Autor',
   REU: 'Réu',
   TESTEMUNHA: 'Testemunha',

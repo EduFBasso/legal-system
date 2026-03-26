@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import './FinanceiroTab.css';
 import { formatDate, formatCurrencyValue, parseCurrencyValue } from '../../utils/formatters';
 import { CurrencyInput, DateInputMasked, TextAreaField } from '../FormFields';
 import EmptyState from '../common/EmptyState';
@@ -143,27 +144,29 @@ function FinanceiroTab({
       valorFixo: valorFixoPreenchido || participacaoTipo === 'fixed',
       honorarios: parseCurrencyValue(formData.attorney_fee_amount || '') > 0,
     };
-  }, [participacaoPercentual, participacaoValorFixo, participacaoTipo, parseCurrencyValue, formData.attorney_fee_amount]);
+  }, [participacaoPercentual, participacaoValorFixo, participacaoTipo, formData.attorney_fee_amount]);
 
   const [participacaoChecks, setParticipacaoChecks] = useState(buildInitialChecks);
   const [manualCheckControl, setManualCheckControl] = useState(false);
 
   useEffect(() => {
-    const timerId = window.setTimeout(() => {
-      setManualCheckControl(false);
-    }, 0);
-
-    return () => window.clearTimeout(timerId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setManualCheckControl(false);
   }, [id]);
 
   useEffect(() => {
     if (manualCheckControl) return;
 
-    const timerId = window.setTimeout(() => {
-      setParticipacaoChecks(buildInitialChecks());
-    }, 0);
+    const nextChecks = buildInitialChecks();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setParticipacaoChecks((prev) => {
+      const noChanges =
+        prev.percentual === nextChecks.percentual
+        && prev.valorFixo === nextChecks.valorFixo
+        && prev.honorarios === nextChecks.honorarios;
 
-    return () => window.clearTimeout(timerId);
+      return noChanges ? prev : nextChecks;
+    });
   }, [manualCheckControl, buildInitialChecks]);
 
   const valorCausa = parseCurrencyValue(formData.valor_causa);

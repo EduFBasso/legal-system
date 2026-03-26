@@ -48,39 +48,6 @@
 }
 
 /* Botão Adicionar Tarefa */
-.btn-add-task {
-  background: var(--color-normal);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-default);
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.btn-add-task:hover:not(:disabled) {
-  background: var(--color-normal-dark);
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
-  transform: translateY(-2px);
-}
-
-.btn-add-task:active:not(:disabled) {
-  background: var(--color-normal-dark);
-  transform: translateY(0);
-}
-
-.btn-add-task:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 
 /* Estatísticas */
 .tasks-stats {

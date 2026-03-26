@@ -9,38 +9,11 @@ import {
   VinculosTab,
 } from '../CaseTabs';
 
+import './CaseDetailSections.css';
+import './CaseDetailTabContent.css';
+
 export default function CaseDetailTabContent({
-  activeSection,
-  id,
-  isReadOnly,
-
-  navigation,
-  caseCore,
-  parties,
-  movements,
-  publications,
-  financial,
-
-  documentos,
-  loadingDocumentos,
-  uploadingDocumento,
-  onUploadDocument,
-  onDeleteDocument,
-
-  formatDate,
-  formatCurrency,
-
-  autoSavingFinancial,
-  systemSettings,
-  showPublicacoesTab,
-
-  currentCaseCnj,
-
-  linkedCases,
-  loadingLinkedCases,
-  mentionedProcessLinks,
-  onMentionedProcessRoleChange,
-  onRemoveMentionedProcess,
+  caseDetail,
 
   onSaveCaseWithParties,
   onDeleteCase,
@@ -50,8 +23,44 @@ export default function CaseDetailTabContent({
   onOpenOrigemPublicacao,
   onAddPartyClick,
 
+  onOpenContactModal = null,
+
   onRemoveParty,
 }) {
+  const {
+    activeSection,
+    id,
+    isReadOnly,
+
+    navigation,
+    caseCore,
+    parties,
+    movements,
+    publications,
+    financial,
+
+    documentos,
+    loadingDocumentos,
+    uploadingDocumento,
+    onUploadDocument,
+    onDeleteDocument,
+
+    formatDate,
+    formatCurrency,
+
+    autoSavingFinancial,
+    systemSettings,
+    showPublicacoesTab,
+
+    currentCaseCnj,
+
+    linkedCases,
+    loadingLinkedCases,
+    mentionedProcessLinks,
+    onMentionedProcessRoleChange,
+    onRemoveMentionedProcess,
+  } = caseDetail;
+
   return (
     <main className="case-content">
       {activeSection === 'info' && (
@@ -82,8 +91,10 @@ export default function CaseDetailTabContent({
           tituloOptions={caseCore.tituloOptions}
           onCreateTituloOption={caseCore.createTituloOption}
           onEditTituloOption={caseCore.updateTituloOption}
+          onSearchTituloOptions={caseCore.searchTituloOptions}
           onInputChange={caseCore.handleInputChange}
           readOnly={isReadOnly}
+          onOpenContactModal={onOpenContactModal}
         />
       )}
 
@@ -192,9 +203,14 @@ export default function CaseDetailTabContent({
           id={id}
           parties={parties.parties}
           loadingParties={parties.loadingParties}
+          caseData={caseCore.caseData}
           onAddPartyClick={isReadOnly ? () => {} : onAddPartyClick}
           onRemoveParty={isReadOnly ? () => {} : onRemoveParty}
-          onEditParty={isReadOnly ? () => {} : parties.handleEditParty}
+          onEditParty={
+            isReadOnly
+              ? () => {}
+              : (party) => parties.handleEditParty(party, caseCore.caseData?.representations)
+          }
           readOnly={isReadOnly}
         />
       )}

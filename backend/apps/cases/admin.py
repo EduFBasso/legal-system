@@ -72,7 +72,6 @@ class CaseAdmin(admin.ModelAdmin):
         'numero_processo_unformatted',
         'titulo',
         'observacoes',
-        'comarca',
         'vara',
         'tipo_acao',
     ]
@@ -102,7 +101,6 @@ class CaseAdmin(admin.ModelAdmin):
         ('Localização', {
             'fields': (
                 'tribunal',
-                'comarca',
                 'vara',
             )
         }),

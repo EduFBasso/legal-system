@@ -9,13 +9,16 @@ export default function SelectContactModal({
   onClose, 
   onSelectContact, 
   onCreateNew,
-  existingPartyContactIds = [] // Array of contact IDs already linked to this case
+  existingPartyContactIds = [], // Array of contact IDs already linked to this case
+  disabledContactIds = [],
+  disabledContactReason = 'Este contato não pode ser selecionado.'
 }) {
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedContactId, setSelectedContactId] = useState(null);
+  const [blockedMessage, setBlockedMessage] = useState(null);
 
   // Load contacts on mount or search change
   const loadContacts = useCallback(async () => {
@@ -46,12 +49,25 @@ export default function SelectContactModal({
     return () => clearTimeout(timer);
   }, [searchTerm, isOpen, loadContacts]);
 
-  const handleSelectContact = (contactId) => {
-    // Check if contact is already linked to this case
+  const getDisabledReason = useCallback((contactId) => {
     if (existingPartyContactIds.includes(contactId)) {
-      return; // Prevent selection
+      return 'Este contato já está vinculado a este processo. Edite o papel acima.';
     }
-    // Just highlight the card
+    if (disabledContactIds.includes(contactId)) {
+      return disabledContactReason;
+    }
+    return null;
+  }, [existingPartyContactIds, disabledContactIds, disabledContactReason]);
+
+  const handleSelectContact = (contactId) => {
+    const reason = getDisabledReason(contactId);
+    if (reason) {
+      setBlockedMessage(reason);
+      setSelectedContactId(null);
+      return;
+    }
+
+    setBlockedMessage(null);
     setSelectedContactId(contactId);
   };
 
@@ -73,7 +89,7 @@ export default function SelectContactModal({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose} onKeyDown={handleKeyDown}>
+    <div className="modal-overlay modal-overlay--select-contact" onClick={onClose} onKeyDown={handleKeyDown}>
       <div className="modal-content select-contact-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Selecionar Contato</h2>
@@ -91,6 +107,12 @@ export default function SelectContactModal({
               autoFocus
             />
           </div>
+
+          {blockedMessage && (
+            <div className="contacts-blocked-message" role="alert">
+              <strong>⚠️ Atenção:</strong> {blockedMessage}
+            </div>
+          )}
 
           {/* Contact List */}
           <div className="contacts-list">
@@ -117,23 +139,25 @@ export default function SelectContactModal({
               </div>
             ) : (
               contacts.map(contact => {
-                const isAlreadyLinked = existingPartyContactIds.includes(contact.id);
+                const disabledReason = getDisabledReason(contact.id);
+                const isDisabled = Boolean(disabledReason);
+
                 return (
                   <div
                     key={contact.id}
-                    className={isAlreadyLinked ? 'contact-card-disabled-wrapper' : ''}
-                    title={isAlreadyLinked ? 'Este contato já está vinculado a este processo. Edite o papel acima.' : undefined}
+                    className={isDisabled ? 'contact-card-disabled-wrapper' : ''}
+                    title={disabledReason || undefined}
                   >
                     <ContactCard 
                       contact={contact}
-                      isSelected={selectedContactId === contact.id && !isAlreadyLinked}
+                      isSelected={selectedContactId === contact.id && !isDisabled}
                       onSelect={() => handleSelectContact(contact.id)}
                       onView={null} // Hide view button in selection mode
                       onLinkToCase={null} // Hide link button
                     />
-                    {isAlreadyLinked && (
+                    {isDisabled && (
                       <div className="already-linked-badge">
-                        ⚠️ Já vinculado - Edite o papel
+                        BLOQUEADO
                       </div>
                     )}
                   </div>

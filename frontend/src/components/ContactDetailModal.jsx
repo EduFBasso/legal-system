@@ -1,9 +1,10 @@
 // src/components/ContactDetailModal.jsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import ConfirmDialog from './common/ConfirmDialog';
 import { FormField, FormSelect, FormMaskedField, AddressFieldGroup, PartyRoleBadge } from './common';
+import { Button, CancelButton, DeleteButton, EditButton, SaveButton } from './common/Button';
 import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
 import { deleteParty } from '../services/casePartiesService';
@@ -19,7 +20,8 @@ export default function ContactDetailModal({
   onLinkToProcess,
   onLinkToCase, // Novo callback para abrir modal de vinculação
   allowModification = true,  // Se false, bloqueia editar/deletar (apenas visualização)
-  openInEditMode = false     // Se true, abre direto em modo edição
+  openInEditMode = false,    // Se true, abre direto em modo edição
+  modalOverlayClassName = ''
 }) {
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,6 +38,38 @@ export default function ContactDetailModal({
   // Detect mode: CREATE if no contactId, VIEW/EDIT if contactId exists
   // Don't check contact state - it gets populated with empty object during creation
   const isCreating = !contactId;
+
+  // Helper: Apply masks to contact data for editing
+  // Maps backend field names to frontend field names + applies masks
+  const applyMasksToContact = useCallback((contactData) => {
+    return {
+      ...contactData,
+      // Map backend field names to frontend names
+      trading_name: contactData.trading_name || '',
+      document: contactData.document_number ? maskDocument(contactData.document_number, contactData.person_type) : '',
+      address_line1: contactData.street || '',
+      address_number: contactData.number || '',
+      // Apply masks to phone fields
+      phone: contactData.phone ? maskPhone(contactData.phone) : '',
+      mobile: contactData.mobile ? maskPhone(contactData.mobile) : '',
+      zip_code: contactData.zip_code ? maskCEP(contactData.zip_code) : '',
+    };
+  }, []);
+
+  const loadContactDetails = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await contactsAPI.getById(contactId);
+      setContact(data);
+      setEditedContact(applyMasksToContact(data)); // Apply masks for editing
+    } catch (err) {
+      setError('Erro ao carregar detalhes do contato');
+      console.error('Load contact details error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [applyMasksToContact, contactId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -74,39 +108,7 @@ export default function ContactDetailModal({
       setIsEditing(false);
       setError(null);
     }
-  }, [isOpen, contactId]);
-
-  // Helper: Apply masks to contact data for editing
-  // Maps backend field names to frontend field names + applies masks
-  const applyMasksToContact = (contactData) => {
-    return {
-      ...contactData,
-      // Map backend field names to frontend names
-      trading_name: contactData.trading_name || '',
-      document: contactData.document_number ? maskDocument(contactData.document_number, contactData.person_type) : '',
-      address_line1: contactData.street || '',
-      address_number: contactData.number || '',
-      // Apply masks to phone fields
-      phone: contactData.phone ? maskPhone(contactData.phone) : '',
-      mobile: contactData.mobile ? maskPhone(contactData.mobile) : '',
-      zip_code: contactData.zip_code ? maskCEP(contactData.zip_code) : '',
-    };
-  };
-
-  const loadContactDetails = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await contactsAPI.getById(contactId);
-      setContact(data);
-      setEditedContact(applyMasksToContact(data)); // Apply masks for editing
-    } catch (err) {
-      setError('Erro ao carregar detalhes do contato');
-      console.error('Load contact details error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [contactId, isOpen, loadContactDetails, openInEditMode]);
 
   const handleEdit = () => {
     setEditedContact(applyMasksToContact(contact)); // Apply masks when entering edit mode
@@ -288,6 +290,9 @@ export default function ContactDetailModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      overlayClassName={modalOverlayClassName}
+      closeOnOverlayClick={!isEditing}
+      closeOnEsc={!isEditing}
       title={
         isCreating 
           ? "➕ Novo Contato" 
@@ -514,19 +519,20 @@ export default function ContactDetailModal({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h3>📋 Processos Vinculados</h3>
                   {onLinkToCase && (
-                    <button 
-                      className="btn-add-link"
+                    <Button
+                      variant="success"
+                      size="sm"
                       onClick={() => onLinkToCase(contact)}
                       title="Vincular a outro processo"
                     >
                       ➕ Vincular Processo
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {contact.linked_cases && contact.linked_cases.length > 0 ? (
                   <div className="linked-cases-list">
                     {contact.linked_cases.map((linkedCase) => (
-                      <div key={linkedCase.id} className="linked-case-item">
+                      <div key={String(linkedCase.id)} className="linked-case-item">
                         <Link
                           to={`/cases/${linkedCase.case_id}`}
                           target="_blank"
@@ -544,17 +550,19 @@ export default function ContactDetailModal({
                           </div>
                           <div className="linked-case-arrow">↗</div>
                         </Link>
-                        <button
-                          className="btn-unlink-case"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUnlinkCase(linkedCase.id, linkedCase.numero_processo);
-                          }}
-                          disabled={unlinkingPartyId === linkedCase.id}
-                          title="Desvincular deste processo"
-                        >
-                          {unlinkingPartyId === linkedCase.id ? '⏳' : '🗑️'}
-                        </button>
+                        {linkedCase?.can_unlink !== false ? (
+                          <button
+                            className="btn-unlink-case"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnlinkCase(linkedCase.id, linkedCase.numero_processo);
+                            }}
+                            disabled={unlinkingPartyId === linkedCase.id}
+                            title="Desvincular deste processo"
+                          >
+                            {unlinkingPartyId === linkedCase.id ? '⏳' : '🗑️'}
+                          </button>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -588,12 +596,10 @@ export default function ContactDetailModal({
                 <>
                   {showLinkToProcessButton ? (
                     <>
-                      <button className="btn-cancel-edit" onClick={onClose}>
-                        ❌ Cancelar
-                      </button>
-                      <button className="btn-link-to-process" onClick={() => onLinkToProcess?.(contact)}>
+                      <CancelButton onClick={onClose}>❌ Cancelar</CancelButton>
+                      <Button variant="success" size="md" onClick={() => onLinkToProcess?.(contact)}>
                         ✅ Adicionar ao Processo
-                      </button>
+                      </Button>
                     </>
                   ) : !allowModification ? (
                     <div className="read-only-notice">
@@ -619,35 +625,25 @@ export default function ContactDetailModal({
                     </div>
                   ) : (
                     <>
-                      <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
-                        🗑️ Excluir
-                      </button>
-                      <button className="btn-edit" onClick={handleEdit}>
-                        ✏️ Editar
-                      </button>
+                      <DeleteButton onClick={() => setShowDeleteConfirm(true)}>🗑️ Excluir</DeleteButton>
+                      <EditButton onClick={handleEdit}>✏️ Editar</EditButton>
                     </>
                   )}
                 </>
               ) : isEditing && !isCreating ? (
                 <>
-                  <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
-                    🗑️ Excluir
-                  </button>
-                  <button className="btn-cancel-edit" onClick={handleCancel} disabled={saving}>
-                    ❌ Cancelar
-                  </button>
-                  <button className="btn-save-edit" onClick={handleSave} disabled={saving}>
+                  <DeleteButton onClick={() => setShowDeleteConfirm(true)}>🗑️ Excluir</DeleteButton>
+                  <CancelButton onClick={handleCancel} disabled={saving}>❌ Cancelar</CancelButton>
+                  <SaveButton onClick={handleSave} disabled={saving}>
                     {saving ? '⏳ Salvando...' : '💾 Atualizar Informações'}
-                  </button>
+                  </SaveButton>
                 </>
               ) : (
                 <>
-                  <button className="btn-cancel-edit" onClick={handleCancel} disabled={saving}>
-                    ❌ Cancelar
-                  </button>
-                  <button className="btn-save-edit" onClick={handleSave} disabled={saving}>
+                  <CancelButton onClick={handleCancel} disabled={saving}>❌ Cancelar</CancelButton>
+                  <SaveButton onClick={handleSave} disabled={saving}>
                     {saving ? '⏳ Salvando...' : '➕ Criar Contato'}
-                  </button>
+                  </SaveButton>
                 </>
               )}
             </div>

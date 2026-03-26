@@ -1,0 +1,750 @@
+/* FinanceiroTab styles extracted from CaseDetailPage.css */
+
+/* ========================================
+   FINANCEIRO SECTION - Dois Blocos
+   ======================================== */
+
+/* Bloco Financeiro */
+.financeiro-bloco {
+  background: white;
+  border: 3px solid #475569;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.financeiro-bloco-title {
+  background: #334155;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+  border-bottom: 3px solid #1f2937;
+}
+
+/* Tema Azul para Bloco A (Valor do Processo) - Destaque forte */
+.financeiro-bloco-azul {
+  background: #eef2ff;
+  border: 4px solid #1e3a8a;
+  border-radius: 12px;
+}
+
+.financeiro-bloco-azul .financeiro-bloco-title {
+  background: #1e3a8a;
+  color: white;
+  border-bottom: 3px solid #0f2a6b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.financeiro-bloco-content {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Cards dentro do Bloco */
+.financeiro-card {
+  background: white;
+  border: 2px solid #94a3b8;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.financeiro-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #94a3b8;
+}
+
+/* Destaque para Valor da Causa - font-size maior (apenas o primeiro campo) */
+.financeiro-card:first-of-type .financeiro-field:first-child .currency-input-wrapper {
+  padding: 0.75rem 1rem;
+}
+
+.financeiro-card:first-of-type .financeiro-field:first-child .currency-input-wrapper .currency-input {
+  font-size: 1.5rem !important;
+  font-weight: 600;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.financeiro-card:first-of-type .financeiro-field:first-child .currency-input-wrapper .currency-input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.financeiro-card:first-of-type .financeiro-field:first-child .currency-input-wrapper .currency-input::placeholder {
+  font-size: 1.5rem !important;
+  font-weight: 400;
+  opacity: 0.5;
+}
+
+.financeiro-card:first-of-type .financeiro-field:first-child .currency-input-wrapper .currency-symbol {
+  font-size: 1.5rem !important;
+  font-weight: 600;
+}
+
+/* Focus cinza para inputs financeiros (padrão do form) */
+.financeiro-bloco .currency-input-wrapper:focus-within {
+  border-color: #64748b;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+}
+
+.financeiro-bloco .currency-input-wrapper {
+  background: #ffffff;
+}
+
+.financeiro-bloco .form-input,
+.financeiro-bloco .date-input-masked {
+  background: #ffffff;
+}
+
+.financeiro-bloco .currency-input-wrapper .currency-input {
+  background: #ffffff;
+}
+
+.financeiro-bloco .form-input:-webkit-autofill,
+.financeiro-bloco .form-input:-webkit-autofill:hover,
+.financeiro-bloco .form-input:-webkit-autofill:focus,
+.financeiro-bloco .currency-input-wrapper .currency-input:-webkit-autofill,
+.financeiro-bloco .currency-input-wrapper .currency-input:-webkit-autofill:hover,
+.financeiro-bloco .currency-input-wrapper .currency-input:-webkit-autofill:focus,
+.financeiro-input-compact:-webkit-autofill,
+.financeiro-input-compact:-webkit-autofill:hover,
+.financeiro-input-compact:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #1e293b;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* Dentro do currency-input-wrapper, o input não deve ter borda/shadow próprio */
+.financeiro-bloco .currency-input-wrapper .currency-input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* Padronização: todos os inputs e textareas da aba Financeiro usam foco cinza */
+.financeiro-bloco .form-input:focus,
+.financeiro-bloco .textarea-input:focus,
+.financeiro-bloco input[type="text"]:focus,
+.financeiro-bloco input[type="number"]:focus,
+.financeiro-bloco input[type="date"]:focus {
+  border-color: #64748b;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+}
+
+/* TextAreas na aba financeiro com fonte legível */
+.financeiro-bloco .textarea-input {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Grid para campos em linha */
+.financeiro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+/* Checkbox inline */
+.financeiro-checkbox-inline {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-radius: 6px;
+  height: 100%;
+}
+
+.financeiro-checkbox-inline label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin: 0;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.financeiro-checkbox-inline input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Grupo de Participação */
+.financeiro-participacao-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.financeiro-participacao-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+  padding: 0.25rem 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  min-width: 0;
+}
+
+.financeiro-participacao-topo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.financeiro-participacao-topo .financeiro-check-inline {
+  flex: 0 0 auto;
+}
+
+.financeiro-participacao-topo .financeiro-input-compact {
+  width: 120px;
+}
+
+.financeiro-participacao-item .form-field {
+  margin-bottom: 0;
+}
+
+.financeiro-participacao-topo > .form-field {
+  width: auto;
+  min-width: 180px;
+  flex: 0 0 auto;
+}
+
+.financeiro-participacao-topo .financeiro-currency-inline .currency-input-wrapper {
+  width: 180px;
+}
+
+.financeiro-participacao-topo .currency-input-wrapper,
+.financeiro-grid-honorarios .currency-input-wrapper {
+  min-height: 40px;
+  height: 40px;
+  padding: 0.4rem 0.65rem;
+  align-items: center;
+}
+
+.financeiro-participacao-topo .currency-input-wrapper .currency-input,
+.financeiro-grid-honorarios .currency-input-wrapper .currency-input {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.financeiro-check-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #1e293b;
+  padding: 0;
+}
+
+.financeiro-check-inline input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.financeiro-participacao-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-left: 1.35rem;
+}
+
+.financeiro-honorarios-modo-row {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+}
+
+.financeiro-grid-honorarios {
+  grid-template-columns: repeat(2, minmax(200px, 260px));
+  justify-content: flex-start;
+  column-gap: 1.5rem;
+  row-gap: 0.8rem;
+}
+
+.financeiro-honorarios-modo {
+  display: flex;
+  gap: 1.1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.financeiro-participacao-topo .financeiro-honorarios-modo {
+  margin-left: 0;
+  gap: 1.1rem;
+}
+
+.financeiro-participacao-item-honorarios .financeiro-participacao-topo {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.financeiro-participacao-topo .financeiro-currency-inline {
+  margin-bottom: 0;
+}
+
+.financeiro-honorarios-opcao {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.financeiro-honorarios-opcao input[type="radio"] {
+  margin: 0;
+}
+
+.financeiro-field-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.financeiro-grid-honorarios .financeiro-input-compact {
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  padding: 0.4rem 0.65rem;
+}
+
+.financeiro-grid-honorarios .financeiro-currency-inline .currency-input-wrapper {
+  width: 100%;
+}
+
+.financeiro-field-inline-currency .financeiro-currency-inline {
+  margin-bottom: 0;
+}
+
+/* Resumo de Participação - Container com grid */
+.financeiro-participacao-resumo-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+.financeiro-participacao-resumo-linhas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.financeiro-participacao-resumo-linha {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1875rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.financeiro-participacao-resumo-linha strong {
+  font-size: 1.1875rem;
+  color: #334155;
+}
+
+.financeiro-participacao-resumo-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  font-size: 1.32rem;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.financeiro-participacao-resumo-total strong {
+  font-size: 1.32rem;
+  color: #1e3a8a;
+}
+
+.financeiro-input-compact {
+  padding: 0.65rem 0.85rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 1.05rem;
+  color: #1e293b;
+  transition: all 0.2s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.financeiro-input-compact:focus {
+  outline: none;
+  border-color: #64748b;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+}
+
+.financeiro-resumo-participacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border: 2px solid #64748b;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.financeiro-resumo-participacao strong {
+  font-size: 1.3rem;
+  color: #1e293b;
+}
+
+/* Fields */
+.financeiro-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.financeiro-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Subsecção (Recebimentos, Despesas) */
+.financeiro-subsection {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 2px solid #94a3b8;
+}
+
+.financeiro-subsection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.financeiro-subsection-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Formulário de Recebimento */
+.financeiro-recebimento-form {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+/* Remover margin-bottom dos FormFields dentro do form */
+.financeiro-recebimento-form .form-field {
+  margin-bottom: 0;
+}
+
+.financeiro-recebimento-form > .form-field > .form-input,
+.financeiro-recebimento-form .financeiro-input,
+.financeiro-recebimento-form > .form-field .currency-input-wrapper,
+.financeiro-recebimento-form .btn {
+  min-height: 48px;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.financeiro-recebimento-form .currency-input-wrapper .currency-input {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.financeiro-recebimento-form .currency-input-wrapper {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.financeiro-recebimento-form .currency-input-wrapper:focus-within {
+  border-color: #64748b;
+}
+
+.financeiro-recebimento-form .btn,
+.financeiro-subsection .btn-success {
+  white-space: nowrap;
+  padding: 0.75rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Textarea */
+.financeiro-textarea-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.financeiro-textarea-group textarea {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #1e293b;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.financeiro-textarea-group textarea::placeholder {
+  font-size: 1rem;
+}
+
+/* Forca acessibilidade dos FormFields usados na aba Financeiro */
+.financeiro-bloco .form-label,
+.financeiro-bloco .form-input,
+.financeiro-bloco .form-input::placeholder {
+  font-size: 1rem;
+}
+
+.financeiro-textarea-group textarea:focus {
+  outline: none;
+  border-color: #1e293b;
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+/* Total Custos */
+.financeiro-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border: 2px solid #64748b;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.financeiro-total strong {
+  font-size: 1.3rem;
+  color: #1e293b;
+}
+
+/* Total Recebimentos */
+.financeiro-total-recebimentos {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-radius: 8px;
+  font-size: 1.32rem;
+  color: #1e3a8a;
+  font-weight: 600;
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+.financeiro-total-recebimentos strong {
+  font-size: 1.32rem;
+  color: #1e3a8a;
+}
+
+/* Lista de Recebimentos e Despesas */
+.financeiro-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.financeiro-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.financeiro-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.financeiro-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.financeiro-item-data {
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.financeiro-item-descricao {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.financeiro-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.financeiro-item-valor {
+  font-size: 1.1rem;
+  color: #1e3a8a;
+  font-weight: 700;
+  min-width: 120px;
+  text-align: right;
+}
+
+.btn-icon-danger {
+  background: transparent;
+  border: 2px solid #dc2626;
+  color: #dc2626;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon-danger:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.05);
+}
+
+.btn-icon-danger:active {
+  transform: scale(0.95);
+}
+
+/* Responsivo para Financeiro */
+@media (max-width: 768px) {
+  .financeiro-bloco-content {
+    padding: 1.25rem;
+  }
+
+  .financeiro-card {
+    padding: 1rem;
+  }
+
+  .financeiro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .financeiro-participacao-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .financeiro-participacao-item {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .financeiro-participacao-topo > .form-field {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .financeiro-grid-honorarios {
+    grid-template-columns: 1fr;
+  }
+
+  .financeiro-participacao-campos {
+    padding-left: 0.75rem;
+  }
+
+  .financeiro-participacao-item-honorarios .financeiro-participacao-topo {
+    justify-content: flex-start;
+  }
+
+  .financeiro-participacao-item .financeiro-input-compact,
+  .financeiro-participacao-item .currency-input-wrapper {
+    flex: 1;
+    width: 100%;
+  }
+
+  .financeiro-participacao-campos {
+    padding-left: 1.1rem;
+  }
+
+  .financeiro-recebimento-form {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .financeiro-recebimento-form .btn {
+    width: 100%;
+  }
+
+  .financeiro-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .financeiro-item-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .financeiro-item-valor {
+    text-align: left;
+    min-width: auto;
+  }
+}

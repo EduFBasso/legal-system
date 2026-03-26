@@ -44,6 +44,11 @@ const renderWithRouter = (component) => {
   );
 };
 
+const silenceConsoleError = () => {
+  const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  return () => spy.mockRestore();
+};
+
 describe('ContactDetailModal', () => {
   const mockContact = {
     id: 1,
@@ -228,6 +233,29 @@ describe('ContactDetailModal', () => {
 
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
+
+    it('does not close when overlay is clicked while creating (editing)', async () => {
+      const user = userEvent.setup();
+
+      const { container } = renderWithRouter(
+        <ContactDetailModal
+          contactId={null}
+          isOpen={true}
+          onClose={mockOnClose}
+          onContactUpdated={mockOnContactUpdated}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/Novo Contato/i)).toBeInTheDocument();
+      });
+
+      const overlay = container.querySelector('.modal-overlay');
+      expect(overlay).toBeTruthy();
+
+      await user.click(overlay);
+      expect(mockOnClose).not.toHaveBeenCalled();
+    });
   });
 
   describe('VIEW Mode', () => {
@@ -263,47 +291,58 @@ describe('ContactDetailModal', () => {
     });
 
     it('displays error message when API fails', async () => {
+      const restoreConsole = silenceConsoleError();
       mockGetById.mockRejectedValueOnce(new Error('Network error'));
-      
-      renderWithRouter(
-        <ContactDetailModal
-          contactId={1}
-          isOpen={true}
-          onClose={mockOnClose}
-          onContactUpdated={mockOnContactUpdated}
-        />
-      );
 
-      await waitFor(() => {
-        expect(screen.getByText(/Erro ao carregar detalhes/i)).toBeInTheDocument();
-      });
+      try {
+        renderWithRouter(
+          <ContactDetailModal
+            contactId={1}
+            isOpen={true}
+            onClose={mockOnClose}
+            onContactUpdated={mockOnContactUpdated}
+          />
+        );
+
+        await waitFor(() => {
+          expect(screen.getByText(/Erro ao carregar detalhes/i)).toBeInTheDocument();
+        });
+      } finally {
+        restoreConsole();
+      }
     });
 
     it('retries loading when retry button is clicked', async () => {
       mockGetById.mockRejectedValueOnce(new Error('Network error'));
       const user = userEvent.setup();
-      
-      renderWithRouter(
-        <ContactDetailModal
-          contactId={1}
-          isOpen={true}
-          onClose={mockOnClose}
-          onContactUpdated={mockOnContactUpdated}
-        />
-      );
 
-      await waitFor(() => {
-        expect(screen.getByText(/Erro ao carregar detalhes/i)).toBeInTheDocument();
-      });
+      const restoreConsole = silenceConsoleError();
 
-      mockGetById.mockResolvedValueOnce(mockContact);
-      const retryButton = screen.getByRole('button', { name: /Tentar Novamente/i });
-      await user.click(retryButton);
+      try {
+        renderWithRouter(
+          <ContactDetailModal
+            contactId={1}
+            isOpen={true}
+            onClose={mockOnClose}
+            onContactUpdated={mockOnContactUpdated}
+          />
+        );
 
-      await waitFor(() => {
-        expect(mockGetById).toHaveBeenCalledTimes(2);
-        expect(screen.getByText('João Silva')).toBeInTheDocument();
-      });
+        await waitFor(() => {
+          expect(screen.getByText(/Erro ao carregar detalhes/i)).toBeInTheDocument();
+        });
+
+        mockGetById.mockResolvedValueOnce(mockContact);
+        const retryButton = screen.getByRole('button', { name: /Tentar Novamente/i });
+        await user.click(retryButton);
+
+        await waitFor(() => {
+          expect(mockGetById).toHaveBeenCalledTimes(2);
+          expect(screen.getByText('João Silva')).toBeInTheDocument();
+        });
+      } finally {
+        restoreConsole();
+      }
     });
 
     it('displays linked cases', async () => {
@@ -510,29 +549,35 @@ describe('ContactDetailModal', () => {
     it('shows error message when update fails', async () => {
       const user = userEvent.setup();
       mockUpdate.mockRejectedValueOnce(new Error('Network error'));
-      
-      renderWithRouter(
-        <ContactDetailModal
-          contactId={1}
-          isOpen={true}
-          onClose={mockOnClose}
-          onContactUpdated={mockOnContactUpdated}
-        />
-      );
 
-      await waitFor(() => {
-        expect(screen.getByText('João Silva')).toBeInTheDocument();
-      });
+      const restoreConsole = silenceConsoleError();
 
-      const editButton = screen.getByRole('button', { name: /Editar/i });
-      await user.click(editButton);
+      try {
+        renderWithRouter(
+          <ContactDetailModal
+            contactId={1}
+            isOpen={true}
+            onClose={mockOnClose}
+            onContactUpdated={mockOnContactUpdated}
+          />
+        );
 
-      const saveButton = screen.getByRole('button', { name: /Atualizar/i });
-      await user.click(saveButton);
+        await waitFor(() => {
+          expect(screen.getByText('João Silva')).toBeInTheDocument();
+        });
 
-      await waitFor(() => {
-        expect(screen.getByText(/Erro ao salvar alterações/i)).toBeInTheDocument();
-      });
+        const editButton = screen.getByRole('button', { name: /Editar/i });
+        await user.click(editButton);
+
+        const saveButton = screen.getByRole('button', { name: /Atualizar/i });
+        await user.click(saveButton);
+
+        await waitFor(() => {
+          expect(screen.getByText(/Erro ao salvar alterações/i)).toBeInTheDocument();
+        });
+      } finally {
+        restoreConsole();
+      }
     });
   });
 

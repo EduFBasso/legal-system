@@ -9,6 +9,7 @@ class SystemSettingsService {
   constructor() {
     this.cache = new Map();
     this.cacheExpiry = new Map();
+    this.inFlight = new Map();
     this.cacheDuration = 5 * 60 * 1000; // 5 minutos de cache padrão
   }
 
@@ -25,21 +26,33 @@ class SystemSettingsService {
       return this.cache.get(cacheKey);
     }
 
+    // Deduplicar requisições concorrentes (ex.: React StrictMode no dev)
+    if (this.inFlight.has(cacheKey)) {
+      return this.inFlight.get(cacheKey);
+    }
+
     try {
-      const data = await apiFetch('/system-settings');
-      
-      // Armazenar em cache
-      this.cache.set(cacheKey, data.settings);
-      this.cacheExpiry.set(cacheKey, Date.now() + this.cacheDuration);
-      
-      console.log('⚙️ Settings carregadas:', data.settings);
-      
-      return data.settings;
+      const requestPromise = (async () => {
+        const data = await apiFetch('/system-settings');
+
+        // Armazenar em cache
+        this.cache.set(cacheKey, data.settings);
+        this.cacheExpiry.set(cacheKey, Date.now() + this.cacheDuration);
+
+        console.log('⚙️ Settings carregadas:', data.settings);
+
+        return data.settings;
+      })();
+
+      this.inFlight.set(cacheKey, requestPromise);
+      return await requestPromise;
     } catch (error) {
       console.error('Erro ao buscar settings:', error);
       
       // Retornar settings padrão em caso de erro
       return this.getDefaultSettings();
+    } finally {
+      this.inFlight.delete(cacheKey);
     }
   }
 

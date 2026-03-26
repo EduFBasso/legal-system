@@ -4,7 +4,10 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.conf import settings
+
+from apps.cases.defaults import CASE_PARTY_ROLE_CHOICES, CASE_TIPO_ACAO_CHOICES
 
 
 class Case(models.Model):
@@ -44,13 +47,6 @@ class Case(models.Model):
         help_text='Ex: TJSP, TRF3, TST'
     )
 
-    comarca = models.CharField(
-        max_length=100,
-        blank=True,
-        default='',
-        help_text='Comarca/Subseção judiciária'
-    )
-
     vara = models.CharField(
         max_length=200,
         blank=True,
@@ -62,15 +58,7 @@ class Case(models.Model):
         max_length=100,
         blank=True,
         default='',
-        choices=[
-            ('CIVEL', 'Cível'),
-            ('CRIMINAL', 'Criminal'),
-            ('TRABALHISTA', 'Trabalhista'),
-            ('TRIBUTARIA', 'Tributária'),
-            ('FAMILIA', 'Família'),
-            ('CONSUMIDOR', 'Consumidor'),
-            ('OUTROS', 'Outros'),
-        ],
+        choices=CASE_TIPO_ACAO_CHOICES,
         help_text='Área do direito'
     )
 
@@ -91,6 +79,33 @@ class Case(models.Model):
         through='CaseParty',
         related_name='cases',
         help_text='Clientes/partes envolvidas no processo'
+    )
+
+    # ========== VÍNCULO (PROCESSO PRINCIPAL / DERIVADO) ==========
+    VINCULO_TIPO_CHOICES = [
+        ('DERIVADO', 'Derivado'),
+        ('APENSO', 'Apenso'),
+        ('INCIDENTE', 'Incidente'),
+        ('CUMPRIMENTO', 'Cumprimento de Sentença'),
+        ('RECURSO', 'Recurso'),
+        ('OUTRO', 'Outro'),
+    ]
+
+    case_principal = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cases_derivados',
+        help_text='Se preenchido, indica que este processo é derivado e aponta para o processo principal.'
+    )
+
+    vinculo_tipo = models.CharField(
+        max_length=20,
+        choices=VINCULO_TIPO_CHOICES,
+        blank=True,
+        default='',
+        help_text='Tipo do vínculo com o processo principal (somente quando case_principal está preenchido).'
     )
 
     # ========== STATUS ==========
@@ -403,10 +418,44 @@ class Case(models.Model):
             return f"{self.numero_processo} - {self.titulo}"
         return self.numero_processo
 
+    def clean(self):
+        super().clean()
+
+        if self.case_principal_id is None:
+            # Processo principal: não deve carregar tipo de vínculo.
+            if self.vinculo_tipo:
+                raise ValidationError({'vinculo_tipo': 'vinculo_tipo só pode ser preenchido quando case_principal estiver definido.'})
+            return
+
+        # Processo derivado.
+        if self.pk and self.case_principal_id == self.pk:
+            raise ValidationError({'case_principal': 'Um processo não pode ser principal de si mesmo.'})
+
+        if not self.vinculo_tipo:
+            raise ValidationError({'vinculo_tipo': 'vinculo_tipo é obrigatório quando case_principal estiver definido.'})
+
+        # Evitar ciclos (A -> B -> ... -> A)
+        cursor = self.case_principal
+        visited = set()
+        while cursor is not None:
+            if cursor.pk is None:
+                break
+            if cursor.pk in visited:
+                # Cycle already present in DB (defensive).
+                break
+            visited.add(cursor.pk)
+            if self.pk and cursor.pk == self.pk:
+                raise ValidationError({'case_principal': 'Vínculo inválido: criaria um ciclo de processos.'})
+            cursor = cursor.case_principal
+
     def save(self, *args, **kwargs):
         # Auto-preencher numero_processo_unformatted
         if self.numero_processo:
             self.numero_processo_unformatted = ''.join(filter(str.isdigit, self.numero_processo))
+
+        # Normalização do vínculo: se não houver principal, zera vinculo_tipo.
+        if not self.case_principal_id and self.vinculo_tipo:
+            self.vinculo_tipo = ''
         
         super().save(*args, **kwargs)
         
@@ -527,6 +576,178 @@ class CaseTituloOption(models.Model):
         return self.label
 
 
+class CasePartyRoleOption(models.Model):
+    """Opções compartilhadas (persistidas) para o campo `CaseParty.role`.
+
+    Mantém uma lista evolutiva de papéis (ex: "Assistente Técnico") para uso
+    no cadastro de partes. Diferente das opções padrão (choices), estas opções
+    são editáveis e podem ser renomeadas.
+    """
+
+    label = models.CharField(max_length=100, help_text='Texto exibido na lista')
+    key = models.CharField(
+        max_length=140,
+        unique=True,
+        db_index=True,
+        help_text='Chave normalizada (sem acento, minúscula, espaços colapsados) para deduplicação',
+    )
+
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_party_role_options',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Opção de Papel da Parte'
+        verbose_name_plural = 'Opções de Papel da Parte'
+        ordering = ['label']
+
+    @staticmethod
+    def normalize_key(value: str) -> str:
+        raw = str(value or '').strip()
+        if not raw:
+            return ''
+        nfd = unicodedata.normalize('NFD', raw)
+        no_marks = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+        collapsed = ' '.join(no_marks.split())
+        return collapsed.lower()
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.normalize_key(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
+
+
+class CaseRepresentationTypeOption(models.Model):
+    """Opções compartilhadas (persistidas) para o campo `CaseRepresentation.representation_type`.
+
+    Mantém uma lista evolutiva de tipos de representação (ex: "Procurador", "Responsável")
+    para uso no cadastro de representante do cliente.
+    """
+
+    label = models.CharField(max_length=100, help_text='Texto exibido na lista')
+    key = models.CharField(
+        max_length=140,
+        unique=True,
+        db_index=True,
+        help_text='Chave normalizada (sem acento, minúscula, espaços colapsados) para deduplicação',
+    )
+
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_representation_type_options',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Opção de Tipo de Representação'
+        verbose_name_plural = 'Opções de Tipo de Representação'
+        ordering = ['label']
+
+    @staticmethod
+    def normalize_key(value: str) -> str:
+        raw = str(value or '').strip()
+        if not raw:
+            return ''
+        nfd = unicodedata.normalize('NFD', raw)
+        no_marks = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+        collapsed = ' '.join(no_marks.split())
+        return collapsed.lower()
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.normalize_key(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
+
+
+class CaseRepresentation(models.Model):
+    """Representação do cliente em um processo.
+
+    Registra a relação entre um contato representado (cliente do processo) e
+    um contato representante/responsável, com um tipo livre (sugerido por opções).
+    """
+
+    case = models.ForeignKey(
+        'Case',
+        on_delete=models.CASCADE,
+        related_name='representations',
+    )
+
+    represented_contact = models.ForeignKey(
+        'contacts.Contact',
+        on_delete=models.CASCADE,
+        related_name='case_representations_as_represented',
+        help_text='Contato representado (normalmente o cliente do processo)',
+    )
+
+    representative_contact = models.ForeignKey(
+        'contacts.Contact',
+        on_delete=models.CASCADE,
+        related_name='case_representations_as_representative',
+        help_text='Contato representante/responsável no contexto deste processo',
+    )
+
+    representation_type = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text='Tipo de representação (texto livre; pode vir da lista de opções)',
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_case_representations',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Representação no Processo'
+        verbose_name_plural = 'Representações no Processo'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['case', 'represented_contact'],
+                name='unique_representation_per_case_and_represented_contact',
+            ),
+            models.CheckConstraint(
+                check=~Q(represented_contact=models.F('representative_contact')),
+                name='case_representation_no_self_representation',
+            ),
+        ]
+
+    def __str__(self):
+        try:
+            case_label = self.case.numero_processo
+        except Exception:
+            case_label = ''
+        return f"{self.represented_contact_id} -> {self.representative_contact_id} ({case_label})"
+
+
 class CaseParty(models.Model):
     """
     Tabela intermediária para relacionamento ManyToMany entre Case e Contact.
@@ -546,15 +767,8 @@ class CaseParty(models.Model):
     )
 
     role = models.CharField(
-        max_length=20,
-        choices=[
-            ('CLIENTE', 'Cliente/Representado'),
-            ('AUTOR', 'Autor'),
-            ('REU', 'Réu'),
-            ('TESTEMUNHA', 'Testemunha'),
-            ('PERITO', 'Perito'),
-            ('TERCEIRO', 'Terceiro Interessado'),
-        ],
+        max_length=100,
+        choices=CASE_PARTY_ROLE_CHOICES,
         default='CLIENTE',
         help_text='Papel da parte no processo'
     )
@@ -596,6 +810,118 @@ class CaseParty(models.Model):
         super().delete(*args, **kwargs)
         if case:
             case.sync_cliente_principal_from_parties(save=True)
+
+
+class CaseLink(models.Model):
+    """Vínculos flexíveis entre processos.
+
+    Complementa o atalho `Case.case_principal`.
+    Permite múltiplos vínculos por processo (apenso, recurso, incidente, etc.),
+    com tipo, observação e data.
+    """
+
+    from_case = models.ForeignKey(
+        'Case',
+        on_delete=models.CASCADE,
+        related_name='links_out',
+        help_text='Processo de origem do vínculo'
+    )
+
+    to_case = models.ForeignKey(
+        'Case',
+        on_delete=models.CASCADE,
+        related_name='links_in',
+        help_text='Processo de destino do vínculo'
+    )
+
+    link_type = models.CharField(
+        max_length=20,
+        choices=Case.VINCULO_TIPO_CHOICES,
+        help_text='Tipo do vínculo'
+    )
+
+    link_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text='Data do vínculo (quando aplicável)'
+    )
+
+    notes = models.TextField(
+        blank=True,
+        default='',
+        help_text='Observação/justificativa do vínculo'
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_case_links',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Vínculo entre Processos'
+        verbose_name_plural = 'Vínculos entre Processos'
+        ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(from_case=models.F('to_case')),
+                name='case_link_no_self_link',
+            ),
+            models.UniqueConstraint(
+                fields=['from_case', 'to_case', 'link_type'],
+                name='unique_case_link_per_type',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['from_case', 'to_case']),
+            models.Index(fields=['link_type']),
+        ]
+
+    def __str__(self):
+        return f"{self.from_case_id} -> {self.to_case_id} ({self.link_type})"
+
+    def clean(self):
+        super().clean()
+
+        if self.from_case_id and self.to_case_id and self.from_case_id == self.to_case_id:
+            raise ValidationError({'to_case': 'Um processo não pode ser vinculado a si mesmo.'})
+
+        # Regra de segurança/escopo: processos de owners diferentes não devem ser vinculados.
+        if self.from_case_id and self.to_case_id:
+            from_owner_id = getattr(self.from_case, 'owner_id', None)
+            to_owner_id = getattr(self.to_case, 'owner_id', None)
+            if from_owner_id != to_owner_id:
+                raise ValidationError({'to_case': 'Não é permitido vincular processos de responsáveis/escopos diferentes.'})
+
+        # Evitar ciclos no grafo de vínculos direcionados.
+        # Se já existe caminho to_case -> ... -> from_case, adicionar from_case -> to_case criaria ciclo.
+        if not self.from_case_id or not self.to_case_id:
+            return
+
+        from_id = self.from_case_id
+        target_id = from_id
+        frontier = {self.to_case_id}
+        visited = set()
+
+        # Exclui self em updates.
+        base_qs = CaseLink.objects.all()
+        if self.pk:
+            base_qs = base_qs.exclude(pk=self.pk)
+
+        while frontier:
+            if target_id in frontier:
+                raise ValidationError({'to_case': 'Vínculo inválido: criaria um ciclo entre processos.'})
+
+            visited |= frontier
+
+            next_ids = set(
+                base_qs.filter(from_case_id__in=frontier).values_list('to_case_id', flat=True)
+            )
+            frontier = next_ids - visited
 
 
 class CaseMovement(models.Model):

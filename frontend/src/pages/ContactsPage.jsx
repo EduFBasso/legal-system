@@ -1,5 +1,5 @@
 // src/pages/ContactsPage.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import ContactCard from '../components/ContactCard';
 import ContactDetailModal from '../components/ContactDetailModal';
@@ -13,8 +13,14 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showLoadingUi, setShowLoadingUi] = useState(false);
   const [error, setError] = useState(null);
+  const loadRunIdRef = useRef(0);
+  const lastLoadStartedAtRef = useRef(0);
+  const loadingUiTimerRef = useRef(null);
   const hasRunSearchEffectRef = useRef(false);
+  const previousSearchTermRef = useRef('');
+  const searchTermRef = useRef('');
   
   // Modal state
   const [selectedContactId, setSelectedContactId] = useState(null);
@@ -37,9 +43,98 @@ export default function ContactsPage() {
     setShowToast(true);
   };
 
+  const trace = useCallback((event, payload) => {
+    try {
+      if (typeof window === 'undefined') return;
+      if (window.localStorage?.getItem('debug_flicker') !== '1') return;
+
+      const t = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+      const stamp = Number(t).toFixed(1);
+      if (payload === undefined) {
+        console.log(`[FlickerTrace][ContactsPage] ${stamp}ms ${event}`);
+      } else {
+        console.log(`[FlickerTrace][ContactsPage] ${stamp}ms ${event}`, payload);
+      }
+    } catch {
+      // noop
+    }
+  }, []);
+
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+
+  const loadContacts = useCallback(async (reason = 'unknown') => {
+    const runId = ++loadRunIdRef.current;
+    lastLoadStartedAtRef.current = Date.now();
+
+    trace('loadContacts:start', {
+      reason,
+      runId,
+      search: searchTermRef.current || '',
+    });
+
+    if (loadingUiTimerRef.current) {
+      clearTimeout(loadingUiTimerRef.current);
+    }
+    setShowLoadingUi(false);
+    loadingUiTimerRef.current = setTimeout(() => {
+      if (loadRunIdRef.current === runId) {
+        trace('loadingUi:show', { runId });
+        setShowLoadingUi(true);
+      }
+    }, 150);
+
+    try {
+      setLoading(true);
+      setError(null);
+      // Pass search parameter to backend
+      const effectiveSearch = searchTermRef.current;
+      const params = effectiveSearch ? { search: effectiveSearch } : {};
+      const data = await contactsAPI.getAll(params);
+      if (loadRunIdRef.current !== runId) return;
+
+      trace('loadContacts:success', { runId, count: Array.isArray(data) ? data.length : null });
+      setContacts(data);
+    } catch (err) {
+      if (loadRunIdRef.current !== runId) return;
+
+      trace('loadContacts:error', {
+        runId,
+        status: err?.status,
+        message: String(err?.message || err || ''),
+      });
+      if (err?.status === 401) {
+        setError('Sessão expirada. Faça login novamente para carregar os contatos.');
+      } else {
+        setError('Erro ao carregar contatos. Verifique se o backend está rodando.');
+      }
+      console.error('Load contacts error:', err);
+    } finally {
+      if (loadRunIdRef.current === runId) {
+        if (loadingUiTimerRef.current) {
+          clearTimeout(loadingUiTimerRef.current);
+        }
+        setShowLoadingUi(false);
+        setLoading(false);
+
+        trace('loadContacts:finally', { runId });
+      }
+    }
+  }, [trace]);
+
   // Load all contacts on mount
   useEffect(() => {
-    loadContacts();
+    trace('mount');
+    loadContacts('mount');
+  }, [loadContacts, trace]);
+
+  useEffect(() => {
+    return () => {
+      if (loadingUiTimerRef.current) {
+        clearTimeout(loadingUiTimerRef.current);
+      }
+    };
   }, []);
 
   // Search effect with debounce
@@ -49,28 +144,52 @@ export default function ContactsPage() {
     // - 1x aqui (debounce) mesmo com searchTerm vazio
     if (!hasRunSearchEffectRef.current) {
       hasRunSearchEffectRef.current = true;
+      previousSearchTermRef.current = searchTerm;
+      return;
+    }
+
+    const previousSearchTerm = previousSearchTermRef.current;
+    previousSearchTermRef.current = searchTerm;
+
+    // Evita disparar uma busca "vazia" no mount (StrictMode pode rodar o effect 2x).
+    // Mas se o usuário limpar um termo que estava preenchido, precisamos recarregar o "tudo".
+    if (!searchTerm.trim()) {
+      if (previousSearchTerm.trim()) {
+        searchTermRef.current = '';
+        loadContacts('search-clear');
+      }
       return;
     }
 
     const timer = setTimeout(() => {
-      loadContacts();
+      // Garante que buscamos com o termo que disparou o debounce.
+      searchTermRef.current = searchTerm;
+      loadContacts('search-debounce');
     }, 300); // Wait 300ms after user stops typing
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, loadContacts]);
 
   // Auto-reload contacts when user returns from linking in another tab
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        const elapsedMs = Date.now() - (lastLoadStartedAtRef.current || 0);
+        trace('visibilitychange:visible', { elapsedMs });
+        // Evita recarregar em sequência logo após o mount / troca de aba inicial.
+        // Alguns browsers disparam visibilitychange durante a abertura da página.
+        if (elapsedMs < 1200) {
+          trace('visibilitychange:skip-reload', { elapsedMs });
+          return;
+        }
         // User came back to this tab, reload contacts to get updated linked_cases
-        loadContacts();
+        loadContacts('visibilitychange');
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [loadContacts, trace]);
 
   // Auto-open modal if "open" query param is present
   useEffect(() => {
@@ -110,26 +229,6 @@ export default function ContactsPage() {
     params.delete('focus');
     setSearchParams(params);
   }, [searchParams, contacts, setSearchParams]);
-
-  const loadContacts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Pass search parameter to backend
-      const params = searchTerm ? { search: searchTerm } : {};
-      const data = await contactsAPI.getAll(params);
-      setContacts(data);
-    } catch (err) {
-      if (err?.status === 401) {
-        setError('Sessão expirada. Faça login novamente para carregar os contatos.');
-      } else {
-        setError('Erro ao carregar contatos. Verifique se o backend está rodando.');
-      }
-      console.error('Load contacts error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleViewContact = (contactId) => {
     setSelectedContactId(contactId);
@@ -203,13 +302,13 @@ export default function ContactsPage() {
         {error ? (
           <div className="contacts-error">
             <p>❌ {error}</p>
-            <button onClick={loadContacts} className="btn-retry">
+            <button onClick={() => loadContacts('retry')} className="btn-retry">
               🔄 Tentar Novamente
             </button>
           </div>
         ) : loading ? (
           <div className="contacts-loading">
-            <p>Carregando contatos...</p>
+            {showLoadingUi ? <p>Carregando contatos...</p> : null}
           </div>
         ) : contacts.length === 0 && !searchTerm ? (
           <div className="contacts-empty">
@@ -255,6 +354,12 @@ export default function ContactsPage() {
             
             // Se não tem vínculos, pode editar
             if (!contact.linked_cases || contact.linked_cases.length === 0) {
+              return true;
+            }
+
+            // Se só há vínculos que não são partes (ex.: representação), pode editar
+            const hasPartyLinks = contact.linked_cases.some(lc => lc?.can_unlink !== false);
+            if (!hasPartyLinks) {
               return true;
             }
             

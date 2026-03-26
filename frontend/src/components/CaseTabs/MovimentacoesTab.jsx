@@ -3,10 +3,13 @@ import { Plus, FileText } from 'lucide-react';
 import { notifyTaskUpdate } from '../../services/taskSyncService';
 import useSyncTaskUpdates from '../../hooks/useSyncTaskUpdates';
 import EmptyState from '../common/EmptyState';
+import { Button } from '../common/Button';
 import caseTasksService from '../../services/caseTasksService';
 import caseMovementsService from '../../services/caseMovementsService';
 import MovimentacaoCard from './MovimentacaoCard';
 import MovimentacaoEditForm from './MovimentacaoEditForm';
+
+import './MovimentacoesTab.css';
 
 const HIGHLIGHT_DURATION_MS = 3000;
 const getTodayIsoDate = () => new Date().toISOString().split('T')[0];
@@ -415,44 +418,18 @@ function MovimentacoesTab({
             <p className="section-subtitle">Publicações do DJE, despachos, decisões e movimentações do tribunal</p>
           </div>
           {id && (
-            <button
+            <Button
+              variant="success"
+              size="sm"
               onClick={() => {
                 if (readOnly) return;
                 handleOpenCreateMovimentacao();
               }}
               disabled={readOnly}
               aria-disabled={readOnly ? 'true' : undefined}
-              style={{
-                background: '#166534',
-                color: 'white',
-                border: 'none',
-                padding: '0.625rem 1.25rem',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: readOnly ? 'not-allowed' : 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap',
-                opacity: readOnly ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (readOnly) return;
-                e.target.style.background = '#15803d';
-                e.target.style.transform = 'translateY(-1px)';
-                e.target.style.boxShadow = '0 2px 8px rgba(22, 101, 52, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                if (readOnly) return;
-                e.target.style.background = '#166534';
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = 'none';
-              }}
             >
               <Plus size={18} /> Nova Movimentação
-            </button>
+            </Button>
           )}
         </div>
         

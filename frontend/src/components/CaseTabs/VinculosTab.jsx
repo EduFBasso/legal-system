@@ -1,107 +1,39 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import EmptyState from '../common/EmptyState';
-import PartyRoleBadge from '../common/PartyRoleBadge';
-import { contactsAPI } from '../../services/api';
-import { openCaseDetailWindow } from '../../utils/publicationNavigation';
+import './VinculosTab.css';
 
 function VinculosTab({
-  caseData,
-  linkedCases = [],
-  loading = false,
-  parties = [],
-  mentionedProcessLinks = [],
-  onMentionedProcessRoleChange = () => {},
-  onRemoveMentionedProcess = () => {},
   readOnly = false,
 }) {
-  const clientId = caseData?.cliente_principal || null;
-  const clientName = caseData?.cliente_nome || 'Cliente';
-  const currentCaseId = caseData?.id || null;
+  const [rows, setRows] = useState(() => [
+    { id: 1, categoria: '', origem: '', destino: '', tipo: '', observacoes: '' },
+  ]);
 
-  const uniqueContactIds = useMemo(() => {
-    const ids = parties
-      .map((party) => party?.contact)
-      .filter(Boolean)
-      .map((value) => Number(value))
-      .filter((value) => Number.isFinite(value));
-    return Array.from(new Set(ids));
-  }, [parties]);
+  const nextId = useMemo(() => {
+    const maxId = rows.reduce((max, row) => Math.max(max, Number(row?.id) || 0), 0);
+    return maxId + 1;
+  }, [rows]);
 
-  const [contactsById, setContactsById] = useState({});
-  const [loadingContacts, setLoadingContacts] = useState(false);
-  const [contactsError, setContactsError] = useState(null);
-
-  useEffect(() => {
-    let isActive = true;
-
-    const loadContacts = async () => {
-      if (uniqueContactIds.length === 0) {
-        setContactsById({});
-        setContactsError(null);
-        return;
-      }
-
-      setLoadingContacts(true);
-      setContactsError(null);
-
-      try {
-        const results = await Promise.allSettled(uniqueContactIds.map((id) => contactsAPI.getById(id)));
-        if (!isActive) return;
-
-        const nextMap = {};
-        let hadFailures = false;
-
-        results.forEach((result, index) => {
-          const id = uniqueContactIds[index];
-          if (result.status === 'fulfilled') {
-            nextMap[id] = result.value;
-          } else {
-            hadFailures = true;
-          }
-        });
-
-        setContactsById(nextMap);
-        if (hadFailures) {
-          setContactsError('Alguns contatos não puderam ser carregados.');
-        }
-      } catch {
-        if (!isActive) return;
-        setContactsById({});
-        setContactsError('Erro ao carregar vínculos dos contatos.');
-      } finally {
-        if (isActive) {
-          setLoadingContacts(false);
-        }
-      }
-    };
-
-    loadContacts();
-
-    return () => {
-      isActive = false;
-    };
-  }, [uniqueContactIds]);
-
-  const handleOpenContact = (e) => {
-    e?.stopPropagation?.();
+  const addRow = useCallback(() => {
     if (readOnly) return;
-    if (!clientId) return;
-    window.open(`/contacts?open=${clientId}`, '_blank', 'noopener,noreferrer');
-  };
+    setRows((prev) => [
+      ...prev,
+      { id: nextId, categoria: '', origem: '', destino: '', tipo: '', observacoes: '' },
+    ]);
+  }, [nextId, readOnly]);
 
-  const handleOpenPartyContact = (e, contactId) => {
-    e?.stopPropagation?.();
+  const removeRow = useCallback((id) => {
     if (readOnly) return;
-    if (!contactId) return;
-    window.open(`/contacts?open=${contactId}`, '_blank', 'noopener,noreferrer');
-  };
+    setRows((prev) => {
+      const next = prev.filter((row) => row.id !== id);
+      return next.length > 0 ? next : [{ id: 1, categoria: '', origem: '', destino: '', tipo: '', observacoes: '' }];
+    });
+  }, [readOnly]);
 
-  const handleOpenCase = (caseId) => {
+  const updateRow = useCallback((id, field, value) => {
     if (readOnly) return;
-    if (!caseId) return;
-    openCaseDetailWindow(caseId);
-  };
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
+  }, [readOnly]);
 
   return (
     <div className="case-section">
@@ -109,216 +41,90 @@ function VinculosTab({
         <div className="section-header">
           <h2 className="section-title">🔗 Vínculos</h2>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <div style={{ fontWeight: 700, marginBottom: '6px' }}>👥 Vínculos por contato</div>
-
-            {parties.length === 0 ? (
-              <EmptyState
-                icon="👤"
-                title="Nenhuma parte vinculada"
-                description="Adicione partes ao processo para visualizar vínculos por contato."
-              />
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {(loadingContacts || contactsError) && (
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    {loadingContacts && <span>Carregando vínculos dos contatos…</span>}
-                    {!loadingContacts && contactsError && <span>{contactsError}</span>}
-                  </div>
-                )}
-
-                {parties.map((party) => {
-                  const contactId = party?.contact ? Number(party.contact) : null;
-                  const contactDetails = contactId ? contactsById[contactId] : null;
-                  const linkedFromContact = Array.isArray(contactDetails?.linked_cases)
-                    ? contactDetails.linked_cases
-                    : [];
-
-                  const otherCases = currentCaseId
-                    ? linkedFromContact.filter((item) => Number(item.case_id) !== Number(currentCaseId))
-                    : linkedFromContact;
-
-                  return (
-                    <div
-                      key={party?.id || `${party?.contact}-${party?.role}`}
-                      style={{ border: '1px solid var(--color-border)', borderRadius: '8px', padding: '10px' }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={(e) => handleOpenPartyContact(e, contactId)}
-                          title="Abrir contato em nova aba"
-                          style={{ textAlign: 'left' }}
-                          disabled={readOnly}
-                        >
-                          👁 {party?.contact_name || `Contato #${contactId || ''}`}
-                        </button>
-
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <PartyRoleBadge role={party?.role} label={party?.role_display || party?.role} size="sm" />
-                          {party?.is_client && (
-                            <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="sm" />
-                          )}
-                        </div>
-                      </div>
-
-                      <div style={{ marginTop: '10px' }}>
-                        <div style={{ fontWeight: 700, marginBottom: '6px' }}>📋 Processos vinculados deste contato</div>
-
-                        {loadingContacts && !contactDetails ? (
-                          <div>Carregando…</div>
-                        ) : otherCases.length === 0 ? (
-                          <div style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                            Nenhum outro processo vinculado.
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {otherCases.map((linkedCase) => (
-                              <button
-                                key={linkedCase.id}
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={() => handleOpenCase(linkedCase.case_id)}
-                                title="Abrir processo em nova aba"
-                                style={{ textAlign: 'left', justifyContent: 'space-between', width: '100%', display: 'flex', gap: '12px' }}
-                                disabled={readOnly}
-                              >
-                                <span>
-                                  📄 {linkedCase.numero_processo}
-                                </span>
-                                <span style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <PartyRoleBadge role={linkedCase.role} label={linkedCase.role_display} size="sm" />
-                                  {linkedCase.is_client && (
-                                    <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="sm" />
-                                  )}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+        <div className="vinculos-lab">
+          <div className="vinculos-lab__header">
+            <div className="vinculos-lab__title">Laboratório de vínculos</div>
+            <div className="vinculos-lab__subtitle">
+              Insira linhas manualmente para organizar relações (cliente × processos, representante × cliente principal etc.).
+            </div>
           </div>
 
-          <div>
-            <div style={{ fontWeight: 700, marginBottom: '6px' }}>🔗 Vínculos por processo</div>
+          <div className="vinculos-lab__actions">
+            <button type="button" className="btn btn-secondary btn-md" onClick={addRow} disabled={readOnly}>
+              + Adicionar linha
+            </button>
+          </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <div style={{ fontWeight: 700, marginBottom: '6px' }}>Processos mencionados em movimentações</div>
+          <div className="vinculos-lab__table" role="table" aria-label="Tabela de vínculos">
+            <div className="vinculos-lab__row vinculos-lab__row--header" role="row">
+              <div role="columnheader">Categoria</div>
+              <div role="columnheader">Origem</div>
+              <div role="columnheader">Destino</div>
+              <div role="columnheader">Tipo</div>
+              <div role="columnheader">Observações</div>
+              <div role="columnheader">Ações</div>
+            </div>
 
-                {mentionedProcessLinks.length === 0 ? (
-                  <EmptyState
-                    icon="🧾"
-                    title="Nenhum processo mencionado ainda"
-                    description="Clique em um CNJ na aba Movimentações para adicionar aqui."
+            {rows.map((row) => (
+              <div key={row.id} className="vinculos-lab__row" role="row">
+                <div role="cell">
+                  <input
+                    className="vinculos-lab__input"
+                    value={row.categoria}
+                    onChange={(e) => updateRow(row.id, 'categoria', e.target.value)}
+                    placeholder="Ex: Cliente principal"
+                    disabled={readOnly}
                   />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {mentionedProcessLinks.map((item) => (
-                      <div
-                        key={item.cnj}
-                        style={{
-                          display: 'flex',
-                          gap: '10px',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: '8px',
-                          padding: '10px',
-                        }}
-                      >
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                          <div style={{ fontWeight: 800 }}>📄 {item.cnj}</div>
-                          <input
-                            className="financeiro-input"
-                            type="text"
-                            value={item.papel || ''}
-                            onChange={(e) => onMentionedProcessRoleChange(item.cnj, e.target.value)}
-                            placeholder="Papel (opcional)"
-                            disabled={readOnly}
-                          />
-                        </div>
-
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveMentionedProcess(item.cnj);
-                          }}
-                          title="Remover"
-                          style={{ whiteSpace: 'nowrap' }}
-                          disabled={readOnly}
-                        >
-                          🗑️ Remover
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <div style={{ fontWeight: 700, marginBottom: '6px' }}>Cliente principal</div>
-                {clientId ? (
+                </div>
+                <div role="cell">
+                  <input
+                    className="vinculos-lab__input"
+                    value={row.origem}
+                    onChange={(e) => updateRow(row.id, 'origem', e.target.value)}
+                    placeholder="Ex: João (cliente)"
+                    disabled={readOnly}
+                  />
+                </div>
+                <div role="cell">
+                  <input
+                    className="vinculos-lab__input"
+                    value={row.destino}
+                    onChange={(e) => updateRow(row.id, 'destino', e.target.value)}
+                    placeholder="Ex: Processo 000..."
+                    disabled={readOnly}
+                  />
+                </div>
+                <div role="cell">
+                  <input
+                    className="vinculos-lab__input"
+                    value={row.tipo}
+                    onChange={(e) => updateRow(row.id, 'tipo', e.target.value)}
+                    placeholder="Ex: Representante"
+                    disabled={readOnly}
+                  />
+                </div>
+                <div role="cell">
+                  <input
+                    className="vinculos-lab__input"
+                    value={row.observacoes}
+                    onChange={(e) => updateRow(row.id, 'observacoes', e.target.value)}
+                    placeholder="Notas rápidas"
+                    disabled={readOnly}
+                  />
+                </div>
+                <div role="cell">
                   <button
                     type="button"
-                    className="btn btn-secondary"
-                    onClick={handleOpenContact}
-                    title="Abrir contato em nova aba"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => removeRow(row.id)}
                     disabled={readOnly}
+                    title="Remover linha"
                   >
-                    👁 {clientName}
+                    Remover
                   </button>
-                ) : (
-                  <div>Não definido</div>
-                )}
+                </div>
               </div>
-
-              <div>
-                <div style={{ fontWeight: 700, marginBottom: '6px' }}>Outros processos do mesmo cliente</div>
-
-                {loading ? (
-                  <div>Carregando vínculos…</div>
-                ) : linkedCases.length === 0 ? (
-                  <EmptyState
-                    icon="🔎"
-                    title="Nenhum vínculo encontrado"
-                    description="Não há outros processos com o mesmo cliente principal."
-                  />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {linkedCases.map((linkedCase) => (
-                      <button
-                        key={linkedCase.id}
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => handleOpenCase(linkedCase.id)}
-                        title="Abrir processo em nova aba"
-                        style={{ textAlign: 'left', justifyContent: 'space-between', width: '100%', display: 'flex', gap: '12px' }}
-                        disabled={readOnly}
-                      >
-                        <span>
-                          📄 {linkedCase.numero_processo_formatted || linkedCase.numero_processo}
-                          {linkedCase.titulo ? ` — ${linkedCase.titulo}` : ''}
-                        </span>
-                        <span>
-                          {linkedCase.status_display || linkedCase.status || ''}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

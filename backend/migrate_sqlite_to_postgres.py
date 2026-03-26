@@ -7,7 +7,8 @@ USO:
     1. Configure DATABASE_URL no .env apontando para o PostgreSQL
     2. Certifique-se de que o PostgreSQL já rodou `migrate` (tabelas criadas)
     3. Execute:
-           python scripts/migrate_sqlite_to_postgres.py
+           # a partir da pasta backend/
+           python migrate_sqlite_to_postgres.py
 
 COMO FUNCIONA:
     - Usa `dumpdata` para exportar dados do SQLite
@@ -22,7 +23,7 @@ PASSO A PASSO (no servidor):
            psql -c "GRANT ALL PRIVILEGES ON DATABASE legal_system TO legal_user;"
     3. Configure .env com DATABASE_URL=postgresql://...
     4. python manage.py migrate           # cria estrutura
-    5. python scripts/migrate_sqlite_to_postgres.py  # migra dados
+    5. python migrate_sqlite_to_postgres.py  # migra dados
 """
 
 import os

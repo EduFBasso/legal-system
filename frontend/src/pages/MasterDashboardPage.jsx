@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import MasterContactDetailsModal from '../components/MasterContactDetailsModal';
@@ -127,6 +127,82 @@ export default function MasterDashboardPage() {
   });
   const contactsKpiCount = kpis.loading ? '...' : kpis.contatos;
   const selectedMember = teamMembers.find((member) => String(member.id) === selectedLawyer) || null;
+
+  const lastFocusRefreshAtRef = useRef(0);
+
+  const refreshScopedData = useCallback(async ({ force = false } = {}) => {
+    if (!selectedLawyer) return;
+
+    const shouldSkip = () => {
+      const now = Date.now();
+      const elapsed = now - (lastFocusRefreshAtRef.current || 0);
+      if (!force && elapsed < 900) return true;
+      lastFocusRefreshAtRef.current = now;
+      return false;
+    };
+
+    if (shouldSkip()) return;
+
+    try {
+      const contactsData = await contactsAPI.getAll({ team_member_id: selectedLawyer });
+      setContacts(Array.isArray(contactsData) ? contactsData : []);
+      setContactsError('');
+    } catch {
+      // Silencioso
+    }
+
+    try {
+      const scopeParams = { team_member_id: selectedLawyer };
+      const taskParams = new URLSearchParams(scopeParams).toString();
+      const financialParams = new URLSearchParams({
+        ...scopeParams,
+        date__gte: startDate,
+        date__lte: endDate,
+      }).toString();
+
+      const [casesStats, tasksData, paymentsData, expensesData] = await Promise.all([
+        casesService.getStats(scopeParams),
+        apiFetch(`/case-tasks/${taskParams ? `?${taskParams}` : ''}`),
+        apiFetch(`/payments/${financialParams ? `?${financialParams}` : ''}`),
+        apiFetch(`/expenses/${financialParams ? `?${financialParams}` : ''}`),
+      ]);
+
+      const totalRecebimentos = sumValues(paymentsData, 'value');
+      const totalDespesas = sumValues(expensesData, 'value');
+
+      setKpis((current) => ({
+        ...current,
+        loading: false,
+        processos: Number(casesStats?.total || 0),
+        tarefas: Array.isArray(tasksData) ? tasksData.length : 0,
+        financeiro: totalRecebimentos - totalDespesas,
+      }));
+    } catch {
+      // Silencioso
+    }
+
+    if (activeKpi === 'processos') {
+      try {
+        const params = new URLSearchParams();
+        params.set('team_member_id', selectedLawyer);
+        if (casesSearch.trim()) {
+          params.set('search', casesSearch.trim());
+        }
+        const qs = params.toString();
+        const data = await apiFetch(`/cases/${qs ? `?${qs}` : ''}`);
+        setCasesData(Array.isArray(data) ? data : (data.results || []));
+        setCasesError('');
+      } catch {
+        // Silencioso
+      }
+    }
+  }, [
+    activeKpi,
+    casesSearch,
+    endDate,
+    selectedLawyer,
+    startDate,
+  ]);
 
   const lawyerOptions = teamMembers.map((member) => {
     const firstName = (member.first_name || '').trim();
@@ -571,6 +647,37 @@ export default function MasterDashboardPage() {
       clearTimeout(timer);
     };
   }, [activeKpi, selectedLawyer, casesSearch]);
+
+  useEffect(() => {
+    const handleFocus = () => refreshScopedData();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refreshScopedData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [
+    refreshScopedData,
+  ]);
+
+  useEffect(() => {
+    if (!selectedLawyer) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+
+      refreshScopedData({ force: true });
+    }, 30000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [refreshScopedData, selectedLawyer]);
 
   if (!user || user.role !== 'MASTER') {
     return (

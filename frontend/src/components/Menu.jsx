@@ -1,5 +1,5 @@
 // src/components/Menu.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import publicationsService from '../services/publicationsService';
 import { subscribePublicationSync } from '../services/publicationSync';
@@ -12,6 +12,8 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
   const [pendingCount, setPendingCount] = useState(0);
   const [openTasksCount, setOpenTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [pendingAttention, setPendingAttention] = useState(false);
+  const pendingAttentionTimerRef = useRef(null);
 
   const renderMenuLink = ({ to, end = true, icon, label, badge = null }) => {
     if (!isAuthenticated) {
@@ -47,7 +49,31 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       try {
         const result = await publicationsService.getPendingCount();
         if (result.success) {
-          setPendingCount(result.count || 0);
+          const nextCount = Number(result.count || 0);
+          setPendingCount((previousCount) => {
+            const previous = Number(previousCount || 0);
+
+            if (nextCount > previous) {
+              setPendingAttention(true);
+              if (pendingAttentionTimerRef.current) {
+                window.clearTimeout(pendingAttentionTimerRef.current);
+              }
+              pendingAttentionTimerRef.current = window.setTimeout(() => {
+                setPendingAttention(false);
+                pendingAttentionTimerRef.current = null;
+              }, 4500);
+            }
+
+            if (nextCount === 0) {
+              setPendingAttention(false);
+              if (pendingAttentionTimerRef.current) {
+                window.clearTimeout(pendingAttentionTimerRef.current);
+                pendingAttentionTimerRef.current = null;
+              }
+            }
+
+            return nextCount;
+          });
         }
       } catch {
         setPendingCount(0);
@@ -96,6 +122,10 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       unsubscribeTasks();
       window.removeEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
       window.removeEventListener('focus', handleWindowFocus);
+      if (pendingAttentionTimerRef.current) {
+        window.clearTimeout(pendingAttentionTimerRef.current);
+        pendingAttentionTimerRef.current = null;
+      }
     };
   }, [isAuthenticated]);
 
@@ -127,7 +157,11 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
             icon: '⏳',
             label: 'Não Vinculadas',
             badge: isAuthenticated && pendingCount > 0 ? (
-              <span className="menu-count-badge menu-count-badge--pending">{pendingCount}</span>
+              <span className={
+                `menu-count-badge menu-count-badge--pending${pendingAttention ? ' menu-count-badge--attention' : ''}`
+              }>
+                {pendingCount}
+              </span>
             ) : null,
           })}
         </li>

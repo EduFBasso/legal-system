@@ -4,6 +4,9 @@
  *
  * Componente puramente de UI: delega navegação para o callback onTabChange.
  */
+
+import './CaseDetailNavbar.css';
+
 export default function CaseDetailNavbar({
   activeSection,
   onTabChange,

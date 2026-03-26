@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { caseTheme } from './caseTheme';
+import { Button } from '../common/Button';
 
 /**
  * TaskForm - Formulário inline para criar ou editar tarefas
@@ -133,76 +134,12 @@ export default function TaskForm({
 
       {/* Botões de Ação */}
       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-        <button
-          onClick={onCancel}
-          disabled={isSaving}
-          style={{
-            border: 'none',
-            background: caseTheme.button.neutral,
-            color: '#fff',
-            borderRadius: '8px',
-            padding: '0.375rem 0.75rem',
-            fontSize: '0.8125rem',
-            fontWeight: '600',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            opacity: isSaving ? 0.6 : 1,
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            if (!isSaving) {
-              e.currentTarget.style.background = caseTheme.button.neutralDark;
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(71, 85, 105, 0.3)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isSaving) {
-              e.currentTarget.style.background = caseTheme.button.neutral;
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }
-          }}
-        >
+        <Button variant="secondary" size="xs" onClick={onCancel} disabled={isSaving}>
           <X size={14} /> Cancelar
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          style={{
-            border: 'none',
-            background: caseTheme.button.primary,
-            color: 'white',
-            borderRadius: '8px',
-            padding: '0.375rem 0.75rem',
-            fontSize: '0.8125rem',
-            fontWeight: '600',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            cursor: canSubmit ? 'pointer' : 'not-allowed',
-            opacity: canSubmit ? 1 : 0.6,
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            if (canSubmit) {
-              e.currentTarget.style.background = caseTheme.button.primaryDark;
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(22, 101, 52, 0.3)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (canSubmit) {
-              e.currentTarget.style.background = caseTheme.button.primary;
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }
-          }}
-        >
+        </Button>
+        <Button variant="success" size="xs" onClick={handleSubmit} disabled={!canSubmit}>
           <Check size={14} /> {isSaving ? 'Salvando...' : submitLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

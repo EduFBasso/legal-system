@@ -1,0 +1,33 @@
+/* MovimentacoesTab - timeline styles scoped near component */
+
+.section-subtitle {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 1.5rem 0;
+}
+
+.movimentacoes-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem 0;
+  margin-left: 0;
+}
+
+.timeline-item {
+  position: relative;
+  display: block;
+  padding: 1rem 1rem 1rem 2rem;
+  margin-bottom: 1rem;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e9d5ff;
+}
+
+.timeline-marker {
+  display: none;
+}
+
+.timeline-content {
+  margin-top: 0.25rem;
+}

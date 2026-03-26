@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import casesService from '../services/casesService';
 import publicationsService from '../services/publicationsService';
-import { notifyPublicationSync } from '../services/publicationSync';
 import { useSettings } from '../contexts/SettingsContext';
 
 /**
@@ -96,6 +95,12 @@ export function useCaseCore(
       // Fallback silencioso (ex: offline)
       console.warn('Error loading titulo options:', error);
     }
+  }, []);
+
+  const searchTituloOptions = useCallback(async (q) => {
+    // Busca remota (server-side) para listas grandes.
+    // Não mexe no state global automaticamente para evitar “piscar” a lista base.
+    return await casesService.getTituloOptions(q);
   }, []);
 
   const createTituloOption = useCallback(async (label) => {
@@ -371,12 +376,6 @@ export function useCaseCore(
                 console.warn('Fallback de criação de movimentação falhou:', fallbackError);
               }
             }
-
-            notifyPublicationSync({
-              type: 'PUBLICATION_INTEGRATED',
-              idApi: Number(pubId),
-              caseId: created.id,
-            });
           } catch (integrationError) {
             console.error('Error integrating source publication:', integrationError);
             showToast('Processo criado, mas houve falha ao vincular a publicação de origem', 'warning');
@@ -482,6 +481,7 @@ export function useCaseCore(
     tituloOptions,
     createTituloOption,
     updateTituloOption,
+    searchTituloOptions,
 
     // Funções
     handleInputChange,

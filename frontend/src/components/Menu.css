@@ -149,6 +149,9 @@
 
 .menu-count-badge--pending {
   background: #ef4444;
+}
+
+.menu-count-badge--attention {
   animation: pulse 2s infinite;
 }
 

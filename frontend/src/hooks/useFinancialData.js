@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import financialService from '../services/financialService';
 
 /**
@@ -43,6 +43,8 @@ export function useFinancialData(
     valor: ''
   });
 
+  const entriesInFlightRef = useRef({ caseId: null, promise: null });
+
   /**
    * Parse valor monetário para número
    */
@@ -85,28 +87,23 @@ export function useFinancialData(
   useEffect(() => {
     if (!formData || !id) return;
 
-    const syncFromFormData = () => {
-      setParticipacaoTipo(formData.participation_type ?? null);
+    setParticipacaoTipo(formData.participation_type ?? null);
 
-      if (formData.participation_percentage !== null && formData.participation_percentage !== undefined) {
-        setParticipacaoPercentual(formData.participation_percentage.toString());
-      } else {
-        setParticipacaoPercentual('');
-      }
+    if (formData.participation_percentage !== null && formData.participation_percentage !== undefined) {
+      setParticipacaoPercentual(formData.participation_percentage.toString());
+    } else {
+      setParticipacaoPercentual('');
+    }
 
-      if (formData.participation_fixed_value !== null && formData.participation_fixed_value !== undefined) {
-        setParticipacaoValorFixo(formatCurrencyInput(formData.participation_fixed_value));
-      } else {
-        setParticipacaoValorFixo('');
-      }
+    if (formData.participation_fixed_value !== null && formData.participation_fixed_value !== undefined) {
+      setParticipacaoValorFixo(formatCurrencyInput(formData.participation_fixed_value));
+    } else {
+      setParticipacaoValorFixo('');
+    }
 
-      if (formData.payment_conditional !== undefined) {
-        setPagaMedianteGanho(formData.payment_conditional);
-      }
-    };
-
-    const timerId = window.setTimeout(syncFromFormData, 0);
-    return () => window.clearTimeout(timerId);
+    if (formData.payment_conditional !== undefined) {
+      setPagaMedianteGanho(formData.payment_conditional);
+    }
   }, [formData, id, formatCurrencyInput]);
 
   /**
@@ -131,13 +128,33 @@ export function useFinancialData(
       participationTypeCompat = null;
     }
 
-    setFormData(prev => ({
-      ...prev,
-      participation_type: participationTypeCompat,
-      participation_percentage: hasPercentual ? parsedPercentual : null,
-      participation_fixed_value: hasValorFixo ? parsedValorFixo : null,
-      payment_conditional: pagaMedianteGanho,
-    }));
+    setFormData((prev) => {
+      const nextParticipationPercentage = hasPercentual ? parsedPercentual : null;
+      const nextParticipationFixedValue = hasValorFixo ? parsedValorFixo : null;
+
+      const prevParticipationType = prev?.participation_type ?? null;
+      const prevParticipationPercentage = prev?.participation_percentage ?? null;
+      const prevParticipationFixedValue = prev?.participation_fixed_value ?? null;
+      const prevPaymentConditional = prev?.payment_conditional ?? false;
+
+      const noChanges =
+        prevParticipationType === participationTypeCompat
+        && prevParticipationPercentage === nextParticipationPercentage
+        && prevParticipationFixedValue === nextParticipationFixedValue
+        && prevPaymentConditional === pagaMedianteGanho;
+
+      if (noChanges) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        participation_type: participationTypeCompat,
+        participation_percentage: nextParticipationPercentage,
+        participation_fixed_value: nextParticipationFixedValue,
+        payment_conditional: pagaMedianteGanho,
+      };
+    });
   }, [id, participacaoTipo, participacaoPercentual, participacaoValorFixo, pagaMedianteGanho, parseCurrencyValue, setFormData]);
 
   /**
@@ -171,20 +188,59 @@ export function useFinancialData(
   }, [id, showToast]);
 
   /**
+   * Carregar recebimentos + despesas juntos (reduz "tremor"/layout shift na montagem)
+   * e deduplica chamadas concorrentes comuns no dev (React StrictMode).
+   */
+  const loadFinancialEntries = useCallback(async () => {
+    if (!id) return;
+
+    if (entriesInFlightRef.current.caseId === id && entriesInFlightRef.current.promise) {
+      return entriesInFlightRef.current.promise;
+    }
+
+    const requestPromise = (async () => {
+      const [paymentsResult, expensesResult] = await Promise.allSettled([
+        financialService.getPaymentsByCase(id),
+        financialService.getExpensesByCase(id),
+      ]);
+
+      if (paymentsResult.status === 'fulfilled') {
+        setRecebimentos(paymentsResult.value);
+      } else {
+        console.error('Error loading payments:', paymentsResult.reason);
+        showToast('Erro ao carregar recebimentos', 'error');
+      }
+
+      if (expensesResult.status === 'fulfilled') {
+        setDespesas(expensesResult.value);
+      } else {
+        console.error('Error loading expenses:', expensesResult.reason);
+        showToast('Erro ao carregar despesas', 'error');
+      }
+    })();
+
+    entriesInFlightRef.current = { caseId: id, promise: requestPromise };
+
+    try {
+      await requestPromise;
+    } finally {
+      if (entriesInFlightRef.current.caseId === id) {
+        entriesInFlightRef.current = { caseId: null, promise: null };
+      }
+    }
+  }, [id, showToast]);
+
+  /**
    * Auto-load ao entrar em aba Financeiro
    */
   useEffect(() => {
     if (activeIsFinanceiro && id) {
-      const timerId = window.setTimeout(() => {
-        loadPayments();
-        loadExpenses();
-      }, 0);
-
-      return () => window.clearTimeout(timerId);
+      loadFinancialEntries();
+      return undefined;
     }
 
     return undefined;
-  }, [activeIsFinanceiro, id, loadPayments, loadExpenses]);
+  }, [activeIsFinanceiro, id, loadFinancialEntries]);
 
   /**
    * Construir payload financeiro para auto-save

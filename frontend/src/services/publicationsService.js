@@ -4,6 +4,7 @@
  */
 
 import { apiFetch } from '@/utils/apiFetch.js';
+import { notifyPublicationSync } from './publicationSync';
 
 class PublicationsService {
   /**
@@ -244,7 +245,7 @@ class PublicationsService {
    * @returns {Promise<Object>} Resultado
    */
   async integratePublication(idApi, { caseId, createMovement = false, notes = '' }) {
-    return await apiFetch(`/publications/${idApi}/integrate`, {
+    const result = await apiFetch(`/publications/${idApi}/integrate`, {
       method: 'POST',
       body: JSON.stringify({
         case_id: caseId,
@@ -252,6 +253,16 @@ class PublicationsService {
         notes
       })
     });
+
+    if (result?.success) {
+      notifyPublicationSync({
+        type: 'PUBLICATION_INTEGRATED',
+        idApi: Number(idApi),
+        caseId: Number(caseId),
+      });
+    }
+
+    return result;
   }
 
   /**

@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Edit2, Save, X, Trash2, UserPlus, Plus } from 'lucide-react';
+import './InformacaoTab.css';
 import { formatDate, maskNumeroProcesso } from '../../utils/formatters';
 import { generateAllConsultaLinks } from '../../utils/consultaLinksHelper';
 import { SelectField, DateInputMasked, CurrencyInput, TextAreaField } from '../FormFields';
 import SearchableCreatableSelectField from '../FormFields/SearchableCreatableSelectField';
 import EditableDetailField from '../EditableDetailField';
-import { SaveButton, CancelButton, DeleteButton, EditButton } from '../common/Button';
+import { Button, SaveButton, CancelButton, DeleteButton, EditButton } from '../common/Button';
 import PartyRoleBadge from '../common/PartyRoleBadge';
 
 /**
@@ -28,7 +29,9 @@ function InformacaoTab({
   onOpenOrigemMovimentacao = null,
   onOpenOrigemPublicacao = null,
   onAddPartyClick,
+  onOpenContactModal = null,
   parties = [],
+  caseData = null,
   formatCurrency = (value) => {
     if (!value) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {
@@ -44,9 +47,23 @@ function InformacaoTab({
   tituloOptions = [],
   onCreateTituloOption = null,
   onEditTituloOption = null,
+  onSearchTituloOptions = null,
   onInputChange = () => {},
 }) {
+    const openContact = (e, contactId) => {
+      if (!onOpenContactModal) return;
+      const parsed = Number(contactId);
+      if (!parsed) return;
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      onOpenContactModal(parsed);
+    };
   const formData = rawFormData || {};
+  const representations = Array.isArray(formData.representations)
+    ? formData.representations
+    : Array.isArray(caseData?.representations)
+      ? caseData.representations
+      : [];
 
   const normalizeBadgeKey = (value) => {
     if (!value) return '';
@@ -133,25 +150,27 @@ function InformacaoTab({
       <div className={`publication-buttons-group ${wrap ? 'is-wrap' : 'is-nowrap'}`}>
         {/* Link oficial (ESAJ ou principal) */}
         {consultaLinks.linkOficial && (
-          <button
-            className="btn-official-link btn btn-sm"
+          <Button
+            variant="primary-soft"
+            size="sm"
             onClick={() => handleConsultarProcesso(consultaLinks.linkOficial)}
             title="Copia o número e abre o portal do tribunal"
           >
-            🔍 {formData.tribunal || 'Consultar'}
-          </button>
+            {formData.tribunal || 'Consultar'}
+          </Button>
         )}
         
         {/* Links alternativos (eProc, TRF3, TRT15, etc.) */}
         {consultaLinks.linksAlternativos.map((system, index) => (
-          <button
+          <Button
             key={index}
-            className="btn-alternative-link btn btn-sm"
+            variant={system.shortName === 'eProc' ? 'secondary-soft' : 'success'}
+            size="sm"
             onClick={() => handleConsultarProcesso(system.url)}
             title={system.description}
           >
             {system.icon} {system.shortName}
-          </button>
+          </Button>
         ))}
       </div>
     );
@@ -237,6 +256,10 @@ function InformacaoTab({
                           options={tituloOptions}
                           placeholder="Pesquisar ou digitar..."
                           allowCreate={true}
+                          allowCreateWhenExactMatchIsNotPersisted={true}
+                          onSearchOptions={onSearchTituloOptions || null}
+                          remoteSearchDebounceMs={400}
+                          remoteSearchMinChars={2}
                           onCreateOption={onCreateTituloOption || null}
                           onEditOption={onEditTituloOption || null}
                         />
@@ -327,9 +350,18 @@ function InformacaoTab({
                   <div className="detail-partes-col">
                     {(() => {
                       const clientParty = parties.find(p => p.is_client);
-                      const dynamicLabel = clientParty?.role_display 
-                        ? `${clientParty.role_display.toUpperCase()} DA AÇÃO` 
-                        : 'CLIENTE';
+                      const clientRep = clientParty
+                        ? representations.find((r) => Number(r?.represented_contact) === Number(clientParty.contact))
+                        : null;
+                      const clientRepTypeLabel = (clientRep?.representation_type || '').trim();
+                      const otherReps = representations
+                        .filter((r) => {
+                          const representedId = Number(r?.represented_contact);
+                          if (!representedId) return false;
+                          if (clientParty && representedId === Number(clientParty.contact)) return false;
+                          return parties.some((p) => Number(p?.contact) === representedId);
+                        });
+                      const dynamicLabel = 'CLIENTE/REPRESENTADO DA AÇÃO';
                       
                       return (
                         <>
@@ -341,13 +373,68 @@ function InformacaoTab({
                                   to={`/contacts?open=${clientParty.contact}`}
                                   className="party-contact-link detail-client-link"
                                   title="Ver detalhes, selecionar ou criar outro processo com vínculo"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  onClick={(e) => openContact(e, clientParty.contact)}
                                 >
                                   <span className="detail-client-name">{clientParty.contact_name}</span> ↗
                                 </Link>
                                 <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="md" />
                               </div>
+
+                              {clientRep && (
+                                <div className="detail-representative-block">
+                                  <span className="detail-label detail-representative-title">REPRESENTADO POR</span>
+                                  <div className="detail-representative-row">
+                                    <Link
+                                      to={`/contacts?open=${clientRep?.representative_contact}`}
+                                      className="party-contact-link detail-representative-link"
+                                      title="Abrir representante em nova aba"
+                                      onClick={(e) => openContact(e, clientRep?.representative_contact)}
+                                    >
+                                      <span className="detail-representative-name">{clientRep?.representative_contact_name}</span> ↗
+                                    </Link>
+                                    {clientRepTypeLabel && (
+                                      <PartyRoleBadge label={clientRepTypeLabel} size="md" />
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {otherReps.length > 0 && (
+                                <div className="detail-representative-block">
+                                  <span className="detail-label detail-representative-title">OUTROS REPRESENTADOS</span>
+                                  <div className="detail-partes-list" style={{ marginTop: '0.5rem' }}>
+                                    {otherReps.map((rep) => {
+                                      const repTypeLabel = (rep?.representation_type || '').trim();
+                                      return (
+                                        <div key={`${rep?.represented_contact}-${rep?.representative_contact}`} className="detail-partes-item">
+                                          <Link
+                                            to={`/contacts?open=${rep?.represented_contact}`}
+                                            className="party-contact-link"
+                                            title="Abrir representado em nova aba"
+                                            onClick={(e) => openContact(e, rep?.represented_contact)}
+                                          >
+                                            <strong>{rep?.represented_contact_name}</strong> ↗
+                                          </Link>
+                                          <span className="detail-value-sub"> → </span>
+                                          <Link
+                                            to={`/contacts?open=${rep?.representative_contact}`}
+                                            className="party-contact-link"
+                                            title="Abrir representante em nova aba"
+                                            onClick={(e) => openContact(e, rep?.representative_contact)}
+                                          >
+                                            <strong>{rep?.representative_contact_name}</strong> ↗
+                                          </Link>
+                                          {repTypeLabel && (
+                                            <span style={{ marginLeft: '0.5rem' }}>
+                                              <PartyRoleBadge label={repTypeLabel} size="sm" />
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="detail-client-block">
@@ -387,8 +474,7 @@ function InformacaoTab({
                                   to={`/contacts?open=${party.contact}`}
                                   className="party-contact-link"
                                   title="Ver detalhes, selecionar ou criar outro processo com vínculo"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  onClick={(e) => openContact(e, party.contact)}
                                 >
                                   <strong>{party.contact_name}</strong> ↗
                                 </Link>
@@ -496,33 +582,19 @@ function InformacaoTab({
                 {!isEditing ? (
                   <>
                     <div className="detail-item">
-                      <span className="detail-label">Comarca</span>
-                      <span className="detail-value">{formData.comarca || '-'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Vara</span>
+                      <span className="detail-label">Comarca / Foro / Vara</span>
                       <span className="detail-value">{formData.vara || '-'}</span>
                     </div>
                   </>
                 ) : (
-                  <div className="detail-grid-2">
-                    <EditableDetailField
-                      label="Comarca"
-                      value={formData.comarca}
-                      isEditing={isEditing}
-                      type="text"
-                      onChange={(value) => handleInputChange('comarca', value)}
-                      placeholder="Ex: São Paulo"
-                    />
-                    <EditableDetailField
-                      label="Vara"
-                      value={formData.vara}
-                      isEditing={isEditing}
-                      type="text"
-                      onChange={(value) => handleInputChange('vara', value)}
-                      placeholder="Ex: 1ª Vara Cível"
-                    />
-                  </div>
+                  <EditableDetailField
+                    label="Comarca / Foro / Vara"
+                    value={formData.vara}
+                    isEditing={isEditing}
+                    type="text"
+                    onChange={(value) => handleInputChange('vara', value)}
+                    placeholder="Ex: Foro de Americana - 4ª Vara Cível"
+                  />
                 )}
               </div>
             </div>
@@ -552,7 +624,7 @@ function InformacaoTab({
 
                 {!isEditing ? (
                   <div className="detail-item full">
-                    <p className="detail-value">{formData.observacoes || '-'}</p>
+                    <p className="detail-value detail-value-prewrap">{formData.observacoes || '-'}</p>
                   </div>
                 ) : (
                   <EditableDetailField

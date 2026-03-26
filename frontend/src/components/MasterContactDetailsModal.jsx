@@ -140,7 +140,7 @@ export default function MasterContactDetailsModal({ contactId, teamMemberId, isO
 
           <section className="detail-section">
             <h3 className="section-title">📝 Observações</h3>
-            <p>{contact.notes || '—'}</p>
+            <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{contact.notes || '—'}</p>
           </section>
 
           <section className="detail-section">
