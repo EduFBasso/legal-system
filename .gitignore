@@ -108,3 +108,7 @@ backend/apps/accounts/management/commands/purge_system_data.py
 # Artefatos de reset/local dumps
 backend/_dev_*.json
 backend/*_backup*.json
+
+# Artefatos locais de teste (notificações/UI)
+test_notifications*.json
+files-legado/test_notifications_ui.py
