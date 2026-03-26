@@ -1,5 +1,25 @@
 import { openCaseDetailWindow } from '../../utils/publicationNavigation';
 
+function formatBRL(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return '—';
+  return parsed.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function getOfficeParticipationLabel(c) {
+  const type = (c?.participation_type || '').trim();
+  if (type === 'fixed') {
+    return formatBRL(c?.participation_fixed_value);
+  }
+
+  const perc = Number(c?.participation_percentage);
+  if (Number.isFinite(perc) && perc > 0) {
+    return `${perc.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+  }
+
+  return '—';
+}
+
 export default function MasterCasesSection({
   selectedLawyer,
   selectedLawyerOptionLabel,
@@ -45,6 +65,9 @@ export default function MasterCasesSection({
                 <th>Título / Tipo</th>
                 <th>Tribunal</th>
                 <th>Cliente</th>
+                <th>Valor da causa</th>
+                <th>Participação escritório</th>
+                <th>Total recebido</th>
                 <th>Última movimentação</th>
                 <th>Status</th>
               </tr>
@@ -70,6 +93,9 @@ export default function MasterCasesSection({
                       || c.parties_summary?.[0]?.name
                       || '—'}
                   </td>
+                  <td>{formatBRL(c.valor_causa)}</td>
+                  <td>{getOfficeParticipationLabel(c)}</td>
+                  <td>{formatBRL(c.total_payments)}</td>
                   <td>
                     {c.data_ultima_movimentacao
                       ? new Date(c.data_ultima_movimentacao + 'T00:00:00').toLocaleDateString('pt-BR')
