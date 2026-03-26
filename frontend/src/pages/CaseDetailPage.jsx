@@ -143,7 +143,8 @@ function CaseDetailPage() {
   const parties = usePartyManagement(
     id,
     modalsNotif.showToast,
-    []
+    [],
+    caseCore.loadCaseData
   );
 
   // Movements and tasks

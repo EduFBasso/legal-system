@@ -10,7 +10,7 @@ import casePartiesService from '../services/casePartiesService';
  * @param {Array} initialParties - Parties iniciais (opcional)
  * @returns {Object} Estado e funções para gerenciar partes
  */
-export function usePartyManagement(id, showToast, initialParties = []) {
+export function usePartyManagement(id, showToast, initialParties = [], reloadCaseData = null) {
   // Estado de partes
   const [parties, setParties] = useState(initialParties);
   const [loadingParties, setLoadingParties] = useState(false);
@@ -191,6 +191,14 @@ export function usePartyManagement(id, showToast, initialParties = []) {
       await loadParties();
       if (loadContacts) {
         await loadContacts();
+      }
+
+      // IMPORTANT: em casos com representação (ex: cliente incapaz),
+      // o backend atualiza também `case.representations`/payload de detalhe.
+      // Para evitar inconsistência visual (representante só aparecer após refresh),
+      // forçamos um reload completo do processo quando disponível.
+      if (typeof reloadCaseData === 'function') {
+        await reloadCaseData();
       }
     } catch (error) {
       console.error('Error saving party:', error);
