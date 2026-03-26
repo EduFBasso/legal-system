@@ -145,7 +145,13 @@ export default function MasterDashboardPage() {
 
     try {
       const contactsData = await contactsAPI.getAll({ team_member_id: selectedLawyer });
-      setContacts(Array.isArray(contactsData) ? contactsData : []);
+      const nextContacts = Array.isArray(contactsData) ? contactsData : [];
+      setContacts(nextContacts);
+      setKpis((current) => ({
+        ...current,
+        loading: false,
+        contatos: nextContacts.length,
+      }));
       setContactsError('');
     } catch {
       // Silencioso
