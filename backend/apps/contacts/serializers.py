@@ -111,7 +111,16 @@ class ContactListSerializer(serializers.ModelSerializer):
         elif user and user.is_authenticated and not _has_full_team_scope(request):
             case_parties = case_parties.filter(case__owner=user)
 
-        return [
+        representative_links = obj.case_representations_as_representative.select_related(
+            'case',
+            'represented_contact',
+        ).filter(case__deleted=False)
+        if scope_user is not None:
+            representative_links = representative_links.filter(case__owner=scope_user)
+        elif user and user.is_authenticated and not _has_full_team_scope(request):
+            representative_links = representative_links.filter(case__owner=user)
+
+        linked_as_party = [
             {
                 'id': cp.id,  # ID do CaseParty (não do Case!)
                 'numero_processo': cp.case.numero_processo_formatted or cp.case.numero_processo,
@@ -119,9 +128,27 @@ class ContactListSerializer(serializers.ModelSerializer):
                 'role': cp.role,
                 'role_display': cp.get_role_display(),
                 'is_client': cp.is_client,
+                'can_unlink': True,
+                'link_type': 'party',
             }
             for cp in case_parties
         ]
+
+        linked_as_representative = [
+            {
+                'id': f'rep:{rep.id}',
+                'numero_processo': rep.case.numero_processo_formatted or rep.case.numero_processo,
+                'case_id': rep.case.id,
+                'role': 'REPRESENTANTE',
+                'role_display': 'Representante',
+                'is_client': False,
+                'can_unlink': False,
+                'link_type': 'representation',
+            }
+            for rep in representative_links
+        ]
+
+        return linked_as_party + linked_as_representative
 
 
 class ContactDetailSerializer(serializers.ModelSerializer):
@@ -228,7 +255,16 @@ class ContactDetailSerializer(serializers.ModelSerializer):
         elif user and user.is_authenticated and not _has_full_team_scope(request):
             case_parties = case_parties.filter(case__owner=user)
 
-        return [
+        representative_links = obj.case_representations_as_representative.select_related(
+            'case',
+            'represented_contact',
+        ).filter(case__deleted=False)
+        if scope_user is not None:
+            representative_links = representative_links.filter(case__owner=scope_user)
+        elif user and user.is_authenticated and not _has_full_team_scope(request):
+            representative_links = representative_links.filter(case__owner=user)
+
+        linked_as_party = [
             {
                 'id': cp.id,  # ID do CaseParty (não do Case!)
                 'numero_processo': cp.case.numero_processo_formatted or cp.case.numero_processo,
@@ -236,9 +272,27 @@ class ContactDetailSerializer(serializers.ModelSerializer):
                 'role': cp.role,
                 'role_display': cp.get_role_display(),
                 'is_client': cp.is_client,
+                'can_unlink': True,
+                'link_type': 'party',
             }
             for cp in case_parties
         ]
+
+        linked_as_representative = [
+            {
+                'id': f'rep:{rep.id}',
+                'numero_processo': rep.case.numero_processo_formatted or rep.case.numero_processo,
+                'case_id': rep.case.id,
+                'role': 'REPRESENTANTE',
+                'role_display': 'Representante',
+                'is_client': False,
+                'can_unlink': False,
+                'link_type': 'representation',
+            }
+            for rep in representative_links
+        ]
+
+        return linked_as_party + linked_as_representative
 
 
 class ContactCreateUpdateSerializer(serializers.ModelSerializer):

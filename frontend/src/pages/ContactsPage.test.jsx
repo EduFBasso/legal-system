@@ -64,6 +64,11 @@ vi.mock('../components/common/Toast', () => ({
   }
 }));
 
+const silenceConsoleError = () => {
+  const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  return () => spy.mockRestore();
+};
+
 // Helper to render with Router
 const renderWithRouter = (component) => {
   return render(
@@ -181,41 +186,56 @@ describe('ContactsPage', () => {
     });
 
     it('displays error message when API fails', async () => {
-      mockGetAll.mockRejectedValueOnce(new Error('Network error'));
-      
-      renderWithRouter(<ContactsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText(/Erro ao carregar contatos/i)).toBeInTheDocument();
-      });
+      const restoreConsole = silenceConsoleError();
+      try {
+        mockGetAll.mockRejectedValueOnce(new Error('Network error'));
+        
+        renderWithRouter(<ContactsPage />);
+        
+        await waitFor(() => {
+          expect(screen.getByText(/Erro ao carregar contatos/i)).toBeInTheDocument();
+        });
+      } finally {
+        restoreConsole();
+      }
     });
 
     it('shows retry button on error', async () => {
-      mockGetAll.mockRejectedValueOnce(new Error('Network error'));
-      
-      renderWithRouter(<ContactsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /Tentar Novamente/i })).toBeInTheDocument();
-      });
+      const restoreConsole = silenceConsoleError();
+      try {
+        mockGetAll.mockRejectedValueOnce(new Error('Network error'));
+        
+        renderWithRouter(<ContactsPage />);
+        
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /Tentar Novamente/i })).toBeInTheDocument();
+        });
+      } finally {
+        restoreConsole();
+      }
     });
 
     it('retries loading when retry button is clicked', async () => {
-      mockGetAll.mockRejectedValueOnce(new Error('Network error'));
-      
-      renderWithRouter(<ContactsPage />);
-      
-      await waitFor(() => {
-        expect(screen.getByText(/Erro ao carregar contatos/i)).toBeInTheDocument();
-      });
+      const restoreConsole = silenceConsoleError();
+      try {
+        mockGetAll.mockRejectedValueOnce(new Error('Network error'));
+        
+        renderWithRouter(<ContactsPage />);
+        
+        await waitFor(() => {
+          expect(screen.getByText(/Erro ao carregar contatos/i)).toBeInTheDocument();
+        });
 
-      mockGetAll.mockResolvedValueOnce(mockContacts);
-      const retryButton = screen.getByRole('button', { name: /Tentar Novamente/i });
-      await userEvent.click(retryButton);
+        mockGetAll.mockResolvedValueOnce(mockContacts);
+        const retryButton = screen.getByRole('button', { name: /Tentar Novamente/i });
+        await userEvent.click(retryButton);
 
-      await waitFor(() => {
-        expect(screen.getByText('João Silva')).toBeInTheDocument();
-      });
+        await waitFor(() => {
+          expect(screen.getByText('João Silva')).toBeInTheDocument();
+        });
+      } finally {
+        restoreConsole();
+      }
     });
   });
 

@@ -2,9 +2,20 @@
 import { useEffect } from 'react';
 import './Modal.css';
 
-export default function Modal({ isOpen, onClose, title, children, size = 'medium' }) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'medium',
+  overlayClassName = '',
+  closeOnOverlayClick = true,
+  closeOnEsc = true,
+}) {
   // Close on ESC key
   useEffect(() => {
+    if (!closeOnEsc) return;
+
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
     };
@@ -18,12 +29,18 @@ export default function Modal({ isOpen, onClose, title, children, size = 'medium
       document.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnEsc]);
 
   if (!isOpen) return null;
 
+  const handleOverlayClick = (e) => {
+    if (!closeOnOverlayClick) return;
+    if (e.target !== e.currentTarget) return;
+    onClose();
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className={`modal-overlay ${overlayClassName}`.trim()} onClick={handleOverlayClick}>
       <div 
         className={`modal-content modal-${size}`}
         onClick={(e) => e.stopPropagation()}

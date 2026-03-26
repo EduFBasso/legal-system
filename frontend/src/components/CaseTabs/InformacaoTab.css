@@ -345,7 +345,7 @@
 .detail-client-block {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.9rem;
   align-items: flex-start;
 }
 
@@ -363,19 +363,57 @@
 }
 
 .detail-client-name {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.4rem;
 }
 
-.detail-client-role {
-  font-size: 1rem;
-  color: #64748b;
-  font-weight: 600;
+.detail-representative-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.35rem;
+  margin-top: 0.2rem;
 }
 
-.detail-client-action {
-  font-size: 1rem;
+.detail-representative-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.detail-representative-title {
   margin-top: 0.25rem;
+}
+
+.detail-representative-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: var(--color-warning);
+}
+
+.detail-representative-name {
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+/* Override the default party link styles inside the case detail page */
+.case-detail-page .party-contact-link.detail-representative-link {
+  color: var(--color-warning);
+}
+
+.case-detail-page .party-contact-link.detail-representative-link:hover {
+  color: var(--color-warning);
+  border-bottom-color: var(--color-warning);
+}
+
+.case-detail-page .party-contact-link.detail-representative-link:focus-visible {
+  color: var(--color-warning);
+  border-bottom-color: var(--color-warning);
+  outline: 2px solid var(--color-warning);
+  outline-offset: 2px;
 }
 
 /* Badges Row */

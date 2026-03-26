@@ -356,6 +356,12 @@ export default function ContactsPage() {
             if (!contact.linked_cases || contact.linked_cases.length === 0) {
               return true;
             }
+
+            // Se só há vínculos que não são partes (ex.: representação), pode editar
+            const hasPartyLinks = contact.linked_cases.some(lc => lc?.can_unlink !== false);
+            if (!hasPartyLinks) {
+              return true;
+            }
             
             // Se tem vínculos, só pode editar se for cliente
             return contact.is_client_anywhere === true;

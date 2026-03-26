@@ -200,9 +200,14 @@ export default function CaseDetailTabContent({
           id={id}
           parties={parties.parties}
           loadingParties={parties.loadingParties}
+          caseData={caseCore.caseData}
           onAddPartyClick={isReadOnly ? () => {} : onAddPartyClick}
           onRemoveParty={isReadOnly ? () => {} : onRemoveParty}
-          onEditParty={isReadOnly ? () => {} : parties.handleEditParty}
+          onEditParty={
+            isReadOnly
+              ? () => {}
+              : (party) => parties.handleEditParty(party, caseCore.caseData?.representations)
+          }
           readOnly={isReadOnly}
         />
       )}

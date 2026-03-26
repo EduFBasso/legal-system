@@ -30,6 +30,7 @@ function InformacaoTab({
   onOpenOrigemPublicacao = null,
   onAddPartyClick,
   parties = [],
+  caseData = null,
   formatCurrency = (value) => {
     if (!value) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {
@@ -49,6 +50,11 @@ function InformacaoTab({
   onInputChange = () => {},
 }) {
   const formData = rawFormData || {};
+  const representations = Array.isArray(formData.representations)
+    ? formData.representations
+    : Array.isArray(caseData?.representations)
+      ? caseData.representations
+      : [];
 
   const normalizeBadgeKey = (value) => {
     if (!value) return '';
@@ -335,9 +341,11 @@ function InformacaoTab({
                   <div className="detail-partes-col">
                     {(() => {
                       const clientParty = parties.find(p => p.is_client);
-                      const dynamicLabel = clientParty?.role_display 
-                        ? `${clientParty.role_display.toUpperCase()} DA AÇÃO` 
-                        : 'CLIENTE';
+                      const rep = clientParty
+                        ? representations.find((r) => Number(r?.represented_contact) === Number(clientParty.contact))
+                        : null;
+                      const repTypeLabel = (rep?.representation_type || '').trim();
+                      const dynamicLabel = 'CLIENTE/REPRESENTADO DA AÇÃO';
                       
                       return (
                         <>
@@ -356,6 +364,26 @@ function InformacaoTab({
                                 </Link>
                                 <PartyRoleBadge label="CLIENTE" isClient={true} showCheck={true} size="md" />
                               </div>
+
+                              {rep && (
+                                <div className="detail-representative-block">
+                                  <span className="detail-label detail-representative-title">REPRESENTADO POR</span>
+                                  <div className="detail-representative-row">
+                                    <Link
+                                      to={`/contacts?open=${rep?.representative_contact}`}
+                                      className="party-contact-link detail-representative-link"
+                                      title="Abrir representante em nova aba"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      <span className="detail-representative-name">{rep?.representative_contact_name}</span> ↗
+                                    </Link>
+                                    {repTypeLabel && (
+                                      <PartyRoleBadge label={repTypeLabel} size="md" />
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="detail-client-block">

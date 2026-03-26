@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { UserPlus } from 'lucide-react';
+import { Pencil, UserPlus } from 'lucide-react';
 import Toast from '../common/Toast';
 import ContactDetailModal from '../ContactDetailModal';
 import SelectContactModal from '../SelectContactModal';
@@ -33,6 +33,13 @@ export default function CaseDetailModals({
 
   const [partyRoleOptions, setPartyRoleOptions] = useState(defaultPartyRoleOptions);
 
+  const [representationTypeOptions, setRepresentationTypeOptions] = useState([]);
+  const [showSelectRepresentativeModal, setShowSelectRepresentativeModal] = useState(false);
+  const [showCreateRepresentativeModal, setShowCreateRepresentativeModal] = useState(false);
+  const [representativeTarget, setRepresentativeTarget] = useState(null); // 'add' | 'edit'
+  const [editingRepresentativeContactId, setEditingRepresentativeContactId] = useState(null);
+  const [editingRepresentativeTarget, setEditingRepresentativeTarget] = useState(null); // 'add' | 'edit'
+
   useEffect(() => {
     const shouldLoad = !!parties.editingParty || !!parties.showAddPartyModal;
     if (!shouldLoad) return;
@@ -47,6 +54,27 @@ export default function CaseDetailModals({
       })
       .catch(() => {
         // Fallback silencioso para defaults.
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [parties.editingParty, parties.showAddPartyModal]);
+
+  useEffect(() => {
+    const shouldLoad = !!parties.editingParty || !!parties.showAddPartyModal;
+    if (!shouldLoad) return;
+
+    let isActive = true;
+    Promise.resolve(casesService.getRepresentationTypeOptions())
+      .then((options) => {
+        if (!isActive) return;
+        if (Array.isArray(options)) {
+          setRepresentationTypeOptions(options);
+        }
+      })
+      .catch(() => {
+        // Fallback silencioso.
       });
 
     return () => {
@@ -98,6 +126,118 @@ export default function CaseDetailModals({
     }
   }, [modalsNotif]);
 
+  const onCreateRepresentationTypeOption = useCallback(async (label) => {
+    try {
+      const created = await casesService.createRepresentationTypeOption(label);
+      if (created && typeof created === 'object') {
+        setRepresentationTypeOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const exists = next.some((opt) => String(opt?.value) === String(created.value));
+          if (!exists) next.push(created);
+          return next;
+        });
+      }
+      return created;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao cadastrar tipo de representação', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
+  const onEditRepresentationTypeOption = useCallback(async (idToUpdate, label) => {
+    try {
+      const updated = await casesService.updateRepresentationTypeOption(idToUpdate, label);
+      if (updated && typeof updated === 'object') {
+        setRepresentationTypeOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const index = next.findIndex((opt) => Number(opt?.id) === Number(updated.id));
+          if (index >= 0) {
+            next[index] = { ...next[index], ...updated };
+            return next;
+          }
+          const byValue = next.findIndex((opt) => String(opt?.value) === String(updated.value));
+          if (byValue >= 0) {
+            next[byValue] = { ...next[byValue], ...updated };
+            return next;
+          }
+          return [...next, updated];
+        });
+      }
+      return updated;
+    } catch (error) {
+      modalsNotif?.showToast?.(error?.message || 'Erro ao editar tipo de representação', 'error');
+      return null;
+    }
+  }, [modalsNotif]);
+
+  const openRepresentativePicker = useCallback((target) => {
+    setRepresentativeTarget(target);
+    setShowSelectRepresentativeModal(true);
+  }, []);
+
+  const openEditRepresentativeContact = useCallback((target, contactId) => {
+    if (!contactId) return;
+    setEditingRepresentativeTarget(target);
+    setEditingRepresentativeContactId(contactId);
+  }, []);
+
+  const handleRepresentativeContactUpdated = useCallback((updatedContact) => {
+    if (!updatedContact || !updatedContact.id) return;
+
+    if (editingRepresentativeTarget === 'edit') {
+      parties.setEditingPartyFormData((prev) => {
+        const prevId = prev?.representative_contact?.id;
+        if (!prevId || Number(prevId) !== Number(updatedContact.id)) return prev;
+        return {
+          ...prev,
+          representative_contact: updatedContact,
+        };
+      });
+    } else {
+      parties.setPartyFormData((prev) => {
+        const prevId = prev?.representative_contact?.id;
+        if (!prevId || Number(prevId) !== Number(updatedContact.id)) return prev;
+        return {
+          ...prev,
+          representative_contact: updatedContact,
+        };
+      });
+    }
+
+    modalsNotif?.showToast?.('Dados do representante atualizados!', 'success');
+  }, [editingRepresentativeTarget, modalsNotif, parties]);
+
+  const applyRepresentativeSelection = useCallback((contact) => {
+    if (!contact) return;
+
+    const representedContactId = representativeTarget === 'edit'
+      ? parties.editingParty?.contact
+      : parties.selectedContact?.id;
+
+    if (representedContactId && Number(contact.id) === Number(representedContactId)) {
+      modalsNotif?.showToast?.('Representante não pode ser o mesmo contato do cliente.', 'error', 6000);
+      return;
+    }
+
+    if (representativeTarget === 'edit') {
+      parties.setEditingPartyFormData((prev) => ({
+        ...prev,
+        representative_contact: contact,
+      }));
+    } else {
+      parties.setPartyFormData((prev) => ({
+        ...prev,
+        representative_contact: contact,
+      }));
+    }
+    setShowSelectRepresentativeModal(false);
+  }, [modalsNotif, parties, representativeTarget]);
+
+  const openCreateRepresentativeContact = useCallback(() => {
+    setShowSelectRepresentativeModal(false);
+    setShowCreateRepresentativeModal(true);
+  }, []);
+
   return (
     <>
       {/* Modal de Seleção de Contato */}
@@ -123,6 +263,60 @@ export default function CaseDetailModals({
         />
       )}
 
+      {/* Modal de Seleção de Representante */}
+      {showSelectRepresentativeModal && (
+        <SelectContactModal
+          isOpen={showSelectRepresentativeModal}
+          onClose={() => setShowSelectRepresentativeModal(false)}
+          onSelectContact={applyRepresentativeSelection}
+          onCreateNew={openCreateRepresentativeContact}
+          existingPartyContactIds={[]}
+          disabledContactIds={(() => {
+            const representedContactId = representativeTarget === 'edit'
+              ? parties.editingParty?.contact
+              : parties.selectedContact?.id;
+            return representedContactId ? [representedContactId] : [];
+          })()}
+          disabledContactReason="A pessoa representada não pode ser o próprio representante. Selecione outro contato."
+        />
+      )}
+
+      {/* Modal de Criar Representante */}
+      {showCreateRepresentativeModal && (
+        <ContactDetailModal
+          contactId={null}
+          isOpen={showCreateRepresentativeModal}
+          onClose={() => setShowCreateRepresentativeModal(false)}
+          onContactUpdated={modalsNotif.handleContactCreated}
+          showLinkToProcessButton={false}
+          modalOverlayClassName="modal-overlay--top"
+          onLinkToProcess={(created) => {
+            applyRepresentativeSelection(created);
+            setShowCreateRepresentativeModal(false);
+          }}
+        />
+      )}
+
+      {/* Modal de Editar Representante (dados pessoais) */}
+      {!!editingRepresentativeContactId && (
+        <ContactDetailModal
+          contactId={editingRepresentativeContactId}
+          isOpen={!!editingRepresentativeContactId}
+          onClose={() => {
+            setEditingRepresentativeContactId(null);
+            setEditingRepresentativeTarget(null);
+          }}
+          onContactUpdated={(updated) => {
+            handleRepresentativeContactUpdated(updated);
+            setEditingRepresentativeContactId(null);
+            setEditingRepresentativeTarget(null);
+          }}
+          showLinkToProcessButton={false}
+          openInEditMode={true}
+          modalOverlayClassName="modal-overlay--top"
+        />
+      )}
+
       {/* Modal de Edição de Papel da Parte */}
       {parties.editingParty && (
         <div className="modal-overlay case-detail-modal-overlay" onClick={() => parties.setEditingParty(null)}>
@@ -133,80 +327,169 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-body">
-              <div className="selected-contact-info">
-                <span className="contact-icon">
-                  {parties.editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <strong>{parties.editingParty.contact_name}</strong>
-                    <button
-                      className="btn-edit-contact-link"
-                      onClick={() => modalsNotif.setEditingContactId(parties.editingParty.contact)}
-                      title="Editar dados pessoais do contato"
-                      style={{
-                        background: 'none',
-                        border: '1px solid #2563eb',
-                        borderRadius: '4px',
-                         padding: '0.5rem 0.9rem',
-                        cursor: 'pointer',
-                        color: '#2563eb',
-                         fontSize: '1rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        fontWeight: '500',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#2563eb';
-                        e.target.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'none';
-                        e.target.style.color = '#2563eb';
-                      }}
-                    >
-                      ✏️ Editar dados pessoais
-                    </button>
-                  </div>
-                  {parties.editingParty.contact_document && (
-                    <span className="contact-doc"> • {parties.editingParty.contact_document}</span>
-                  )}
+              <section className="party-modal__section">
+                <div className="party-modal__section-header">
+                  <h3 className="party-modal__section-title">📌 Parte no Processo</h3>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Papel no Processo *</label>
-                <SearchableCreatableSelectField
-                  value={parties.editingPartyFormData.role}
-                  onChange={(newRole) => {
-                    parties.setEditingPartyFormData((prev) => ({
-                      ...prev,
-                      role: newRole,
-                    }));
-                  }}
-                  options={partyRoleOptions}
-                  placeholder="Pesquisar ou selecionar..."
-                  allowCreate={true}
-                  onCreateOption={onCreatePartyRoleOption}
-                  onEditOption={onEditPartyRoleOption}
-                  reduceListOnQuery={true}
-                />
-              </div>
+                <div className="party-modal__section-body">
+                  <div className="selected-contact-info party-modal__contact-card">
+                    <span className="contact-icon">
+                      {parties.editingParty.contact_person_type === 'PF' ? '👤' : '🏢'}
+                    </span>
+                    <div className="party-modal__grow">
+                      <div className="party-modal__contact-header">
+                        <strong className="party-modal__contact-name">{parties.editingParty.contact_name}</strong>
+                      </div>
+                      {parties.editingParty.contact_document && (
+                        <span className="contact-doc"> • {parties.editingParty.contact_document}</span>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="form-group">
-                <label className="checkbox-label checkbox-label-strong">
-                  <input
-                    type="checkbox"
-                    checked={parties.editingPartyFormData.is_client}
-                    onChange={(e) =>
-                      parties.setEditingPartyFormData((prev) => ({ ...prev, is_client: e.target.checked }))
-                    }
-                  />
-                  <span>É cliente do escritório neste processo</span>
-                </label>
-              </div>
+                  <div className="form-group party-modal__field">
+                    <label className="checkbox-label checkbox-label-strong party-modal__checkbox">
+                      <input
+                        type="checkbox"
+                        checked={parties.editingPartyFormData.is_client}
+                        onChange={(e) =>
+                          parties.setEditingPartyFormData((prev) => ({
+                            ...prev,
+                            is_client: e.target.checked,
+                            ...(e.target.checked
+                              ? {}
+                              : {
+                                is_represented: false,
+                                representative_contact: null,
+                                representation_type: '',
+                              }),
+                          }))
+                        }
+                      />
+                      <span>É cliente do escritório neste processo</span>
+                    </label>
+                  </div>
+
+                  <div className="form-group party-modal__field">
+                    <label>Papel no Processo *</label>
+                    <SearchableCreatableSelectField
+                      value={parties.editingPartyFormData.role}
+                      onChange={(newRole) => {
+                        parties.setEditingPartyFormData((prev) => ({
+                          ...prev,
+                          role: newRole,
+                          ...(prev.is_client
+                            ? {}
+                            : {
+                              is_represented: false,
+                              representative_contact: null,
+                              representation_type: '',
+                            }),
+                        }));
+                      }}
+                      options={partyRoleOptions}
+                      placeholder="Pesquisar ou selecionar..."
+                      allowCreate={true}
+                      onCreateOption={onCreatePartyRoleOption}
+                      onEditOption={onEditPartyRoleOption}
+                      reduceListOnQuery={true}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {parties.editingPartyFormData.is_client && (
+                <section className="party-modal__section party-modal__section--success">
+                  <div className="party-modal__section-header">
+                    <h3 className="party-modal__section-title">🛡️ Representação</h3>
+                    <span className="party-modal__section-subtitle">(apenas para cliente/representado)</span>
+                  </div>
+
+                  <div className="party-modal__section-body">
+                    <div className="form-group party-modal__field">
+                      <label className="checkbox-label checkbox-label-strong party-modal__checkbox">
+                        <input
+                          type="checkbox"
+                          checked={!!parties.editingPartyFormData.is_represented}
+                          onChange={(e) =>
+                            parties.setEditingPartyFormData((prev) => ({
+                              ...prev,
+                              is_represented: e.target.checked,
+                              ...(e.target.checked
+                                ? {}
+                                : {
+                                  representative_contact: null,
+                                  representation_type: '',
+                                }),
+                            }))
+                          }
+                        />
+                        <span>A pessoa é representada?</span>
+                      </label>
+                    </div>
+
+                    {parties.editingPartyFormData.is_represented && (
+                      <>
+                        <div className="form-group party-modal__field">
+                          <label>Representante *</label>
+
+                          {parties.editingPartyFormData.representative_contact ? (
+                            <div className="selected-contact-info selected-contact-info--representative party-modal__representative-row">
+                              <span className="contact-icon">👤</span>
+                              <div className="party-modal__grow">
+                                <strong className="party-modal__representative-name">{parties.editingPartyFormData.representative_contact.name}</strong>
+                              </div>
+                              <button
+                                type="button"
+                                className="party-modal__icon-button"
+                                onClick={() => openEditRepresentativeContact('edit', parties.editingPartyFormData.representative_contact?.id)}
+                                title="Editar dados do representante"
+                              >
+                                <Pencil size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-md"
+                                onClick={() => openRepresentativePicker('edit')}
+                              >
+                                Trocar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-md"
+                              onClick={() => openRepresentativePicker('edit')}
+                            >
+                              Selecionar Representante
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="form-group party-modal__field">
+                          <label>Tipo de representação *</label>
+                          <SearchableCreatableSelectField
+                            value={parties.editingPartyFormData.representation_type}
+                            onChange={(newValue) => {
+                              parties.setEditingPartyFormData((prev) => ({
+                                ...prev,
+                                representation_type: newValue,
+                              }));
+                            }}
+                            options={representationTypeOptions}
+                            placeholder="Pesquisar ou selecionar..."
+                            allowCreate={true}
+                            onCreateOption={onCreateRepresentationTypeOption}
+                            onEditOption={onEditRepresentationTypeOption}
+                            onSearchOptions={(q) => casesService.getRepresentationTypeOptions(q)}
+                            reduceListOnQuery={true}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </section>
+              )}
 
               <div className="form-group">
                 <label>Observações</label>
@@ -245,6 +528,7 @@ export default function CaseDetailModals({
           }}
           showLinkToProcessButton={false}
           openInEditMode={true}
+          modalOverlayClassName="modal-overlay--top"
         />
       )}
 
@@ -262,7 +546,7 @@ export default function CaseDetailModals({
                 <span className="contact-icon">
                   {parties.selectedContact.person_type === 'PF' ? '👤' : '🏢'}
                 </span>
-                <div>
+                  <div className="party-modal__grow">
                   <strong>{parties.selectedContact.name}</strong>
                   {parties.selectedContact.document_number && (
                     <span className="contact-doc"> • {parties.selectedContact.document_number}</span>
@@ -275,16 +559,27 @@ export default function CaseDetailModals({
                 <SearchableCreatableSelectField
                   value={parties.partyFormData.role}
                   onChange={(newRole) => {
-                    parties.setPartyFormData((prev) => ({
-                      ...prev,
-                      role: newRole,
-                      is_client:
+                    parties.setPartyFormData((prev) => {
+                      const nextIsClient =
                         newRole === 'CLIENTE'
                           ? true
                           : newRole === 'TESTEMUNHA' || newRole === 'PERITO'
                             ? false
-                            : prev.is_client,
-                    }));
+                            : prev.is_client;
+
+                      return {
+                        ...prev,
+                        role: newRole,
+                        is_client: nextIsClient,
+                        ...(nextIsClient
+                          ? {}
+                          : {
+                            is_represented: false,
+                            representative_contact: null,
+                            representation_type: '',
+                          }),
+                      };
+                    });
                   }}
                   options={partyRoleOptions}
                   placeholder="Pesquisar ou selecionar..."
@@ -303,7 +598,17 @@ export default function CaseDetailModals({
                       <input
                         type="checkbox"
                         checked={parties.partyFormData.is_client}
-                        onChange={(e) => parties.setPartyFormData((prev) => ({ ...prev, is_client: e.target.checked }))}
+                        onChange={(e) => parties.setPartyFormData((prev) => ({
+                          ...prev,
+                          is_client: e.target.checked,
+                          ...(e.target.checked
+                            ? {}
+                            : {
+                              is_represented: false,
+                              representative_contact: null,
+                              representation_type: '',
+                            }),
+                        }))}
                         disabled={hasExistingClient}
                       />
                       <span style={{ opacity: hasExistingClient ? 0.6 : 1 }}>
@@ -321,6 +626,101 @@ export default function CaseDetailModals({
                   </div>
                 );
               })()}
+
+              {parties.partyFormData.is_client && (
+                <>
+                  <div className="form-group">
+                    <label className="checkbox-label checkbox-label-strong">
+                      <input
+                        type="checkbox"
+                        checked={!!parties.partyFormData.is_represented}
+                        onChange={(e) =>
+                          parties.setPartyFormData((prev) => ({
+                            ...prev,
+                            is_represented: e.target.checked,
+                            ...(e.target.checked
+                              ? {}
+                              : {
+                                representative_contact: null,
+                                representation_type: '',
+                              }),
+                          }))
+                        }
+                      />
+                      <span>A pessoa é representada?</span>
+                    </label>
+                  </div>
+
+                  {parties.partyFormData.is_represented && (
+                    <>
+                      <div className="form-group">
+                        <label>Representante *</label>
+
+                        {parties.partyFormData.representative_contact ? (
+                          <div className="selected-contact-info">
+                            <span className="contact-icon">👤</span>
+                            <div style={{ flex: 1 }}>
+                              <strong>{parties.partyFormData.representative_contact.name}</strong>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-edit-contact-link"
+                              onClick={() => openEditRepresentativeContact('add', parties.partyFormData.representative_contact?.id)}
+                              title="Editar dados do representante"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '0.25rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <Pencil size={18} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-md"
+                              onClick={() => openRepresentativePicker('add')}
+                            >
+                              Trocar
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-md"
+                            onClick={() => openRepresentativePicker('add')}
+                          >
+                            Selecionar Representante
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Tipo de representação *</label>
+                        <SearchableCreatableSelectField
+                          value={parties.partyFormData.representation_type}
+                          onChange={(newValue) => {
+                            parties.setPartyFormData((prev) => ({
+                              ...prev,
+                              representation_type: newValue,
+                            }));
+                          }}
+                          options={representationTypeOptions}
+                          placeholder="Pesquisar ou selecionar..."
+                          allowCreate={true}
+                          onCreateOption={onCreateRepresentationTypeOption}
+                          onEditOption={onEditRepresentationTypeOption}
+                          onSearchOptions={(q) => casesService.getRepresentationTypeOptions(q)}
+                          reduceListOnQuery={true}
+                        />
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
 
               <div className="form-group">
                 <label>Observações</label>

@@ -42,4 +42,41 @@ describe('PartiesTab', () => {
     expect(screen.getByRole('button', { name: /Editar/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /Excluir/i })).toBeDisabled();
   });
+
+  it('renders a representative card below the client when representation exists', () => {
+    render(
+      <PartiesTab
+        readOnly={true}
+        parties={[
+          {
+            id: 10,
+            contact: 111,
+            contact_person_type: 'PF',
+            contact_name: 'Cliente Representado',
+            role: 'CLIENTE',
+            role_display: 'Cliente/Representado',
+            is_client: true,
+          },
+        ]}
+        loadingParties={false}
+        caseData={{
+          representations: [
+            {
+              id: 1,
+              represented_contact: 111,
+              represented_contact_name: 'Cliente Representado',
+              representative_contact: 222,
+              representative_contact_name: 'Advogado Representante',
+              representation_type: 'Representação Legal',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByText('Cliente Representado')).toBeInTheDocument();
+    expect(screen.getByText('Advogado Representante')).toBeInTheDocument();
+    expect(screen.getByText(/representação legal/i)).toBeInTheDocument();
+    expect(screen.getByText(/^representante$/i)).toBeInTheDocument();
+  });
 });

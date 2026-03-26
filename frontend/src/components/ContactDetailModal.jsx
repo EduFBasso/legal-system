@@ -20,7 +20,8 @@ export default function ContactDetailModal({
   onLinkToProcess,
   onLinkToCase, // Novo callback para abrir modal de vinculação
   allowModification = true,  // Se false, bloqueia editar/deletar (apenas visualização)
-  openInEditMode = false     // Se true, abre direto em modo edição
+  openInEditMode = false,    // Se true, abre direto em modo edição
+  modalOverlayClassName = ''
 }) {
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -289,6 +290,9 @@ export default function ContactDetailModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      overlayClassName={modalOverlayClassName}
+      closeOnOverlayClick={!isEditing}
+      closeOnEsc={!isEditing}
       title={
         isCreating 
           ? "➕ Novo Contato" 
@@ -528,7 +532,7 @@ export default function ContactDetailModal({
                 {contact.linked_cases && contact.linked_cases.length > 0 ? (
                   <div className="linked-cases-list">
                     {contact.linked_cases.map((linkedCase) => (
-                      <div key={linkedCase.id} className="linked-case-item">
+                      <div key={String(linkedCase.id)} className="linked-case-item">
                         <Link
                           to={`/cases/${linkedCase.case_id}`}
                           target="_blank"
@@ -546,17 +550,19 @@ export default function ContactDetailModal({
                           </div>
                           <div className="linked-case-arrow">↗</div>
                         </Link>
-                        <button
-                          className="btn-unlink-case"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUnlinkCase(linkedCase.id, linkedCase.numero_processo);
-                          }}
-                          disabled={unlinkingPartyId === linkedCase.id}
-                          title="Desvincular deste processo"
-                        >
-                          {unlinkingPartyId === linkedCase.id ? '⏳' : '🗑️'}
-                        </button>
+                        {linkedCase?.can_unlink !== false ? (
+                          <button
+                            className="btn-unlink-case"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnlinkCase(linkedCase.id, linkedCase.numero_processo);
+                            }}
+                            disabled={unlinkingPartyId === linkedCase.id}
+                            title="Desvincular deste processo"
+                          >
+                            {unlinkingPartyId === linkedCase.id ? '⏳' : '🗑️'}
+                          </button>
+                        ) : null}
                       </div>
                     ))}
                   </div>

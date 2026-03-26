@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from apps.contacts.models import Contact
-from apps.cases.models import Case, CaseParty
+from apps.cases.models import Case, CaseParty, CaseRepresentation
 from apps.contacts.serializers import ContactListSerializer, ContactDetailSerializer
 
 
@@ -161,6 +161,32 @@ class ContactAPITest(APITestCase):
             role='AUTOR',
             is_client=True,
         )
+        
+    def test_linked_cases_includes_representation_for_representative_contact(self):
+        """Representative contacts should list cases where they represent someone."""
+        representative = Contact.objects.create(
+            name='Representative',
+            person_type='PF',
+            owner=self.user,
+        )
+        
+        CaseRepresentation.objects.create(
+            case=self.case,
+            represented_contact=self.contact1,
+            representative_contact=representative,
+            representation_type='Procurador',
+            created_by=self.user,
+        )
+        
+        serializer = ContactDetailSerializer(representative)
+        data = serializer.data
+        
+        self.assertEqual(len(data['linked_cases']), 1)
+        linked_case = data['linked_cases'][0]
+        self.assertEqual(linked_case['case_id'], self.case.id)
+        self.assertEqual(linked_case['role'], 'REPRESENTANTE')
+        self.assertEqual(linked_case['role_display'], 'Representante')
+        self.assertEqual(linked_case['can_unlink'], False)
     
     def test_list_contacts(self):
         """Test listing contacts"""

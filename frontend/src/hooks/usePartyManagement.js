@@ -30,6 +30,9 @@ export function usePartyManagement(id, showToast, initialParties = []) {
     role: 'AUTOR',
     is_client: false,
     observacoes: '',
+    is_represented: false,
+    representative_contact: null,
+    representation_type: '',
   });
 
   // Dados de formulário para editar parte
@@ -37,6 +40,9 @@ export function usePartyManagement(id, showToast, initialParties = []) {
     role: 'AUTOR',
     is_client: false,
     observacoes: '',
+    is_represented: false,
+    representative_contact: null,
+    representation_type: '',
   });
 
   /**
@@ -96,6 +102,21 @@ export function usePartyManagement(id, showToast, initialParties = []) {
     }
 
     try {
+      if (partyFormData.is_client && partyFormData.is_represented) {
+        if (!partyFormData.representative_contact?.id) {
+          showToast('Selecione o representante do cliente.', 'error', 7000);
+          return;
+        }
+        if (!String(partyFormData.representation_type || '').trim()) {
+          showToast('Informe o tipo de representação.', 'error', 7000);
+          return;
+        }
+        if (Number(partyFormData.representative_contact.id) === Number(contact?.id)) {
+          showToast('Representante não pode ser o mesmo contato do cliente.', 'error', 7000);
+          return;
+        }
+      }
+
       if (!id) {
         // Draft mode - não está conectado ao backend
         const draftId = `draft-${Date.now()}-${contact.id}`;
@@ -111,6 +132,9 @@ export function usePartyManagement(id, showToast, initialParties = []) {
           role_display: getRoleDisplay(partyFormData.role),
           is_client: partyFormData.is_client,
           observacoes: partyFormData.observacoes,
+          is_represented: !!partyFormData.is_represented,
+          representative_contact: partyFormData.representative_contact,
+          representation_type: partyFormData.representation_type,
           is_draft: true,
         };
 
@@ -134,6 +158,17 @@ export function usePartyManagement(id, showToast, initialParties = []) {
         role: partyFormData.role,
         is_client: partyFormData.is_client,
         observacoes: partyFormData.observacoes,
+        ...(partyFormData.is_client
+          ? {
+            is_represented: !!partyFormData.is_represented,
+            representative_contact: partyFormData.is_represented
+              ? partyFormData.representative_contact?.id || null
+              : null,
+            representation_type: partyFormData.is_represented
+              ? String(partyFormData.representation_type || '').trim()
+              : '',
+          }
+          : {}),
       });
 
       showToast('Parte adicionada com sucesso!', 'success');
@@ -190,12 +225,25 @@ export function usePartyManagement(id, showToast, initialParties = []) {
   /**
    * Abrir edição de parte
    */
-  const handleEditParty = (party) => {
+  const handleEditParty = (party, representations = []) => {
+    const reprList = Array.isArray(representations) ? representations : [];
+    const repr = party?.case && party?.contact
+      ? reprList.find((r) => Number(r?.case) === Number(party.case) && Number(r?.represented_contact) === Number(party.contact))
+      : null;
+
     setEditingParty(party);
     setEditingPartyFormData({
       role: party.role,
       is_client: party.is_client,
       observacoes: party.observacoes || '',
+      is_represented: !!repr,
+      representative_contact: repr
+        ? {
+          id: repr.representative_contact,
+          name: repr.representative_contact_name,
+        }
+        : null,
+      representation_type: repr?.representation_type || '',
     });
   };
 
@@ -206,6 +254,21 @@ export function usePartyManagement(id, showToast, initialParties = []) {
     if (!editingParty) return;
 
     try {
+      if (editingPartyFormData.is_client && editingPartyFormData.is_represented) {
+        if (!editingPartyFormData.representative_contact?.id) {
+          showToast('Selecione o representante do cliente.', 'error', 7000);
+          return;
+        }
+        if (!String(editingPartyFormData.representation_type || '').trim()) {
+          showToast('Informe o tipo de representação.', 'error', 7000);
+          return;
+        }
+        if (Number(editingPartyFormData.representative_contact.id) === Number(editingParty?.contact)) {
+          showToast('Representante não pode ser o mesmo contato do cliente.', 'error', 7000);
+          return;
+        }
+      }
+
       if (!id) {
         setParties((prev) =>
           prev
@@ -217,6 +280,9 @@ export function usePartyManagement(id, showToast, initialParties = []) {
                 role_display: getRoleDisplay(editingPartyFormData.role),
                 is_client: editingPartyFormData.is_client,
                 observacoes: editingPartyFormData.observacoes,
+                is_represented: !!editingPartyFormData.is_represented,
+                representative_contact: editingPartyFormData.representative_contact,
+                representation_type: editingPartyFormData.representation_type,
               };
             })
             .map((party) => {
@@ -238,6 +304,20 @@ export function usePartyManagement(id, showToast, initialParties = []) {
         role: editingPartyFormData.role,
         is_client: editingPartyFormData.is_client,
         observacoes: editingPartyFormData.observacoes,
+        ...(editingPartyFormData.is_client
+          ? {
+            is_represented: !!editingPartyFormData.is_represented,
+            representative_contact: editingPartyFormData.is_represented
+              ? editingPartyFormData.representative_contact?.id || null
+              : null,
+            representation_type: editingPartyFormData.is_represented
+              ? String(editingPartyFormData.representation_type || '').trim()
+              : '',
+          }
+          : {
+            // Se deixar de ser cliente, remove qualquer representação associada.
+            is_represented: false,
+          }),
       };
 
       await casePartiesService.updateParty(editingParty.id, payload);
@@ -275,6 +355,9 @@ export function usePartyManagement(id, showToast, initialParties = []) {
       role: 'AUTOR',
       is_client: false,
       observacoes: '',
+      is_represented: false,
+      representative_contact: null,
+      representation_type: '',
     });
   };
 
