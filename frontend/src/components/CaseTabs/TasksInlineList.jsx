@@ -176,6 +176,21 @@ export default function TasksInlineList({
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', position: 'relative', zIndex: 3 }}>
                     <button
                       type="button"
+                      className="task-action-btn task-action-btn--icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (readOnly) return;
+                        onOpenEditTask(task);
+                      }}
+                      title="Editar"
+                      disabled={readOnly}
+                      aria-disabled={readOnly ? 'true' : undefined}
+                    >
+                      ✏️
+                    </button>
+
+                    <button
+                      type="button"
                       className="task-action-btn task-action-btn--icon task-action-btn--danger"
                       onClick={async (e) => {
                         e.stopPropagation();
@@ -204,21 +219,6 @@ export default function TasksInlineList({
                       aria-disabled={readOnly ? 'true' : undefined}
                     >
                       🗑️
-                    </button>
-
-                    <button
-                      type="button"
-                      className="task-action-btn task-action-btn--icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (readOnly) return;
-                        onOpenEditTask(task);
-                      }}
-                      title="Editar"
-                      disabled={readOnly}
-                      aria-disabled={readOnly ? 'true' : undefined}
-                    >
-                      ✏️
                     </button>
                   </div>
                 </div>
