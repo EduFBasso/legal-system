@@ -4,6 +4,7 @@ import caseTasksService from '../../services/caseTasksService';
 import { notifyTaskUpdate } from '../../services/taskSyncService';
 import useSyncTaskUpdates from '../../hooks/useSyncTaskUpdates';
 import { openCaseDetailWindow } from '../../utils/publicationNavigation';
+import { validateDueDateAtLeastTomorrow } from '../../utils/taskDueDateValidation';
 import {
   getTaskUrgency,
   formatDaysRemaining,
@@ -160,6 +161,12 @@ export default function TasksTab({
   // Criar nova tarefa do processo
   const handleCreateTask = async (taskData) => {
     if (readOnly) {
+      return;
+    }
+
+    const dueDateValidation = validateDueDateAtLeastTomorrow(taskData?.data_vencimento);
+    if (!dueDateValidation.ok) {
+      alert(dueDateValidation.message);
       return;
     }
 

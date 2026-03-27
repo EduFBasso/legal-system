@@ -5,6 +5,7 @@ import caseTasksService from '../services/caseTasksService';
 import DeadlinesContent from '../components/DeadlinesContent';
 import { Button } from '../components/common/Button';
 import Toast from '../components/common/Toast';
+import { validateDueDateAtLeastTomorrow } from '../utils/taskDueDateValidation';
 import './DeadlinesPage.css';
 
 /**
@@ -84,6 +85,12 @@ export default function DeadlinesPage() {
     const titulo = (editingTask.titulo || '').toString().trim();
     if (!titulo) {
       showToast('Título da tarefa é obrigatório', 'error');
+      return;
+    }
+
+    const dueDateValidation = validateDueDateAtLeastTomorrow(editingTask.data_vencimento);
+    if (!dueDateValidation.ok) {
+      showToast(dueDateValidation.message, 'error');
       return;
     }
 

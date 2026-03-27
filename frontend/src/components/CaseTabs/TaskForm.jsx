@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { caseTheme } from './caseTheme';
 import { Button } from '../common/Button';
+import { validateDueDateAtLeastTomorrow } from '../../utils/taskDueDateValidation';
 
 /**
  * TaskForm - Formulário inline para criar ou editar tarefas
@@ -26,6 +27,12 @@ export default function TaskForm({
   const handleSubmit = async () => {
     if (!formData.titulo.trim()) {
       alert('Título é obrigatório');
+      return;
+    }
+
+    const dueDateValidation = validateDueDateAtLeastTomorrow(formData.data_vencimento);
+    if (!dueDateValidation.ok) {
+      alert(dueDateValidation.message);
       return;
     }
 

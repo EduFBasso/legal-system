@@ -5,6 +5,7 @@ import useSyncTaskUpdates from '../../hooks/useSyncTaskUpdates';
 import EmptyState from '../common/EmptyState';
 import { Button } from '../common/Button';
 import caseTasksService from '../../services/caseTasksService';
+import { validateDueDateAtLeastTomorrow } from '../../utils/taskDueDateValidation';
 import caseMovementsService from '../../services/caseMovementsService';
 import MovimentacaoCard from './MovimentacaoCard';
 import MovimentacaoEditForm from './MovimentacaoEditForm';
@@ -220,6 +221,12 @@ function MovimentacoesTab({
       return;
     }
 
+    const dueDateValidation = validateDueDateAtLeastTomorrow(formData.data_vencimento);
+    if (!dueDateValidation.ok) {
+      alert(dueDateValidation.message);
+      return;
+    }
+
     setSavingTask(true);
     try {
       const response = await caseTasksService.createTask({
@@ -275,6 +282,12 @@ function MovimentacoesTab({
     if (readOnly) return;
     if (!formData.titulo.trim()) {
       alert('Título da tarefa é obrigatório');
+      return;
+    }
+
+    const dueDateValidation = validateDueDateAtLeastTomorrow(formData.data_vencimento);
+    if (!dueDateValidation.ok) {
+      alert(dueDateValidation.message);
       return;
     }
 

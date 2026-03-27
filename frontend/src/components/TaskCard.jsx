@@ -86,6 +86,10 @@ export default function TaskCard({
 
   const handleCheckboxChange = () => {
     if (readOnly) return;
+    if (task?.status === 'CONCLUIDA') {
+      const ok = window.confirm('Reativar esta tarefa?');
+      if (!ok) return;
+    }
     onToggleStatus(task);
   };
 
@@ -108,11 +112,6 @@ export default function TaskCard({
       key={task.id}
       className={`task-item ${urgencyClass} ${isCompleted ? 'completed' : ''} ${isSelected ? 'selected' : ''}`}
     >
-      {isCompleted && (
-        <div className="task-stamp task-stamp--completed" aria-label="Tarefa concluída">
-          CONCLUÍDA
-        </div>
-      )}
       <div className="task-main" onClick={handleSelectClick}>
         {isContactTask ? (
           <div className="task-contact-meta task-contact-meta--top">
@@ -238,6 +237,12 @@ export default function TaskCard({
             {formatDaysRemaining(task.data_vencimento)}
           </span>
         </div>
+
+        {isCompleted && (
+          <div className="task-stamp task-stamp--completed task-stamp--bottom" aria-label="Tarefa concluída">
+            CONCLUÍDA
+          </div>
+        )}
       </div>
     </div>
   );

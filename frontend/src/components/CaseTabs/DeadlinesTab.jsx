@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import * as caseTasksService from '../../services/caseTasksService';
+import { validateDueDateAtLeastTomorrow } from '../../utils/taskDueDateValidation';
 import DeadlineCard from './DeadlineCard';
 import TasksSection from './TasksSection';
 import EmptyState from '../common/EmptyState';
@@ -126,6 +127,10 @@ function DeadlinesTab({
 
   const handleToggleTaskCompleted = async (task) => {
     try {
+    // Este fluxo legado não possui input de data; para manter a regra (>= amanhã)
+    // evitamos criar tarefas sem vencimento aqui.
+    alert(validateDueDateAtLeastTomorrow('').message);
+    return;
       await caseTasksService.patchTask(task.id, {
         status: task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA',
       });

@@ -121,6 +121,12 @@
   user-select: none;
 }
 
+.task-stamp--bottom {
+  top: auto;
+  right: 12px;
+  bottom: 12px;
+}
+
 .task-stamp--completed {
   border-color: var(--color-gray-300);
   background: var(--color-white);

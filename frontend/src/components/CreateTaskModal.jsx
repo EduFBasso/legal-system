@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './CreateTaskModal.css';
+import { validateDueDateAtLeastTomorrow } from '../utils/taskDueDateValidation';
 
 /**
  * CreateTaskModal - Modal para criar tarefas do processo (Tipo 2)
@@ -66,8 +67,9 @@ export default function CreateTaskModal({ isOpen, caseId, onClose, onCreateTask 
       return;
     }
     
-    if (!formData.data_vencimento) {
-      alert('Data de vencimento é obrigatória');
+    const dueDateValidation = validateDueDateAtLeastTomorrow(formData.data_vencimento);
+    if (!dueDateValidation.ok) {
+      alert(dueDateValidation.message);
       return;
     }
     
