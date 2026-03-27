@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import ContactTaskModal from '@/components/ContactTaskModal';
@@ -18,10 +18,6 @@ export default function ContactTasksPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
-
-  useEffect(() => {
-    if (!isEditOpen) setEditingTask(null);
-  }, [isEditOpen]);
 
   const tasksQueryParams = useMemo(() => {
     const params = {};
@@ -100,11 +96,15 @@ export default function ContactTasksPage() {
         isOpen={isEditOpen}
         mode="edit"
         initialData={editingTask}
-        onClose={() => setIsEditOpen(false)}
+        onClose={() => {
+          setIsEditOpen(false);
+          setEditingTask(null);
+        }}
         onSubmit={async (payload) => {
           if (!editingTask?.id) return;
           await contactTasksService.patchTask(editingTask.id, payload);
           setIsEditOpen(false);
+          setEditingTask(null);
           handleRefresh();
         }}
       />
