@@ -190,14 +190,6 @@ export default function TaskCard({
         </div>
         {descriptionText && <div className="task-description">{descriptionText}</div>}
 
-        {dueTimeText ? (
-          <div className="task-time" aria-label="Horário de vencimento">
-            ⏰ {dueTimeText}
-          </div>
-        ) : null}
-
-
-
         <div className="task-process-meta">
           {task.case && task.case_numero ? (
             <a
@@ -234,6 +226,14 @@ export default function TaskCard({
           >
             {formatDate(task.data_vencimento)}
           </span>
+          {dueTimeText ? (
+            <>
+              <span className="task-meta-dot">•</span>
+              <span className="task-time" aria-label="Horário de vencimento">
+                ⏰ {dueTimeText}
+              </span>
+            </>
+          ) : null}
           <span className="task-meta-dot">•</span>
           <span
             className={`task-remaining ${isOverdue(task.data_vencimento) ? 'overdue-remaining' : ''} ${

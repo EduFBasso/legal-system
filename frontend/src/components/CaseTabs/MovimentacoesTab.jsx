@@ -15,6 +15,18 @@ import './MovimentacoesTab.css';
 const HIGHLIGHT_DURATION_MS = 3000;
 const getTodayIsoDate = () => new Date().toISOString().split('T')[0];
 
+const normalizeTimeHHmm = (timeValue) => {
+  const value = (timeValue || '').toString().trim();
+  if (!value) return '';
+
+  const match = value.match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+  if (!match) return value;
+
+  const hh = match[1].padStart(2, '0');
+  const mm = match[2].padStart(2, '0');
+  return `${hh}:${mm}`;
+};
+
 /**
  * MovimentacoesTab - Aba de Movimentações Processuais
  * Exibe lista de movimentações (publicações DJE, despachos, decisões)
@@ -202,6 +214,7 @@ function MovimentacoesTab({
       titulo: '',
       descricao: '',
       data_vencimento: '',
+      hora_vencimento: '',
     });
   };
 
@@ -211,6 +224,7 @@ function MovimentacoesTab({
       titulo: '',
       descricao: '',
       data_vencimento: '',
+      hora_vencimento: '',
     });
   };
 
@@ -229,12 +243,14 @@ function MovimentacoesTab({
 
     setSavingTask(true);
     try {
+      const normalizedHora = normalizeTimeHHmm(formData.hora_vencimento);
       const response = await caseTasksService.createTask({
         case: id,
         movimentacao: movementId,
         titulo: formData.titulo,
         descricao: formData.descricao || '',
         data_vencimento: formData.data_vencimento || null,
+        hora_vencimento: normalizedHora || null,
         status: 'PENDENTE',
       });
       
@@ -266,6 +282,7 @@ function MovimentacoesTab({
       titulo: task.titulo || '',
       descricao: task.descricao || '',
       data_vencimento: task.data_vencimento || '',
+      hora_vencimento: task.hora_vencimento || '',
     });
   };
 
@@ -275,6 +292,7 @@ function MovimentacoesTab({
       titulo: '',
       descricao: '',
       data_vencimento: '',
+      hora_vencimento: '',
     });
   };
 
@@ -293,10 +311,12 @@ function MovimentacoesTab({
 
     setSavingEditedTask(true);
     try {
+      const normalizedHora = normalizeTimeHHmm(formData.hora_vencimento);
       await caseTasksService.patchTask(taskId, {
         titulo: formData.titulo,
         descricao: formData.descricao || '',
         data_vencimento: formData.data_vencimento || null,
+        hora_vencimento: normalizedHora || null,
       });
       await onRefreshTasks();
       handleCancelEditTask();

@@ -15,7 +15,7 @@ import { validateDueDateAtLeastTomorrow } from '../../utils/taskDueDateValidatio
  * - submitLabel: string - texto do botão de submit (padrão: "Salvar")
  */
 export default function TaskForm({
-  initialData = { titulo: '', descricao: '', data_vencimento: '' },
+  initialData = { titulo: '', descricao: '', data_vencimento: '', hora_vencimento: '' },
   onSave = async () => {},
   onCancel = () => {},
   isLoading = false,
@@ -123,6 +123,30 @@ export default function TaskForm({
             type="date"
             value={formData.data_vencimento}
             onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: '0.5rem',
+              border: `1px solid ${caseTheme.darkBorder}`,
+              borderRadius: '4px',
+              fontSize: '0.975rem',
+              background: caseTheme.form.input.background,
+              color: '#1F2937',
+              fontWeight: '500',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Hora (opcional) */}
+      <div style={{ marginBottom: '0.75rem' }}>
+        <label style={labelStyle}>Hora (opcional)</label>
+        <div style={{ display: 'flex' }}>
+          <input
+            type="time"
+            value={formData.hora_vencimento || ''}
+            onChange={(e) => setFormData((prev) => ({ ...prev, hora_vencimento: e.target.value }))}
             style={{
               flex: 1,
               minWidth: 0,
