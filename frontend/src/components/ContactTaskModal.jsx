@@ -41,6 +41,15 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
       return;
     }
 
+    if (mode === 'create' && initialData) {
+      setFormData((prev) => ({
+        ...EMPTY_FORM,
+        contact: initialData.contact ?? prev.contact ?? null,
+        contact_name: initialData.contact_name ?? prev.contact_name ?? '',
+      }));
+      return;
+    }
+
     setFormData(EMPTY_FORM);
   }, [isOpen, mode, initialData]);
 

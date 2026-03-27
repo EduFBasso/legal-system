@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import ContactTaskModal from '@/components/ContactTaskModal';
@@ -17,6 +17,9 @@ export default function ContactTasksPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const contactIdParam = searchParams.get('contact_id');
+  const [createInitialData, setCreateInitialData] = useState(null);
 
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -43,6 +46,17 @@ export default function ContactTasksPage() {
     const oab = user.oab_number || '';
     return oab ? `${name} ${oab}` : name;
   }, [scopeLabel, user]);
+
+  useEffect(() => {
+    if (!contactIdParam || readOnly) return;
+    const contactId = Number(contactIdParam);
+    if (!Number.isFinite(contactId)) return;
+
+    // Prefill contact id; name will be resolved when user opens selector if needed
+    setCreateInitialData({ contact: contactId, contact_name: '' });
+    setIsCreateOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactIdParam, readOnly]);
 
   return (
     <>
@@ -85,10 +99,12 @@ export default function ContactTasksPage() {
       <ContactTaskModal
         isOpen={isCreateOpen}
         mode="create"
+        initialData={createInitialData}
         onClose={() => setIsCreateOpen(false)}
         onSubmit={async (payload) => {
           await contactTasksService.createTask(payload);
           setIsCreateOpen(false);
+          setCreateInitialData(null);
           handleRefresh();
         }}
       />

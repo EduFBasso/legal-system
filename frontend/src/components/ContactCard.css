@@ -176,6 +176,31 @@
   transition: all 0.2s ease;
 }
 
+.contact-card .btn-create-task {
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  color: #10b981;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-right: 10px;
+}
+
+.contact-card .btn-create-task:hover {
+  background: #10b981;
+  color: white;
+  transform: scale(1.15);
+}
+
+.contact-card .btn-create-task:active {
+  transform: scale(0.95);
+}
+
 .contact-card .btn-link-case:hover {
   background: #10b981;
   color: white;

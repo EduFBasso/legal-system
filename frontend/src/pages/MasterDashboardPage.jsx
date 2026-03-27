@@ -210,6 +210,26 @@ export default function MasterDashboardPage() {
     startDate,
   ]);
 
+  const openContactTasksNewTab = useCallback((contact) => {
+    if (!selectedLawyer) return;
+
+    const params = new URLSearchParams();
+    params.set('readonly', '0');
+    params.set('team_member_id', String(selectedLawyer));
+    params.set('team_scope', 'member');
+
+    const member = teamMembers.find((m) => String(m.id) === String(selectedLawyer));
+    const lawyerName = (member?.full_name_oab || member?.first_name || member?.username || '').trim();
+
+    const scopeLabelParts = [];
+    if (lawyerName) scopeLabelParts.push(lawyerName);
+    if (contact?.name) scopeLabelParts.push(contact.name);
+    if (scopeLabelParts.length > 0) params.set('scope_label', scopeLabelParts.join(' — '));
+    if (contact?.id != null) params.set('contact_id', String(contact.id));
+
+    window.open(`/contact-tasks?${params.toString()}`, '_blank', 'noopener,noreferrer');
+  }, [selectedLawyer, teamMembers]);
+
   const lawyerOptions = teamMembers.map((member) => {
     const firstName = (member.first_name || '').trim();
     const profileFirstName = (member.full_name_oab || '').trim().split(' ')[0] || '';
@@ -831,6 +851,7 @@ export default function MasterDashboardPage() {
             selectedContactId={selectedContactId}
             onSelectContact={setSelectedContactId}
             onViewContact={handleViewContact}
+            onCreateTask={openContactTasksNewTab}
           />
         )}
 
