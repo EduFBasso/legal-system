@@ -29,6 +29,8 @@ export default function UrgencySection({
   selectedTaskId,
   onSelectTask,
   onToggleStatus,
+  onEditTask,
+  onDeleteTask,
   onOpenCase,
   onOpenMovement,
   onOpenContact,
@@ -50,6 +52,8 @@ export default function UrgencySection({
             selectedTaskId={selectedTaskId}
             onSelectTask={onSelectTask}
             onToggleStatus={onToggleStatus}
+            onEditTask={onEditTask}
+            onDeleteTask={onDeleteTask}
             onOpenCase={onOpenCase}
             onOpenMovement={onOpenMovement}
             onOpenContact={onOpenContact}

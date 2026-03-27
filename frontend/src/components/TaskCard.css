@@ -300,6 +300,40 @@
   word-break: break-word;
 }
 
+.task-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.task-action-btn {
+  border: 1px solid var(--color-gray-300);
+  background: var(--color-white);
+  color: var(--color-gray-700);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.task-action-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.task-action-btn--danger {
+  border-color: var(--color-red-300);
+  color: var(--color-red-700);
+}
+
 .task-item.urgentissimo:not(.completed) .task-title {
   color: var(--color-urgentissimo-dark);
   font-weight: 800;

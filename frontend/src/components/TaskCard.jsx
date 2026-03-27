@@ -23,6 +23,8 @@ export default function TaskCard({
   selectedTaskId,
   onSelectTask,
   onToggleStatus,
+  onEditTask,
+  onDeleteTask,
   onOpenCase,
   onOpenMovement,
   onOpenContact,
@@ -72,6 +74,20 @@ export default function TaskCard({
     onToggleStatus(task);
   };
 
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    if (readOnly) return;
+    if (!onEditTask) return;
+    onEditTask(task);
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    if (readOnly) return;
+    if (!onDeleteTask) return;
+    onDeleteTask(task);
+  };
+
   return (
     <div
       key={task.id}
@@ -93,7 +109,28 @@ export default function TaskCard({
       </div>
 
       <div className="task-main" onClick={handleSelectClick}>
-        <div className="task-title">{titleText}</div>
+        <div className="task-title-row">
+          <div className="task-title">{titleText}</div>
+          {!readOnly && (onEditTask || onDeleteTask) ? (
+            <div className="task-actions">
+              {onEditTask ? (
+                <button type="button" className="task-action-btn" onClick={handleEditClick} aria-label="Editar tarefa">
+                  Editar
+                </button>
+              ) : null}
+              {onDeleteTask ? (
+                <button
+                  type="button"
+                  className="task-action-btn task-action-btn--danger"
+                  onClick={handleDeleteClick}
+                  aria-label="Excluir tarefa"
+                >
+                  Excluir
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
         {descriptionText && <div className="task-description">{descriptionText}</div>}
 
         {task.contact && task.contact_name && (

@@ -21,6 +21,9 @@ export default function DeadlinesContent({
   kind = 'case',
   displayLabel = '',
   readOnly = false,
+  headerActions = null,
+  onEditTask = null,
+  onDeleteTask = null,
 }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +130,7 @@ export default function DeadlinesContent({
 
     try {
       const nextStatus = task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA';
-      await caseTasksService.patchTask(task.id, { status: nextStatus });
+      await service.patchTask(task.id, { status: nextStatus });
 
       setTasks((prevTasks) =>
         prevTasks.map((t) => (t.id === task.id ? { ...t, status: nextStatus } : t))
@@ -189,6 +192,7 @@ export default function DeadlinesContent({
           <h1>{title}</h1>
           {displayLabel ? <div className="header-subtitle">{displayLabel}</div> : null}
         </div>
+        {headerActions ? <div className="header-actions">{headerActions}</div> : null}
       </div>
 
       <div className="deadlines-stats">
@@ -245,6 +249,8 @@ export default function DeadlinesContent({
                   selectedTaskId={selectedTaskId}
                   onSelectTask={setSelectedTaskId}
                   onToggleStatus={handleToggleTaskStatus}
+                  onEditTask={onEditTask}
+                  onDeleteTask={onDeleteTask}
                   onOpenCase={handleOpenCase}
                   onOpenMovement={handleOpenMovement}
                   onOpenContact={handleOpenContact}
