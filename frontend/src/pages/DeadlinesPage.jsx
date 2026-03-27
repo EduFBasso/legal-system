@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DeadlinesContent from '../components/DeadlinesContent';
+import './DeadlinesPage.css';
 
 /**
  * Dashboard de Tarefas por Urgência

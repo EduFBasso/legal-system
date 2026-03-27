@@ -1,0 +1,165 @@
+/* DeadlinesContent.css
+ *
+ * Styles scoped to the reusable DeadlinesContent component.
+ * IMPORTANT: Do not import page-level CSS here.
+ */
+
+.deadlines-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.deadlines-content .page-header {
+  padding: 16px 0;
+}
+
+.deadlines-content .header-content h1,
+.deadlines-content .page-header h1 {
+  margin: 0;
+}
+
+.deadlines-content .deadlines-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* KPI cards (Todas/Crítico/Urgentes/Normais) */
+.deadlines-content .stat-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  box-sizing: border-box;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: var(--transition-default);
+}
+
+.deadlines-content .stat-card.stat-clickable {
+  cursor: pointer;
+}
+
+.deadlines-content .stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  margin-bottom: 0.25rem;
+}
+
+.deadlines-content .stat-label {
+  font-size: 1rem;
+  color: var(--color-gray-900);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Stat colors */
+.deadlines-content .stat-card.stat-total .stat-number,
+.deadlines-content .stat-card.stat-total .stat-label {
+  color: var(--color-total);
+}
+
+.deadlines-content .stat-card.stat-urgentissimo .stat-number,
+.deadlines-content .stat-card.stat-urgentissimo .stat-label {
+  color: var(--color-urgentissimo);
+}
+
+.deadlines-content .stat-card.stat-urgente .stat-number,
+.deadlines-content .stat-card.stat-urgente .stat-label {
+  color: var(--color-urgente);
+}
+
+.deadlines-content .stat-card.stat-normal .stat-number,
+.deadlines-content .stat-card.stat-normal .stat-label {
+  color: var(--color-normal);
+}
+
+/* Hover */
+.deadlines-content .stat-card.stat-total.stat-clickable:hover {
+  border-color: var(--color-total);
+  --color-rgb: var(--color-total-rgb);
+  box-shadow: var(--shadow-hover-light);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-total-light);
+}
+
+.deadlines-content .stat-card.stat-urgentissimo.stat-clickable:hover {
+  border-color: var(--color-urgentissimo);
+  --color-rgb: var(--color-urgentissimo-rgb);
+  box-shadow: var(--shadow-hover-light);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-urgentissimo-light);
+}
+
+.deadlines-content .stat-card.stat-urgente.stat-clickable:hover {
+  border-color: var(--color-urgente);
+  --color-rgb: var(--color-urgente-rgb);
+  box-shadow: var(--shadow-hover-light);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-urgente-light);
+}
+
+.deadlines-content .stat-card.stat-normal.stat-clickable:hover {
+  border-color: var(--color-normal);
+  --color-rgb: var(--color-normal-rgb);
+  box-shadow: var(--shadow-hover-light);
+  transform: var(--transform-hover-emphasis);
+  background: var(--color-normal-light);
+}
+
+/* Selected: single border + subtle colored glow (avoid “double border”) */
+.deadlines-content .stat-card.stat-selected {
+  transform: none;
+}
+
+.deadlines-content .stat-card.stat-total.stat-selected {
+  border-color: var(--color-total);
+  background: var(--color-total-light);
+  box-shadow: 0 0 0 2px rgba(var(--color-total-rgb), 0.18);
+}
+
+.deadlines-content .stat-card.stat-urgentissimo.stat-selected {
+  border-color: var(--color-urgentissimo);
+  background: var(--color-urgentissimo-light);
+  box-shadow: 0 0 0 2px rgba(var(--color-urgentissimo-rgb), 0.18);
+}
+
+.deadlines-content .stat-card.stat-urgente.stat-selected {
+  border-color: var(--color-urgente);
+  background: var(--color-urgente-light);
+  box-shadow: 0 0 0 2px rgba(var(--color-urgente-rgb), 0.18);
+}
+
+.deadlines-content .stat-card.stat-normal.stat-selected {
+  border-color: var(--color-normal);
+  background: var(--color-normal-light);
+  box-shadow: 0 0 0 2px rgba(var(--color-normal-rgb), 0.18);
+}
+
+.deadlines-content .tasks-container {
+  margin-top: 16px;
+}
+
+.deadlines-content .loading-state,
+.deadlines-content .error-state,
+.deadlines-content .empty-state {
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .deadlines-content .deadlines-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .deadlines-content .deadlines-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

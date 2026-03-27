@@ -87,157 +87,9 @@
   color: var(--color-gray-800);
 }
 
-/* Estatísticas */
-.deadlines-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-}
-
-.deadlines-page .stat-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-gray-300);
-  box-sizing: border-box;
-  border-radius: 8px;
-  padding: 1.5rem;
-  text-align: center;
-  transition: var(--transition-default);
-}
-
-.deadlines-page .stat-card.stat-clickable {
-  cursor: pointer;
-}
-
-/* Stat colors and hover - Total (Slate) */
-.deadlines-page .stat-card.stat-total .stat-number,
-.deadlines-page .stat-card.stat-total .stat-label {
-  color: var(--color-total);
-}
-
-.deadlines-page .stat-card.stat-total.stat-clickable:hover {
-  border-color: var(--color-total);
-  border-width: 1px;
-  --color-rgb: var(--color-total-rgb);
-  box-shadow: var(--shadow-hover-light);
-  transform: var(--transform-hover-emphasis);
-  background: var(--color-total-light);
-}
-
-/* Stat colors and hover - Urgentissimo (Red) */
-.deadlines-page .stat-card.stat-urgentissimo .stat-number,
-.deadlines-page .stat-card.stat-urgentissimo .stat-label {
-  color: var(--color-urgentissimo);
-}
-
-.deadlines-page .stat-card.stat-urgentissimo.stat-clickable:hover {
-  border-color: var(--color-urgentissimo);
-  border-width: 1px;
-  --color-rgb: var(--color-urgentissimo-rgb);
-  box-shadow: var(--shadow-hover-light);
-  transform: var(--transform-hover-emphasis);
-  background: var(--color-urgentissimo-light);
-}
-
-/* Stat colors and hover - Urgente (Orange) */
-.deadlines-page .stat-card.stat-urgente .stat-number,
-.deadlines-page .stat-card.stat-urgente .stat-label {
-  color: var(--color-urgente);
-}
-
-.deadlines-page .stat-card.stat-urgente.stat-clickable:hover {
-  border-color: var(--color-urgente);
-  border-width: 1px;
-  --color-rgb: var(--color-urgente-rgb);
-  box-shadow: var(--shadow-hover-light);
-  transform: var(--transform-hover-emphasis);
-  background: var(--color-urgente-light);
-}
-
-/* Stat colors and hover - Normal (Green) */
-.deadlines-page .stat-card.stat-normal .stat-number,
-.deadlines-page .stat-card.stat-normal .stat-label {
-  color: var(--color-normal);
-}
-
-.deadlines-page .stat-card.stat-normal.stat-clickable:hover {
-  border-color: var(--color-normal);
-  border-width: 1px;
-  --color-rgb: var(--color-normal-rgb);
-  box-shadow: var(--shadow-hover-light);
-  transform: var(--transform-hover-emphasis);
-  background: var(--color-normal-light);
-}
-
-/* ========== SELECTED STATE ========== */
-.deadlines-page .stat-card.stat-selected {
-  border-width: 1px;
-  transform: none;
-}
-
-/* Selected state for each urgency */
-.deadlines-page .stat-card.stat-total.stat-selected {
-  border-color: var(--color-total) !important;
-  background: var(--color-total-light) !important;
-  box-shadow: 0 0 0 2px rgba(var(--color-total-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.deadlines-page .stat-card.stat-total.stat-selected:hover {
-  --color-rgb: var(--color-total-rgb);
-  box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-normal);
-}
-
-.deadlines-page .stat-card.stat-urgentissimo.stat-selected {
-  border-color: var(--color-urgentissimo) !important;
-  background: var(--color-urgentissimo-light) !important;
-  box-shadow: 0 0 0 2px rgba(var(--color-urgentissimo-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.deadlines-page .stat-card.stat-urgentissimo.stat-selected:hover {
-  --color-rgb: var(--color-urgentissimo-rgb);
-  box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-normal);
-}
-
-.deadlines-page .stat-card.stat-urgente.stat-selected {
-  border-color: var(--color-urgente) !important;
-  background: var(--color-urgente-light) !important;
-  box-shadow: 0 0 0 2px rgba(var(--color-urgente-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.deadlines-page .stat-card.stat-urgente.stat-selected:hover {
-  --color-rgb: var(--color-urgente-rgb);
-  box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-normal);
-}
-
-.deadlines-page .stat-card.stat-normal.stat-selected {
-  border-color: var(--color-normal) !important;
-  background: var(--color-normal-light) !important;
-  box-shadow: 0 0 0 2px rgba(var(--color-normal-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.deadlines-page .stat-card.stat-normal.stat-selected:hover {
-  --color-rgb: var(--color-normal-rgb);
-  box-shadow: var(--shadow-hover-dark);
-  transform: var(--transform-hover-normal);
-}
-
-.deadlines-page .stat-number {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-gray-900);
-  margin-bottom: 0.25rem;
-}
-
-.deadlines-page .stat-label {
-  font-size: 1rem;
-  color: var(--color-gray-900);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
+/* Estatísticas (KPI cards) agora são estilos do componente DeadlinesContent
+   em frontend/src/components/DeadlinesContent.css para manter consistência
+   entre Painel Master e página de prazos sem vazamento de CSS. */
   justify-content: center;
   text-align: center;
   min-height: 2.4em;
@@ -336,220 +188,19 @@
 }
 
 /* Lista de tarefas */
+/*
+  IMPORTANTE:
+  A lista de tarefas nesta página usa o componente compartilhado TaskCard.
+  Evite redefinir estilos de `.task-*` aqui para não vazar/colidir com outras
+  telas (ex.: Painel Master) que também reutilizam esse conteúdo.
+  Estilos do card/checkbox/urgência/concluída ficam em TaskCard.css.
+*/
 .deadlines-page .tasks-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 10px;
   background: var(--color-gray-50);
-}
-
-.deadlines-page .task-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 18px 20px;
-  border: 1px solid #ddd6fe;
-  border-radius: 8px;
-  background: var(--color-white);
-  transition: var(--transition-default);
-}
-
-.deadlines-page .task-item:hover {
-  background: var(--color-gray-50);
-  border-color: var(--color-gray-400);
-  box-shadow: var(--shadow-default);
-  transform: var(--transform-hover-normal);
-}
-
-/* Task item hover states for each urgency */
-.deadlines-page .task-item.urgentissimo:hover {
-  --color-rgb: var(--color-urgentissimo-rgb);
-  background: var(--color-urgentissimo-light);
-  border-color: var(--color-urgentissimo);
-  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
-}
-
-.deadlines-page .task-item.urgente:hover {
-  --color-rgb: var(--color-urgente-rgb);
-  background: var(--color-urgente-light);
-  border-color: var(--color-urgente);
-  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
-}
-
-.deadlines-page .task-item.normal:hover {
-  --color-rgb: var(--color-normal-rgb);
-  background: var(--color-normal-light);
-  border-color: var(--color-normal);
-  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.12);
-}
-
-.deadlines-page .task-item.completed {
-  opacity: 0.6;
-}
-
-.deadlines-page .task-item.completed .task-title {
-  text-decoration: line-through;
-  color: var(--color-gray-400);
-}
-
-/* Task item selected states for each urgency */
-.deadlines-page .task-item.urgentissimo.selected {
-  --color-rgb: var(--color-urgentissimo-rgb);
-  border: 3px solid var(--color-urgentissimo);
-  background: var(--color-urgentissimo-light);
-  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
-  transform: var(--transform-hover-normal);
-}
-
-.task-item.urgentissimo.selected:hover {
-  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
-  transform: var(--transform-hover-emphasis);
-}
-
-.deadlines-page .task-item.urgente.selected {
-  --color-rgb: var(--color-urgente-rgb);
-  border: 3px solid var(--color-urgente);
-  background: var(--color-urgente-light);
-  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
-  transform: var(--transform-hover-normal);
-}
-
-.task-item.urgente.selected:hover {
-  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
-  transform: var(--transform-hover-emphasis);
-}
-
-.deadlines-page .task-item.normal.selected {
-  --color-rgb: var(--color-normal-rgb);
-  border: 3px solid var(--color-normal);
-  background: var(--color-normal-light);
-  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
-  transform: var(--transform-hover-normal);
-}
-
-.task-item.normal.selected:hover {
-  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
-  transform: var(--transform-hover-emphasis);
-}
-
-/* Checkbox */
-.deadlines-page .task-checkbox {
-  flex-shrink: 0;
-  margin-top: 4px;
-}
-
-.deadlines-page .checkbox-input {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  border: 2px solid var(--color-gray-400);
-  border-radius: 4px;
-  background: var(--color-white);
-  display: grid;
-  place-content: center;
-  transition: var(--transition-default);
-}
-
-.checkbox-input::before {
-  content: '';
-  width: 10px;
-  height: 10px;
-  transform: scale(0);
-  transition: var(--transition-checkbox);
-  background-color: var(--color-white);
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-}
-
-/* Checkbox colors for each urgency */
-.task-item.urgentissimo .checkbox-input {
-  border-color: var(--color-urgentissimo);
-}
-
-.task-item.urgentissimo .checkbox-input:checked {
-  background: var(--color-urgentissimo);
-  border-color: var(--color-urgentissimo);
-}
-
-.task-item.urgentissimo .checkbox-input:focus-visible {
-  outline: 2px solid #fecaca;
-  outline-offset: 1px;
-}
-
-.task-item.urgente .checkbox-input {
-  border-color: var(--color-urgente);
-}
-
-.task-item.urgente .checkbox-input:checked {
-  background: var(--color-urgente);
-  border-color: var(--color-urgente);
-}
-
-.task-item.urgente .checkbox-input:focus-visible {
-  outline: 2px solid #fed7aa;
-  outline-offset: 1px;
-}
-
-.task-item.normal .checkbox-input {
-  border-color: var(--color-normal);
-}
-
-.task-item.normal .checkbox-input:checked {
-  background: var(--color-normal);
-  border-color: var(--color-normal);
-}
-
-.task-item.normal .checkbox-input:focus-visible {
-  outline: 2px solid #bbf7d0;
-  outline-offset: 1px;
-}
-
-.checkbox-input:checked::before {
-  transform: scale(1);
-}
-
-/* Conteúdo principal da tarefa */
-.deadlines-page .task-main {
-  flex: 1;
-  cursor: pointer;
-  min-width: 0;
-}
-
-.deadlines-page .task-main:hover {
-  opacity: 0.8;
-}
-
-.deadlines-page .task-title {
-  font-weight: 700;
-  font-size: 17px;
-  color: var(--color-gray-800);
-  margin: 0 0 8px 0;
-  word-break: break-word;
-}
-
-/* Task title colors for each urgency when not completed */
-.task-item.urgentissimo:not(.completed) .task-title {
-  color: var(--color-urgentissimo-dark);
-  font-weight: 800;
-}
-
-.task-item.urgente:not(.completed) .task-title {
-  color: var(--color-urgente-dark);
-  font-weight: 800;
-}
-
-.task-item.normal:not(.completed) .task-title {
-  color: var(--color-normal-dark);
-  font-weight: 800;
-}
-
-.task-process-line {
-  font-size: 15px;
-  margin: 0 0 10px 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-gray-200);
 }
 
 .deadlines-page .task-process-meta {
@@ -590,21 +241,21 @@
 }
 
 /* Link colors for each urgency */
-.task-item.urgentissimo .task-movement-link-anchor {
+.deadlines-page .task-item.urgentissimo .task-movement-link-anchor {
   color: var(--color-urgentissimo-dark);
 }
 
-.task-item.urgente .task-movement-link-anchor {
+.deadlines-page .task-item.urgente .task-movement-link-anchor {
   color: var(--color-urgente-dark);
 }
 
-.task-item.normal .task-movement-link-anchor {
+.deadlines-page .task-item.normal .task-movement-link-anchor {
   color: var(--color-normal-dark);
 }
 
-.task-item.urgentissimo .task-movement-link-anchor:hover,
-.task-item.urgente .task-movement-link-anchor:hover,
-.task-item.normal .task-movement-link-anchor:hover {
+.deadlines-page .task-item.urgentissimo .task-movement-link-anchor:hover,
+.deadlines-page .task-item.urgente .task-movement-link-anchor:hover,
+.deadlines-page .task-item.normal .task-movement-link-anchor:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -617,9 +268,7 @@
   word-break: break-word;
 }
 
-.task-item:not(.completed) .task-description {
-  color: var(--color-gray-700);
-}
+/* Card-level task styles are owned by TaskCard.css */
 
 .deadlines-page .task-meta {
   display: flex;
@@ -630,31 +279,23 @@
   align-items: center;
 }
 
-.task-item:not(.completed) .task-meta {
-  color: var(--color-gray-700);
-}
+/* Card-level task styles are owned by TaskCard.css */
 
-.task-date,
-.task-remaining {
+.deadlines-page .task-date,
+.deadlines-page .task-remaining {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.task-meta-dot {
+.deadlines-page .task-meta-dot {
   font-size: 16px;
   line-height: 1;
 }
 
-.task-item:not(.completed) .task-date,
-.task-item:not(.completed) .task-remaining,
-.task-item:not(.completed) .task-meta-dot {
-  color: var(--color-gray-700);
-  font-size: 16px;
-  font-weight: 700;
-}
+/* Card-level task styles are owned by TaskCard.css */
 
-.task-date.overdue-date {
+.deadlines-page .task-date.overdue-date {
   color: var(--color-urgentissimo-dark) !important;
   background: var(--color-urgentissimo-light);
   border: 1px solid #fecaca;
@@ -662,13 +303,13 @@
   padding: 2px 8px;
 }
 
-.task-remaining.overdue-remaining,
-.task-meta-dot.overdue-meta-dot {
+.deadlines-page .task-remaining.overdue-remaining,
+.deadlines-page .task-meta-dot.overdue-meta-dot {
   color: var(--color-urgentissimo-dark) !important;
   font-weight: 700;
 }
 
-.task-date.today-date {
+.deadlines-page .task-date.today-date {
   color: #b45309 !important;
   background: #fffbeb;
   border: 1px solid #fcd34d;
@@ -676,8 +317,8 @@
   padding: 2px 8px;
 }
 
-.task-remaining.today-remaining,
-.task-meta-dot.today-meta-dot {
+.deadlines-page .task-remaining.today-remaining,
+.deadlines-page .task-meta-dot.today-meta-dot {
   color: #b45309 !important;
   font-weight: 700;
 }
@@ -692,21 +333,21 @@
 }
 
 /* Process link colors for each urgency */
-.task-item.urgentissimo .task-process-link {
+.deadlines-page .task-item.urgentissimo .task-process-link {
   color: var(--color-urgentissimo-dark);
 }
 
-.task-item.urgente .task-process-link {
+.deadlines-page .task-item.urgente .task-process-link {
   color: var(--color-urgente-dark);
 }
 
-.task-item.normal .task-process-link {
+.deadlines-page .task-item.normal .task-process-link {
   color: var(--color-normal-dark);
 }
 
-.task-item.urgentissimo .task-process-link:hover,
-.task-item.urgente .task-process-link:hover,
-.task-item.normal .task-process-link:hover {
+.deadlines-page .task-item.urgentissimo .task-process-link:hover,
+.deadlines-page .task-item.urgente .task-process-link:hover,
+.deadlines-page .task-item.normal .task-process-link:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -743,16 +384,16 @@
     min-height: 2.8em;
   }
 
-  .task-item {
+  .deadlines-page .task-item {
     padding: 14px 16px;
     flex-wrap: wrap;
   }
 
-  .task-title {
+  .deadlines-page .task-title {
     font-size: 15px;
   }
 
-  .task-meta {
+  .deadlines-page .task-meta {
     width: 100%;
     order: 3;
   }
@@ -788,21 +429,21 @@
     font-size: 28px;
   }
 
-  .task-item {
+  .deadlines-page .task-item {
     padding: 12px 14px;
     gap: 8px;
   }
 
-  .task-title {
+  .deadlines-page .task-title {
     font-size: 14px;
   }
 
-  .task-main {
+  .deadlines-page .task-main {
     flex-basis: 100%;
     order: 2;
   }
 
-  .task-meta {
+  .deadlines-page .task-meta {
     flex-direction: column;
     gap: 4px;
   }

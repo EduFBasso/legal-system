@@ -162,7 +162,7 @@
 }
 
 .task-item.completed {
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .task-item.completed .task-title {
@@ -292,10 +292,6 @@
   min-width: 0;
 }
 
-.task-main:hover {
-  opacity: 0.8;
-}
-
 .task-title {
   font-weight: 700;
   font-size: 17px;
@@ -329,6 +325,17 @@
   gap: 8px;
 }
 
+/* Ensure meta links are always legible (Master uses readOnly + aria-disabled) */
+.task-process-link,
+.task-movement-link-anchor {
+  opacity: 1;
+}
+
+.task-item:not(.completed) .task-process-link,
+.task-item:not(.completed) .task-movement-link-anchor {
+  font-weight: 700;
+}
+
 .task-movement-link-anchor {
   display: inline-block;
   color: var(--color-gray-800);
@@ -340,8 +347,29 @@
 
 .task-process-link[aria-disabled='true'],
 .task-movement-link-anchor[aria-disabled='true'] {
-  opacity: 0.55;
+  opacity: 1;
   text-decoration: none;
+}
+
+/* Read-only links should remain fully legible even when inert */
+.task-process-link[aria-disabled='true'],
+.task-movement-link-anchor[aria-disabled='true'] {
+  color: inherit;
+}
+
+.task-item.urgentissimo .task-process-link[aria-disabled='true'],
+.task-item.urgentissimo .task-movement-link-anchor[aria-disabled='true'] {
+  color: var(--color-urgentissimo-dark);
+}
+
+.task-item.urgente .task-process-link[aria-disabled='true'],
+.task-item.urgente .task-movement-link-anchor[aria-disabled='true'] {
+  color: var(--color-urgente-dark);
+}
+
+.task-item.normal .task-process-link[aria-disabled='true'],
+.task-item.normal .task-movement-link-anchor[aria-disabled='true'] {
+  color: var(--color-normal-dark);
 }
 
 .task-process-link[aria-disabled='true']:hover,
@@ -369,7 +397,7 @@
 }
 
 .task-description {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-gray-600);
   margin: 0 0 10px 0;
   line-height: 1.4;

@@ -11,7 +11,7 @@ import {
 } from '../utils/taskUrgency';
 import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import UrgencySection from './UrgencySection';
-import '../pages/DeadlinesPage.css';
+import './DeadlinesContent.css';
 
 export default function DeadlinesContent({
   tasksQueryParams,
@@ -141,7 +141,7 @@ export default function DeadlinesContent({
 
   if (loading) {
     return (
-      <div className="deadlines-page">
+      <div className="deadlines-content">
         <div className="page-header">
           <h1>⏰ Tarefas por Urgência</h1>
         </div>
@@ -155,7 +155,7 @@ export default function DeadlinesContent({
 
   if (error) {
     return (
-      <div className="deadlines-page">
+      <div className="deadlines-content">
         <div className="page-header">
           <h1>⏰ Tarefas por Urgência</h1>
         </div>
@@ -167,7 +167,7 @@ export default function DeadlinesContent({
   }
 
   return (
-    <div className="deadlines-page">
+    <div className="deadlines-content">
       <div className="page-header">
         <div className="header-content">
           <h1>⏰ Tarefas por Urgência</h1>
