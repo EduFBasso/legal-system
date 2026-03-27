@@ -1198,6 +1198,12 @@ class CaseTask(models.Model):
         help_text='Data limite da tarefa (auto-calculada se não informada)'
     )
 
+    hora_vencimento = models.TimeField(
+        null=True,
+        blank=True,
+        help_text='Hora limite da tarefa (opcional)'
+    )
+
     status = models.CharField(
         max_length=20,
         choices=[

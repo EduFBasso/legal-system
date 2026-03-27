@@ -6,6 +6,7 @@ import DeadlinesContent from '../components/DeadlinesContent';
 import { Button } from '../components/common/Button';
 import Toast from '../components/common/Toast';
 import { validateDueDateAtLeastTomorrow } from '../utils/taskDueDateValidation';
+import { notifyTaskUpdate } from '../services/taskSyncService';
 import './DeadlinesPage.css';
 
 /**
@@ -118,6 +119,17 @@ export default function DeadlinesPage() {
         data_vencimento: editingTask.data_vencimento,
         hora_vencimento: normalizedHora || null,
       });
+
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'edited',
+        taskId: editingTask.id,
+        caseId: editingTask.case,
+        titulo: editingTask.titulo,
+        data_vencimento: editingTask.data_vencimento,
+        timestamp: new Date().toISOString(),
+      });
+
       setEditingTask(null);
       showToast('Tarefa atualizada com sucesso!', 'success');
     } catch (err) {

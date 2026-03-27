@@ -179,6 +179,7 @@ class CaseTaskSerializer(serializers.ModelSerializer):
             'urgencia_display',
             'cor_urgencia',
             'data_vencimento',
+            'hora_vencimento',
             'status',
             'status_display',
             'vencida',
