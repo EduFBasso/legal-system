@@ -42,6 +42,7 @@ export default function TaskCard({
   const urgencyClass = urgency.toLowerCase();
 
   const titleText = htmlToText(task.titulo);
+  const dueTimeText = (task.hora_vencimento || '').toString().trim();
   const descriptionText = htmlToText(task.descricao);
   const movementTitleText = htmlToText(task.movimentacao_titulo);
 
@@ -147,7 +148,7 @@ export default function TaskCard({
               />
             </div>
           ) : null}
-          <div className="task-title">{titleText}</div>
+          <div className="task-title">{titleText}{dueTimeText ? ` ${dueTimeText} hs` : ''}</div>
           {!isContactTask && !readOnly && (onEditTask || onDeleteTask) ? (
             <div className="task-actions">
               {onEditTask ? (

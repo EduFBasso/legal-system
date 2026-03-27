@@ -315,6 +315,7 @@ class ContactTaskSerializer(serializers.ModelSerializer):
             'urgencia',
             'urgencia_display',
             'data_vencimento',
+            'hora_vencimento',
             'status',
             'status_display',
             'concluida_em',

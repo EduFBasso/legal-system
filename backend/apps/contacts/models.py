@@ -258,6 +258,12 @@ class ContactTask(models.Model):
         help_text='Data limite da tarefa'
     )
 
+    hora_vencimento = models.TimeField(
+        null=True,
+        blank=True,
+        help_text='Hora limite da tarefa (opcional)'
+    )
+
     status = models.CharField(
         max_length=20,
         choices=[
@@ -277,7 +283,7 @@ class ContactTask(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['data_vencimento', '-created_at']
+        ordering = ['data_vencimento', 'hora_vencimento', '-created_at']
         verbose_name = 'Tarefa do Contato'
         verbose_name_plural = 'Tarefas do Contato'
         indexes = [

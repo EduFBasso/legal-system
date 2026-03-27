@@ -12,6 +12,7 @@ const EMPTY_FORM = {
   titulo: '',
   descricao: '',
   data_vencimento: '',
+  hora_vencimento: '',
 };
 
 export default function ContactTaskModal({ isOpen, mode = 'create', initialData = null, onClose, onSubmit }) {
@@ -37,6 +38,7 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
         titulo: initialData.titulo ?? '',
         descricao: initialData.descricao ?? '',
         data_vencimento: initialData.data_vencimento ?? '',
+        hora_vencimento: initialData.hora_vencimento ?? '',
       });
       return;
     }
@@ -82,6 +84,7 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
         titulo: formData.titulo,
         descricao: formData.descricao,
         data_vencimento: formData.data_vencimento,
+        hora_vencimento: formData.hora_vencimento || null,
         status: 'PENDENTE',
       });
       onClose();
@@ -168,6 +171,18 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
                 onChange={(e) => setFormData((prev) => ({ ...prev, data_vencimento: e.target.value }))}
                 disabled={loading}
                 required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="contact_task_hora_vencimento">Hora</label>
+              <input
+                id="contact_task_hora_vencimento"
+                type="time"
+                name="hora_vencimento"
+                value={formData.hora_vencimento}
+                onChange={(e) => setFormData((prev) => ({ ...prev, hora_vencimento: e.target.value }))}
+                disabled={loading}
               />
             </div>
 
