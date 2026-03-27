@@ -95,6 +95,17 @@
   transition: var(--transition-default);
 }
 
+/* Ensure icon actions can be reused outside TaskCard markup (e.g., Movimentações inline list) */
+.task-action-btn.task-action-btn--icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
 .task-stamp {
   position: absolute;
   top: 12px;

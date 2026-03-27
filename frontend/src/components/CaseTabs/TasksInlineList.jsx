@@ -176,6 +176,7 @@ export default function TasksInlineList({
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', position: 'relative', zIndex: 3 }}>
                     <button
                       type="button"
+                      className="task-action-btn task-action-btn--icon task-action-btn--danger"
                       onClick={async (e) => {
                         e.stopPropagation();
                         if (readOnly) return;
@@ -198,8 +199,7 @@ export default function TasksInlineList({
                           alert('Erro ao excluir tarefa');
                         }
                       }}
-                      style={{ ...tasksInlineStyles.deleteTaskIconButton, pointerEvents: 'auto', position: 'relative', zIndex: 4 }}
-                      title="Excluir esta tarefa"
+                      title="Excluir"
                       disabled={readOnly}
                       aria-disabled={readOnly ? 'true' : undefined}
                     >
@@ -207,20 +207,18 @@ export default function TasksInlineList({
                     </button>
 
                     <button
+                      type="button"
+                      className="task-action-btn task-action-btn--icon"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (readOnly) return;
                         onOpenEditTask(task);
                       }}
-                      style={{
-                        ...tasksInlineStyles.editTaskButton,
-                        background: editButtonBaseColor,
-                      }}
+                      title="Editar"
                       disabled={readOnly}
                       aria-disabled={readOnly ? 'true' : undefined}
-                      {...(readOnly ? {} : editTaskButtonInteractions)}
                     >
-                      Editar
+                      ✏️
                     </button>
                   </div>
                 </div>
