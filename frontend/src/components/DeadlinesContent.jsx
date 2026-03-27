@@ -11,6 +11,7 @@ import {
 } from '../utils/taskUrgency';
 import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import UrgencySection from './UrgencySection';
+import ContactDetailModal from './ContactDetailModal';
 import MasterContactDetailsModal from './MasterContactDetailsModal';
 import './DeadlinesContent.css';
 
@@ -267,12 +268,27 @@ export default function DeadlinesContent({
         )}
       </div>
 
-      <MasterContactDetailsModal
-        contactId={selectedContactId}
-        teamMemberId={tasksQueryParams?.team_member_id || null}
-        isOpen={isContactModalOpen}
-        onClose={() => setIsContactModalOpen(false)}
-      />
+      {readOnly ? (
+        <MasterContactDetailsModal
+          contactId={selectedContactId}
+          teamMemberId={tasksQueryParams?.team_member_id || null}
+          isOpen={isContactModalOpen}
+          onClose={() => setIsContactModalOpen(false)}
+        />
+      ) : (
+        <ContactDetailModal
+          contactId={selectedContactId}
+          isOpen={isContactModalOpen}
+          onClose={() => setIsContactModalOpen(false)}
+          onContactUpdated={() => {
+            // No-op: keep modal behavior consistent with contact card view.
+          }}
+          allowModification={true}
+          showLinkToProcessButton={false}
+          onLinkToCase={null}
+          onLinkToProcess={null}
+        />
+      )}
     </div>
   );
 }
