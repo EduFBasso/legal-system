@@ -228,6 +228,18 @@ export const tasksInlineStyles = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
   },
+  deleteTaskIconButton: {
+    border: 'none',
+    background: '#ffffff',
+    color: caseTheme.darkText,
+    borderRadius: '6px',
+    padding: '0.25rem 0.45rem',
+    fontSize: '1rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    lineHeight: 1,
+  },
 };
 
 // Re-exportar para compatibilidade

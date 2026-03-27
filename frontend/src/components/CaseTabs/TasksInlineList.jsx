@@ -169,22 +169,39 @@ export default function TasksInlineList({
                       Sem vencimento
                     </span>
                   )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (readOnly) return;
-                      onOpenEditTask(task);
-                    }}
-                    style={{
-                      ...tasksInlineStyles.editTaskButton,
-                      background: editButtonBaseColor,
-                    }}
-                    disabled={readOnly}
-                    aria-disabled={readOnly ? 'true' : undefined}
-                    {...(readOnly ? {} : editTaskButtonInteractions)}
-                  >
-                    Editar
-                  </button>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (readOnly) return;
+                        if (typeof onDeleteTask !== 'function') return;
+                        onDeleteTask(task);
+                      }}
+                      style={tasksInlineStyles.deleteTaskIconButton}
+                      title="Excluir esta tarefa"
+                      disabled={readOnly || typeof onDeleteTask !== 'function'}
+                      aria-disabled={readOnly ? 'true' : undefined}
+                    >
+                      🗑️
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (readOnly) return;
+                        onOpenEditTask(task);
+                      }}
+                      style={{
+                        ...tasksInlineStyles.editTaskButton,
+                        background: editButtonBaseColor,
+                      }}
+                      disabled={readOnly}
+                      aria-disabled={readOnly ? 'true' : undefined}
+                      {...(readOnly ? {} : editTaskButtonInteractions)}
+                    >
+                      Editar
+                    </button>
+                  </div>
                 </div>
               </>
             )}
