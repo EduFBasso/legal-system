@@ -41,8 +41,21 @@ export default function TaskCard({
   // Normaliza urgency para lowercase (CSS classes são minúsculas)
   const urgencyClass = urgency.toLowerCase();
 
+  const normalizeTimeHHmm = (timeValue) => {
+    const value = (timeValue || '').toString().trim();
+    if (!value) return '';
+
+    // Aceita "HH:mm" ou "HH:mm:ss" e normaliza para "HH:mm".
+    const match = value.match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+    if (!match) return value;
+
+    const hh = match[1].padStart(2, '0');
+    const mm = match[2].padStart(2, '0');
+    return `${hh}:${mm}`;
+  };
+
   const titleText = htmlToText(task.titulo);
-  const dueTimeText = (task.hora_vencimento || '').toString().trim();
+  const dueTimeText = normalizeTimeHHmm(task.hora_vencimento);
   const descriptionText = htmlToText(task.descricao);
   const movementTitleText = htmlToText(task.movimentacao_titulo);
 
