@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import ContactDetailModal from './ContactDetailModal';
 import SelectContactModal from './SelectContactModal';
 
 import './CreateTaskModal.css';
@@ -16,6 +17,7 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [isSelectContactOpen, setIsSelectContactOpen] = useState(false);
+  const [isCreateContactOpen, setIsCreateContactOpen] = useState(false);
 
   const modalTitle = useMemo(() => {
     if (mode === 'edit') return 'Editar Tarefa de Pessoa';
@@ -38,6 +40,10 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
 
     setFormData(EMPTY_FORM);
   }, [isOpen, mode, initialData]);
+
+  useEffect(() => {
+    if (!isOpen) setIsCreateContactOpen(false);
+  }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -175,7 +181,27 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
           }));
           setIsSelectContactOpen(false);
         }}
-        onCreateNew={null}
+        onCreateNew={() => {
+          setIsCreateContactOpen(true);
+        }}
+      />
+
+      <ContactDetailModal
+        contactId={null}
+        isOpen={isCreateContactOpen}
+        onClose={() => setIsCreateContactOpen(false)}
+        onContactUpdated={(createdContact) => {
+          if (createdContact?.id) {
+            setFormData((prev) => ({
+              ...prev,
+              contact: createdContact.id,
+              contact_name: createdContact.name,
+            }));
+          }
+          setIsCreateContactOpen(false);
+          setIsSelectContactOpen(false);
+        }}
+        showLinkToProcessButton={false}
       />
     </>
   );
