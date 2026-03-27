@@ -408,6 +408,24 @@
   color: var(--color-gray-700);
 }
 
+.task-contact-meta {
+  margin: 0 0 10px 0;
+}
+
+.task-contact-link {
+  color: var(--color-gray-800);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.task-process-link--empty {
+  color: var(--color-gray-600);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: default;
+}
+
 .task-meta {
   display: flex;
   flex-wrap: wrap;

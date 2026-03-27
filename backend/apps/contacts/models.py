@@ -4,6 +4,7 @@ Models para gestão de contatos (clientes e partes envolvidas).
 from django.db import models
 from django.core.validators import RegexValidator
 from django.conf import settings
+from django.utils import timezone
 
 
 class Contact(models.Model):
@@ -189,33 +190,106 @@ class Contact(models.Model):
             return f"({numbers[0:2]}) {numbers[2:7]}-{numbers[7:11]}"
         
         return self.phone
-    
+
     @property
     def mobile_formatted(self):
         """Retorna celular formatado."""
         if not self.mobile:
             return None
-        
+
         # Remove caracteres não numéricos
         numbers = ''.join(filter(str.isdigit, self.mobile))
-        
+
         if len(numbers) == 10:  # Telefone fixo: (11) 3333-4444
             return f"({numbers[0:2]}) {numbers[2:6]}-{numbers[6:10]}"
         elif len(numbers) == 11:  # Celular: (11) 98765-4321
             return f"({numbers[0:2]}) {numbers[2:7]}-{numbers[7:11]}"
-        
+
         return self.mobile
-    
+
     @property
     def zip_code_formatted(self):
         """Retorna CEP formatado."""
         if not self.zip_code:
             return None
-        
+
         # Remove caracteres não numéricos
         numbers = ''.join(filter(str.isdigit, self.zip_code))
-        
+
         if len(numbers) == 8:  # CEP: 12345-678
             return f"{numbers[0:5]}-{numbers[5:8]}"
-        
+
         return self.zip_code
+
+
+class ContactTask(models.Model):
+    """Tarefas administrativas vinculadas a um contato (pessoa/cliente).
+
+    Diferente de CaseTask, estas tarefas podem existir sem processo no sistema.
+    """
+
+    contact = models.ForeignKey(
+        Contact,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+        db_index=True,
+        help_text='Contato relacionado à tarefa'
+    )
+
+    titulo = models.CharField(max_length=255, help_text='Título curto da tarefa')
+    descricao = models.TextField(blank=True, default='', help_text='Descrição detalhada da tarefa')
+
+    urgencia = models.CharField(
+        max_length=20,
+        choices=[
+            ('NORMAL', 'Prazo Normal'),
+            ('URGENTE', 'Prazo Urgente'),
+            ('URGENTISSIMO', 'Prazo Urgentíssimo'),
+        ],
+        default='NORMAL',
+        db_index=True,
+        help_text='Nível de urgência da tarefa'
+    )
+
+    data_vencimento = models.DateField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='Data limite da tarefa'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDENTE', 'Pendente'),
+            ('EM_ANDAMENTO', 'Em andamento'),
+            ('CONCLUIDA', 'Concluída'),
+            ('CANCELADA', 'Cancelada'),
+        ],
+        default='PENDENTE',
+        db_index=True,
+        help_text='Status de execução da tarefa'
+    )
+
+    concluida_em = models.DateTimeField(null=True, blank=True, help_text='Quando a tarefa foi concluída')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['data_vencimento', '-created_at']
+        verbose_name = 'Tarefa do Contato'
+        verbose_name_plural = 'Tarefas do Contato'
+        indexes = [
+            models.Index(fields=['contact', 'status']),
+            models.Index(fields=['urgencia', 'data_vencimento']),
+        ]
+
+    def __str__(self):
+        return f"{self.contact.name} - {self.titulo}"
+
+    @property
+    def vencida(self):
+        if not self.data_vencimento or self.status == 'CONCLUIDA':
+            return False
+        return self.data_vencimento < timezone.now().date()

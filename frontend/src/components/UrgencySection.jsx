@@ -31,6 +31,7 @@ export default function UrgencySection({
   onToggleStatus,
   onOpenCase,
   onOpenMovement,
+  onOpenContact,
   isOverdue,
   isToday,
   formatDate,
@@ -51,6 +52,7 @@ export default function UrgencySection({
             onToggleStatus={onToggleStatus}
             onOpenCase={onOpenCase}
             onOpenMovement={onOpenMovement}
+            onOpenContact={onOpenContact}
             isOverdue={isOverdue}
             isToday={isToday}
             formatDate={formatDate}

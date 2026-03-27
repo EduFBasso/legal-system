@@ -179,6 +179,14 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
             })}
           </li>
 
+          <li className="menu-item">
+            {renderMenuLink({
+              to: '/contact-tasks',
+              icon: '👤',
+              label: 'Tarefas de Pessoas',
+            })}
+          </li>
+
           <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
 
           <li className="menu-item">

@@ -15,11 +15,12 @@ from apps.accounts.scope import (
     has_master_team_scope,
     is_truthy,
 )
-from .models import Contact
+from .models import Contact, ContactTask
 from .serializers import (
     ContactListSerializer,
     ContactDetailSerializer,
-    ContactCreateUpdateSerializer
+    ContactCreateUpdateSerializer,
+    ContactTaskSerializer,
 )
 
 
@@ -257,6 +258,60 @@ class ContactViewSet(viewsets.ModelViewSet):
                 {'error': 'Foto deve ter no máximo 5MB'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class ContactTaskViewSet(viewsets.ModelViewSet):
+    """ViewSet para tarefas administrativas vinculadas a um contato (pessoa/cliente)."""
+
+    queryset = ContactTask.objects.select_related('contact').all().order_by('data_vencimento', '-created_at')
+    serializer_class = ContactTaskSerializer
+    UserModel = get_user_model()
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        'contact': ['exact'],
+        'urgencia': ['exact', 'in'],
+        'status': ['exact', 'in'],
+        'data_vencimento': ['gte', 'lte', 'exact'],
+    }
+    search_fields = [
+        'titulo',
+        'descricao',
+        'contact__name',
+        'contact__document_number',
+    ]
+    ordering_fields = ['data_vencimento', 'urgencia', 'status', 'created_at']
+    ordering = ['data_vencimento', '-created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return queryset.none()
+
+        scope_user = get_master_scope_user(self.request, self.UserModel)
+        if scope_user is not None:
+            queryset = queryset.filter(contact__owner=scope_user)
+        elif is_master_user(user):
+            if has_master_team_scope(self.request):
+                queryset = apply_master_team_scope(
+                    queryset,
+                    self.request,
+                    self.UserModel,
+                    owner_field='contact__owner',
+                )
+            else:
+                queryset = apply_user_owned_or_shared(queryset, user, owner_field='contact__owner')
+        else:
+            queryset = queryset.filter(contact__owner=user)
+
+        return queryset
+
+    @action(detail=False, methods=['get'], url_path='count')
+    def count(self, request):
+        """Retorna apenas a contagem de tarefas para o mesmo escopo/filtros do list()."""
+        queryset = self.filter_queryset(self.get_queryset())
+        return Response({'count': queryset.count()})
         
         # Valida extensão
         allowed_extensions = ['jpg', 'jpeg', 'png', 'webp']

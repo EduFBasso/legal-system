@@ -5,7 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from apps.accounts.permissions import is_master_user
 from apps.accounts.scope import get_master_scope_user, has_master_team_scope
-from .models import Contact
+from .models import Contact, ContactTask
 
 UserModel = get_user_model()
 
@@ -294,6 +294,34 @@ class ContactDetailSerializer(serializers.ModelSerializer):
         ]
 
         return linked_as_party + linked_as_representative
+
+
+class ContactTaskSerializer(serializers.ModelSerializer):
+    """Serializer para tarefas vinculadas a um contato (pessoa/cliente)."""
+
+    urgencia_display = serializers.CharField(source='get_urgencia_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    contact_name = serializers.CharField(source='contact.name', read_only=True)
+    vencida = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ContactTask
+        fields = [
+            'id',
+            'contact',
+            'contact_name',
+            'titulo',
+            'descricao',
+            'urgencia',
+            'urgencia_display',
+            'data_vencimento',
+            'status',
+            'status_display',
+            'concluida_em',
+            'vencida',
+            'created_at',
+            'updated_at',
+        ]
 
 
 class ContactCreateUpdateSerializer(serializers.ModelSerializer):

@@ -25,6 +25,7 @@ export default function TaskCard({
   onToggleStatus,
   onOpenCase,
   onOpenMovement,
+  onOpenContact,
   isOverdue,
   isToday,
   formatDate,
@@ -48,13 +49,22 @@ export default function TaskCard({
   const handleCaseClick = (e) => {
     e.stopPropagation();
     if (readOnly) return;
+    if (!task.case) return;
     onOpenCase(task.case);
   };
 
   const handleMovementClick = (e) => {
     e.stopPropagation();
     if (readOnly) return;
+    if (!task.case || !task.movimentacao) return;
     onOpenMovement(task.case, task.movimentacao, task.id);
+  };
+
+  const handleContactClick = (e) => {
+    e.stopPropagation();
+    if (!onOpenContact) return;
+    if (!task.contact) return;
+    onOpenContact(task.contact);
   };
 
   const handleCheckboxChange = () => {
@@ -86,16 +96,32 @@ export default function TaskCard({
         <div className="task-title">{titleText}</div>
         {descriptionText && <div className="task-description">{descriptionText}</div>}
 
+        {task.contact && task.contact_name && (
+          <div className="task-contact-meta">
+            <a
+              className="task-contact-link"
+              onClick={handleContactClick}
+              style={{ cursor: 'pointer' }}
+            >
+              Contato: {task.contact_name}
+            </a>
+          </div>
+        )}
+
         <div className="task-process-meta">
-          <a
-            className="task-process-link"
-            onClick={handleCaseClick}
-            style={{ cursor: readOnly ? 'default' : 'pointer', pointerEvents: readOnly ? 'none' : 'auto' }}
-            aria-disabled={readOnly}
-          >
-            {task.case_numero}
-          </a>
-          {task.movimentacao && (
+          {task.case && task.case_numero ? (
+            <a
+              className="task-process-link"
+              onClick={handleCaseClick}
+              style={{ cursor: readOnly ? 'default' : 'pointer', pointerEvents: readOnly ? 'none' : 'auto' }}
+              aria-disabled={readOnly}
+            >
+              {task.case_numero}
+            </a>
+          ) : (
+            <span className="task-process-link task-process-link--empty">Sem processo</span>
+          )}
+          {movementTitleText && (
             <>
               <span className="task-meta-dot">•</span>
               <a
@@ -104,7 +130,7 @@ export default function TaskCard({
                 style={{ cursor: readOnly ? 'default' : 'pointer', pointerEvents: readOnly ? 'none' : 'auto' }}
                 aria-disabled={readOnly}
               >
-                📋 {movementTitleText}
+                {/^\s*📋/u.test(movementTitleText) ? movementTitleText : `📋 ${movementTitleText}`}
               </a>
             </>
           )}

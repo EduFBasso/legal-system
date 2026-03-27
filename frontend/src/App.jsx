@@ -20,6 +20,7 @@ import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
+import ContactTasksPage from './pages/ContactTasksPage';
 import MasterDashboardPage from './pages/MasterDashboardPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
@@ -100,6 +101,7 @@ function App() {
                         <Route path="/search-history" element={<SearchHistoryPage />} />
                         <Route path="/notifications" element={<NotificationsPage />} />
                         <Route path="/deadlines" element={<DeadlinesPage />} />
+                        <Route path="/contact-tasks" element={<ContactTasksPage />} />
                         <Route
                           path="/master"
                           element={user?.role === 'MASTER' ? <Navigate to="/painel-master" replace /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}

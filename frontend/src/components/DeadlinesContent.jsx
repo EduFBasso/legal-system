@@ -11,10 +11,15 @@ import {
 } from '../utils/taskUrgency';
 import { openCaseDetailWindow } from '../utils/publicationNavigation';
 import UrgencySection from './UrgencySection';
+import MasterContactDetailsModal from './MasterContactDetailsModal';
 import './DeadlinesContent.css';
 
 export default function DeadlinesContent({
   tasksQueryParams,
+  service = caseTasksService,
+  title = '⏰ Tarefas por Urgência',
+  kind = 'case',
+  displayLabel = '',
   readOnly = false,
 }) {
   const [tasks, setTasks] = useState([]);
@@ -22,11 +27,13 @@ export default function DeadlinesContent({
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [selectedContactId, setSelectedContactId] = useState(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const fetchAllTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await caseTasksService.getAllTasks(tasksQueryParams);
+      const data = await service.getAllTasks(tasksQueryParams);
       setTasks(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
@@ -36,7 +43,7 @@ export default function DeadlinesContent({
     } finally {
       setLoading(false);
     }
-  }, [tasksQueryParams]);
+  }, [service, tasksQueryParams]);
 
   useEffect(() => {
     fetchAllTasks();
@@ -62,17 +69,24 @@ export default function DeadlinesContent({
 
   const handleOpenCase = (caseId) => {
     if (readOnly) return;
+    if (kind !== 'case') return;
     openCaseDetailWindow(caseId);
   };
 
   const handleOpenMovement = (caseId, movementId, taskId) => {
     if (readOnly) return;
+    if (kind !== 'case') return;
     setSelectedTaskId(taskId);
     openCaseDetailWindow(caseId, {
       tab: 'movements',
       focusMovement: movementId,
       focusTask: taskId,
     });
+  };
+
+  const handleOpenContact = (contactId) => {
+    setSelectedContactId(contactId);
+    setIsContactModalOpen(true);
   };
 
   const grouped = useMemo(() => {
@@ -143,7 +157,8 @@ export default function DeadlinesContent({
     return (
       <div className="deadlines-content">
         <div className="page-header">
-          <h1>⏰ Tarefas por Urgência</h1>
+          <h1>{title}</h1>
+          {displayLabel ? <div className="header-subtitle">{displayLabel}</div> : null}
         </div>
         <div className="loading-state">
           <div className="spinner"></div>
@@ -157,7 +172,8 @@ export default function DeadlinesContent({
     return (
       <div className="deadlines-content">
         <div className="page-header">
-          <h1>⏰ Tarefas por Urgência</h1>
+          <h1>{title}</h1>
+          {displayLabel ? <div className="header-subtitle">{displayLabel}</div> : null}
         </div>
         <div className="error-state">
           <p>❌ {error}</p>
@@ -170,7 +186,8 @@ export default function DeadlinesContent({
     <div className="deadlines-content">
       <div className="page-header">
         <div className="header-content">
-          <h1>⏰ Tarefas por Urgência</h1>
+          <h1>{title}</h1>
+          {displayLabel ? <div className="header-subtitle">{displayLabel}</div> : null}
         </div>
       </div>
 
@@ -230,6 +247,7 @@ export default function DeadlinesContent({
                   onToggleStatus={handleToggleTaskStatus}
                   onOpenCase={handleOpenCase}
                   onOpenMovement={handleOpenMovement}
+                  onOpenContact={handleOpenContact}
                   isOverdue={isOverdue}
                   isToday={isToday}
                   formatDate={formatDate}
@@ -242,6 +260,13 @@ export default function DeadlinesContent({
           </>
         )}
       </div>
+
+      <MasterContactDetailsModal
+        contactId={selectedContactId}
+        teamMemberId={tasksQueryParams?.team_member_id || null}
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
     </div>
   );
 }
