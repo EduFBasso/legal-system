@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import caseTasksService from '../services/caseTasksService';
 import DeadlinesContent from '../components/DeadlinesContent';
+import { Button } from '../components/common/Button';
+import Toast from '../components/common/Toast';
 import './DeadlinesPage.css';
 
 /**
@@ -14,6 +17,13 @@ export default function DeadlinesPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const readOnly = searchParams.get('readonly') === '1';
+  const [editingTask, setEditingTask] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message, type = 'info', autoCloseMs = 3000) => {
+    setToast({ message, type, autoCloseMs });
+  }, []);
 
   const tasksQueryParams = useMemo(() => {
     const params = {};
@@ -40,12 +50,128 @@ export default function DeadlinesPage() {
     return oab ? `${name} ${oab}` : name;
   }, [scopeLabel, user]);
 
+  const handleOpenEditTask = useCallback(
+    (task) => {
+      if (readOnly) return;
+      setEditingTask(task);
+    },
+    [readOnly]
+  );
+
+  const handleDeleteTask = useCallback(
+    async (task) => {
+      if (readOnly) return;
+      if (!task?.id) return;
+      const ok = window.confirm('Excluir esta tarefa?');
+      if (!ok) return;
+
+      try {
+        await caseTasksService.deleteTask(task.id);
+        showToast('Tarefa excluída com sucesso!', 'success');
+      } catch (err) {
+        console.error('Erro ao excluir tarefa:', err);
+        showToast('Erro ao excluir tarefa.', 'error');
+      }
+    },
+    [readOnly, showToast]
+  );
+
+  const handleSaveEditTask = async (e) => {
+    e.preventDefault();
+    if (readOnly) return;
+    if (!editingTask) return;
+
+    const titulo = (editingTask.titulo || '').toString().trim();
+    if (!titulo) {
+      showToast('Título da tarefa é obrigatório', 'error');
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      await caseTasksService.patchTask(editingTask.id, {
+        titulo: editingTask.titulo,
+        descricao: editingTask.descricao,
+        data_vencimento: editingTask.data_vencimento,
+      });
+      setEditingTask(null);
+      showToast('Tarefa atualizada com sucesso!', 'success');
+    } catch (err) {
+      console.error('Erro ao atualizar tarefa:', err);
+      showToast('Erro ao atualizar tarefa.', 'error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
 
   return (
-    <DeadlinesContent
-      tasksQueryParams={tasksQueryParams}
-      displayLabel={displayLabel}
-      readOnly={readOnly}
-    />
+    <>
+      <DeadlinesContent
+        tasksQueryParams={tasksQueryParams}
+        displayLabel={displayLabel}
+        readOnly={readOnly}
+        onEditTask={handleOpenEditTask}
+        onDeleteTask={handleDeleteTask}
+      />
+
+      <Toast
+        isOpen={Boolean(toast?.message)}
+        message={toast?.message || ''}
+        type={toast?.type || 'info'}
+        autoCloseMs={toast?.autoCloseMs || 3000}
+        onClose={() => setToast(null)}
+      />
+
+      {editingTask && (
+        <div className="modal-overlay">
+          <div className="modal-content create-task-modal">
+            <div className="modal-header">
+              <h2>✏️ Editar Tarefa do Processo</h2>
+              <button className="modal-close" onClick={() => setEditingTask(null)}>
+                ×
+              </button>
+            </div>
+            <form className="create-task-form" onSubmit={handleSaveEditTask}>
+              <div className="form-group">
+                <label>Título *</label>
+                <input
+                  type="text"
+                  value={editingTask.titulo || ''}
+                  onChange={(e) => setEditingTask((prev) => ({ ...prev, titulo: e.target.value }))}
+                  disabled={savingEdit}
+                />
+              </div>
+              <div className="form-group">
+                <label>Descrição</label>
+                <textarea
+                  rows={3}
+                  value={editingTask.descricao || ''}
+                  onChange={(e) => setEditingTask((prev) => ({ ...prev, descricao: e.target.value }))}
+                  disabled={savingEdit}
+                />
+              </div>
+              <div className="form-group">
+                <label>Data de vencimento</label>
+                <input
+                  type="date"
+                  value={editingTask.data_vencimento || ''}
+                  onChange={(e) => setEditingTask((prev) => ({ ...prev, data_vencimento: e.target.value }))}
+                  disabled={savingEdit}
+                />
+              </div>
+              <div className="form-actions">
+                <Button variant="secondary" type="button" onClick={() => setEditingTask(null)} disabled={savingEdit}>
+                  Cancelar
+                </Button>
+                <Button variant="success" type="submit" disabled={savingEdit}>
+                  {savingEdit ? '⏳ Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

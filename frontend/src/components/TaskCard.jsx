@@ -150,7 +150,7 @@ export default function TaskCard({
         ) : null}
 
         <div className="task-title-row">
-          {isContactTask ? (
+          {!isContactTask ? (
             <div className="task-checkbox task-checkbox--inline">
               <input
                 type="checkbox"
@@ -191,17 +191,7 @@ export default function TaskCard({
         </div>
         {descriptionText && <div className="task-description">{descriptionText}</div>}
 
-        {!isContactTask ? (
-          <div className="task-checkbox">
-            <input
-              type="checkbox"
-              checked={isCompleted}
-              onChange={handleCheckboxChange}
-              className="checkbox-input"
-              disabled={readOnly}
-            />
-          </div>
-        ) : null}
+
 
         <div className="task-process-meta">
           {task.case && task.case_numero ? (
