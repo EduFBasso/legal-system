@@ -29,6 +29,17 @@
 
 .btn-retry-detail {
   padding: 12px 24px;
+
+  /* Nested flows (e.g., selecting a contact while creating a task):
+     keep the linked case list visible but prevent navigation/shortcuts. */
+  .modal-overlay--disable-case-links .linked-case-link {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .modal-overlay--disable-case-links .linked-case-arrow {
+    opacity: 0.4;
+  }
   background: var(--color-primary, #3b82f6);
   color: white;
   border: none;

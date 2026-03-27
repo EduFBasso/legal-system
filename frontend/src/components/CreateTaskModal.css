@@ -14,6 +14,14 @@
   animation: fadeIn 0.2s ease;
 }
 
+/* Nested modal stack for ContactTaskModal:
+   - ContactTaskModal overlay sits below SelectContactModal
+   - SelectContactModal sits below the standard ContactDetailModal overlay
+*/
+.modal-overlay.modal-overlay--contact-task {
+  z-index: 800;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

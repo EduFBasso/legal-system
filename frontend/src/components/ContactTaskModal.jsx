@@ -18,6 +18,8 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
   const [loading, setLoading] = useState(false);
   const [isSelectContactOpen, setIsSelectContactOpen] = useState(false);
   const [isCreateContactOpen, setIsCreateContactOpen] = useState(false);
+  const [viewContactId, setViewContactId] = useState(null);
+  const [isViewContactOpen, setIsViewContactOpen] = useState(false);
 
   const modalTitle = useMemo(() => {
     if (mode === 'edit') return 'Editar Tarefa de Pessoa';
@@ -85,7 +87,7 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
 
   return (
     <>
-      <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-overlay modal-overlay--contact-task" onClick={onClose}>
         <div className="modal-content create-task-modal" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2>{modalTitle}</h2>
@@ -184,6 +186,28 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
         onCreateNew={() => {
           setIsCreateContactOpen(true);
         }}
+        onViewContact={(contactId) => {
+          setViewContactId(contactId);
+          setIsViewContactOpen(true);
+        }}
+      />
+
+      <ContactDetailModal
+        contactId={viewContactId}
+        isOpen={isViewContactOpen}
+        onClose={() => setIsViewContactOpen(false)}
+        onContactUpdated={() => {
+          // If user edits the contact name, refresh the selected label if it's the same contact
+          // (We keep it simple: if current selected contact matches, re-open selector to refetch list)
+          if (formData.contact === viewContactId) {
+            setIsSelectContactOpen(true);
+          }
+        }}
+        allowModification={true}
+        showLinkToProcessButton={false}
+        onLinkToCase={null}
+        onLinkToProcess={null}
+        modalOverlayClassName="modal-overlay--disable-case-links"
       />
 
       <ContactDetailModal

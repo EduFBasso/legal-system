@@ -9,6 +9,7 @@ export default function SelectContactModal({
   onClose, 
   onSelectContact, 
   onCreateNew,
+  onViewContact,
   existingPartyContactIds = [], // Array of contact IDs already linked to this case
   disabledContactIds = [],
   disabledContactReason = 'Este contato não pode ser selecionado.'
@@ -152,7 +153,17 @@ export default function SelectContactModal({
                       contact={contact}
                       isSelected={selectedContactId === contact.id && !isDisabled}
                       onSelect={() => handleSelectContact(contact.id)}
-                      onView={null} // Hide view button in selection mode
+                      onView={
+                        onViewContact
+                          ? () => {
+                              if (isDisabled) {
+                                setBlockedMessage(getDisabledReason(contact.id));
+                                return;
+                              }
+                              onViewContact(contact.id);
+                            }
+                          : null
+                      }
                       onLinkToCase={null} // Hide link button
                     />
                     {isDisabled && (
