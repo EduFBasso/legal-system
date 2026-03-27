@@ -10,7 +10,6 @@ export default function MasterContactsSection({
   selectedContactId,
   onSelectContact,
   onViewContact,
-  onCreateTask,
 }) {
   return (
     <section className="master-admin-contacts-section" aria-label="Contatos (somente leitura)">
@@ -50,7 +49,6 @@ export default function MasterContactsSection({
               isSelected={selectedContactId === contact.id}
               onSelect={() => onSelectContact(contact.id)}
               onView={() => onViewContact(contact.id)}
-              onCreateTask={onCreateTask}
               onLinkToCase={undefined}
             />
           ))

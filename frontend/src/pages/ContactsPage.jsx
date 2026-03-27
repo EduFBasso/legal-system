@@ -35,6 +35,13 @@ export default function ContactsPage() {
     navigate(`/cases?action=link&contactId=${contact.id}`);
   };
 
+  const openContactTasksNewTab = useCallback((contact) => {
+    if (!contact?.id) return;
+    const params = new URLSearchParams();
+    params.set('contact_id', String(contact.id));
+    window.open(`/contact-tasks?${params.toString()}`, '_blank', 'noopener,noreferrer');
+  }, []);
+
 
   // Helper to show toast
   const displayToast = (message, type = 'info') => {
@@ -328,6 +335,7 @@ export default function ContactsPage() {
               isSelected={selectedContactId === contact.id}
               onSelect={() => handleSelectContact(contact.id)}
               onView={() => handleViewContact(contact.id)}
+              onCreateTask={openContactTasksNewTab}
               onLinkToCase={() => handleLinkToCase(contact.id)}
             />
           ))
