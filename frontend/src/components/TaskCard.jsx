@@ -160,7 +160,7 @@ export default function TaskCard({
               />
             </div>
           ) : null}
-          <div className="task-title">{titleText}{dueTimeText ? ` ${dueTimeText} hs` : ''}</div>
+          <div className="task-title">{titleText}</div>
           {!isContactTask && !readOnly && (onEditTask || onDeleteTask) ? (
             <div className="task-actions">
               {onEditTask ? (
@@ -189,6 +189,12 @@ export default function TaskCard({
           ) : null}
         </div>
         {descriptionText && <div className="task-description">{descriptionText}</div>}
+
+        {dueTimeText ? (
+          <div className="task-time" aria-label="Horário de vencimento">
+            ⏰ {dueTimeText}
+          </div>
+        ) : null}
 
 
 
