@@ -54,10 +54,25 @@ export default function DeadlinesPage() {
   const handleOpenEditTask = useCallback(
     (task) => {
       if (readOnly) return;
-      setEditingTask(task);
+      setEditingTask({
+        ...task,
+        hora_vencimento: task?.hora_vencimento ?? '',
+      });
     },
     [readOnly]
   );
+
+  const normalizeTimeHHmm = useCallback((timeValue) => {
+    const value = (timeValue || '').toString().trim();
+    if (!value) return '';
+
+    const match = value.match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+    if (!match) return value;
+
+    const hh = match[1].padStart(2, '0');
+    const mm = match[2].padStart(2, '0');
+    return `${hh}:${mm}`;
+  }, []);
 
   const handleDeleteTask = useCallback(
     async (task) => {
@@ -96,10 +111,12 @@ export default function DeadlinesPage() {
 
     setSavingEdit(true);
     try {
+      const normalizedHora = normalizeTimeHHmm(editingTask.hora_vencimento);
       await caseTasksService.patchTask(editingTask.id, {
         titulo: editingTask.titulo,
         descricao: editingTask.descricao,
         data_vencimento: editingTask.data_vencimento,
+        hora_vencimento: normalizedHora || null,
       });
       setEditingTask(null);
       showToast('Tarefa atualizada com sucesso!', 'success');
@@ -164,6 +181,21 @@ export default function DeadlinesPage() {
                   type="date"
                   value={editingTask.data_vencimento || ''}
                   onChange={(e) => setEditingTask((prev) => ({ ...prev, data_vencimento: e.target.value }))}
+                  disabled={savingEdit}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Hora (opcional)</label>
+                <input
+                  type="time"
+                  value={editingTask.hora_vencimento || ''}
+                  onChange={(e) =>
+                    setEditingTask((prev) => ({
+                      ...prev,
+                      hora_vencimento: e.target.value,
+                    }))
+                  }
                   disabled={savingEdit}
                 />
               </div>
