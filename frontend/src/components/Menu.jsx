@@ -140,7 +140,28 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
           {renderMenuLink({ to: '/cases', icon: '⚖️', label: 'Processos' })}
         </li>
 
-        <li className="menu-group-spacer" aria-hidden="true" />
+        <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
+
+        <li className="menu-item">
+          {renderMenuLink({
+            to: '/contact-tasks',
+            icon: '👤',
+            label: 'Tarefas de Pessoas',
+          })}
+        </li>
+
+          <li className="menu-item">
+            {renderMenuLink({
+              to: '/deadlines',
+              icon: '⏰',
+              label: 'Tarefas Processuais',
+              badge: isAuthenticated && openTasksCount > 0 ? (
+                <span className="menu-count-badge menu-count-badge--tasks">{openTasksCount}</span>
+              ) : null,
+            })}
+          </li>
+
+          <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
 
         <li className="menu-item">
           {renderMenuLink({ to: '/publications', icon: '🔍', label: 'Buscar Publicações' })}
@@ -167,27 +188,6 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
         </li>
 
         <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
-
-          <li className="menu-item">
-            {renderMenuLink({
-              to: '/deadlines',
-              icon: '⏰',
-              label: 'Tarefas Processuais',
-              badge: isAuthenticated && openTasksCount > 0 ? (
-                <span className="menu-count-badge menu-count-badge--tasks">{openTasksCount}</span>
-              ) : null,
-            })}
-          </li>
-
-          <li className="menu-item">
-            {renderMenuLink({
-              to: '/contact-tasks',
-              icon: '👤',
-              label: 'Tarefas de Pessoas',
-            })}
-          </li>
-
-          <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
 
           <li className="menu-item">
             <button
