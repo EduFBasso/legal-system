@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import ContactTaskModal from '@/components/ContactTaskModal';
 import DeadlinesContent from '@/components/DeadlinesContent';
+import { Button } from '@/components/common/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import contactTasksService from '@/services/contactTasksService';
 
@@ -55,9 +56,9 @@ export default function ContactTasksPage() {
         kind="contact"
         headerActions={
           !readOnly ? (
-            <button className="deadlines-new-task" type="button" onClick={() => setIsCreateOpen(true)}>
+            <Button variant="success" size="md" type="button" onClick={() => setIsCreateOpen(true)}>
               + Nova tarefa
-            </button>
+            </Button>
           ) : null
         }
         onEditTask={

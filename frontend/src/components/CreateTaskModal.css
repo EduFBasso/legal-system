@@ -153,6 +153,14 @@
   border-top: 1px solid #e5e7eb;
 }
 
+/* ContactTaskModal uses create-task-actions wrapper */
+.create-task-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 12px;
+}
+
 .btn-cancel,
 .btn-create {
   flex: 1;

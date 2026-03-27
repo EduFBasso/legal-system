@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import ContactDetailModal from './ContactDetailModal';
 import SelectContactModal from './SelectContactModal';
+import { Button } from './common/Button';
 
 import './CreateTaskModal.css';
 
@@ -108,15 +109,16 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
                   disabled={loading}
                   style={{ flex: 1, minWidth: 0 }}
                 />
-                <button
+                <Button
                   type="button"
-                  className="create-task-submit"
+                  variant="success"
+                  size="md"
                   onClick={() => setIsSelectContactOpen(true)}
                   disabled={loading}
                   style={{ width: 'auto' }}
                 >
                   Selecionar
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -161,12 +163,12 @@ export default function ContactTaskModal({ isOpen, mode = 'create', initialData 
             </div>
 
             <div className="create-task-actions">
-              <button className="create-task-cancel" type="button" onClick={onClose} disabled={loading}>
+              <Button variant="secondary" size="md" type="button" onClick={onClose} disabled={loading}>
                 Cancelar
-              </button>
-              <button className="create-task-submit" type="submit" disabled={loading}>
+              </Button>
+              <Button variant="success" size="md" type="submit" disabled={loading}>
                 {loading ? 'Salvando...' : 'Salvar'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
