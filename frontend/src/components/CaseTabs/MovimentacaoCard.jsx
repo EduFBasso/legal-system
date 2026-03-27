@@ -59,7 +59,8 @@ export default function MovimentacaoCard({
   onSaveEditedTask,
   onToggleTaskStatus,
   onNewTaskFormChange,
-  onEditTaskFormChange
+  onEditTaskFormChange,
+  onDeleteTask,
 }) {
   const tipoDisplay = getTipoDisplay(mov.tipo, mov.tipo_customizado);
   const manualDescricao = mov.origem === 'MANUAL'
@@ -120,6 +121,7 @@ export default function MovimentacaoCard({
               onCancelEditTask={onCancelEditTask}
               onSaveEditedTask={onSaveEditedTask}
               onToggleTaskStatus={onToggleTaskStatus}
+              onDeleteTask={onDeleteTask}
               onNewTaskFormChange={onNewTaskFormChange}
               onEditTaskFormChange={onEditTaskFormChange}
               readOnly={readOnly}

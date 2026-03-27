@@ -230,8 +230,8 @@ export const tasksInlineStyles = {
   },
   deleteTaskIconButton: {
     border: 'none',
-    background: '#ffffff',
-    color: caseTheme.darkText,
+    background: 'transparent',
+    color: caseTheme.darkTextSecondary,
     borderRadius: '6px',
     padding: '0.25rem 0.45rem',
     fontSize: '1rem',

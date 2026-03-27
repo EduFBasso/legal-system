@@ -326,6 +326,30 @@ function MovimentacoesTab({
     }
   };
 
+  const handleDeleteTask = async (task) => {
+    if (readOnly) return;
+    if (!task?.id) return;
+
+    const ok = window.confirm('Excluir esta tarefa?');
+    if (!ok) return;
+
+    try {
+      await caseTasksService.deleteTask(task.id);
+      await onRefreshTasks();
+
+      notifyTaskUpdate({
+        type: 'task-updated',
+        action: 'deleted',
+        taskId: task.id,
+        caseId: id,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Erro ao excluir tarefa');
+    }
+  };
+
   // ========== EFFECTS ==========
   const filteredMovimentacoes = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -503,6 +527,7 @@ function MovimentacoesTab({
                 onCancelEditTask={handleCancelEditTask}
                 onSaveEditedTask={handleSaveEditedTask}
                 onToggleTaskStatus={handleToggleTaskStatus}
+                onDeleteTask={handleDeleteTask}
                 onNewTaskFormChange={setNewTaskForm}
                 onEditTaskFormChange={setEditTaskForm}
               />
