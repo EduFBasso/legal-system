@@ -177,28 +177,32 @@
 }
 
 .contact-card .btn-create-task {
-  width: 36px;
-  height: 36px;
-  background: #f1f5f9;
-  border: none;
-  border-radius: 8px;
-  color: #10b981;
+  height: 28px;
+  padding: 0 10px;
+  background: #dcfce7;
+  border: 1px solid #16a34a;
+  border-radius: 999px;
+  color: #166534;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   margin-right: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
 .contact-card .btn-create-task:hover {
-  background: #10b981;
+  background: #16a34a;
+  border-color: #16a34a;
   color: white;
-  transform: scale(1.15);
+  transform: translateY(-1px);
 }
 
 .contact-card .btn-create-task:active {
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 .contact-card .btn-link-case:hover {

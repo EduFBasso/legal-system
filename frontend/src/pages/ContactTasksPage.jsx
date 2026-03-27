@@ -5,6 +5,8 @@ import ContactTaskModal from '@/components/ContactTaskModal';
 import DeadlinesContent from '@/components/DeadlinesContent';
 import { Button } from '@/components/common/Button';
 import { useAuth } from '@/contexts/AuthContext';
+import contactsAPI from '@/services/api';
+import { apiFetch } from '@/utils/apiFetch';
 import contactTasksService from '@/services/contactTasksService';
 
 export default function ContactTasksPage() {
@@ -20,6 +22,7 @@ export default function ContactTasksPage() {
 
   const contactIdParam = searchParams.get('contact_id');
   const [createInitialData, setCreateInitialData] = useState(null);
+  const [selectedContactName, setSelectedContactName] = useState('');
 
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -35,26 +38,44 @@ export default function ContactTasksPage() {
     if (excludeOwnerSelf) params.exclude_owner_self = excludeOwnerSelf;
     if (excludeOwnerless) params.exclude_ownerless = excludeOwnerless;
 
+    if (contactIdParam) params.contact_id = contactIdParam;
+
     return params;
   }, [searchParams]);
 
   const scopeLabel = searchParams.get('scope_label') || '';
   const displayLabel = useMemo(() => {
     if (scopeLabel) return scopeLabel;
+    if (selectedContactName) return selectedContactName;
     if (!user) return '';
     const name = user.full_name_oab || user.first_name || user.username || '';
     const oab = user.oab_number || '';
     return oab ? `${name} ${oab}` : name;
-  }, [scopeLabel, user]);
+  }, [scopeLabel, selectedContactName, user]);
 
   useEffect(() => {
     if (!contactIdParam || readOnly) return;
     const contactId = Number(contactIdParam);
     if (!Number.isFinite(contactId)) return;
 
-    // Prefill contact id; name will be resolved when user opens selector if needed
-    setCreateInitialData({ contact: contactId, contact_name: '' });
-    setIsCreateOpen(true);
+    let cancelled = false;
+
+    async function hydrateContact() {
+      try {
+        const detail = await apiFetch(`/contacts/${contactId}/`);
+        const name = detail?.name || '';
+        if (cancelled) return;
+        setSelectedContactName(name);
+        setCreateInitialData({ contact: contactId, contact_name: name });
+      } catch {
+        if (cancelled) return;
+        setCreateInitialData({ contact: contactId, contact_name: '' });
+      } finally {
+        if (!cancelled) setIsCreateOpen(true);
+      }
+    }
+
+    hydrateContact();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactIdParam, readOnly]);
 
