@@ -32,6 +32,17 @@ export default function TasksInlineList({
   caseId,
   readOnly = false,
 }) {
+  const normalizeTimeHHmm = (timeValue) => {
+    const value = (timeValue || '').toString().trim();
+    if (!value) return '';
+
+    const match = value.match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+    if (!match) return value;
+
+    const hh = match[1].padStart(2, '0');
+    const mm = match[2].padStart(2, '0');
+    return `${hh}:${mm}`;
+  };
   const taskList = (tasks || []).filter((task) => Number(task.movimentacao) === Number(movimentoId));
   const isCreating = addingTaskForMovement === movimentoId;
 
@@ -160,6 +171,12 @@ export default function TasksInlineList({
                       }}
                     >
                       <span>{formatDate(task.data_vencimento)}</span>
+                      {normalizeTimeHHmm(task.hora_vencimento) ? (
+                        <>
+                          <span style={{ opacity: 0.8 }}>•</span>
+                          <span>⏰ {normalizeTimeHHmm(task.hora_vencimento)}</span>
+                        </>
+                      ) : null}
                       <span style={{ opacity: 0.8 }}>•</span>
                       <span>{formatDaysRemaining(task.data_vencimento)}</span>
                     </span>
