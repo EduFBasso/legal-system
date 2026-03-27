@@ -19,6 +19,7 @@ export default function CreateTaskModal({ isOpen, caseId, onClose, onCreateTask 
     titulo: '',
     descricao: '',
     data_vencimento: '',
+    hora_vencimento: '',
   });
   
   const [calculatedUrgency, setCalculatedUrgency] = useState('NORMAL');
@@ -59,6 +60,18 @@ export default function CreateTaskModal({ isOpen, caseId, onClose, onCreateTask 
     }));
   };
 
+  const normalizeTimeHHmm = (timeValue) => {
+    const value = (timeValue || '').toString().trim();
+    if (!value) return '';
+
+    const match = value.match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+    if (!match) return value;
+
+    const hh = match[1].padStart(2, '0');
+    const mm = match[2].padStart(2, '0');
+    return `${hh}:${mm}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -75,15 +88,17 @@ export default function CreateTaskModal({ isOpen, caseId, onClose, onCreateTask 
     
     setLoading(true);
     try {
+      const normalizedHora = normalizeTimeHHmm(formData.hora_vencimento);
       await onCreateTask({
         ...formData,
         case: caseId,
         status: 'PENDENTE',
         movimentacao: null, // Tipo 2: sem movimentação
+        hora_vencimento: normalizedHora || null,
       });
       
       // Reset form
-      setFormData({ titulo: '', descricao: '', data_vencimento: '' });
+      setFormData({ titulo: '', descricao: '', data_vencimento: '', hora_vencimento: '' });
       setCalculatedUrgency('NORMAL');
       onClose();
     } catch (error) {
@@ -169,6 +184,19 @@ export default function CreateTaskModal({ isOpen, caseId, onClose, onCreateTask 
               onChange={handleInputChange}
               disabled={loading}
               required
+            />
+          </div>
+
+          {/* Hora (opcional) */}
+          <div className="form-group">
+            <label htmlFor="hora_vencimento">Hora (opcional)</label>
+            <input
+              id="hora_vencimento"
+              type="time"
+              name="hora_vencimento"
+              value={formData.hora_vencimento}
+              onChange={handleInputChange}
+              disabled={loading}
             />
           </div>
 
