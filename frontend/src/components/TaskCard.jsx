@@ -36,6 +36,7 @@ export default function TaskCard({
 }) {
   const isSelected = selectedTaskId === task.id;
   const isCompleted = task.status === 'CONCLUIDA';
+  const isContactTask = Boolean(task.contact && task.contact_name);
   
   // Normaliza urgency para lowercase (CSS classes são minúsculas)
   const urgencyClass = urgency.toLowerCase();
@@ -98,34 +99,77 @@ export default function TaskCard({
           CONCLUÍDA
         </div>
       )}
-      <div className="task-checkbox">
-        <input
-          type="checkbox"
-          checked={isCompleted}
-          onChange={handleCheckboxChange}
-          className="checkbox-input"
-          disabled={readOnly}
-        />
-      </div>
-
       <div className="task-main" onClick={handleSelectClick}>
+        {isContactTask ? (
+          <div className="task-contact-meta task-contact-meta--top">
+            <a className="task-contact-link" onClick={handleContactClick} style={{ cursor: 'pointer' }}>
+              Contato: {task.contact_name}
+            </a>
+
+            {!readOnly && (onEditTask || onDeleteTask) ? (
+              <div className="task-contact-actions">
+                {onEditTask ? (
+                  <button
+                    type="button"
+                    className="task-icon-action task-icon-action--edit"
+                    onClick={handleEditClick}
+                    aria-label="Editar tarefa"
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                ) : null}
+                {onDeleteTask ? (
+                  <button
+                    type="button"
+                    className="task-icon-action task-icon-action--delete"
+                    onClick={handleDeleteClick}
+                    aria-label="Excluir tarefa"
+                    title="Excluir"
+                  >
+                    🗑️
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="task-title-row">
+          {isContactTask ? (
+            <div className="task-checkbox task-checkbox--inline">
+              <input
+                type="checkbox"
+                checked={isCompleted}
+                onChange={handleCheckboxChange}
+                className="checkbox-input"
+                disabled={readOnly}
+              />
+            </div>
+          ) : null}
           <div className="task-title">{titleText}</div>
-          {!readOnly && (onEditTask || onDeleteTask) ? (
+          {!isContactTask && !readOnly && (onEditTask || onDeleteTask) ? (
             <div className="task-actions">
               {onEditTask ? (
-                <button type="button" className="task-action-btn" onClick={handleEditClick} aria-label="Editar tarefa">
-                  Editar
+                <button
+                  type="button"
+                  className="task-action-btn task-action-btn--icon"
+                  onClick={handleEditClick}
+                  aria-label="Editar tarefa"
+                  title="Editar"
+                >
+                  ✏️
                 </button>
               ) : null}
               {onDeleteTask ? (
                 <button
                   type="button"
-                  className="task-action-btn task-action-btn--danger"
+                  className="task-action-btn task-action-btn--icon task-action-btn--danger"
                   onClick={handleDeleteClick}
                   aria-label="Excluir tarefa"
+                  title="Excluir"
                 >
-                  Excluir
+                  🗑️
                 </button>
               ) : null}
             </div>
@@ -133,17 +177,17 @@ export default function TaskCard({
         </div>
         {descriptionText && <div className="task-description">{descriptionText}</div>}
 
-        {task.contact && task.contact_name && (
-          <div className="task-contact-meta">
-            <a
-              className="task-contact-link"
-              onClick={handleContactClick}
-              style={{ cursor: 'pointer' }}
-            >
-              Contato: {task.contact_name}
-            </a>
+        {!isContactTask ? (
+          <div className="task-checkbox">
+            <input
+              type="checkbox"
+              checked={isCompleted}
+              onChange={handleCheckboxChange}
+              className="checkbox-input"
+              disabled={readOnly}
+            />
           </div>
-        )}
+        ) : null}
 
         <div className="task-process-meta">
           {task.case && task.case_numero ? (

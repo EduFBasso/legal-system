@@ -303,7 +303,7 @@
 .task-title-row {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
 }
 
@@ -311,6 +311,7 @@
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .task-action-btn {
@@ -322,6 +323,17 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.task-action-btn--icon {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .task-action-btn:disabled {
@@ -445,12 +457,59 @@
 .task-contact-meta {
   margin: 0 0 10px 0;
 }
+.task-contact-meta--top {
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .task-contact-link {
   color: var(--color-gray-800);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+.task-contact-meta--top .task-contact-link {
+  /* ~30% larger than 17px title */
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.task-contact-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.task-icon-action {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 18px; /* ~30% bigger than 14px icon buttons */
+  line-height: 1;
+}
+
+.task-icon-action:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.task-checkbox--inline {
+  margin-top: 2px;
+  margin-right: 6px;
+}
+
+.task-checkbox--inline .checkbox-input {
+  width: 18px;
+  height: 18px;
+}
+
+/* When checkbox is inline with title, remove the title bottom margin
+   so spacing stays tight like the original layout. */
+.task-title-row .task-title {
+  margin: 0;
 }
 
 .task-process-link--empty {
