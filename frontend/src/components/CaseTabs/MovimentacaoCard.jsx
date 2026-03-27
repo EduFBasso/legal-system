@@ -123,6 +123,7 @@ export default function MovimentacaoCard({
               onSaveEditedTask={onSaveEditedTask}
               onToggleTaskStatus={onToggleTaskStatus}
               onRefreshTasks={onRefreshTasks}
+              caseId={mov?.case}
               onNewTaskFormChange={onNewTaskFormChange}
               onEditTaskFormChange={onEditTaskFormChange}
               readOnly={readOnly}

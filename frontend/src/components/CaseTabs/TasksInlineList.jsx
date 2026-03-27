@@ -7,6 +7,7 @@ import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
 import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle, getButtonHoverHandlers } from './caseTheme';
 import { Button } from '../common/Button';
+import { notifyTaskUpdate } from '../../services/taskSyncService';
 import caseTasksService from '../../services/caseTasksService';
 import './TasksInlineList.css';
 
@@ -28,6 +29,7 @@ export default function TasksInlineList({
   onSaveEditedTask,
   onToggleTaskStatus,
   onRefreshTasks,
+  caseId,
   readOnly = false,
 }) {
   const taskList = (tasks || []).filter((task) => Number(task.movimentacao) === Number(movimentoId));
@@ -183,6 +185,14 @@ export default function TasksInlineList({
                         try {
                           await caseTasksService.deleteTask(task.id);
                           await Promise.resolve(onRefreshTasks?.());
+
+                          notifyTaskUpdate({
+                            type: 'task-updated',
+                            action: 'deleted',
+                            taskId: task.id,
+                            caseId: caseId,
+                            timestamp: new Date().toISOString(),
+                          });
                         } catch (error) {
                           console.error('Error deleting task:', error);
                           alert('Erro ao excluir tarefa');
