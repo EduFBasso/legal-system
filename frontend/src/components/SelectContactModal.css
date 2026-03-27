@@ -2,7 +2,9 @@
 
 /* Ensure this modal can appear above other modals (nested flows) */
 .modal-overlay.modal-overlay--select-contact {
-  z-index: 1100;
+  /* Keep below the default modal overlay (1000) so the standard ContactDetailModal
+     can open above it in nested flows like "Criar Novo Contato". */
+  z-index: 900;
 }
 
 .select-contact-modal {
