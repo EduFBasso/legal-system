@@ -298,7 +298,7 @@ describe('MasterDashboardPage', () => {
       screen.getByRole('button', { name: /Tarefas/i }).click();
     });
 
-    expect(screen.queryByText('Abrir Tarefas Agendadas em nova aba')).not.toBeInTheDocument();
+    expect(screen.queryByText('Abrir Tarefas Processuais em nova aba')).not.toBeInTheDocument();
     expect(await screen.findByText('Tarefa A')).toBeInTheDocument();
     expect(getAllTasksMock).toHaveBeenCalledWith({ team_member_id: '1' });
 

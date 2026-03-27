@@ -172,7 +172,7 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
             {renderMenuLink({
               to: '/deadlines',
               icon: '⏰',
-              label: 'Tarefas Agendadas',
+              label: 'Tarefas Processuais',
               badge: isAuthenticated && openTasksCount > 0 ? (
                 <span className="menu-count-badge menu-count-badge--tasks">{openTasksCount}</span>
               ) : null,
