@@ -7,6 +7,7 @@ import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
 import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle, getButtonHoverHandlers } from './caseTheme';
 import { Button } from '../common/Button';
+import caseTasksService from '../../services/caseTasksService';
 import './TasksInlineList.css';
 
 export default function TasksInlineList({
@@ -26,6 +27,7 @@ export default function TasksInlineList({
   onCancelEditTask,
   onSaveEditedTask,
   onToggleTaskStatus,
+  onRefreshTasks,
   readOnly = false,
 }) {
   const taskList = (tasks || []).filter((task) => Number(task.movimentacao) === Number(movimentoId));
@@ -142,7 +144,7 @@ export default function TasksInlineList({
                   </div>
                 </div>
 
-                <div style={{ marginTop: '0.45rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ marginTop: '0.45rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
                   {task.data_vencimento ? (
                     <span
                       style={{
@@ -169,17 +171,26 @@ export default function TasksInlineList({
                       Sem vencimento
                     </span>
                   )}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', position: 'relative', zIndex: 3 }}>
                     <button
-                      onClick={(e) => {
+                      type="button"
+                      onClick={async (e) => {
                         e.stopPropagation();
                         if (readOnly) return;
-                        if (typeof onDeleteTask !== 'function') return;
-                        onDeleteTask(task);
+                        if (!task?.id) return;
+                        const ok = window.confirm('Excluir esta tarefa?');
+                        if (!ok) return;
+                        try {
+                          await caseTasksService.deleteTask(task.id);
+                          await Promise.resolve(onRefreshTasks?.());
+                        } catch (error) {
+                          console.error('Error deleting task:', error);
+                          alert('Erro ao excluir tarefa');
+                        }
                       }}
-                      style={tasksInlineStyles.deleteTaskIconButton}
+                      style={{ ...tasksInlineStyles.deleteTaskIconButton, pointerEvents: 'auto', position: 'relative', zIndex: 4 }}
                       title="Excluir esta tarefa"
-                      disabled={readOnly || typeof onDeleteTask !== 'function'}
+                      disabled={readOnly}
                       aria-disabled={readOnly ? 'true' : undefined}
                     >
                       🗑️

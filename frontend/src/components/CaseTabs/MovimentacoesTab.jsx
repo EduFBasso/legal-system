@@ -528,6 +528,7 @@ function MovimentacoesTab({
                 onSaveEditedTask={handleSaveEditedTask}
                 onToggleTaskStatus={handleToggleTaskStatus}
                 onDeleteTask={handleDeleteTask}
+                onRefreshTasks={onRefreshTasks}
                 onNewTaskFormChange={setNewTaskForm}
                 onEditTaskFormChange={setEditTaskForm}
               />
