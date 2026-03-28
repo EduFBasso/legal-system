@@ -15,8 +15,10 @@ export default function CasesPage() {
   const debounceTimerRef = useRef(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
   const [toast, setToast] = useState(null);
-  const [stats, setStats] = useState(null);
+  // Mantém o KPI sempre montado (sem esperar fetch) e apenas atualiza números.
+  const [stats, setStats] = useState({ total: 0, ativos: 0, inativos: 0, by_tribunal: {} });
   const [allTribunals, setAllTribunals] = useState({});
   const [showTribunalBreakdown, setShowTribunalBreakdown] = useState(false);
   const [selectedTribunals, setSelectedTribunals] = useState([]);
@@ -61,6 +63,7 @@ export default function CasesPage() {
    * Load statistics
    */
   const loadStats = useCallback(async () => {
+    setLoadingStats(true);
     try {
       const statsData = await casesService.getStats({});
       setStats(statsData);
@@ -72,6 +75,8 @@ export default function CasesPage() {
       });
     } catch (error) {
       console.error('Error loading stats:', error);
+    } finally {
+      setLoadingStats(false);
     }
   }, []);
 
@@ -258,73 +263,69 @@ export default function CasesPage() {
         </button>
       </div>
 
-      {/* Statistics */}
-      {stats && (
-        <div className="cases-stats">
-          <div 
-            className={`stat-card stat-clickable ${!hasActiveFilters ? 'stat-selected' : ''}`}
-            onClick={clearFilters} 
-            title="Ver todos os processos"
-          >
-            <div className="stat-value">{stats.total || 0}</div>
-            <div className="stat-label">Total</div>
-          </div>
-          <div 
-            className={`stat-card stat-active stat-clickable ${filters.status === 'ATIVO' ? 'stat-selected' : ''}`}
-            onClick={() => toggleStatusFilter('ATIVO')}
-            title="Processos ativos (movimentação < 90 dias)"
-          >
-            <div className="stat-value">{stats.ativos || 0}</div>
-            <div className="stat-label">Ativos</div>
-          </div>
-          <div 
-            className={`stat-card stat-inactive stat-clickable ${filters.status === 'INATIVO' ? 'stat-selected' : ''}`}
-            onClick={() => toggleStatusFilter('INATIVO')}
-            title="Processos inativos (sem movimentação > 90 dias)"
-          >
-            <div className="stat-value">{stats.inativos || 0}</div>
-            <div className="stat-label">Inativos</div>
-          </div>
-          {allTribunals && Object.keys(allTribunals).length > 0 && (
-            <div 
-              className={`stat-card stat-clickable stat-tribunal ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
-              onClick={() => setShowTribunalBreakdown(!showTribunalBreakdown)}
-              title="Clique para expandir lista de tribunais"
-            >
-              <div className="stat-value">{Object.keys(allTribunals).length}</div>
-              <div className="stat-label">
-                Tribunais {showTribunalBreakdown ? '▲' : '▼'}
-              </div>
-              
-              {showTribunalBreakdown && (
-                <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
-                  {Object.entries(allTribunals).map(([tribunal, count]) => (
-                    <div 
-                      key={tribunal} 
-                      className="tribunal-item"
-                      onClick={() => toggleTribunal(tribunal)}
-                      title={tribunal}
-                    >
-                      <div className="tribunal-checkbox-group">
-                        <input
-                          type="checkbox"
-                          className="tribunal-filter-checkbox"
-                          checked={selectedTribunals.includes(tribunal)}
-                          onChange={() => toggleTribunal(tribunal)}
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={`Filtrar por tribunal ${tribunal}`}
-                        />
-                        <span className="tribunal-name">{tribunal}</span>
-                      </div>
-                      <span className="tribunal-count">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+      {/* Statistics (KPI sempre montado; números atualizam quando stats carrega) */}
+      <div className="cases-stats" aria-busy={loadingStats ? 'true' : 'false'}>
+        <div
+          className={`stat-card stat-clickable ${!hasActiveFilters ? 'stat-selected' : ''}`}
+          onClick={clearFilters}
+          title="Ver todos os processos"
+        >
+          <div className="stat-value">{stats?.total || 0}</div>
+          <div className="stat-label">Total</div>
         </div>
-      )}
+        <div
+          className={`stat-card stat-active stat-clickable ${filters.status === 'ATIVO' ? 'stat-selected' : ''}`}
+          onClick={() => toggleStatusFilter('ATIVO')}
+          title="Processos ativos (movimentação < 90 dias)"
+        >
+          <div className="stat-value">{stats?.ativos || 0}</div>
+          <div className="stat-label">Ativos</div>
+        </div>
+        <div
+          className={`stat-card stat-inactive stat-clickable ${filters.status === 'INATIVO' ? 'stat-selected' : ''}`}
+          onClick={() => toggleStatusFilter('INATIVO')}
+          title="Processos inativos (sem movimentação > 90 dias)"
+        >
+          <div className="stat-value">{stats?.inativos || 0}</div>
+          <div className="stat-label">Inativos</div>
+        </div>
+        {allTribunals && Object.keys(allTribunals).length > 0 && (
+          <div
+            className={`stat-card stat-clickable stat-tribunal ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
+            onClick={() => setShowTribunalBreakdown(!showTribunalBreakdown)}
+            title="Clique para expandir lista de tribunais"
+          >
+            <div className="stat-value">{Object.keys(allTribunals).length}</div>
+            <div className="stat-label">Tribunais {showTribunalBreakdown ? '▲' : '▼'}</div>
+
+            {showTribunalBreakdown && (
+              <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
+                {Object.entries(allTribunals).map(([tribunal, count]) => (
+                  <div
+                    key={tribunal}
+                    className="tribunal-item"
+                    onClick={() => toggleTribunal(tribunal)}
+                    title={tribunal}
+                  >
+                    <div className="tribunal-checkbox-group">
+                      <input
+                        type="checkbox"
+                        className="tribunal-filter-checkbox"
+                        checked={selectedTribunals.includes(tribunal)}
+                        onChange={() => toggleTribunal(tribunal)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Filtrar por tribunal ${tribunal}`}
+                      />
+                      <span className="tribunal-name">{tribunal}</span>
+                    </div>
+                    <span className="tribunal-count">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Filters */}
       <CasesFilters
