@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import caseTasksService from '../services/caseTasksService';
 import { notifyTaskUpdate, subscribeToTaskUpdates } from '../services/taskSyncService';
 import { useUrgencyVisibility } from '../hooks/useUrgencyVisibility';
@@ -29,29 +29,40 @@ export default function DeadlinesContent({
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasLoadedOnceRef = useRef(false);
   const [selectedUrgency, setSelectedUrgency] = useState(null);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-  const fetchAllTasks = useCallback(async () => {
+  const fetchAllTasks = useCallback(async ({ showSpinner } = {}) => {
+    const shouldShowSpinner = showSpinner ?? !hasLoadedOnceRef.current;
+
     try {
-      setLoading(true);
+      if (shouldShowSpinner) {
+        setLoading(true);
+      }
       const data = await service.getAllTasks(tasksQueryParams);
       setTasks(Array.isArray(data) ? data : []);
       setError(null);
+      hasLoadedOnceRef.current = true;
     } catch (err) {
       console.error('Erro ao buscar tarefas:', err);
-      setError('Erro ao carregar tarefas do sistema.');
-      setTasks([]);
+      // Se já carregou pelo menos 1x, não derruba a UI (evita flicker do KPI/estatísticas).
+      if (!hasLoadedOnceRef.current) {
+        setError('Erro ao carregar tarefas do sistema.');
+        setTasks([]);
+      }
     } finally {
-      setLoading(false);
+      if (shouldShowSpinner) {
+        setLoading(false);
+      }
     }
   }, [service, tasksQueryParams]);
 
   useEffect(() => {
-    fetchAllTasks();
-    const interval = setInterval(fetchAllTasks, 2 * 60 * 1000);
+    fetchAllTasks({ showSpinner: true });
+    const interval = setInterval(() => fetchAllTasks({ showSpinner: false }), 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchAllTasks]);
 
@@ -65,7 +76,7 @@ export default function DeadlinesContent({
             )
           );
         }
-        fetchAllTasks();
+        fetchAllTasks({ showSpinner: false });
       }
     });
     return unsubscribe;
