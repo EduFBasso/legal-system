@@ -7,6 +7,7 @@ import { Button } from '@/components/common/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiFetch } from '@/utils/apiFetch';
 import contactTasksService from '@/services/contactTasksService';
+import { notifyTaskUpdate } from '@/services/taskSyncService';
 
 export default function ContactTasksPage() {
   const [searchParams] = useSearchParams();
@@ -112,6 +113,15 @@ export default function ContactTasksPage() {
                 const ok = window.confirm(`Excluir a tarefa "${task.titulo}"?`);
                 if (!ok) return;
                 await contactTasksService.deleteTask(task.id);
+
+                notifyTaskUpdate({
+                  type: 'task-updated',
+                  action: 'deleted',
+                  taskId: task.id,
+                  contactId: task.contact,
+                  timestamp: new Date().toISOString(),
+                });
+
                 handleRefresh();
               }
             : null
@@ -124,9 +134,18 @@ export default function ContactTasksPage() {
         initialData={createInitialData}
         onClose={() => setIsCreateOpen(false)}
         onSubmit={async (payload) => {
-          await contactTasksService.createTask(payload);
+          const newTask = await contactTasksService.createTask(payload);
           setIsCreateOpen(false);
           setCreateInitialData(null);
+
+          notifyTaskUpdate({
+            type: 'task-updated',
+            action: 'created',
+            taskId: newTask?.id,
+            contactId: newTask?.contact,
+            timestamp: new Date().toISOString(),
+          });
+
           handleRefresh();
         }}
       />
@@ -144,6 +163,15 @@ export default function ContactTasksPage() {
           await contactTasksService.patchTask(editingTask.id, payload);
           setIsEditOpen(false);
           setEditingTask(null);
+
+          notifyTaskUpdate({
+            type: 'task-updated',
+            action: 'edited',
+            taskId: editingTask.id,
+            contactId: editingTask?.contact,
+            timestamp: new Date().toISOString(),
+          });
+
           handleRefresh();
         }}
       />
