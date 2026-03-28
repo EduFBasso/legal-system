@@ -82,6 +82,19 @@ class Case(models.Model):
     )
 
     # ========== VÍNCULO (PROCESSO PRINCIPAL / DERIVADO) ==========
+    CLASSIFICACAO_CHOICES = [
+        ('NEUTRO', 'Neutro'),
+        ('PRINCIPAL', 'Principal'),
+    ]
+
+    classificacao = models.CharField(
+        max_length=20,
+        choices=CLASSIFICACAO_CHOICES,
+        default='NEUTRO',
+        db_index=True,
+        help_text='Classificação do processo (quando não há case_principal).',
+    )
+
     VINCULO_TIPO_CHOICES = [
         ('DERIVADO', 'Derivado'),
         ('APENSO', 'Apenso'),
@@ -431,6 +444,15 @@ class Case(models.Model):
         if self.pk and self.case_principal_id == self.pk:
             raise ValidationError({'case_principal': 'Um processo não pode ser principal de si mesmo.'})
 
+        # Não permitir encadeamento: processo derivado não pode apontar para outro derivado.
+        # (A -> B é ok; A -> B -> C não)
+        if self.case_principal is not None and getattr(self.case_principal, 'case_principal_id', None) is not None:
+            raise ValidationError({'case_principal': 'Vínculo inválido: não é permitido apontar para um processo que já é derivado.'})
+
+        # Processo derivado não pode ser marcado como principal.
+        if (self.classificacao or '').strip().upper() == 'PRINCIPAL':
+            raise ValidationError({'classificacao': 'Processo derivado não pode ser classificado como Principal.'})
+
         if not self.vinculo_tipo:
             raise ValidationError({'vinculo_tipo': 'vinculo_tipo é obrigatório quando case_principal estiver definido.'})
 
@@ -608,6 +630,58 @@ class CasePartyRoleOption(models.Model):
     class Meta:
         verbose_name = 'Opção de Papel da Parte'
         verbose_name_plural = 'Opções de Papel da Parte'
+        ordering = ['label']
+
+    @staticmethod
+    def normalize_key(value: str) -> str:
+        raw = str(value or '').strip()
+        if not raw:
+            return ''
+        nfd = unicodedata.normalize('NFD', raw)
+        no_marks = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+        collapsed = ' '.join(no_marks.split())
+        return collapsed.lower()
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.normalize_key(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
+
+
+class CaseVinculoTipoOption(models.Model):
+    """Opções compartilhadas (persistidas) para o campo `Case.vinculo_tipo`.
+
+    Mantém uma lista evolutiva de tipos de vínculo (ex: "Apenso", "Incidente")
+    para uso no relacionamento principal/derivado.
+    """
+
+    label = models.CharField(max_length=100, help_text='Texto exibido na lista')
+    key = models.CharField(
+        max_length=140,
+        unique=True,
+        db_index=True,
+        help_text='Chave normalizada (sem acento, minúscula, espaços colapsados) para deduplicação',
+    )
+
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_vinculo_tipo_options',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Opção de Tipo de Vínculo'
+        verbose_name_plural = 'Opções de Tipos de Vínculo'
         ordering = ['label']
 
     @staticmethod

@@ -10,6 +10,19 @@ import './CaseCard.css';
 export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
   const navigate = useNavigate();
 
+  const normalize = (value = '') =>
+    value
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+
+  const isDerived = Boolean(caseData?.case_principal);
+  const classificationBadge = isDerived ? 'Derivado' : 'Principal';
+  const vinculoLabel = (caseData?.vinculo_tipo_display || caseData?.vinculo_tipo || '').toString().trim();
+  const showVinculoLabel = isDerived && vinculoLabel && normalize(vinculoLabel) !== 'derivado';
+
   const renderRoleBadges = (badges = [], keyPrefix = 'badge') => (
     <div className="role-badges">
       {badges.map((badge) => (
@@ -162,6 +175,14 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
           >
             {caseData.status_display || caseData.status}
           </span>
+          <span className="info-badge">
+            {classificationBadge}
+          </span>
+          {showVinculoLabel && (
+            <span className="info-badge">
+              {vinculoLabel}
+            </span>
+          )}
           {caseData.dias_sem_movimentacao !== null && caseData.dias_sem_movimentacao > 90 && (
             <span className="badge badge-auto-status-inactive">
               Inativo &gt;90d

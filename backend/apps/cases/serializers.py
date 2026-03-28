@@ -476,6 +476,7 @@ class CaseListSerializer(serializers.ModelSerializer):
     parties_summary = serializers.SerializerMethodField()
     active_tasks_count = serializers.IntegerField(read_only=True, default=0)
     total_payments = serializers.DecimalField(read_only=True, max_digits=15, decimal_places=2, allow_null=True)
+    classificacao_display = serializers.CharField(source='get_classificacao_display', read_only=True)
     vinculo_tipo_display = serializers.CharField(source='get_vinculo_tipo_display', read_only=True)
     case_principal_numero = serializers.CharField(source='case_principal.numero_processo_formatted', read_only=True, allow_null=True)
 
@@ -524,6 +525,8 @@ class CaseListSerializer(serializers.ModelSerializer):
             'attorney_fee_installments',
             'observacoes',
             'tags',
+            'classificacao',
+            'classificacao_display',
             'case_principal',
             'case_principal_numero',
             'vinculo_tipo',
@@ -563,8 +566,11 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source='owner.profile.full_name_oab', read_only=True, default='')
     owner_oab = serializers.CharField(source='owner.profile.oab_number', read_only=True, default='')
 
+    classificacao_display = serializers.CharField(source='get_classificacao_display', read_only=True)
     vinculo_tipo_display = serializers.CharField(source='get_vinculo_tipo_display', read_only=True)
     case_principal_numero = serializers.CharField(source='case_principal.numero_processo_formatted', read_only=True, allow_null=True)
+    # Allow saving custom vínculo tipos (outside Django choices) while keeping display mapping for known ones.
+    vinculo_tipo = serializers.CharField(required=False, allow_blank=True)
 
     # Nested serializer for parties
     parties = CasePartySerializer(source='caseparty_set', many=True, read_only=True)
@@ -634,6 +640,8 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'representations',
             'links_out',
             'links_in',
+            'classificacao',
+            'classificacao_display',
             'case_principal',
             'case_principal_numero',
             'vinculo_tipo',
