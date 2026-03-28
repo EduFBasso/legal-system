@@ -5,7 +5,7 @@ import unicodedata
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, Count, Prefetch, Sum
@@ -186,6 +186,26 @@ class CaseViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return CaseListSerializer
         return CaseDetailSerializer
+
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a processos.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a processos.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a processos.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a processos.')
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=['get', 'post'], url_path='tipo-acao-options')
     def tipo_acao_options(self, request):
@@ -1067,6 +1087,86 @@ class CaseMovementViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(case_id=case_id)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a partes do processo.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a partes do processo.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a partes do processo.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a partes do processo.')
+        return super().destroy(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a representações do processo.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a representações do processo.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a representações do processo.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a representações do processo.')
+        return super().destroy(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a vínculos do processo.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a vínculos do processo.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a vínculos do processo.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a vínculos do processo.')
+        return super().destroy(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a movimentações do processo.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a movimentações do processo.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a movimentações do processo.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a movimentações do processo.')
+        return super().destroy(request, *args, **kwargs)
+
     @transaction.atomic
     def perform_destroy(self, instance):
         """
@@ -1160,6 +1260,26 @@ class CasePrazoViewSet(viewsets.ModelViewSet):
         
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a prazos do processo.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a prazos do processo.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a prazos do processo.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a prazos do processo.')
+        return super().destroy(request, *args, **kwargs)
+
 
 class CaseTaskViewSet(viewsets.ModelViewSet):
     """
@@ -1217,6 +1337,26 @@ class CaseTaskViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas processuais.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas processuais.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas processuais.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas processuais.')
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'], url_path='count')
     def count(self, request):
         """Retorna apenas a contagem de tarefas para o mesmo escopo/filtros do list()."""
@@ -1265,6 +1405,26 @@ class PaymentViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(case_id=case_id)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().destroy(request, *args, **kwargs)
+
 
 class ExpenseViewSet(viewsets.ModelViewSet):
     """
@@ -1306,5 +1466,25 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         if case_id:
             queryset = queryset.filter(case_id=case_id)
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura ao financeiro.')
+        return super().destroy(request, *args, **kwargs)
 
 

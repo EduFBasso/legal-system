@@ -24,6 +24,16 @@ from .models import Publication, PublicationDeletionTombstone, SearchHistory
 logger = logging.getLogger(__name__)
 
 
+def _deny_master_publications(request):
+    user = getattr(request, 'user', None)
+    if user and getattr(user, 'is_authenticated', False) and is_master_user(user):
+        return Response(
+            {'detail': 'Usuário MASTER não possui acesso ao módulo de publicações.'},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    return None
+
+
 def _get_user_publication_identity(user):
     profile = getattr(user, 'profile', None)
     # Para usuário autenticado, priorizar APENAS os dados do perfil.
@@ -214,6 +224,9 @@ def fetch_today_publications(request):
         "erros": null
     }
     """
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     try:
         user = request.user
         owner = user if user.is_authenticated else None
@@ -311,6 +324,9 @@ def fetch_today_publications(request):
 
 @api_view(['GET'])
 def search_publications(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Busca publicações com filtros personalizados.
     
@@ -427,6 +443,9 @@ def search_publications(request):
 
 @api_view(['GET'])
 def debug_search(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     import requests
     if not getattr(settings, 'DEBUG', False):
         return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -701,6 +720,9 @@ def _attach_case_suggestions(publicacoes, user=None):
 
 @api_view(['GET'])
 def get_last_search(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Retorna informações da última busca realizada.
     Valida se publicações ainda existem no banco (proteção contra deleção manual).
@@ -779,6 +801,9 @@ def get_last_search(request):
 
 @api_view(['GET'])
 def retrieve_last_search_publications(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Recupera as publicações da última busca diretamente do banco SQLite.
     Evita requisições ao PJe, retornando dados já salvos.
@@ -962,6 +987,9 @@ def _ensure_movement_from_publication(publication, case):
 
 @api_view(['GET'])
 def get_publications_by_case(request, case_id):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Retorna publicacoes vinculadas a um caso especifico.
     
@@ -1053,6 +1081,9 @@ def get_publications_by_case(request, case_id):
 
 @api_view(['POST'])
 def integrate_publication(request, id_api):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Vincula publicacao a um caso.
 
@@ -1182,6 +1213,9 @@ def integrate_publication(request, id_api):
 
 @api_view(['POST'])
 def create_movement_from_publication(request, id_api):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Cria uma movimentação a partir de uma publicação já vinculada.
     
@@ -1249,6 +1283,9 @@ def create_movement_from_publication(request, id_api):
 
 @api_view(['POST'])
 def batch_integrate_publications(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Integra publicacoes da ultima busca (ou search_id informado).
 
@@ -1367,6 +1404,9 @@ def batch_integrate_publications(request):
 
 @api_view(['GET'])
 def get_search_history(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Retorna lista completa do histórico de buscas.
     
@@ -1551,6 +1591,9 @@ def get_search_history(request):
 
 @api_view(['GET'])
 def get_search_history_detail(request, search_id):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Retorna detalhes de uma busca específica do histórico, incluindo as publicações.
     
@@ -1643,6 +1686,9 @@ def get_search_history_detail(request, search_id):
 
 @api_view(['DELETE'])
 def delete_search_history(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Deleta todo o histórico de buscas.
     ATENÇÃO: Esta operação é irreversível!
@@ -1687,6 +1733,9 @@ def delete_search_history(request):
 
 @api_view(['GET'])
 def get_publication_by_id(request, id_api):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Busca uma publicação específica pelo id_api.
     Usado para abrir modal de publicação a partir de notificações.
@@ -1736,6 +1785,9 @@ def get_publication_by_id(request, id_api):
 
 @api_view(['DELETE'])
 def delete_publication(request, id_api):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     HARD DELETE: Remove a publicação do banco de dados.
     CASCADE: Deleta notificações não lidas relacionadas.
@@ -1809,6 +1861,9 @@ def delete_publication(request, id_api):
 
 @api_view(['POST'])
 def delete_multiple_publications(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     Deleta múltiplas publicações + notificações relacionadas.
     HARD DELETE com validação de publicações vinculadas a casos.
@@ -1897,6 +1952,9 @@ def delete_multiple_publications(request):
 
 @api_view(['POST'])
 def delete_all_publications(request):
+    denied = _deny_master_publications(request)
+    if denied is not None:
+        return denied
     """
     HARD DELETE: Remove TODAS as publicações + limpa histórico.
     Valida publicações vinculadas a casos (protegidas).

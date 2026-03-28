@@ -44,7 +44,7 @@ export default function Header() {
     <header className="app-header">
       <div className="header-logo">
         <h1>⚖️ Sistema Jurídico</h1>
-        {isAuthenticated ? (
+        {isAuthenticated && !isMasterUser ? (
           <Link
             to="/notifications"
             className="btn-notifications"
@@ -56,7 +56,7 @@ export default function Header() {
               <span className="header-badge">{unreadCount}</span>
             )}
           </Link>
-        ) : (
+        ) : !isAuthenticated ? (
           <button
             type="button"
             className="btn-notifications"
@@ -66,7 +66,7 @@ export default function Header() {
           >
             🔔
           </button>
-        )}
+        ) : null}
       </div>
       <div className="header-user">
         {isAuthenticated ? (

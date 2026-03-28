@@ -505,10 +505,9 @@ class PublicationsSearchIdentityValidationTests(TestCase):
 	def test_fetch_today_requires_oab_and_name(self):
 		url = reverse('publications:fetch_today')
 		response = self.client.get(url)
-		self.assertEqual(response.status_code, 400)
+		self.assertEqual(response.status_code, 403)
 		payload = response.json()
-		self.assertFalse(payload.get('success'))
-		self.assertIn('Nome completo e o Número da OAB', payload.get('error', ''))
+		self.assertIn('MASTER', payload.get('detail', ''))
 
 	def test_search_requires_oab_and_name(self):
 		url = reverse('publications:search')
@@ -517,10 +516,9 @@ class PublicationsSearchIdentityValidationTests(TestCase):
 			'data_fim': '2026-02-20',
 			'tribunais': ['TJSP'],
 		})
-		self.assertEqual(response.status_code, 400)
+		self.assertEqual(response.status_code, 403)
 		payload = response.json()
-		self.assertFalse(payload.get('success'))
-		self.assertIn('Nome completo e o Número da OAB', payload.get('error', ''))
+		self.assertIn('MASTER', payload.get('detail', ''))
 
 
 class PublicationsSearchCaseSuggestionTests(TestCase):

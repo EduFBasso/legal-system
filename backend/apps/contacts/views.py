@@ -4,6 +4,7 @@ Views REST API para o app de contatos.
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -308,6 +309,26 @@ class ContactTaskViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(contact__owner=user)
 
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas de pessoas.')
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas de pessoas.')
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas de pessoas.')
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if is_master_user(request.user):
+            raise PermissionDenied('Usuário MASTER possui acesso somente leitura a tarefas de pessoas.')
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'], url_path='count')
     def count(self, request):

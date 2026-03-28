@@ -31,6 +31,7 @@ initTaskSync(taskSyncBroadcast);
 
 function App() {
   const { isAuthenticated, showNotLoggedMessage, user } = useAuth();
+  const isMasterUser = user?.role === 'MASTER';
 
   useEffect(() => {
     return () => cleanupTaskSync();
@@ -44,23 +45,31 @@ function App() {
             {/* Rotas dedicadas para processos (full width, sem sidebar) */}
             <Route
               path="/cases/new"
-              element={isAuthenticated ? <CaseDetailPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+              element={isAuthenticated
+                ? (isMasterUser ? <Navigate to="/painel-master" replace /> : <CaseDetailPage />)
+                : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
             />
             <Route
               path="/cases/:id"
-              element={isAuthenticated ? <CaseDetailPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+              element={isAuthenticated
+                ? (isMasterUser ? <Navigate to="/painel-master" replace /> : <CaseDetailPage />)
+                : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
             />
 
             {/* Rotas dedicadas para tarefas (full width, sem header/menu/sidebar) */}
             <Route
               path="/deadlines/standalone"
-              element={isAuthenticated ? <DeadlinesPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+              element={isAuthenticated
+                ? (isMasterUser ? <Navigate to="/painel-master" replace /> : <DeadlinesPage />)
+                : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
             />
             
             {/* Rota de detalhes de publicação em nova janela */}
             <Route
               path="/publications/:idApi/details"
-              element={isAuthenticated ? <PublicationDetailsPage /> : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+              element={isAuthenticated
+                ? (isMasterUser ? <Navigate to="/painel-master" replace /> : <PublicationDetailsPage />)
+                : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
             />
 
             {/* Painel administrativo Master (full width, sem sidebars) */}
@@ -80,6 +89,9 @@ function App() {
 
             {/* Rotas normais com layout padrão */}
             <Route path="/*" element={
+              isAuthenticated && isMasterUser ? (
+                <Navigate to="/painel-master" replace />
+              ) : (
               <div className="app-container">
                 <Header />
                 {/* <Breadcrumb /> */}
@@ -134,7 +146,7 @@ function App() {
               </Sidebar>
             </div>
           </div>
-            } />
+            )} />
           </Routes>
         </PublicationsProvider>
       </NotificationsProvider>
