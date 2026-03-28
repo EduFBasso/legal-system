@@ -27,12 +27,16 @@ export default function DeadlinesPage() {
     setToast({ message, type, autoCloseMs });
   }, []);
 
+  // Evita recriar params por identidade instável do URLSearchParams.
+  // Mantém o mesmo objeto enquanto a querystring não muda.
+  const tasksQueryKey = searchParams.toString();
   const tasksQueryParams = useMemo(() => {
     const params = {};
-    const teamMemberId = searchParams.get('team_member_id');
-    const teamScope = searchParams.get('team_scope');
-    const excludeOwnerSelf = searchParams.get('exclude_owner_self');
-    const excludeOwnerless = searchParams.get('exclude_ownerless');
+    const sp = new URLSearchParams(tasksQueryKey);
+    const teamMemberId = sp.get('team_member_id');
+    const teamScope = sp.get('team_scope');
+    const excludeOwnerSelf = sp.get('exclude_owner_self');
+    const excludeOwnerless = sp.get('exclude_ownerless');
 
     if (teamMemberId) params.team_member_id = teamMemberId;
     if (teamScope) params.team_scope = teamScope;
@@ -40,7 +44,7 @@ export default function DeadlinesPage() {
     if (excludeOwnerless) params.exclude_ownerless = excludeOwnerless;
 
     return params;
-  }, [searchParams]);
+  }, [tasksQueryKey]);
 
   const scopeLabel = searchParams.get('scope_label') || '';
 

@@ -64,14 +64,16 @@ export default function CasesPage() {
     try {
       const statsData = await casesService.getStats({});
       setStats(statsData);
-      
-      if (Object.keys(allTribunals).length === 0) {
-        setAllTribunals(statsData.by_tribunal || {});
-      }
+
+      // Preenche breakdown 1x sem causar refetch por dependência.
+      setAllTribunals((prev) => {
+        if (prev && Object.keys(prev).length > 0) return prev;
+        return statsData?.by_tribunal || {};
+      });
     } catch (error) {
       console.error('Error loading stats:', error);
     }
-  }, [allTribunals]);
+  }, []);
 
   /**
    * Initial load - load stats and cases
