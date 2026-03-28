@@ -113,6 +113,17 @@
   color: inherit;
 }
 
+.btn-master-panel--static {
+  cursor: default;
+}
+
+.btn-master-panel--static:hover,
+.btn-master-panel--static:active {
+  background: transparent;
+  border-color: transparent;
+  transform: none;
+}
+
 .btn-settings:hover,
 .btn-notifications:hover {
   background: rgba(255, 255, 255, 0.2);

@@ -72,14 +72,13 @@ export default function Header() {
         {isAuthenticated ? (
           <>
             {isMasterUser && (
-              <Link
-                to="/painel-master"
-                className="btn-notifications btn-master-panel"
+              <span
+                className="btn-notifications btn-master-panel btn-master-panel--static"
                 title="Painel Administrativo"
                 aria-label="Painel Administrativo Master"
               >
                 🔑
-              </Link>
+              </span>
             )}
             <span className="user-name">{displayName}</span>
 
