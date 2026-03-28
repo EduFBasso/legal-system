@@ -1,19 +1,14 @@
 // src/components/Menu.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import publicationsService from '../services/publicationsService';
-import { subscribePublicationSync } from '../services/publicationSync';
 import caseTasksService from '../services/caseTasksService';
 import { subscribeToTaskUpdates } from '../services/taskSyncService';
 import SettingsModal from './SettingsModal';
 import './Menu.css';
 
 export default function Menu({ isAuthenticated, onBlockedAction }) {
-  const [pendingCount, setPendingCount] = useState(0);
   const [openTasksCount, setOpenTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [pendingAttention, setPendingAttention] = useState(false);
-  const pendingAttentionTimerRef = useRef(null);
 
   const renderMenuLink = ({ to, end = true, icon, label, badge = null }) => {
     if (!isAuthenticated) {
@@ -45,41 +40,6 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       return;
     }
 
-    const loadPendingCount = async () => {
-      try {
-        const result = await publicationsService.getPendingCount();
-        if (result.success) {
-          const nextCount = Number(result.count || 0);
-          setPendingCount((previousCount) => {
-            const previous = Number(previousCount || 0);
-
-            if (nextCount > previous) {
-              setPendingAttention(true);
-              if (pendingAttentionTimerRef.current) {
-                window.clearTimeout(pendingAttentionTimerRef.current);
-              }
-              pendingAttentionTimerRef.current = window.setTimeout(() => {
-                setPendingAttention(false);
-                pendingAttentionTimerRef.current = null;
-              }, 4500);
-            }
-
-            if (nextCount === 0) {
-              setPendingAttention(false);
-              if (pendingAttentionTimerRef.current) {
-                window.clearTimeout(pendingAttentionTimerRef.current);
-                pendingAttentionTimerRef.current = null;
-              }
-            }
-
-            return nextCount;
-          });
-        }
-      } catch {
-        setPendingCount(0);
-      }
-    };
-
     const loadOpenTasksCount = async () => {
       try {
         const result = await caseTasksService.getTasksCount({
@@ -91,41 +51,21 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
       }
     };
 
-    loadPendingCount();
     loadOpenTasksCount();
 
-    const handlePublicationsSearchCompleted = () => {
-      loadPendingCount();
-    };
-
     const handleWindowFocus = () => {
-      loadPendingCount();
       loadOpenTasksCount();
     };
-
-    // Escutar eventos de integração para atualizar contador
-    const unsubscribe = subscribePublicationSync((event) => {
-      if (event.type === 'PUBLICATION_INTEGRATED') {
-        loadPendingCount();
-      }
-    });
 
     const unsubscribeTasks = subscribeToTaskUpdates(() => {
       loadOpenTasksCount();
     });
 
-    window.addEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
     window.addEventListener('focus', handleWindowFocus);
 
     return () => {
-      unsubscribe();
       unsubscribeTasks();
-      window.removeEventListener('publicationsSearchCompleted', handlePublicationsSearchCompleted);
       window.removeEventListener('focus', handleWindowFocus);
-      if (pendingAttentionTimerRef.current) {
-        window.clearTimeout(pendingAttentionTimerRef.current);
-        pendingAttentionTimerRef.current = null;
-      }
     };
   }, [isAuthenticated]);
 
@@ -168,23 +108,6 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
         </li>
         <li className="menu-item">
           {renderMenuLink({ to: '/search-history', icon: '📜', label: 'Histórico de Buscas' })}
-        </li>
-        <li className="menu-item">
-          {renderMenuLink({ to: '/publications/all', icon: '📚', label: 'Todas Publicações' })}
-        </li>
-        <li className="menu-item">
-          {renderMenuLink({
-            to: '/publications/pending',
-            icon: '⏳',
-            label: 'Não Vinculadas',
-            badge: isAuthenticated && pendingCount > 0 ? (
-              <span className={
-                `menu-count-badge menu-count-badge--pending${pendingAttention ? ' menu-count-badge--attention' : ''}`
-              }>
-                {pendingCount}
-              </span>
-            ) : null,
-          })}
         </li>
 
         <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />

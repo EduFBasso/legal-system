@@ -26,16 +26,6 @@ vi.mock('../services/casePartiesService', () => ({
   deleteParty: (...args) => mockDeleteParty(...args)
 }));
 
-// Mock Settings Context
-const mockSettings = {
-  showEmptyFields: false,
-  deletePassword: ''
-};
-
-vi.mock('../contexts/SettingsContext', () => ({
-  useSettings: () => ({ settings: mockSettings })
-}));
-
 const renderWithRouter = (component) => {
   return render(
     <BrowserRouter>
@@ -96,8 +86,6 @@ describe('ContactDetailModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetById.mockResolvedValue(mockContact);
-    mockSettings.showEmptyFields = false;
-    mockSettings.deletePassword = '';
   });
 
   describe('CREATE Mode', () => {

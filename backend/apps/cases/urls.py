@@ -13,7 +13,6 @@ from .views import (
     CaseTaskViewSet,
     PaymentViewSet,
     ExpenseViewSet,
-    CaseDocumentViewSet,
 )
 
 router = DefaultRouter()
@@ -26,7 +25,6 @@ router.register(r'case-prazos', CasePrazoViewSet, basename='caseprazo')
 router.register(r'case-tasks', CaseTaskViewSet, basename='casetask')
 router.register(r'payments', PaymentViewSet, basename='payment')
 router.register(r'expenses', ExpenseViewSet, basename='expense')
-router.register(r'case-documents', CaseDocumentViewSet, basename='casedocument')
 
 urlpatterns = [
     path('', include(router.urls)),

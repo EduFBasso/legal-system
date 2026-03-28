@@ -12,13 +12,11 @@ import MainContent from './components/MainContent';
 import Sidebar from './components/Sidebar';
 import ContactsPage from './pages/ContactsPage';
 import PublicationsPage from './pages/PublicationsPage';
-import AllPublicationsPage from './pages/AllPublicationsPage';
 import CasesPage from './pages/CasesPage';
 import CaseDetailPage from './pages/CaseDetailPage';
 import PublicationDetailsPage from './pages/PublicationDetailsPage';
 import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
-import PendingPublicationsPage from './pages/PendingPublicationsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
 import ContactTasksPage from './pages/ContactTasksPage';
 import MasterDashboardPage from './pages/MasterDashboardPage';
@@ -95,8 +93,8 @@ function App() {
                         <Route path="/" element={<ContactsPage />} />
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/publications" element={<PublicationsPage />} />
-                        <Route path="/publications/all" element={<AllPublicationsPage />} />
-                        <Route path="/publications/pending" element={<PendingPublicationsPage />} />
+                        <Route path="/publications/all" element={<Navigate to="/search-history" replace />} />
+                        <Route path="/publications/pending" element={<Navigate to="/publications" replace />} />
                         <Route path="/cases" element={<CasesPage />} />
                         <Route path="/search-history" element={<SearchHistoryPage />} />
                         <Route path="/notifications" element={<NotificationsPage />} />

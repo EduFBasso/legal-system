@@ -181,6 +181,7 @@ function SearchHistoryDetailModal({
                         key={pub.id_api}
                         publication={pub}
                         highlighted={isHighlighted}
+                        onMarkAsRead={markPublicationNotificationAsRead}
                         onClick={() => handlePublicationClick(pub)}
                       />
                     );

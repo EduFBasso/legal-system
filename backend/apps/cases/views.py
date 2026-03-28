@@ -76,7 +76,6 @@ from .models import (
     CaseTask,
     Payment,
     Expense,
-    CaseDocument,
     CaseTipoAcaoOption,
     CaseTituloOption,
     CasePartyRoleOption,
@@ -95,7 +94,6 @@ from .serializers import (
     CaseTaskSerializer,
     PaymentSerializer,
     ExpenseSerializer,
-    CaseDocumentSerializer,
 )
 
 UserModel = get_user_model()
@@ -1310,39 +1308,3 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class CaseDocumentViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para documentos anexados ao processo.
-    """
-
-    queryset = CaseDocument.objects.select_related('case').all().order_by('-uploaded_at')
-    serializer_class = CaseDocumentSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = {
-        'case': ['exact'],
-        'file_extension': ['exact', 'in'],
-        'uploaded_at': ['gte', 'lte', 'exact'],
-    }
-    search_fields = ['original_name', 'tipo_documento', 'description', 'case__numero_processo']
-    ordering_fields = ['uploaded_at', 'original_name', 'file_size']
-    ordering = ['-uploaded_at']
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = self.request.user
-        scope_user = get_master_scope_user(self.request, UserModel)
-        if scope_user is not None:
-            queryset = queryset.filter(case__owner=scope_user)
-        elif user.is_authenticated:
-            if is_master_user(user):
-                team_scope = self.request.query_params.get('team_scope')
-                if team_scope == 'all':
-                    queryset = apply_master_team_scope(queryset, self.request, UserModel, owner_field='case__owner', include_ownerless=False)
-                else:
-                    queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
-            else:
-                queryset = apply_user_owned_or_shared(queryset, user, owner_field='case__owner')
-        case_id = self.request.query_params.get('case_id')
-        if case_id:
-            queryset = queryset.filter(case_id=case_id)
-        return queryset

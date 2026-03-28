@@ -127,10 +127,12 @@ function DeadlinesTab({
 
   const handleToggleTaskCompleted = async (task) => {
     try {
-    // Este fluxo legado não possui input de data; para manter a regra (>= amanhã)
-    // evitamos criar tarefas sem vencimento aqui.
-    alert(validateDueDateAtLeastTomorrow('').message);
-    return;
+      // Mantém regra de vencimento (>= amanhã) quando aplicável.
+      const validation = validateDueDateAtLeastTomorrow(task?.data_vencimento || '');
+      if (!validation?.isValid) {
+        alert(validation?.message || 'Data de vencimento inválida');
+        return;
+      }
       await caseTasksService.patchTask(task.id, {
         status: task.status === 'CONCLUIDA' ? 'PENDENTE' : 'CONCLUIDA',
       });

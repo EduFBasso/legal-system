@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import casesService from '../services/casesService';
 import publicationsService from '../services/publicationsService';
-import { useSettings } from '../contexts/SettingsContext';
 
 /**
  * useCaseCore
@@ -23,8 +22,6 @@ export function useCaseCore(
   onCaseCreated,
   onCaseDeleted,
 ) {
-  const { settings: _settings } = useSettings();
-
   // Estado principal do caso
   const [caseData, setCaseData] = useState(null);
   const [formData, setFormData] = useState({});
@@ -185,24 +182,32 @@ export function useCaseCore(
   /**
    * Carregar dados do caso
    */
-  const loadCaseData = useCallback(async () => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+  const loadCaseData = useCallback(
+    /**
+     * @param {{ silent?: boolean }=} options
+     */
+    async (options = {}) => {
+      const { silent = false } = options || {};
 
-    try {
-      setLoading(true);
-      const data = await casesService.getById(id);
-      setCaseData(data);
-      setFormData(data);
-    } catch (error) {
-      console.error('Error loading case:', error);
-      showToast('Erro ao carregar processo', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, showToast]);
+      if (!id) {
+        if (!silent) setLoading(false);
+        return;
+      }
+
+      try {
+        if (!silent) setLoading(true);
+        const data = await casesService.getById(id);
+        setCaseData(data);
+        setFormData(data);
+      } catch (error) {
+        console.error('Error loading case:', error);
+        showToast('Erro ao carregar processo', 'error');
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [id, showToast]
+  );
 
   useEffect(() => {
     loadCaseData();
@@ -349,32 +354,25 @@ export function useCaseCore(
         }
 
         const pubId = sourcePublication?.id_api || publicationId;
-        const shouldCreateMovementBySystemSetting = systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION !== false;
 
         if (pubId) {
           // REGRA DE NEGÓCIO:
           // Se o processo foi criado a partir de uma publicação (via ?pub_id=),
           // essa publicação deve ser vinculada ao processo.
+          // Também criamos a movimentação correspondente, porque é na aba Movimentações
+          // que o advogado controla tarefas vinculadas ao evento (publicação).
           try {
-            // Para publicação de origem, sempre garantir criação de movimentação.
-            const createMovementRequested = true;
-
             const integrationResult = await publicationsService.integratePublication(pubId, {
               caseId: created.id,
-              createMovement: createMovementRequested,
+              // A ação do usuário aqui é explícita (Criar/Salvar processo a partir da publicação),
+              // então faz sentido gerar a movimentação para não "sumir" do fluxo de tarefas.
+              createMovement: true,
             });
 
-            // Caso o backend não crie a movimentação (ou se estiver desligado por setting),
-            // fazer fallback explícito para garantir que apareça em Movimentações.
-            if (
-              createMovementRequested
-              && (integrationResult?.movement_created !== true || shouldCreateMovementBySystemSetting === false)
-            ) {
-              try {
-                await publicationsService.createMovementFromPublication(pubId);
-              } catch (fallbackError) {
-                console.warn('Fallback de criação de movimentação falhou:', fallbackError);
-              }
+            // Se a integração falhar, o caso ainda é criado; apenas avisar.
+            if (integrationResult?.success !== true) {
+              console.warn('Falha ao integrar publicação de origem no caso criado:', integrationResult);
+              showToast(integrationResult?.error || 'Processo criado, mas houve falha ao vincular a publicação de origem', 'warning');
             }
           } catch (integrationError) {
             console.error('Error integrating source publication:', integrationError);

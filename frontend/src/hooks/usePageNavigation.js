@@ -20,7 +20,6 @@ export function usePageNavigation() {
     if (tab === 'info' || tab === 'informacoes') return 'info';
     if (tab === 'financeiro') return 'financeiro';
     if (tab === 'vinculos') return 'vinculos';
-    if (tab === 'documentos') return 'documentos';
     if (tab === 'publicacoes') return 'publicacoes';
     if (tab === 'tasks' || tab === 'tarefas') return 'tasks';
     return 'info';
@@ -45,7 +44,6 @@ export function usePageNavigation() {
     // Canonical tabs
     if (tab === 'financeiro') return 'financeiro';
     if (tab === 'vinculos') return 'vinculos';
-    if (tab === 'documentos') return 'documentos';
     if (tab === 'publicacoes') return 'publicacoes';
     if (tab === 'tasks' || tab === 'tarefas') return 'tasks';
 
@@ -59,7 +57,6 @@ export function usePageNavigation() {
     if (section === 'info') return 'info';
     if (section === 'financeiro') return 'financeiro';
     if (section === 'vinculos') return 'vinculos';
-    if (section === 'documentos') return 'documentos';
     if (section === 'publicacoes') return 'publicacoes';
     if (section === 'tasks') return 'tasks';
     return 'info';

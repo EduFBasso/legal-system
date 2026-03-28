@@ -27,6 +27,7 @@ describe('PublicationCard', () => {
       <PublicationCard
         publication={{ ...basePublication, integration_status: 'PENDING', case_id: null }}
         onClick={vi.fn()}
+        onMarkAsRead={vi.fn()}
         showActionButtons={true}
         onDelete={vi.fn()}
       />
@@ -40,6 +41,7 @@ describe('PublicationCard', () => {
       <PublicationCard
         publication={{ ...basePublication, integration_status: 'INTEGRATED', case_id: 123 }}
         onClick={vi.fn()}
+        onMarkAsRead={vi.fn()}
         showActionButtons={true}
         onDelete={vi.fn()}
       />

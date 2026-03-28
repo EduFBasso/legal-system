@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import PublicationCard from './PublicationCard';
+import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
 import './PublicationsList.css';
 
 /**
@@ -19,6 +20,8 @@ export default function PublicationsList({
   onIntegrate = () => {},
   onCreateCase = () => {}
 }) {
+  const markPublicationNotificationAsRead = usePublicationNotificationRead();
+
   // Estado de carregamento
   if (loading) {
     return (
@@ -65,6 +68,7 @@ export default function PublicationsList({
         <PublicationCard
           key={pub.id_api}
           publication={pub}
+          onMarkAsRead={markPublicationNotificationAsRead}
           onClick={() => onCardClick(pub)}
           selectionMode={selectionMode}
           isSelected={selectedIds.has(pub.id_api)}

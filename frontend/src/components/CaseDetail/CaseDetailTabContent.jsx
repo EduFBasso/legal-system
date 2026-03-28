@@ -2,7 +2,6 @@ import {
   InformacaoTab,
   PartiesTab,
   MovimentacoesTab,
-  DocumentosTab,
   FinanceiroTab,
   PublicacoesTab,
   TasksTab,
@@ -38,12 +37,6 @@ export default function CaseDetailTabContent({
     movements,
     publications,
     financial,
-
-    documentos,
-    loadingDocumentos,
-    uploadingDocumento,
-    onUploadDocument,
-    onDeleteDocument,
 
     formatDate,
     formatCurrency,
@@ -116,17 +109,6 @@ export default function CaseDetailTabContent({
         />
       )}
 
-      {activeSection === 'documentos' && (
-        <DocumentosTab
-          caseId={id}
-          documentos={documentos}
-          loading={loadingDocumentos}
-          uploading={uploadingDocumento}
-          onUploadDocument={onUploadDocument}
-          onDeleteDocument={onDeleteDocument}
-        />
-      )}
-
       {activeSection === 'publicacoes' && showPublicacoesTab && (
         <PublicacoesTab
           caseId={id}
@@ -147,9 +129,8 @@ export default function CaseDetailTabContent({
       {activeSection === 'tasks' && (
         <TasksTab
           caseId={id}
-          caseData={caseCore.caseData}
           tasks={movements.tasks}
-          setTasks={movements.setTasks}
+          loadingTasks={movements.loadingTasks}
           formatDate={formatDate}
           onRefreshTasks={movements.loadTasks}
           readOnly={isReadOnly}

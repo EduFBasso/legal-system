@@ -20,7 +20,6 @@ import { useMovementsAndTasks } from '../hooks/useMovementsAndTasks';
 import { usePublicationsForCase } from '../hooks/usePublicationsForCase';
 import { useFinancialData } from '../hooks/useFinancialData';
 import { useCaseDetailLinkedCases } from '../hooks/useCaseDetailLinkedCases';
-import { useCaseDocuments } from '../hooks/useCaseDocuments';
 import { useCaseDetailAutoRefresh } from '../hooks/useCaseDetailAutoRefresh';
 import { useFinanceiroAutoSaveGuards } from '../hooks/useFinanceiroAutoSaveGuards';
 import { useCaseDetailLinkContactFlow } from '../hooks/useCaseDetailLinkContactFlow';
@@ -43,7 +42,6 @@ import './CaseDetailPage.css';
  * - useModalsAndNotifications: Modais e notificações (Toast)
  * - usePageNavigation: Navegação de abas e URL params
  * - useCaseDetailLinkedCases: Processos relacionados (aba Vínculos)
- * - useCaseDocuments: Listagem/upload/exclusão (aba Documentos)
  * - useCaseDetailAutoRefresh: Recarrega dados ao entrar em abas e ao retomar foco
  * - useFinanceiroAutoSaveGuards: Força salvar rascunho do Financeiro ao sair/ocultar
  */
@@ -204,7 +202,14 @@ function CaseDetailPage() {
       try {
         const settings = await systemSettingsService.getAllSettings();
         setSystemSettings(settings);
-        console.log('⚙️ System settings carregadas:', settings);
+        try {
+          const shouldLog = import.meta.env.DEV && String(window?.localStorage?.getItem('debug_settings') || '') === '1';
+          if (shouldLog) {
+            console.log('⚙️ System settings carregadas:', settings);
+          }
+        } catch {
+          // ignore
+        }
       } catch (error) {
         console.error('Erro ao carregar system settings:', error);
       }
@@ -252,7 +257,7 @@ function CaseDetailPage() {
     activeSection: navigation.activeSection,
     caseSaving: caseCore.saving,
     autoSavingFinancial,
-    loadCaseData: caseCore.loadCaseData,
+    loadCaseData: () => caseCore.loadCaseData({ silent: true }),
     loadMovimentacoes: movements.loadMovimentacoes,
     loadTasks: movements.loadTasks,
   });
@@ -458,13 +463,6 @@ function CaseDetailPage() {
     );
   };
 
-  const documents = useCaseDocuments({
-    caseId: id,
-    activeSection: navigation.activeSection,
-    systemSettings,
-    showToast: modalsNotif.showToast,
-  });
-
   const showPublicacoesTab = !(
     systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION &&
     systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC
@@ -485,12 +483,6 @@ function CaseDetailPage() {
       },
       publications,
       financial,
-
-      documentos: documents.documentos,
-      loadingDocumentos: documents.loadingDocumentos,
-      uploadingDocumento: documents.uploadingDocumento,
-      onUploadDocument: documents.uploadDocumento,
-      onDeleteDocument: documents.deleteDocumento,
 
       formatDate,
       formatCurrency,
@@ -516,11 +508,6 @@ function CaseDetailPage() {
     handleMentionProcess,
     publications,
     financial,
-    documents.documentos,
-    documents.loadingDocumentos,
-    documents.uploadingDocumento,
-    documents.uploadDocumento,
-    documents.deleteDocumento,
     autoSavingFinancial,
     systemSettings,
     showPublicacoesTab,

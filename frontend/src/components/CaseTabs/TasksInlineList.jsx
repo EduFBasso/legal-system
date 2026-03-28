@@ -5,7 +5,7 @@ import { formatDaysRemaining } from '../../utils/taskUrgency';
 import { htmlToText } from '../../utils/htmlToText';
 import TaskForm from './TaskForm';
 import { tasksInlineStyles, getTaskCardStyle } from './movementCardStyles';
-import { caseTheme, getUrgencyStyle, getUrgencyButtonStyle, getButtonHoverHandlers } from './caseTheme';
+import { caseTheme, getUrgencyStyle } from './caseTheme';
 import { Button } from '../common/Button';
 import { notifyTaskUpdate } from '../../services/taskSyncService';
 import caseTasksService from '../../services/caseTasksService';
@@ -91,16 +91,6 @@ export default function TasksInlineList({
         const urgency = calculateUrgency(task.data_vencimento);
         const urgencyMeta = getUrgencyStyle(urgency);
         const taskToneColor = task.data_vencimento ? urgencyMeta.color : caseTheme.darkText;
-        const urgencyButtonStyle = getUrgencyButtonStyle(urgency);
-        const editButtonBaseColor = task.data_vencimento ? urgencyButtonStyle.base : caseTheme.button.primary;
-        const editButtonHoverColor = task.data_vencimento ? urgencyButtonStyle.hover : caseTheme.button.primaryDark;
-        const editButtonShadow = task.data_vencimento ? urgencyButtonStyle.shadow : '0 2px 8px rgba(22, 101, 52, 0.3)';
-        const editTaskButtonInteractions = getButtonHoverHandlers({
-          base: editButtonBaseColor,
-          hover: editButtonHoverColor,
-          shadow: editButtonShadow,
-        });
-
         return (
           <div
             id={`task-${task.id}`}

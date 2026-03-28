@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUrgencyVisibility } from '../../hooks/useUrgencyVisibility';
 import caseTasksService from '../../services/caseTasksService';
 import { notifyTaskUpdate } from '../../services/taskSyncService';
@@ -18,6 +18,8 @@ import CreateTaskModal from '../CreateTaskModal';
 import { Button } from '../common/Button';
 import './TasksTab.css';
 
+const EMPTY_TASKS = [];
+
 /**
  * TasksTab - Tarefas do Processo (Tipo 2)
  * 
@@ -31,11 +33,12 @@ import './TasksTab.css';
  */
 export default function TasksTab({
   caseId = null,
+  tasks: allTasks = EMPTY_TASKS,
+  loadingTasks = false,
   formatDate = (date) => date ? new Date(date).toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—',
   onRefreshTasks = () => {},
   readOnly = false,
 }) {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedUrgency, setSelectedUrgency] = useState(null);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
@@ -49,28 +52,12 @@ export default function TasksTab({
   // Hook para visibilidade de urgências
   const { URGENCIES, urgencyConfig, shouldShowUrgency } = useUrgencyVisibility(selectedUrgency);
 
-  // Carregar tarefas tipo 2 (movimentacao=NULL) do caso — usa estado LOCAL
-  const loadCaseTasksType2 = useCallback(async () => {
-    if (!caseId) return;
-    try {
-      setLoading(true);
-      const allTasks = await caseTasksService.getTasksByCase(caseId);
-      // Filtra apenas tarefas tipo 2 (sem movimentação) → armazena localmente
-      const type2Tasks = allTasks.filter(task => !task.movimentacao);
-      setTasks(type2Tasks);
-      setError(null);
-    } catch (err) {
-      console.error('Erro ao buscar tarefas do processo:', err);
-      setError('Erro ao carregar tarefas do processo.');
-    } finally {
-      setLoading(false);
-    }
-  }, [caseId]);  // removido setTasks da dependência (é local agora)
-
-  // Carregar tarefas ao montar componente
+  // Sincroniza o estado local (tipo 2) com as tarefas já carregadas pelo pai.
   useEffect(() => {
-    loadCaseTasksType2();
-  }, [loadCaseTasksType2]);
+    const nextType2 = Array.isArray(allTasks) ? allTasks.filter((task) => !task.movimentacao) : [];
+    setTasks(nextType2);
+    setError(null);
+  }, [allTasks]);
 
   // Sincronizar atualizações entre abas
   useSyncTaskUpdates({
@@ -83,7 +70,6 @@ export default function TasksTab({
           )
         );
       }
-      loadCaseTasksType2();
       onRefreshTasks(); // sincroniza o pai com todas as tarefas
     },
   });
@@ -197,7 +183,7 @@ export default function TasksTab({
     }
   };
 
-  if (loading) {
+  if (loadingTasks) {
     return (
       <div className="tasks-tab">
         <div className="tab-header">

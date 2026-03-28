@@ -60,7 +60,6 @@ export default function MovimentacaoCard({
   onToggleTaskStatus,
   onNewTaskFormChange,
   onEditTaskFormChange,
-  onDeleteTask,
   onRefreshTasks,
 }) {
   const tipoDisplay = getTipoDisplay(mov.tipo, mov.tipo_customizado);

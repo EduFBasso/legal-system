@@ -13,6 +13,14 @@ class SystemSettingsService {
     this.cacheDuration = 5 * 60 * 1000; // 5 minutos de cache padrão
   }
 
+  shouldDebugLog() {
+    try {
+      return import.meta.env.DEV && String(window?.localStorage?.getItem('debug_settings') || '') === '1';
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Busca todas as configurações do sistema
    * @returns {Promise<Object>} Objeto com todas as settings
@@ -22,7 +30,9 @@ class SystemSettingsService {
     
     // Verificar cache
     if (this.cache.has(cacheKey) && this.cacheExpiry.get(cacheKey) > Date.now()) {
-      console.log('📦 Usando cache de settings');
+      if (this.shouldDebugLog()) {
+        console.log('📦 Usando cache de settings');
+      }
       return this.cache.get(cacheKey);
     }
 
@@ -39,7 +49,9 @@ class SystemSettingsService {
         this.cache.set(cacheKey, data.settings);
         this.cacheExpiry.set(cacheKey, Date.now() + this.cacheDuration);
 
-        console.log('⚙️ Settings carregadas:', data.settings);
+        if (this.shouldDebugLog()) {
+          console.log('⚙️ Settings carregadas:', data.settings);
+        }
 
         return data.settings;
       })();
@@ -100,6 +112,11 @@ class SystemSettingsService {
    */
   getDefaultSettings() {
     return {
+      // ===== ALERTAS (PROCESSOS) =====
+      'STALE_PROCESS_MONITOR_ENABLED': false,
+      'STALE_PROCESS_MONITOR_TIME': '09:00',
+      'STALE_PROCESS_DAYS_THRESHOLD': 90,
+
       // ===== PUBLICAÇÕES =====
       'AUTO_LOAD_PUBLICATIONS_ON_CASE': true,
       'AUTO_LOAD_PUBLICATIONS_ON_CONTACTS': true,
@@ -133,6 +150,37 @@ class SystemSettingsService {
       'DEBUG_MODE': false,
       'LOG_API_REQUESTS': false,
     };
+  }
+
+  /**
+   * Atualiza múltiplas configurações editáveis do sistema.
+   * @param {Object} settingsPatch - ex.: { STALE_PROCESS_MONITOR_TIME: '09:00' }
+   * @returns {Promise<Object>} settings mescladas após update
+   */
+  async updateSettings(settingsPatch) {
+    const data = await apiFetch('/system-settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ settings: settingsPatch }),
+    });
+
+    // Atualização bem-sucedida: invalidar cache
+    this.clearCache();
+
+    // Retornar settings completas, se disponíveis
+    return data?.settings || null;
+  }
+
+  /**
+   * Atualiza uma configuração específica.
+   */
+  async updateSetting(key, value) {
+    const data = await apiFetch(`/system-settings/${key}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value }),
+    });
+
+    this.clearCache();
+    return data?.value;
   }
 
   /**

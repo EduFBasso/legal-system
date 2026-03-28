@@ -1,7 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePublicationsContext } from '../contexts/PublicationsContext';
-import { useSettings } from '../contexts/SettingsContext';
 import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
 import publicationsService from '../services/publicationsService';
 import { subscribePublicationSync } from '../services/publicationSync';
@@ -27,7 +26,6 @@ import './PublicationsPage.css';
  * Usa Context API e componentes modulares para maior manutenibilidade
  */
 export default function PublicationsPage() {
-  const { settings } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
   const markPublicationNotificationAsRead = usePublicationNotificationRead();
@@ -59,17 +57,13 @@ export default function PublicationsPage() {
 
   /**
    * Handler para busca com filtros
-   * Adiciona retroactiveDays do settings
    * Se a busca retornou publicações (> 0), redireciona para Histórico de Buscas
    */
   const handleSearch = useCallback(async (filters) => {
-    const retroactiveDays = settings.retroactiveDays ?? 7;
-
     const result = await search({
       dataInicio: filters.dataInicio,
       dataFim: filters.dataFim,
       tribunais: filters.tribunais,
-      retroactiveDays
     });
 
     if (result?.success && result.total_publicacoes > 0) {
@@ -82,7 +76,7 @@ export default function PublicationsPage() {
       }
       navigate('/search-history', { state: { fromPublicationsSearch: true } });
     }
-  }, [search, settings.retroactiveDays, navigate, hideToast]);
+  }, [search, navigate, hideToast]);
 
   /**
    * Funções de seleção para exclusão
@@ -251,6 +245,10 @@ export default function PublicationsPage() {
    * Handler para criar novo caso a partir de uma publicação
    */
   const handleCreateCaseSingle = async (pub) => {
+    // Se o usuário está criando caso a partir da publicação, não faz sentido
+    // manter a notificação como “não lida” no sidebar/página de notificações.
+    markPublicationNotificationAsRead(pub?.id_api);
+
     try {
       const latest = await publicationsService.getPublicationById(pub.id_api);
       const latestPublication = latest?.publication;

@@ -128,3 +128,21 @@ class Notification(models.Model):
             self.read = False
             self.read_at = None
             self.save(update_fields=['read', 'read_at'])
+
+
+class SystemSetting(models.Model):
+    """Configuração persistida do sistema (chave/valor).
+
+    Usado para recursos que precisam de agendamento/execução no backend.
+    """
+
+    key = models.CharField(max_length=120, unique=True, db_index=True)
+    value = models.JSONField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Configuração do Sistema'
+        verbose_name_plural = 'Configurações do Sistema'
+
+    def __str__(self):
+        return self.key

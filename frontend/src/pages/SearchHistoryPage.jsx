@@ -5,6 +5,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearchHistory } from '../hooks/useSearchHistory';
+import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
 import publicationsService from '../services/publicationsService';
 import { subscribePublicationSync } from '../services/publicationSync';
 import SearchHistoryList from '../components/SearchHistoryList';
@@ -16,6 +17,7 @@ import './SearchHistoryPage.css';
 function SearchHistoryPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const markPublicationNotificationAsRead = usePublicationNotificationRead();
   const {
     searches,
     loading,
@@ -278,8 +280,9 @@ function SearchHistoryPage() {
 
   const handleCreateCaseFromPublication = useCallback((publication) => {
     if (!publication?.id_api) return;
+    markPublicationNotificationAsRead(publication.id_api);
     openCreateCaseFromPublicationWindow(publication.id_api);
-  }, []);
+  }, [markPublicationNotificationAsRead]);
 
   const handleIntegratePublicationToSuggestedCase = useCallback(async (publication) => {
     const idApi = publication?.id_api;

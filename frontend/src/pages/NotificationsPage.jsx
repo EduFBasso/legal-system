@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
-import { useSettings } from '../contexts/SettingsContext';
 import NotificationDetailModal from '../components/NotificationDetailModal';
 import { routeNotification } from '../utils/notificationRouting';
 import './NotificationsPage.css';
@@ -9,7 +8,6 @@ import './NotificationsPage.css';
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { settings } = useSettings();
   const {
     notifications,
     unreadCount,
@@ -21,7 +19,6 @@ export default function NotificationsPage() {
     deleteNotification,
     deleteAllNotifications,
     requestPermission,
-    createTestNotification,
   } = useNotifications();
   
   const [filter, setFilter] = useState('all'); // all, unread, read
@@ -70,19 +67,6 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleCreateTest = async () => {
-    const success = await createTestNotification('default');
-    if (success) {
-      alert('Notificação de teste criada!');
-    }
-  };
-
-  const handleCreateTestStale90Days = async () => {
-    const success = await createTestNotification('stale_90_days');
-    if (success) {
-      alert('Notificação de teste 90+ dias criada!');
-    }
-  };
 
   const handleDeleteNotification = async (notificationId) => {
     const confirmAction = window.confirm('Deseja apagar esta notificação?');
@@ -249,26 +233,6 @@ export default function NotificationsPage() {
             >
               🗑 Apagar todas
             </button>
-          )}
-
-          {settings?.showNotificationTestButtons && (
-            <>
-              <button 
-                className="btn-primary" 
-                onClick={handleCreateTest}
-                disabled={loading}
-              >
-                🧪 Criar Teste
-              </button>
-              <button
-                className="btn-warning"
-                onClick={handleCreateTestStale90Days}
-                disabled={loading}
-                title="Criar notificação de teste de processo sem publicação há mais de 90 dias"
-              >
-                🧪 Teste 90+ dias
-              </button>
-            </>
           )}
         </div>
       </div>

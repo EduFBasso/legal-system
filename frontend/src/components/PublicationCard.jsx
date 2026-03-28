@@ -7,6 +7,7 @@ import './PublicationCard.css';
 export default function PublicationCard({ 
   publication, 
   onClick, 
+  onMarkAsRead,
   highlighted = false,
   selectionMode = false,
   isSelected = false,
@@ -119,6 +120,8 @@ export default function PublicationCard({
       e.stopPropagation();
       onToggleSelect();
     } else {
+      // Qualquer clique no card deve ser interpretado como “lido”.
+      onMarkAsRead?.(publication?.id_api);
       onClick();
     }
   };

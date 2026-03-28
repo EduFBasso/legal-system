@@ -13,14 +13,12 @@ class PublicationsService {
    * @param {string} params.dataInicio - Data inicial (YYYY-MM-DD)
    * @param {string} params.dataFim - Data final (YYYY-MM-DD)
    * @param {Array<string>} params.tribunais - Lista de tribunais
-   * @param {number} params.retroactiveDays - Dias retroativos para notificações
    * @returns {Promise<Object>} Resultado da busca
    */
-  async search({ dataInicio, dataFim, tribunais, retroactiveDays = 7 }) {
+  async search({ dataInicio, dataFim, tribunais }) {
     const params = new URLSearchParams({
       data_inicio: dataInicio,
-      data_fim: dataFim,
-      retroactive_days: retroactiveDays
+      data_fim: dataFim
     });
 
     tribunais.forEach(tribunal => {
@@ -162,55 +160,9 @@ class PublicationsService {
     });
   }
 
-  /**
-   * Lista publicações pendentes de integração
-   * @param {Object} params - filtros
-   * @returns {Promise<Object>} Resultado
-   */
-  async getPendingPublications({
-    limit = 20,
-    offset = 0,
-    tribunal = null,
-    ordering = '-data_disponibilizacao'
-  } = {}) {
-    const params = new URLSearchParams({
-      limit,
-      offset,
-      ordering
-    });
 
-    if (tribunal) {
-      params.append('tribunal', tribunal);
-    }
 
-    return await apiFetch(`/publications/pending?${params}`);
-  }
 
-  /**
-   * Retorna contagem de pendentes
-   * @returns {Promise<Object>} Resultado
-   */
-  async getPendingCount() {
-    return await apiFetch('/publications/pending/count');
-  }
-
-  /**
-   * Busca TODAS as publicações do sistema (integradas e não vinculadas)
-   * @param {Object} options - Opções de filtro, paginação e ordenação
-   * @returns {Promise<Object>} Resultado com lista de todas as publicações
-   */
-  async getAllPublications({ tribunal = '', ordering = '-data_disponibilizacao', integrationStatus = '', limit = 50, offset = 0 } = {}) {
-    const params = new URLSearchParams({
-      ordering,
-      limit: String(limit),
-      offset: String(offset)
-    });
-
-    if (tribunal) params.append('tribunal', tribunal);
-    if (integrationStatus) params.append('integration_status', integrationStatus);
-    
-    return await apiFetch(`/publications/all?${params}`);
-  }
 
   /**
    * Busca uma publicação específica por id_api

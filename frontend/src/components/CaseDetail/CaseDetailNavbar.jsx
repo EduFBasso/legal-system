@@ -45,13 +45,6 @@ export default function CaseDetailNavbar({
             {activeLinkedTasksCount > 0 && <span className="badge">{activeLinkedTasksCount}</span>}
           </button>
 
-          <button
-            className={`nav-tab ${activeSection === 'documentos' ? 'active' : ''}`}
-            onClick={() => onTabChange('documentos')}
-          >
-            📄 Documentos
-          </button>
-
           {showPublicacoesTab && (
             <button
               className={`nav-tab ${activeSection === 'publicacoes' ? 'active' : ''}`}

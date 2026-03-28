@@ -90,13 +90,7 @@
 /* Estatísticas (KPI cards) agora são estilos do componente DeadlinesContent
    em frontend/src/components/DeadlinesContent.css para manter consistência
    entre Painel Master e página de prazos sem vazamento de CSS. */
-  justify-content: center;
-  text-align: center;
-  min-height: 2.4em;
-  line-height: 1.2;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
+
 /* Estados de Loading/Error/Empty */
 .deadlines-page .loading-state,
 .deadlines-page .error-state,

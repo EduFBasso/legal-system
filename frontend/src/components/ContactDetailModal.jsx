@@ -5,7 +5,6 @@ import Modal from './Modal';
 import ConfirmDialog from './common/ConfirmDialog';
 import { FormField, FormSelect, FormMaskedField, AddressFieldGroup, PartyRoleBadge } from './common';
 import { Button, CancelButton, DeleteButton, EditButton, SaveButton } from './common/Button';
-import { useSettings } from '../contexts/SettingsContext';
 import contactsAPI from '../services/api';
 import { deleteParty } from '../services/casePartiesService';
 import { maskDocument, maskPhone, maskCEP, unmask } from '../utils/masks';
@@ -30,10 +29,8 @@ export default function ContactDetailModal({
   const [editedContact, setEditedContact] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [unlinkingPartyId, setUnlinkingPartyId] = useState(null);
-  const { settings } = useSettings();
 
   // Detect mode: CREATE if no contactId, VIEW/EDIT if contactId exists
   // Don't check contact state - it gets populated with empty object during creation
@@ -221,14 +218,6 @@ export default function ContactDetailModal({
   };
 
   const handleDelete = async () => {
-    // Validate password if configured
-    if (settings.deletePassword) {
-      if (deletePassword !== settings.deletePassword) {
-        setDeleteError('❌ Senha incorreta');
-        return;
-      }
-    }
-
     try {
       setSaving(true);
       setDeleteError('');
@@ -252,7 +241,6 @@ export default function ContactDetailModal({
 
   const handleCancelDelete = () => {
     setShowDeleteConfirm(false);
-    setDeletePassword('');
     setDeleteError('');
   };
 
@@ -374,8 +362,8 @@ export default function ContactDetailModal({
                   displayValue={contact?.person_type_display}
                 />
                 
-                {/* Documento: sempre mostra se config ativa OU se tiver valor */}
-                {(isEditing || settings.showEmptyFields || contact?.document_formatted) && (
+                {/* Documento: mostra em modo edit, ou em view apenas se existir valor */}
+                {(isEditing || contact?.document_formatted) && (
                   isEditing ? (
                     <FormMaskedField
                       label={currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}
@@ -393,12 +381,10 @@ export default function ContactDetailModal({
                         {currentData.person_type === 'PF' ? 'CPF' : 'CNPJ'}
                       </label>
                       <span className="form-field-value">
-                        {contact?.document_formatted ? (
+                        {contact?.document_formatted && (
                           <>
                             <strong>{currentData.person_type === 'PF' ? 'CPF:' : 'CNPJ:'}</strong> {contact.document_formatted}
                           </>
-                        ) : (
-                          'Não informado ⚠️'
                         )}
                       </span>
                     </div>
@@ -407,12 +393,12 @@ export default function ContactDetailModal({
               </div>
             </section>
 
-            {/* Contact Info: mostra seção se tiver algum dado OU se config ativa ou modo edit */}
-            {(isEditing || settings.showEmptyFields || contact?.has_contact_info) && (
+            {/* Contact Info: mostra seção se tiver algum dado ou em modo edit */}
+            {(isEditing || contact?.has_contact_info) && (
               <section className="detail-section">
                 <h3 className="section-title">📞 Contato</h3>
                 <div className="detail-grid">
-                  {(isEditing || settings.showEmptyFields || contact?.email) && (
+                  {(isEditing || contact?.email) && (
                     <FormField
                       label="Email"
                       value={isEditing ? editedContact.email : (contact?.email || '')}
@@ -423,7 +409,7 @@ export default function ContactDetailModal({
                     />
                   )}
                   
-                  {(isEditing || settings.showEmptyFields || contact?.phone) && (
+                  {(isEditing || contact?.phone) && (
                     <FormMaskedField
                       label="Telefone"
                       value={isEditing ? editedContact.phone : (contact?.phone_formatted || '')}
@@ -435,7 +421,7 @@ export default function ContactDetailModal({
                     />
                   )}
                   
-                  {(isEditing || settings.showEmptyFields || contact?.mobile) && (
+                  {(isEditing || contact?.mobile) && (
                     <FormMaskedField
                       label="Celular"
                       value={isEditing ? editedContact.mobile : (contact?.mobile_formatted || '')}
@@ -444,20 +430,19 @@ export default function ContactDetailModal({
                       readOnly={!isEditing}
                       placeholder="(11) 98765-4321"
                       maxLength={15}
-                      emptyText="Não informado ⚠️"
                     />
                   )}
                 </div>
               </section>
             )}
 
-            {/* Address: sempre mostra se config ativa OU se tiver endereço completo ou modo edit */}
-            {(isEditing || settings.showEmptyFields || contact?.has_complete_address) && (
+            {/* Address: mostra se tiver endereço completo ou em modo edit */}
+            {(isEditing || contact?.has_complete_address) && (
               <section className="detail-section">
                 <h3 className="section-title">📍 Endereço</h3>
                 
                 {/* VIEW mode com endereço completo: mostra apenas endereço formatado */}
-                {!isEditing && contact?.address_oneline && !settings.showEmptyFields ? (
+                {!isEditing && contact?.address_oneline ? (
                   <div className="detail-field full-width">
                     <label className="form-field-label">Endereço Completo</label>
                     <span className="form-field-value">
@@ -465,7 +450,7 @@ export default function ContactDetailModal({
                     </span>
                   </div>
                 ) : (
-                  /* EDIT mode ou showEmptyFields: mostra campos individuais */
+                  /* EDIT mode: mostra campos individuais */
                   <>
                     <AddressFieldGroup
                       address={isEditing ? editedContact : {
@@ -479,25 +464,15 @@ export default function ContactDetailModal({
                       }}
                       onChange={handleChange}
                       readOnly={!isEditing}
-                      showEmptyFields={settings.showEmptyFields}
+                      showEmptyFields={false}
                     />
-                    
-                    {/* Mostra endereço completo também quando em modo VIEW com showEmptyFields */}
-                    {!isEditing && settings.showEmptyFields && contact?.address_oneline && (
-                      <div className="detail-field full-width" style={{ marginTop: '16px' }}>
-                        <label className="form-field-label">Endereço Completo</label>
-                        <span className="form-field-value">
-                          {contact.address_oneline}
-                        </span>
-                      </div>
-                    )}
                   </>
                 )}
               </section>
             )}
 
-            {/* Notes: mostra se tiver conteúdo OU se config ativa ou modo edit */}
-            {(isEditing || settings.showEmptyFields || contact?.notes) && (
+            {/* Notes: mostra se tiver conteúdo ou em modo edit */}
+            {(isEditing || contact?.notes) && (
               <section className="detail-section">
                 <h3 className="section-title">📝 Observações</h3>
                 <FormField
@@ -663,9 +638,6 @@ export default function ContactDetailModal({
       cancelText="✅ Não, manter contato"
       onConfirm={handleDelete}
       onCancel={handleCancelDelete}
-      requirePassword={!!settings.deletePassword}
-      password={deletePassword}
-      onPasswordChange={setDeletePassword}
       passwordError={deleteError}
     />
     </>

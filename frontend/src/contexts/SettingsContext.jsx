@@ -21,19 +21,11 @@ function getCurrentSettingsStorageKey() {
 }
 
 function getDefaultSettings() {
-  return {
-    showEmptyFields: false,
-    deletePassword: '',
-    retroactiveDays: 7,
-    showNotificationTestButtons: false,
-  };
+  return {};
 }
 
 function loadSettingsForCurrentUser() {
-  const savedSettings = localStorage.getItem(getCurrentSettingsStorageKey());
-  if (savedSettings) {
-    return safeJsonParse(savedSettings, getDefaultSettings());
-  }
+  // Legacy settings removed: always start from defaults and overwrite old storage.
   return getDefaultSettings();
 }
 

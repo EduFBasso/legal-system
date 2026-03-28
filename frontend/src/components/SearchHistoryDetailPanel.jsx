@@ -27,6 +27,11 @@ function SearchHistoryDetailPanel({
     setSelectedPublication(publication);
   };
 
+  const handleCreateCase = (publication) => {
+    markPublicationNotificationAsRead(publication?.id_api);
+    onCreateCase(publication);
+  };
+
   const handleClosePublicationDetail = () => {
     setSelectedPublication(null);
   };
@@ -99,9 +104,10 @@ function SearchHistoryDetailPanel({
                       publication={pub}
                       highlighted={isHighlighted}
                       showActionButtons={true}
+                      onMarkAsRead={markPublicationNotificationAsRead}
                       onClick={() => handlePublicationClick(pub)}
                       onIntegrate={() => onIntegrate(pub)}
-                      onCreateCase={() => onCreateCase(pub)}
+                      onCreateCase={() => handleCreateCase(pub)}
                       onDelete={() => onDelete(pub)}
                       caseSuggestion={pub.case_suggestion}
                     />

@@ -308,6 +308,12 @@ LEGAL_SYSTEM_SETTINGS = {
     'DEADLINE_NOTIFICATION_DAYS': 7,
     'DEADLINE_NOTIFICATION_BEFORE_DAYS': 3,
 
+    # ===== MONITORAMENTO (90+ dias sem movimentação) =====
+    # Observação: o agendamento (rodar na hora certa) é feito via Task Scheduler/cron.
+    'STALE_PROCESS_MONITOR_ENABLED': False,
+    'STALE_PROCESS_MONITOR_TIME': '09:00',
+    'STALE_PROCESS_DAYS_THRESHOLD': 90,
+
     # ===== TAREFAS DO PROCESSO =====
     'AUTO_LOAD_TASKS_ON_CASE': True,
     'TASK_NORMAL_DAYS': 15,

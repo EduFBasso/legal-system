@@ -1,152 +1,178 @@
 // src/components/SettingsModal.jsx
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Modal from './Modal';
-import { useSettings } from '../contexts/SettingsContext';
 import './SettingsModal.css';
+import systemSettingsService from '@/services/systemSettingsService.js';
+
+const SETTINGS_KEYS = {
+  enabled: 'STALE_PROCESS_MONITOR_ENABLED',
+  time: 'STALE_PROCESS_MONITOR_TIME',
+  days: 'STALE_PROCESS_DAYS_THRESHOLD',
+};
+
+function normalizeTimeValue(value) {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  return /^\d{2}:\d{2}$/.test(trimmed) ? trimmed : '';
+}
 
 export default function SettingsModal({ isOpen, onClose }) {
-  const { settings, updateSettings } = useSettings();
-  const [draftSettings, setDraftSettings] = useState(null);
-  const localSettings = draftSettings ?? settings;
+  const defaults = useMemo(() => systemSettingsService.getDefaultSettings(), []);
 
-  const handleSave = async () => {
-    await updateSettings(localSettings);
-    setDraftSettings(null);
-    onClose();
-  };
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleCancel = () => {
-    setDraftSettings(null); // Reverte mudanças
-    onClose();
-  };
+  const [draftEnabled, setDraftEnabled] = useState(Boolean(defaults[SETTINGS_KEYS.enabled]));
+  const [draftTime, setDraftTime] = useState(normalizeTimeValue(defaults[SETTINGS_KEYS.time]) || '09:00');
+  const [draftDays, setDraftDays] = useState(String(defaults[SETTINGS_KEYS.days] ?? 90));
 
-  const handleToggle = (key) => {
-    setDraftSettings((prev) => ({
-      ...prev,
-      ...(prev ?? settings),
-      [key]: !(prev ?? settings)[key],
-    }));
-  };
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
 
-  const handlePasswordChange = (e) => {
-    setDraftSettings((prev) => ({
-      ...prev,
-      ...(prev ?? settings),
-      deletePassword: e.target.value,
-    }));
-  };
+    let cancelled = false;
+    (async () => {
+      setErrorMessage('');
+      setIsLoading(true);
+      try {
+        const settings = await systemSettingsService.getAllSettings();
+        if (cancelled) return;
 
-  const handleRetroactiveDaysChange = (e) => {
-    const value = parseInt(e.target.value) || 0;
-    setDraftSettings((prev) => ({
-      ...prev,
-      ...(prev ?? settings),
-      retroactiveDays: Math.max(0, Math.min(30, value)), // Entre 0 e 30 dias
-    }));
-  };
+        setDraftEnabled(Boolean(settings?.[SETTINGS_KEYS.enabled] ?? defaults[SETTINGS_KEYS.enabled]));
+        setDraftTime(
+          normalizeTimeValue(settings?.[SETTINGS_KEYS.time])
+          || normalizeTimeValue(defaults[SETTINGS_KEYS.time])
+          || '09:00'
+        );
+        const nextDays = settings?.[SETTINGS_KEYS.days] ?? defaults[SETTINGS_KEYS.days] ?? 90;
+        setDraftDays(String(nextDays));
+      } catch (error) {
+        if (cancelled) return;
+        setErrorMessage(error?.message || 'Erro ao carregar configurações.');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, defaults]);
+
+  async function handleSave() {
+    setErrorMessage('');
+
+    const parsedDays = parseInt(String(draftDays || '').trim(), 10);
+    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+      setErrorMessage('Dias sem movimentação deve ser um inteiro maior que 0.');
+      return;
+    }
+
+    const timeValue = normalizeTimeValue(draftTime);
+    if (!timeValue) {
+      setErrorMessage('Hora marcada inválida. Use HH:MM (ex.: 09:00).');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await systemSettingsService.updateSettings({
+        [SETTINGS_KEYS.enabled]: Boolean(draftEnabled),
+        [SETTINGS_KEYS.time]: timeValue,
+        [SETTINGS_KEYS.days]: parsedDays,
+      });
+      onClose();
+    } catch (error) {
+      setErrorMessage(error?.message || 'Erro ao salvar configurações.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel} title="⚙️ Configurações" size="medium">
+    <Modal isOpen={isOpen} onClose={onClose} title="⚙️ Configurações" size="medium">
       <div className="settings-content">
-        {/* Visualização */}
-        <section className="settings-section">
-          <h3 className="settings-section-title">👁️ Visualização</h3>
-          
-          <div className="setting-item">
+        <div className="settings-section">
+          <h3 className="settings-section-title">Monitoramento (90+ dias)</h3>
+
+          {errorMessage ? (
+            <div className="setting-item" role="alert" aria-live="polite">
+              <div className="setting-info full-width">
+                <span className="setting-label">Erro</span>
+                <p className="setting-description">{errorMessage}</p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="setting-item" aria-busy={isLoading ? 'true' : 'false'}>
             <div className="setting-info">
-              <label className="setting-label">Exibir campos vazios</label>
-              <p className="setting-description">
-                Mostra "Não informado" em campos sem dados no modal de detalhes. 
-                Útil para lembrar quais informações faltam cadastrar.
-              </p>
+              <label className="setting-label" htmlFor="stale-monitor-enabled">Habilitar monitoramento</label>
+              <p className="setting-description">Gera notificações para processos com 90+ dias sem movimentação.</p>
             </div>
             <button
-              className={`toggle-button ${localSettings.showEmptyFields ? 'active' : ''}`}
-              onClick={() => handleToggle('showEmptyFields')}
-              aria-label="Alternar exibição de campos vazios"
+              id="stale-monitor-enabled"
+              type="button"
+              className={`toggle-button ${draftEnabled ? 'active' : ''}`}
+              onClick={() => setDraftEnabled((v) => !v)}
+              disabled={isLoading || isSaving}
+              aria-pressed={draftEnabled}
+              aria-label="Habilitar monitoramento"
             >
-              <span className="toggle-slider"></span>
+              <span className="toggle-slider" />
             </button>
           </div>
-        </section>
 
-        {/* Segurança */}
-        <section className="settings-section">
-          <h3 className="settings-section-title">🔐 Segurança</h3>
-          
-          <div className="setting-item">
-            <div className="setting-info full-width">
-              <label className="setting-label">Senha para exclusão de contatos</label>
-              <p className="setting-description">
-                Define uma senha que será solicitada ao excluir contatos. 
-                Deixe em branco para permitir exclusão sem confirmação de senha.
-              </p>
+          <div className="setting-item" aria-busy={isLoading ? 'true' : 'false'}>
+            <div className="setting-info">
+              <label className="setting-label" htmlFor="stale-monitor-time">Hora marcada</label>
+              <p className="setting-description">Horário do dia para executar a verificação automaticamente.</p>
+            </div>
+            <div className="setting-info" style={{ maxWidth: 180 }}>
               <input
-                type="password"
+                id="stale-monitor-time"
+                type="time"
                 className="setting-password-input"
-                value={localSettings.deletePassword || ''}
-                onChange={handlePasswordChange}
-                placeholder="Digite uma senha (opcional)"
+                value={draftTime}
+                onChange={(e) => setDraftTime(e.target.value)}
+                disabled={isLoading || isSaving}
               />
             </div>
           </div>
-        </section>
 
-        {/* Notificações */}
-        <section className="settings-section">
-          <h3 className="settings-section-title">🔔 Notificações</h3>
-          
-          <div className="setting-item">
-            <div className="setting-info full-width">
-              <label className="setting-label">Dias retroativos para notificações</label>
-              <p className="setting-description">
-                Ao buscar publicações, apenas as dos últimos <strong>{localSettings.retroactiveDays || 7} dias </strong> 
-                geram notificações. Publicações mais antigas aparecem apenas na lista, sem notificação.
-              </p>
-              <div className="setting-input-group">
-                <input
-                  type="number"
-                  className="setting-number-input"
-                  value={localSettings.retroactiveDays || 7}
-                  onChange={handleRetroactiveDaysChange}
-                  min="0"
-                  max="30"
-                  placeholder="7"
-                />
-                <span className="setting-input-suffix">dias</span>
-              </div>
-              <p className="setting-hint">
-                💡 Dica: Use 0 para nunca criar notificações automáticas, 
-                ou até 30 dias para histórico mais amplo.
-              </p>
-            </div>
-          </div>
-
-          <div className="setting-item">
+          <div className="setting-item" aria-busy={isLoading ? 'true' : 'false'}>
             <div className="setting-info">
-              <label className="setting-label">Exibir botões de teste</label>
-              <p className="setting-description">
-                Mostra os botões "Criar Teste" e "Teste 90+ dias" na página de Notificações.
-                Recomendado manter desativado em uso normal.
-              </p>
+              <label className="setting-label" htmlFor="stale-monitor-days">Dias sem movimentação</label>
+              <p className="setting-description">Quantidade de dias sem movimentação para gerar o alerta.</p>
             </div>
-            <button
-              className={`toggle-button ${localSettings.showNotificationTestButtons ? 'active' : ''}`}
-              onClick={() => handleToggle('showNotificationTestButtons')}
-              aria-label="Alternar botões de teste em notificações"
-            >
-              <span className="toggle-slider"></span>
-            </button>
+            <div className="setting-input-group">
+              <input
+                id="stale-monitor-days"
+                type="number"
+                min="1"
+                step="1"
+                className="setting-number-input"
+                value={draftDays}
+                onChange={(e) => setDraftDays(e.target.value)}
+                disabled={isLoading || isSaving}
+              />
+              <span className="setting-input-suffix">dias</span>
+            </div>
           </div>
-        </section>
+        </div>
 
-        {/* Botões de ação */}
         <div className="settings-actions">
-          <button className="btn-cancel" onClick={handleCancel}>
+          <button type="button" className="btn-cancel" onClick={onClose} disabled={isSaving}>
             Cancelar
           </button>
-          <button className="btn-save" onClick={handleSave}>
-            💾 Salvar
+          <button
+            type="button"
+            className="btn-save"
+            onClick={handleSave}
+            disabled={isLoading || isSaving}
+          >
+            {isSaving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </div>

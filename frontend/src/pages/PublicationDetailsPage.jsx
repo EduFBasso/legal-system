@@ -13,8 +13,6 @@ import { getPublicationActionState } from '../utils/publicationActionState';
 import { Button } from '../components/common/Button';
 import './PublicationDetailsPage.css';
 
-console.log('📦 PublicationsService importado:', publicationsService);
-
 export default function PublicationDetailsPage() {
   const { idApi } = useParams();
   const [publication, setPublication] = useState(null);

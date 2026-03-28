@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
@@ -305,67 +305,3 @@ class NotificationViewSet(viewsets.ModelViewSet):
         })
 
 
-@api_view(['POST'])
-def create_test_notification(request):
-    """
-    Endpoint para criar notificação de teste.
-    Útil para desenvolvimento e troubleshooting.
-    """
-    mode = request.data.get('mode') if hasattr(request, 'data') else None
-    if not mode:
-        mode = request.query_params.get('mode') if hasattr(request, 'query_params') else None
-
-    # Cenário de teste para alerta de 90+ dias (processo fictício)
-    if mode == 'stale_90_days':
-        now = timezone.now()
-        old_date = now - timedelta(days=95)
-        now_local = timezone.localtime(now)
-
-        notification = Notification.objects.create(
-            owner=request.user if request.user.is_authenticated else None,
-            type='process',
-            priority='high',
-            title='⚠ Processo sem publicação há 95 dias',
-            message='Processo fictício TESTE-90D sem publicação/movimentação há mais de 90 dias.',
-            link='/cases',
-            metadata={
-                'alert_type': 'stale_90_days',
-                'case_id': None,
-                'case_number': 'TESTE-90D-0001',
-                'days_without_activity': 95,
-                'is_test': True,
-                'created_at_label': now_local.strftime('%d/%m/%Y às %H:%M')
-            }
-        )
-
-        # Backdate para aparecer como alerta antigo em listagens por data.
-        Notification.objects.filter(id=notification.id).update(
-            created_at=old_date,
-            updated_at=old_date
-        )
-        notification.refresh_from_db()
-    else:
-        # Usar timezone.localtime() para converter para timezone configurado
-        now_local = timezone.localtime(timezone.now())
-        notification = Notification.objects.create(
-            owner=request.user if request.user.is_authenticated else None,
-            type='publication',
-            priority='medium',
-            title='Notificação de Teste - Publicação',
-            message='Esta é uma notificação de teste criada em ' + now_local.strftime('%d/%m/%Y às %H:%M'),
-            link='/notifications',
-            metadata={
-                'id_api': 999999999,  # ID fictício para teste - abrirá página de detalhes
-                'tribunal': 'Tribunal de Teste',
-                'numero_processo': '0000000-00.0000.0.00.0000',
-                'tipo_comunicacao': 'Teste',
-                'is_test': True,
-            }
-        )
-    
-    serializer = NotificationSerializer(notification)
-    return Response({
-        'success': True,
-        'notification': serializer.data,
-        'message': 'Notificação de teste criada com sucesso'
-    })

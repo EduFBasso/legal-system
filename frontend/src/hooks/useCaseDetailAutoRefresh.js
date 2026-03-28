@@ -51,17 +51,6 @@ export function useCaseDetailAutoRefresh({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection, caseId]);
 
-  // Recarrega dados base do caso ao entrar em Financeiro.
-  useEffect(() => {
-    if (activeSection !== 'financeiro' || !caseId) return;
-    if (caseSaving || autoSavingFinancial) return;
-
-    trace('financeiro:enter -> loadCaseData');
-    lastFinanceiroRefreshStartedAtRef.current = Date.now();
-    loadCaseData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSection, caseId]);
-
   // Quando Financeiro estiver aberto, recarrega ao voltar foco/visibilidade.
   useEffect(() => {
     if (activeSection !== 'financeiro' || !caseId) return;

@@ -5,7 +5,6 @@ import ContactTaskModal from '@/components/ContactTaskModal';
 import DeadlinesContent from '@/components/DeadlinesContent';
 import { Button } from '@/components/common/Button';
 import { useAuth } from '@/contexts/AuthContext';
-import contactsAPI from '@/services/api';
 import { apiFetch } from '@/utils/apiFetch';
 import contactTasksService from '@/services/contactTasksService';
 
@@ -41,7 +40,7 @@ export default function ContactTasksPage() {
     if (contactIdParam) params.contact_id = contactIdParam;
 
     return params;
-  }, [searchParams]);
+  }, [searchParams, contactIdParam]);
 
   const scopeLabel = searchParams.get('scope_label') || '';
   const displayLabel = useMemo(() => {
@@ -76,7 +75,6 @@ export default function ContactTasksPage() {
     }
 
     hydrateContact();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactIdParam, readOnly]);
 
   return (
@@ -107,7 +105,6 @@ export default function ContactTasksPage() {
         onDeleteTask={
           !readOnly
             ? async (task) => {
-                // eslint-disable-next-line no-alert
                 const ok = window.confirm(`Excluir a tarefa "${task.titulo}"?`);
                 if (!ok) return;
                 await contactTasksService.deleteTask(task.id);

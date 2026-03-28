@@ -271,8 +271,8 @@ def fetch_today_publications(request):
                 user=user,
             )
             
-            # Criar notificações para novas publicações (7 dias retroativos)
-            _create_publication_notifications(publicacoes, retroactive_days=7, owner=owner)
+            # Criar notificações para novas publicações
+            _create_publication_notifications(publicacoes, owner=owner)
         
         # Calcular duração
         duration = time.time() - start_time
@@ -287,7 +287,6 @@ def fetch_today_publications(request):
             total_novas=total_novas,
             duration_seconds=round(duration, 2),
             search_params={
-                'retroactive_days': 7,
                 'lookback_days': lookback_days,
                 'oab': oab_number,
                 'nome_advogado': advogada_nome,
@@ -357,8 +356,7 @@ def search_publications(request):
         if not tribunais:
             tribunais = tribunais_configurados
         
-        # Dias retroativos para notificações (padrão: 7 dias)
-        retroactive_days = int(request.query_params.get('retroactive_days', 7))
+        # Filtro histórico de notificações (retroactive_days) removido.
         
         # Iniciar cronômetro
         start_time = time.time()
@@ -391,11 +389,7 @@ def search_publications(request):
             )
             
             # Criar notificações para novas publicações
-            _create_publication_notifications(
-                publicacoes,
-                retroactive_days=retroactive_days,
-                owner=owner,
-            )
+            _create_publication_notifications(publicacoes, owner=owner)
         
         # Calcular duração
         duration = time.time() - start_time
@@ -410,7 +404,6 @@ def search_publications(request):
             total_novas=total_novas,
             duration_seconds=round(duration, 2),
             search_params={
-                'retroactive_days': retroactive_days,
                 'oab': oab_number,
                 'nome_advogado': advogada_nome,
             }
@@ -473,25 +466,19 @@ def debug_search(request):
         return Response({'error': str(e)}, status=500)
 
 
-def _create_publication_notifications(publicacoes, retroactive_days=7, owner=None):
+def _create_publication_notifications(publicacoes, owner=None):
     """
     Helper para criar notificações de novas publicações.
     Cria apenas se não existir notificação para aquela publicação específica
-    E se a data de disponibilização for dentro do período retroativo.
+    (deduplicado por id_api).
     
     Args:
         publicacoes: Lista de publicações
-        retroactive_days: Número de dias retroativos (padrão: 7)
-                         Se 0, nenhuma notificação é criada
+        retroactive_days: (REMOVIDO) – filtro histórico removido para evitar
+                         confusão; notificações são criadas para as publicações
+                         retornadas pela busca (limitadas por max_per_search).
     """
-    from datetime import datetime, timedelta, timezone
-    
-    # Se retroactive_days for 0, não criar notificações
-    if retroactive_days == 0:
-        return
-    
-    # Calcular data limite (hoje - retroactive_days)
-    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=retroactive_days)
+    from datetime import datetime
     
     max_per_search = getattr(settings, 'PUBLICATIONS_NOTIFICATION_MAX_PER_SEARCH', 5)
     try:
@@ -502,19 +489,6 @@ def _create_publication_notifications(publicacoes, retroactive_days=7, owner=Non
 
     notifications_created = 0
     for pub in publicacoes[:max_per_search]:
-        # Filtrar por data de disponibilização
-        data_disp = pub.get('data_disponibilizacao')
-        if data_disp:
-            try:
-                # Converter string YYYY-MM-DD para date
-                pub_date = datetime.fromisoformat(data_disp).date()
-                # Pular se for muito antiga
-                if pub_date < cutoff_date:
-                    continue
-            except (ValueError, TypeError) as e:
-                # Se não conseguir parsear, pular
-                continue
-        
         # Verificar se já existe notificação para esta publicação
         notification_exists = Notification.objects.filter(
             type='publication',
@@ -984,175 +958,6 @@ def _ensure_movement_from_publication(publication, case):
 
     _create_movement_from_publication(publication, case)
     return True
-
-
-@api_view(['GET'])
-def get_pending_publications(request):
-    """
-    Lista publicacoes pendentes de integracao.
-
-    GET /api/publications/pending
-    Query params: tribunal, ordering, limit, offset
-    """
-    try:
-        user = request.user
-        tribunal = request.query_params.get('tribunal')
-        ordering = request.query_params.get('ordering', '-data_disponibilizacao')
-        limit = int(request.query_params.get('limit', 20))
-        offset = int(request.query_params.get('offset', 0))
-
-        allowed_ordering = {
-            'data_disponibilizacao',
-            '-data_disponibilizacao',
-            'tribunal',
-            '-tribunal',
-            'created_at',
-            '-created_at',
-        }
-        if ordering not in allowed_ordering:
-            ordering = '-data_disponibilizacao'
-
-        queryset = _apply_owner_filter(Publication.objects.filter(
-            integration_status='PENDING'
-        ), user)
-
-        if tribunal:
-            queryset = queryset.filter(tribunal=tribunal)
-
-        total = queryset.count()
-        queryset = queryset.order_by(ordering)[offset:offset + limit]
-
-        results = []
-        for pub in queryset:
-            case_suggestion = None
-            if not pub.case_id and pub.integration_status != 'INTEGRATED':
-                case_suggestion = _build_case_suggestion(pub.numero_processo, user=user)
-
-            results.append({
-                'id': pub.id,
-                'id_api': pub.id_api,
-                'numero_processo': pub.numero_processo,
-                'tribunal': pub.tribunal,
-                'tipo_comunicacao': pub.tipo_comunicacao,
-                'data_disponibilizacao': pub.data_disponibilizacao.isoformat(),
-                'orgao': pub.orgao,
-                'texto_resumo': pub.texto_resumo,
-                'texto_completo': pub.texto_completo,
-                'link_oficial': pub.link_oficial,
-                'integration_status': pub.integration_status,
-                'case_id': pub.case_id,
-                'case_suggestion': _build_case_suggestion(pub.numero_processo, user=user),
-            })
-
-        return Response({
-            'success': True,
-            'count': total,
-            'results': results,
-            'limit': limit,
-            'offset': offset,
-        })
-
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['GET'])
-def get_all_publications(request):
-    """
-    Lista TODAS as publicações do sistema (integradas e não vinculadas).
-
-    GET /api/publications/all
-    Query params: tribunal, ordering, limit, offset, integration_status
-    """
-    try:
-        user = request.user
-        tribunal = request.query_params.get('tribunal')
-        ordering = request.query_params.get('ordering', '-data_disponibilizacao')
-        limit = int(request.query_params.get('limit', 50))
-        offset = int(request.query_params.get('offset', 0))
-        integration_status = request.query_params.get('integration_status')
-
-        allowed_ordering = {
-            'data_disponibilizacao',
-            '-data_disponibilizacao',
-            'tribunal',
-            '-tribunal',
-            'created_at',
-            '-created_at',
-        }
-        if ordering not in allowed_ordering:
-            ordering = '-data_disponibilizacao'
-
-        queryset = _apply_owner_filter(Publication.objects.all(), user)
-
-        if tribunal:
-            queryset = queryset.filter(tribunal=tribunal)
-        
-        if integration_status:
-            queryset = queryset.filter(integration_status=integration_status)
-
-        total = queryset.count()
-        queryset = queryset.order_by(ordering)[offset:offset + limit]
-
-        results = []
-        for pub in queryset:
-            case_suggestion = None
-            if not pub.case_id and pub.integration_status != 'INTEGRATED':
-                case_suggestion = _build_case_suggestion(pub.numero_processo, user=user)
-
-            results.append({
-                'id': pub.id,
-                'id_api': pub.id_api,
-                'numero_processo': pub.numero_processo,
-                'tribunal': pub.tribunal,
-                'tipo_comunicacao': pub.tipo_comunicacao,
-                'data_disponibilizacao': pub.data_disponibilizacao.isoformat() if pub.data_disponibilizacao else None,
-                'texto_resumo': pub.texto_resumo,
-                'texto_completo': pub.texto_completo,
-                'orgao': pub.orgao,
-                'link_oficial': pub.link_oficial,
-                'integration_status': pub.integration_status,
-                'case_id': pub.case_id,
-                'case_suggestion': case_suggestion,
-                'case_numero': pub.case.numero_processo if pub.case else None,
-                'case_titulo': pub.case.titulo if pub.case else None,
-                'created_at': pub.created_at.isoformat() if pub.created_at else None,
-                'updated_at': pub.updated_at.isoformat() if pub.updated_at else None,
-            })
-
-        return Response({
-            'success': True,
-            'results': results,
-            'total': total,
-            'limit': limit,
-            'offset': offset,
-        })
-
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['GET'])
-def get_pending_count(request):
-    try:
-        count = _apply_owner_filter(Publication.objects.filter(
-            integration_status='PENDING'
-        ), request.user).count()
-        return Response({
-            'success': True,
-            'count': count
-        })
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

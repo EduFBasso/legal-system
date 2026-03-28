@@ -30,7 +30,7 @@ export function routeNotification({ notification, navigate, mode = 'details' }) 
     if (publicationId) {
       openPublicationDetailsWindow(publicationId);
     } else {
-      navigate('/publications/all');
+      navigate('/search-history');
     }
     return true;
   }

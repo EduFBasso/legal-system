@@ -531,7 +531,7 @@ function InformacaoTab({
 
             {/* Cronologia */}
             <div className="details-group">
-              <h3 className="details-group-title">📅 Cronologia</h3>
+              <h3 className="details-group-title">📅 Cronologia e Localização</h3>
               <div className="details-content">
                 {!isEditing ? (
                   <>
@@ -544,6 +544,18 @@ function InformacaoTab({
                       {formData.data_ultima_movimentacao ? (
                         <div className="detail-value-stacked">
                           <strong>{formatDate(formData.data_ultima_movimentacao)}</strong>
+                          {(() => {
+                            const days = caseData?.dias_sem_movimentacao ?? formData?.dias_sem_movimentacao;
+                            if (days === null || days === undefined) return null;
+                            const parsed = Number(days);
+                            if (!Number.isFinite(parsed) || parsed < 0) return null;
+
+                            return (
+                              <div className="detail-value-sub">
+                                {parsed === 0 ? 'Movimentação de hoje' : `${parsed} dia(s) sem movimentação`}
+                              </div>
+                            );
+                          })()}
                           {formData.ultima_movimentacao_resumo && (
                             <div
                               className="detail-value-sub"
@@ -562,39 +574,30 @@ function InformacaoTab({
                         <span className="detail-value empty">Nenhuma movimentação cadastrada</span>
                       )}
                     </div>
-                  </>
-                ) : (
-                  <EditableDetailField
-                    label="Data de Distribuição"
-                    value={formData.data_distribuicao}
-                    isEditing={isEditing}
-                    type="date"
-                    onChange={(value) => handleInputChange('data_distribuicao', value)}
-                  />
-                )}
-              </div>
-            </div>
 
-            {/* Localização */}
-            <div className="details-group">
-              <h3 className="details-group-title">📍 Localização</h3>
-              <div className="details-content">
-                {!isEditing ? (
-                  <>
                     <div className="detail-item">
                       <span className="detail-label">Comarca / Foro / Vara</span>
                       <span className="detail-value">{formData.vara || '-'}</span>
                     </div>
                   </>
                 ) : (
-                  <EditableDetailField
-                    label="Comarca / Foro / Vara"
-                    value={formData.vara}
-                    isEditing={isEditing}
-                    type="text"
-                    onChange={(value) => handleInputChange('vara', value)}
-                    placeholder="Ex: Foro de Americana - 4ª Vara Cível"
-                  />
+                  <>
+                    <EditableDetailField
+                      label="Data de Distribuição"
+                      value={formData.data_distribuicao}
+                      isEditing={isEditing}
+                      type="date"
+                      onChange={(value) => handleInputChange('data_distribuicao', value)}
+                    />
+                    <EditableDetailField
+                      label="Comarca / Foro / Vara"
+                      value={formData.vara}
+                      isEditing={isEditing}
+                      type="text"
+                      onChange={(value) => handleInputChange('vara', value)}
+                      placeholder="Ex: Foro de Americana - 4ª Vara Cível"
+                    />
+                  </>
                 )}
               </div>
             </div>
