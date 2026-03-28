@@ -263,7 +263,9 @@ class ContactViewSet(viewsets.ModelViewSet):
 class ContactTaskViewSet(viewsets.ModelViewSet):
     """ViewSet para tarefas administrativas vinculadas a um contato (pessoa/cliente)."""
 
-    queryset = ContactTask.objects.select_related('contact').all().order_by('data_vencimento', '-created_at')
+    queryset = ContactTask.objects.select_related('contact').prefetch_related(
+        'contact__case_roles__case',
+    ).all().order_by('data_vencimento', '-created_at')
     serializer_class = ContactTaskSerializer
     UserModel = get_user_model()
 

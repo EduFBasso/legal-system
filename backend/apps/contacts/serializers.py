@@ -304,12 +304,46 @@ class ContactTaskSerializer(serializers.ModelSerializer):
     contact_name = serializers.CharField(source='contact.name', read_only=True)
     vencida = serializers.ReadOnlyField()
 
+    case = serializers.SerializerMethodField()
+    case_numero = serializers.SerializerMethodField()
+
+    def _get_unique_client_case(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        scope_user = _get_scope_user(request)
+
+        case_parties = obj.contact.case_roles.select_related('case').filter(
+            is_client=True,
+            case__deleted=False,
+        )
+        if scope_user is not None:
+            case_parties = case_parties.filter(case__owner=scope_user)
+        elif user and user.is_authenticated and not _has_full_team_scope(request):
+            case_parties = case_parties.filter(case__owner=user)
+
+        case_parties = case_parties[:2]
+        if len(case_parties) != 1:
+            return None
+        return case_parties[0].case
+
+    def get_case(self, obj):
+        case = self._get_unique_client_case(obj)
+        return case.id if case else None
+
+    def get_case_numero(self, obj):
+        case = self._get_unique_client_case(obj)
+        if not case:
+            return None
+        return case.numero_processo_formatted or case.numero_processo
+
     class Meta:
         model = ContactTask
         fields = [
             'id',
             'contact',
             'contact_name',
+            'case',
+            'case_numero',
             'titulo',
             'descricao',
             'urgencia',

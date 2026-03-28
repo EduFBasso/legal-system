@@ -84,7 +84,7 @@ export default function DeadlinesContent({
 
   const handleOpenCase = (caseId) => {
     if (readOnly) return;
-    if (kind !== 'case') return;
+    if (!caseId) return;
     openCaseDetailWindow(caseId);
   };
 
