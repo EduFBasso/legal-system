@@ -123,6 +123,7 @@ function InformacaoTab({
 
   // Renderizar botões de consulta processual
   const renderProcessConsultaButtons = ({ wrap = true } = {}) => {
+    if (readOnly) return null;
     if (!formData.publicacao_origem) return null;
 
     // Simular objeto publication a partir dos dados de case
@@ -606,7 +607,7 @@ function InformacaoTab({
             <div className="details-group">
               <h3 className="details-group-title">📝 Observações</h3>
               <div className="details-content">
-                {hasPublicationOrigin && (
+                {!readOnly && hasPublicationOrigin && (
                   <div className="observacoes-origem-box">
                     <div className="observacoes-origem-row">
                       <button

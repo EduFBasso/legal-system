@@ -10,7 +10,7 @@ import publicationsService from '../services/publicationsService';
  * @param {function} showToast - Função para exibir notificações
  * @returns {Object} Estado e funções para gerenciar publicações do caso
  */
-export function usePublicationsForCase(id, systemSettings, showToast) {
+export function usePublicationsForCase(id, systemSettings, showToast, { enabled = true } = {}) {
   // Publicações
   const [publicacoes, setPublicacoes] = useState([]);
   const [loadingPublicacoes, setLoadingPublicacoes] = useState(false);
@@ -19,6 +19,7 @@ export function usePublicationsForCase(id, systemSettings, showToast) {
    * Carregar publicações
    */
   const loadPublicacoes = useCallback(async () => {
+    if (!enabled) return;
     if (!id) return;
     
     setLoadingPublicacoes(true);
@@ -31,18 +32,22 @@ export function usePublicationsForCase(id, systemSettings, showToast) {
     } finally {
       setLoadingPublicacoes(false);
     }
-  }, [id, showToast]);
+  }, [enabled, id, showToast]);
 
   /**
    * Auto-load publicações ao montar (baseado em setting)
    */
   useEffect(() => {
+    if (!enabled) {
+      setLoadingPublicacoes(false);
+      return;
+    }
     const shouldAutoLoad = systemSettings?.AUTO_LOAD_PUBLICATIONS_ON_CASE !== false;
     
     if (id && shouldAutoLoad) {
       loadPublicacoes();
     }
-  }, [id, loadPublicacoes, systemSettings]);
+  }, [enabled, id, loadPublicacoes, systemSettings]);
 
   return {
     // Estado

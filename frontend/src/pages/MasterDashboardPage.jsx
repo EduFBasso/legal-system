@@ -804,7 +804,7 @@ export default function MasterDashboardPage() {
             aria-pressed={activeKpi === 'tarefas'}
             onClick={() => setActiveKpi('tarefas')}
           >
-            <p className="master-admin-kpi-title">Tarefas</p>
+            <p className="master-admin-kpi-title">Tarefas Processuais</p>
             <strong className="master-admin-kpi-value">{kpis.loading ? '...' : kpis.tarefas}</strong>
           </button>
         </section>

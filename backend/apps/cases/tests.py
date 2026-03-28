@@ -1460,6 +1460,32 @@ class MasterCaseScopeTests(APITestCase):
         self.assertNotIn(self.case_master.id, returned_ids)
         self.assertNotIn(self.case_ownerless.id, returned_ids)
 
+    def test_master_case_list_total_payments_not_duplicated_by_tasks_join(self):
+        """Regression: total_payments must not be multiplied by tasks joins.
+
+        When list queryset annotates active_tasks_count and total_payments together,
+        naive Sum('payments__value') can double-count due to join multiplication.
+        """
+        from decimal import Decimal
+
+        # 2 tasks should not cause the single payment to be counted twice.
+        CaseTask.objects.create(case=self.case_a, titulo='T1', status='PENDENTE')
+        CaseTask.objects.create(case=self.case_a, titulo='T2', status='PENDENTE')
+        Payment.objects.create(
+            case=self.case_a,
+            date=timezone.now().date(),
+            description='P1',
+            value=Decimal('500.00'),
+        )
+
+        self.client.force_authenticate(user=self.master)
+        response = self.client.get(f'/api/cases/?team_member_id={self.user_a.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        rows = list(response.data)
+        row = next(item for item in rows if item.get('id') == self.case_a.id)
+        self.assertEqual(row.get('total_payments'), '500.00')
+
     def test_master_without_scope_does_not_see_other_users_case_parties(self):
         self.client.force_authenticate(user=self.master)
 

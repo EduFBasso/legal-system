@@ -14,6 +14,7 @@ export default function CaseDetailNavbar({
   partiesCount = 0,
   activeLinkedTasksCount = 0,
   showPublicacoesTab = true,
+  showFinanceiroTab = true,
   publicacoesCount = 0,
   activeStandaloneTasksCount = 0,
   linkedCasesCount = 0,
@@ -63,12 +64,14 @@ export default function CaseDetailNavbar({
             {activeStandaloneTasksCount > 0 && <span className="badge">{activeStandaloneTasksCount}</span>}
           </button>
 
-          <button
-            className={`nav-tab ${activeSection === 'financeiro' ? 'active' : ''}`}
-            onClick={() => onTabChange('financeiro')}
-          >
-            💰 Financeiro
-          </button>
+          {showFinanceiroTab && (
+            <button
+              className={`nav-tab ${activeSection === 'financeiro' ? 'active' : ''}`}
+              onClick={() => onTabChange('financeiro')}
+            >
+              💰 Financeiro
+            </button>
+          )}
 
           <button
             className={`nav-tab ${activeSection === 'vinculos' ? 'active' : ''}`}

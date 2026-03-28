@@ -264,6 +264,104 @@ describe('MasterDashboardPage', () => {
     });
   });
 
+  it('renders office participation label with fixed-value fallback', async () => {
+    apiFetch.mockImplementation(async (endpoint) => {
+      if (String(endpoint).startsWith('/cases/')) {
+        return [
+          {
+            id: 99,
+            numero_processo_formatted: '0000000-00.0000.0.00.0000',
+            numero_processo: '0000000-00.0000.0.00.0000',
+            titulo: 'Processo X',
+            tribunal: 'TJSP',
+            status: 'ATIVO',
+            // Legacy/inconsistent data scenario:
+            // fixed value is set but type/percentage don't indicate it.
+            participation_type: 'percentage',
+            participation_percentage: null,
+            participation_fixed_value: '15000.00',
+          },
+        ];
+      }
+
+      return [];
+    });
+
+    render(
+      <MemoryRouter>
+        <MasterDashboardPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Advogado(a)'), {
+        target: { value: '1' },
+      });
+    });
+
+    await act(async () => {
+      screen.getByText('Processos').closest('button').click();
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    });
+
+    expect(await screen.findByText('Processo X')).toBeInTheDocument();
+    expect(screen.getByText(/15\.000,00/)).toBeInTheDocument();
+  });
+
+  it('renders office participation label from honorários total', async () => {
+    apiFetch.mockImplementation(async (endpoint) => {
+      if (String(endpoint).startsWith('/cases/')) {
+        return [
+          {
+            id: 99,
+            numero_processo_formatted: '0000000-00.0000.0.00.0000',
+            numero_processo: '0000000-00.0000.0.00.0000',
+            titulo: 'Processo X',
+            tribunal: 'TJSP',
+            status: 'ATIVO',
+            valor_causa: '10000.00',
+            participation_percentage: null,
+            participation_fixed_value: null,
+            attorney_fee_amount: '2000.00',
+            attorney_fee_installments: 1,
+          },
+        ];
+      }
+
+      return [];
+    });
+
+    render(
+      <MemoryRouter>
+        <MasterDashboardPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Advogado(a)'), {
+        target: { value: '1' },
+      });
+    });
+
+    await act(async () => {
+      screen.getByText('Processos').closest('button').click();
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    });
+
+    expect(await screen.findByText('Processo X')).toBeInTheDocument();
+    expect(screen.getByText(/2\.000,00/)).toBeInTheDocument();
+  });
+
   it('renders scheduled tasks inside master page (readonly, scoped)', async () => {
     getAllTasksMock.mockResolvedValue([
       {
@@ -295,7 +393,7 @@ describe('MasterDashboardPage', () => {
     });
 
     await act(async () => {
-      screen.getByRole('button', { name: /Tarefas/i }).click();
+      screen.getByRole('button', { name: /Tarefas Processuais/i }).click();
     });
 
     expect(screen.queryByText('Abrir Tarefas Processuais em nova aba')).not.toBeInTheDocument();

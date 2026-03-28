@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from django.db.models import Q, Count, Prefetch, Sum
+from django.db.models import Q, Count, Prefetch, Sum, OuterRef, Subquery, DecimalField
 from django.db import IntegrityError, transaction
 from django.contrib.auth import get_user_model
 from apps.accounts.permissions import is_master_user
@@ -131,6 +131,13 @@ class CaseViewSet(viewsets.ModelViewSet):
             qs = apply_user_owned_or_shared(qs, user)
 
         if self.action == 'list':
+            payments_sum_subquery = (
+                Payment.objects.filter(case=OuterRef('pk'))
+                .values('case')
+                .annotate(total=Sum('value'))
+                .values('total')[:1]
+            )
+
             qs = qs.prefetch_related(
                 Prefetch('parties', queryset=CaseParty.objects.select_related('contact'))
             ).prefetch_related(
@@ -143,7 +150,11 @@ class CaseViewSet(viewsets.ModelViewSet):
                     distinct=True
                 )
             ).annotate(
-                total_payments=Sum('payments__value')
+                # Use Subquery to avoid join multiplication with tasks annotation.
+                total_payments=Subquery(
+                    payments_sum_subquery,
+                    output_field=DecimalField(max_digits=15, decimal_places=2),
+                )
             )
         else:
             qs = qs.prefetch_related(

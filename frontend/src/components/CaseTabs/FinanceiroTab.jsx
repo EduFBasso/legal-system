@@ -241,264 +241,264 @@ function FinanceiroTab({
           </div>
         </div>
 
-        {/* BLOCO A: Informações do Processo */}
-        <div className="financeiro-bloco financeiro-bloco-azul">
-          <h3 className="financeiro-bloco-title">📋 Informações do Processo</h3>
-          
-          <div className="financeiro-bloco-content">
+        <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0 }}>
+          {/* BLOCO A: Informações do Processo */}
+          <div className="financeiro-bloco financeiro-bloco-azul">
+            <h3 className="financeiro-bloco-title">📋 Informações do Processo</h3>
             
-            {/* Card: Informações do Processo */}
-            <div className="financeiro-card">
-              <h4 className="financeiro-card-title">Informações do Processo</h4>
+            <div className="financeiro-bloco-content">
               
-              <div className="financeiro-grid">
-                <div className="financeiro-field">
-                  <CurrencyInput
-                    label="💰 Valor da Causa"
-                    value={formData.valor_causa}
-                    onChange={(value) => onInputChange('valor_causa', value)}
-                    placeholder="1.000,00"
-                  />
-                </div>
+              {/* Card: Informações do Processo */}
+              <div className="financeiro-card">
+                <h4 className="financeiro-card-title">Informações do Processo</h4>
+                
+                <div className="financeiro-grid">
+                  <div className="financeiro-field">
+                    <CurrencyInput
+                      label="💰 Valor da Causa"
+                      value={formData.valor_causa}
+                      onChange={(value) => onInputChange('valor_causa', value)}
+                      placeholder="1.000,00"
+                    />
+                  </div>
 
-                <div className="financeiro-field">
-                  <label className="financeiro-label">Condição de Pagamento</label>
-                  <div className="financeiro-checkbox-inline">
-                    <label>
-                      <input 
-                        type="checkbox" 
-                        checked={pagaMedianteGanho}
-                        onChange={(e) => setPagaMedianteGanho(e.target.checked)}
-                      />
-                      <span>Cliente paga mediante ganho de causa</span>
-                    </label>
+                  <div className="financeiro-field">
+                    <label className="financeiro-label">Condição de Pagamento</label>
+                    <div className="financeiro-checkbox-inline">
+                      <label>
+                        <input 
+                          type="checkbox" 
+                          checked={pagaMedianteGanho}
+                          onChange={(e) => setPagaMedianteGanho(e.target.checked)}
+                        />
+                        <span>Cliente paga mediante ganho de causa</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
+
+                <TextAreaField
+                  label="Condições de Pagamento"
+                  value={formData.payment_terms || ''}
+                  onChange={(value) => onInputChange('payment_terms', value)}
+                  placeholder="Ex: Entrada + parcelas mensais, vencimentos, reajustes e regras combinadas com o cliente..."
+                  rows={3}
+                />
               </div>
 
-              <TextAreaField
-                label="Condições de Pagamento"
-                value={formData.payment_terms || ''}
-                onChange={(value) => onInputChange('payment_terms', value)}
-                placeholder="Ex: Entrada + parcelas mensais, vencimentos, reajustes e regras combinadas com o cliente..."
-                rows={3}
-              />
             </div>
-
           </div>
-        </div>
 
-        {/* BLOCO B: Participação do Escritório */}
-        <div className="financeiro-bloco financeiro-bloco-azul">
-          <h3 className="financeiro-bloco-title">🤝 Participação do Escritório</h3>
+          {/* BLOCO B: Participação do Escritório */}
+          <div className="financeiro-bloco financeiro-bloco-azul">
+            <h3 className="financeiro-bloco-title">🤝 Participação do Escritório</h3>
 
-          <div className="financeiro-bloco-content">
-            <div className="financeiro-participacao-group">
-                <div className="financeiro-participacao-item">
-                  <div className="financeiro-participacao-topo">
-                    <label className="financeiro-check-inline">
-                      <input
-                        type="checkbox"
-                        checked={participacaoChecks.percentual}
-                        onChange={(e) => handleToggleParticipacao('percentual', e.target.checked)}
-                      />
-                      <span>Percentual (%)</span>
-                    </label>
-                    {participacaoChecks.percentual && (
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={3}
-                        pattern="[0-9]*"
-                        className="financeiro-input-compact"
-                        placeholder="000"
-                        value={participacaoPercentual}
-                        onChange={(e) => handlePercentualChange(e.target.value)}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="financeiro-participacao-item financeiro-participacao-item-honorarios">
-                  <div className="financeiro-participacao-topo">
-                    <label className="financeiro-check-inline">
-                      <input
-                        type="checkbox"
-                        checked={participacaoChecks.valorFixo}
-                        onChange={(e) => handleToggleParticipacao('valorFixo', e.target.checked)}
-                      />
-                      <span>Valor Fixo (R$)</span>
-                    </label>
-                    {participacaoChecks.valorFixo && (
-                      <CurrencyInput
-                        value={participacaoValorFixo}
-                        onChange={(value) => setParticipacaoValorFixo(value)}
-                        placeholder="0,00"
-                        className="financeiro-currency-inline"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="financeiro-participacao-item">
-                  <div className="financeiro-participacao-topo">
-                    <label className="financeiro-check-inline">
-                      <input
-                        type="checkbox"
-                        checked={participacaoChecks.honorarios}
-                        onChange={(e) => handleToggleParticipacao('honorarios', e.target.checked)}
-                      />
-                      <span>Honorários</span>
-                    </label>
-                  </div>
-
-                  {participacaoChecks.honorarios && (
-                    <div className="financeiro-participacao-campos">
-                      <div className="financeiro-honorarios-modo-row">
-                        <div className="financeiro-honorarios-modo">
-                          <label className="financeiro-honorarios-opcao">
-                            <input
-                              type="radio"
-                              name="honorarios_modo"
-                              value="hora"
-                              checked={honorariosModo === 'hora'}
-                              onChange={(e) => setHonorariosModo(e.target.value)}
-                            />
-                            <span>Por hora</span>
-                          </label>
-                          <label className="financeiro-honorarios-opcao">
-                            <input
-                              type="radio"
-                              name="honorarios_modo"
-                              value="parcelado"
-                              checked={honorariosModo === 'parcelado'}
-                              onChange={(e) => setHonorariosModo(e.target.value)}
-                            />
-                            <span>Por parcela</span>
-                          </label>
-                        </div>
-                      </div>
-
-                      {honorariosModo === 'hora' && (
-                        <div className="financeiro-grid financeiro-grid-honorarios">
-                          <div className="financeiro-field-inline financeiro-field-inline-currency">
-                            <label className="financeiro-label">Custo por Hora (R$)</label>
-                            <CurrencyInput
-                              value={honorarioValorHora}
-                              onChange={(value) => setHonorarioValorHora(value)}
-                              placeholder="0,00"
-                              className="financeiro-currency-inline"
-                            />
-                          </div>
-
-                          <div className="financeiro-field-inline">
-                            <label className="financeiro-label">Quantidade de Horas</label>
-                            <input
-                              type="number"
-                              className="financeiro-input-compact"
-                              min="0"
-                              step="0.5"
-                              value={honorarioQtdHoras}
-                              onChange={(e) => setHonorarioQtdHoras(e.target.value)}
-                              placeholder="0"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {honorariosModo === 'parcelado' && (
-                        <div className="financeiro-grid financeiro-grid-honorarios">
-                          <div className="financeiro-field-inline financeiro-field-inline-currency">
-                            <label className="financeiro-label">Parcela (R$)</label>
-                            <CurrencyInput
-                              value={formData.attorney_fee_amount || ''}
-                              onChange={(value) => onInputChange('attorney_fee_amount', value)}
-                              placeholder="0,00"
-                              className="financeiro-currency-inline"
-                              disabled={readOnly}
-                            />
-                          </div>
-
-                          <div className="financeiro-field-inline">
-                            <label className="financeiro-label">Quantidade de Parcelas</label>
-                            <input
-                              type="number"
-                              className="financeiro-input-compact"
-                              min="1"
-                              value={formData.attorney_fee_installments || 1}
-                              onChange={(e) => onInputChange('attorney_fee_installments', e.target.value)}
-                              disabled={readOnly}
-                            />
-                          </div>
-                        </div>
+            <div className="financeiro-bloco-content">
+              <div className="financeiro-participacao-group">
+                  <div className="financeiro-participacao-item">
+                    <div className="financeiro-participacao-topo">
+                      <label className="financeiro-check-inline">
+                        <input
+                          type="checkbox"
+                          checked={participacaoChecks.percentual}
+                          onChange={(e) => handleToggleParticipacao('percentual', e.target.checked)}
+                        />
+                        <span>Percentual (%)</span>
+                      </label>
+                      {participacaoChecks.percentual && (
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={3}
+                          pattern="[0-9]*"
+                          className="financeiro-input-compact"
+                          placeholder="000"
+                          value={participacaoPercentual}
+                          onChange={(e) => handlePercentualChange(e.target.value)}
+                        />
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              <div className="financeiro-participacao-resumo-container">
-                <div className="financeiro-participacao-resumo-linhas">
-                  <div className="financeiro-participacao-resumo-linha">
-                    <span>Percentual:</span>
-                    <strong>R$ {formatCurrencyValue(totalPercentual)}</strong>
+                  <div className="financeiro-participacao-item financeiro-participacao-item-honorarios">
+                    <div className="financeiro-participacao-topo">
+                      <label className="financeiro-check-inline">
+                        <input
+                          type="checkbox"
+                          checked={participacaoChecks.valorFixo}
+                          onChange={(e) => handleToggleParticipacao('valorFixo', e.target.checked)}
+                        />
+                        <span>Valor Fixo (R$)</span>
+                      </label>
+                      {participacaoChecks.valorFixo && (
+                        <CurrencyInput
+                          value={participacaoValorFixo}
+                          onChange={(value) => setParticipacaoValorFixo(value)}
+                          placeholder="0,00"
+                          className="financeiro-currency-inline"
+                        />
+                      )}
+                    </div>
                   </div>
-                  <div className="financeiro-participacao-resumo-linha">
-                    <span>Valor Fixo:</span>
-                    <strong>R$ {formatCurrencyValue(totalValorFixo)}</strong>
-                  </div>
-                  <div className="financeiro-participacao-resumo-linha">
-                    <span>Honorários:</span>
-                    <strong>R$ {formatCurrencyValue(totalHonorarios)}</strong>
+
+                  <div className="financeiro-participacao-item">
+                    <div className="financeiro-participacao-topo">
+                      <label className="financeiro-check-inline">
+                        <input
+                          type="checkbox"
+                          checked={participacaoChecks.honorarios}
+                          onChange={(e) => handleToggleParticipacao('honorarios', e.target.checked)}
+                        />
+                        <span>Honorários</span>
+                      </label>
+                    </div>
+
+                    {participacaoChecks.honorarios && (
+                      <div className="financeiro-participacao-campos">
+                        <div className="financeiro-honorarios-modo-row">
+                          <div className="financeiro-honorarios-modo">
+                            <label className="financeiro-honorarios-opcao">
+                              <input
+                                type="radio"
+                                name="honorarios_modo"
+                                value="hora"
+                                checked={honorariosModo === 'hora'}
+                                onChange={(e) => setHonorariosModo(e.target.value)}
+                              />
+                              <span>Por hora</span>
+                            </label>
+                            <label className="financeiro-honorarios-opcao">
+                              <input
+                                type="radio"
+                                name="honorarios_modo"
+                                value="parcelado"
+                                checked={honorariosModo === 'parcelado'}
+                                onChange={(e) => setHonorariosModo(e.target.value)}
+                              />
+                              <span>Por parcela</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {honorariosModo === 'hora' && (
+                          <div className="financeiro-grid financeiro-grid-honorarios">
+                            <div className="financeiro-field-inline financeiro-field-inline-currency">
+                              <label className="financeiro-label">Custo por Hora (R$)</label>
+                              <CurrencyInput
+                                value={honorarioValorHora}
+                                onChange={(value) => setHonorarioValorHora(value)}
+                                placeholder="0,00"
+                                className="financeiro-currency-inline"
+                              />
+                            </div>
+
+                            <div className="financeiro-field-inline">
+                              <label className="financeiro-label">Quantidade de Horas</label>
+                              <input
+                                type="number"
+                                className="financeiro-input-compact"
+                                min="0"
+                                step="0.5"
+                                value={honorarioQtdHoras}
+                                onChange={(e) => setHonorarioQtdHoras(e.target.value)}
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {honorariosModo === 'parcelado' && (
+                          <div className="financeiro-grid financeiro-grid-honorarios">
+                            <div className="financeiro-field-inline financeiro-field-inline-currency">
+                              <label className="financeiro-label">Parcela (R$)</label>
+                              <CurrencyInput
+                                value={formData.attorney_fee_amount || ''}
+                                onChange={(value) => onInputChange('attorney_fee_amount', value)}
+                                placeholder="0,00"
+                                className="financeiro-currency-inline"
+                              />
+                            </div>
+
+                            <div className="financeiro-field-inline">
+                              <label className="financeiro-label">Quantidade de Parcelas</label>
+                              <input
+                                type="number"
+                                className="financeiro-input-compact"
+                                min="1"
+                                value={formData.attorney_fee_installments || 1}
+                                onChange={(e) => onInputChange('attorney_fee_installments', e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="financeiro-participacao-resumo-total">
-                  <span>Total da Participação:</span>
-                  <strong>R$ {formatCurrencyValue(totalParticipacao)}</strong>
+
+                <div className="financeiro-participacao-resumo-container">
+                  <div className="financeiro-participacao-resumo-linhas">
+                    <div className="financeiro-participacao-resumo-linha">
+                      <span>Percentual:</span>
+                      <strong>R$ {formatCurrencyValue(totalPercentual)}</strong>
+                    </div>
+                    <div className="financeiro-participacao-resumo-linha">
+                      <span>Valor Fixo:</span>
+                      <strong>R$ {formatCurrencyValue(totalValorFixo)}</strong>
+                    </div>
+                    <div className="financeiro-participacao-resumo-linha">
+                      <span>Honorários:</span>
+                      <strong>R$ {formatCurrencyValue(totalHonorarios)}</strong>
+                    </div>
+                  </div>
+                  <div className="financeiro-participacao-resumo-total">
+                    <span>Total da Participação:</span>
+                    <strong>R$ {formatCurrencyValue(totalParticipacao)}</strong>
+                  </div>
                 </div>
-              </div>
+            </div>
           </div>
-        </div>
 
-        {/* BLOCO C: Recebimentos do Cliente */}
-        <div className="financeiro-bloco financeiro-bloco-azul">
-          <h3 className="financeiro-bloco-title">💵 Recebimentos do Cliente</h3>
-          <FinancialEntriesSection
-            entryTitle="Lançamentos de Recebimento"
-            form={recebimentoForm}
-            setForm={setRecebimentoForm}
-            onAdd={onAddRecebimento}
-            addButtonLabel="Adicionar Recebimento"
-            descriptionPlaceholder="Ex: Honorários - Parcela 1/3"
-            emptyMessage="Nenhum recebimento registrado"
-            emptyHint="Preencha os campos acima e clique em 'Adicionar Recebimento'"
-            items={recebimentos}
-            onRemove={onRemoveRecebimento}
-            totalLabel="Total Recebido:"
-            totalValue={calcularTotalRecebimentos()}
-            readOnly={readOnly}
-          />
-        </div>
+          {/* BLOCO C: Recebimentos do Cliente */}
+          <div className="financeiro-bloco financeiro-bloco-azul">
+            <h3 className="financeiro-bloco-title">💵 Recebimentos do Cliente</h3>
+            <FinancialEntriesSection
+              entryTitle="Lançamentos de Recebimento"
+              form={recebimentoForm}
+              setForm={setRecebimentoForm}
+              onAdd={onAddRecebimento}
+              addButtonLabel="Adicionar Recebimento"
+              descriptionPlaceholder="Ex: Honorários - Parcela 1/3"
+              emptyMessage="Nenhum recebimento registrado"
+              emptyHint="Preencha os campos acima e clique em 'Adicionar Recebimento'"
+              items={recebimentos}
+              onRemove={onRemoveRecebimento}
+              totalLabel="Total Recebido:"
+              totalValue={calcularTotalRecebimentos()}
+              readOnly={readOnly}
+            />
+          </div>
 
-        {/* BLOCO D: Custos do Escritório */}
-        <div className="financeiro-bloco financeiro-bloco-azul">
-          <h3 className="financeiro-bloco-title">💸 Custos e Despesas do Escritório</h3>
-          <FinancialEntriesSection
-            entryTitle="Registros de Gastos"
-            form={despesaForm}
-            setForm={setDespesaForm}
-            onAdd={onAddDespesa}
-            addButtonLabel="Adicionar Despesa"
-            descriptionPlaceholder="Ex: Custas processuais, Honorários perito"
-            emptyMessage="Nenhuma despesa registrada"
-            emptyHint="Registre custas do tribunal, perícias, honorários e outros custos"
-            items={despesas}
-            onRemove={onRemoveDespesa}
-            totalLabel="Total de Custos:"
-            totalValue={calcularTotalDespesas()}
-            readOnly={readOnly}
-          />
-        </div>
+          {/* BLOCO D: Custos do Escritório */}
+          <div className="financeiro-bloco financeiro-bloco-azul">
+            <h3 className="financeiro-bloco-title">💸 Custos e Despesas do Escritório</h3>
+            <FinancialEntriesSection
+              entryTitle="Registros de Gastos"
+              form={despesaForm}
+              setForm={setDespesaForm}
+              onAdd={onAddDespesa}
+              addButtonLabel="Adicionar Despesa"
+              descriptionPlaceholder="Ex: Custas processuais, Honorários perito"
+              emptyMessage="Nenhuma despesa registrada"
+              emptyHint="Registre custas do tribunal, perícias, honorários e outros custos"
+              items={despesas}
+              onRemove={onRemoveDespesa}
+              totalLabel="Total de Custos:"
+              totalValue={calcularTotalDespesas()}
+              readOnly={readOnly}
+            />
+          </div>
+        </fieldset>
       </div>
     </div>
   );

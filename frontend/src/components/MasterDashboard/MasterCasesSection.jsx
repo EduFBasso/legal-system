@@ -7,14 +7,38 @@ function formatBRL(value) {
 }
 
 function getOfficeParticipationLabel(c) {
-  const type = (c?.participation_type || '').trim();
-  if (type === 'fixed') {
-    return formatBRL(c?.participation_fixed_value);
+  const valorCausa = Number(c?.valor_causa);
+  const fixed = Number(c?.participation_fixed_value);
+  const perc = Number(c?.participation_percentage);
+  const feeAmount = Number(c?.attorney_fee_amount);
+  const installments = Number(c?.attorney_fee_installments);
+
+  const fixedTotal = Number.isFinite(fixed) && fixed > 0 ? fixed : 0;
+
+  const percTotal = (
+    Number.isFinite(valorCausa)
+    && valorCausa > 0
+    && Number.isFinite(perc)
+    && perc > 0
+  )
+    ? (valorCausa * perc) / 100
+    : 0;
+
+  const feeInstallments = Number.isFinite(installments) && installments > 0 ? installments : 1;
+  const feeTotal = Number.isFinite(feeAmount) && feeAmount > 0 ? feeAmount * feeInstallments : 0;
+
+  const totalParticipation = fixedTotal + percTotal + feeTotal;
+  if (totalParticipation > 0) {
+    return formatBRL(totalParticipation);
   }
 
-  const perc = Number(c?.participation_percentage);
+  // Fallbacks when total can't be computed (e.g., missing valor_causa).
   if (Number.isFinite(perc) && perc > 0) {
     return `${perc.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+  }
+
+  if (Number.isFinite(fixed) && fixed > 0) {
+    return formatBRL(fixed);
   }
 
   return '—';

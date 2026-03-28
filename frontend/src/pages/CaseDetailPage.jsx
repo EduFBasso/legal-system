@@ -152,14 +152,15 @@ function CaseDetailPage() {
     modalsNotif.showToast
   );
 
-  // Publications
+  // Publications (desabilitado em read-only)
   const publications = usePublicationsForCase(
     id,
     systemSettings,
-    modalsNotif.showToast
+    modalsNotif.showToast,
+    { enabled: !isReadOnly }
   );
 
-  // Financial data
+  // Financial data (não deve rodar em read-only)
   const financial = useFinancialData(
     id,
     caseCore.formData,
@@ -177,10 +178,13 @@ function CaseDetailPage() {
     },
     {
       delay: 800,
-      enabled: !!(id && navigation.activeSection === 'financeiro' && !caseCore.saving),
+      enabled: !!(id && navigation.activeSection === 'financeiro' && !isReadOnly && !caseCore.saving),
       getChangedFields: financial.getChangedFinancialFields,
     }
   );
+
+  // Em read-only nunca devemos tentar flush/auto-save financeiro.
+  const forceSaveFinancialSafe = useCallback(async () => {}, []);
 
   const { linkedCases, loadingLinkedCases } = useCaseDetailLinkedCases({
     clientId: caseCore.caseData?.cliente_principal,
@@ -188,11 +192,19 @@ function CaseDetailPage() {
   });
 
   useFinanceiroAutoSaveGuards({
-    caseId: id,
+    caseId: isReadOnly ? null : id,
     activeSection: navigation.activeSection,
     caseSaving: caseCore.saving,
-    forceSaveFinancial,
+    forceSaveFinancial: isReadOnly ? forceSaveFinancialSafe : forceSaveFinancial,
   });
+
+  // Em modo somente leitura, evita deeplink para abas bloqueadas.
+  useEffect(() => {
+    if (!isReadOnly) return;
+    if (navigation.activeSection === 'publicacoes') {
+      navigation.setActiveSection('info');
+    }
+  }, [isReadOnly, navigation.activeSection, navigation.setActiveSection]);
 
   /**
    * Load system settings on mount
