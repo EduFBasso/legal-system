@@ -168,35 +168,6 @@ export default function DeadlinesContent({
     return date.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' });
   };
 
-  if (loading) {
-    return (
-      <div className="deadlines-content">
-        <div className="page-header">
-          <h1>{title}</h1>
-          {displayLabel ? <div className="header-subtitle">{displayLabel}</div> : null}
-        </div>
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Carregando tarefas...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="deadlines-content">
-        <div className="page-header">
-          <h1>{title}</h1>
-          {displayLabel ? <div className="header-subtitle">{displayLabel}</div> : null}
-        </div>
-        <div className="error-state">
-          <p>❌ {error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="deadlines-content">
       <div className="page-header">
@@ -243,7 +214,16 @@ export default function DeadlinesContent({
       </div>
 
       <div className="tasks-container">
-        {totalTasks === 0 ? (
+        {loading && !hasLoadedOnceRef.current ? (
+          <div className="loading-state">
+            <div className="spinner"></div>
+            <p>Carregando tarefas...</p>
+          </div>
+        ) : error && !hasLoadedOnceRef.current ? (
+          <div className="error-state">
+            <p>❌ {error}</p>
+          </div>
+        ) : totalTasks === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">✅</div>
             <h2>Nenhuma tarefa</h2>
