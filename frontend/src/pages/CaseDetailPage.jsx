@@ -463,7 +463,7 @@ function CaseDetailPage() {
     );
   };
 
-  const showPublicacoesTab = !(
+  const showPublicacoesTab = !isReadOnly && !(
     systemSettings?.AUTO_CREATE_MOVEMENT_ON_PUBLICATION_INTEGRATION &&
     systemSettings?.HIDE_PUBLICATIONS_TAB_WHEN_AUTO_SYNC
   );

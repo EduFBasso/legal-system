@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { BellRing } from 'lucide-react';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -29,6 +29,31 @@ import './styles/highlight.css'; // Sistema de destaque reutilizável
 // Initialize at module level so all component subscriptions work on first mount
 initTaskSync(taskSyncBroadcast);
 
+function CaseDetailRouteElement() {
+  const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
+
+  if (!isAuthenticated) {
+    return <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>;
+  }
+
+  const isMasterUser = user?.role === 'MASTER';
+  if (!isMasterUser) {
+    return <CaseDetailPage />;
+  }
+
+  const sp = new URLSearchParams(location.search || '');
+  const readonlyFlag = (sp.get('readonly') || '').trim().toLowerCase();
+  const isReadOnly = readonlyFlag === '1' || readonlyFlag === 'true' || readonlyFlag === 'yes';
+  const teamMemberId = (sp.get('team_member_id') || '').trim();
+
+  if (isReadOnly && teamMemberId) {
+    return <CaseDetailPage />;
+  }
+
+  return <Navigate to="/painel-master" replace />;
+}
+
 function App() {
   const { isAuthenticated, showNotLoggedMessage, user } = useAuth();
   const isMasterUser = user?.role === 'MASTER';
@@ -51,9 +76,7 @@ function App() {
             />
             <Route
               path="/cases/:id"
-              element={isAuthenticated
-                ? (isMasterUser ? <Navigate to="/painel-master" replace /> : <CaseDetailPage />)
-                : <div className="not-logged-panel">Você não está logado. Faça login para usar o sistema.</div>}
+              element={<CaseDetailRouteElement />}
             />
 
             {/* Rotas dedicadas para tarefas (full width, sem header/menu/sidebar) */}
