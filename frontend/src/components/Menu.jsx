@@ -2,12 +2,14 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import caseTasksService from '../services/caseTasksService';
+import contactTasksService from '../services/contactTasksService';
 import { subscribeToTaskUpdates } from '../services/taskSyncService';
 import SettingsModal from './SettingsModal';
 import './Menu.css';
 
 export default function Menu({ isAuthenticated, onBlockedAction }) {
   const [openTasksCount, setOpenTasksCount] = useState(0);
+  const [openContactTasksCount, setOpenContactTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const renderMenuLink = ({ to, end = true, icon, label, badge = null }) => {
@@ -36,29 +38,35 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
+    if (!isAuthenticated) return;
 
-    const loadOpenTasksCount = async () => {
+    const loadCounts = async () => {
       try {
-        const result = await caseTasksService.getTasksCount({
-          status__in: 'PENDENTE,EM_ANDAMENTO',
-        });
-        setOpenTasksCount(Number(result?.count || 0));
+        const [caseResult, contactResult] = await Promise.all([
+          caseTasksService.getTasksCount({
+            status__in: 'PENDENTE,EM_ANDAMENTO',
+          }),
+          contactTasksService.getTasksCount({
+            status__in: 'PENDENTE,EM_ANDAMENTO',
+          }),
+        ]);
+
+        setOpenTasksCount(Number(caseResult?.count || 0));
+        setOpenContactTasksCount(Number(contactResult?.count || 0));
       } catch {
         setOpenTasksCount(0);
+        setOpenContactTasksCount(0);
       }
     };
 
-    loadOpenTasksCount();
+    loadCounts();
 
     const handleWindowFocus = () => {
-      loadOpenTasksCount();
+      loadCounts();
     };
 
     const unsubscribeTasks = subscribeToTaskUpdates(() => {
-      loadOpenTasksCount();
+      loadCounts();
     });
 
     window.addEventListener('focus', handleWindowFocus);
@@ -87,6 +95,9 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
             to: '/contact-tasks',
             icon: '👤',
             label: 'Tarefas de Pessoas',
+            badge: isAuthenticated && openContactTasksCount > 0 ? (
+              <span className="menu-count-badge menu-count-badge--tasks">{openContactTasksCount}</span>
+            ) : null,
           })}
         </li>
 

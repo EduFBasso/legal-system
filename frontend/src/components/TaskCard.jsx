@@ -84,7 +84,8 @@ export default function TaskCard({
     onOpenContact(task.contact);
   };
 
-  const handleCheckboxChange = () => {
+  const handleCheckboxChange = (e) => {
+    e?.stopPropagation?.();
     if (readOnly) return;
     if (task?.status === 'CONCLUIDA') {
       const ok = window.confirm('Reativar esta tarefa?');
@@ -149,17 +150,16 @@ export default function TaskCard({
         ) : null}
 
         <div className="task-title-row">
-          {!isContactTask ? (
-            <div className="task-checkbox task-checkbox--inline">
-              <input
-                type="checkbox"
-                checked={isCompleted}
-                onChange={handleCheckboxChange}
-                className="checkbox-input"
-                disabled={readOnly}
-              />
-            </div>
-          ) : null}
+          <div className="task-checkbox task-checkbox--inline" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isCompleted}
+              onChange={handleCheckboxChange}
+              className="checkbox-input"
+              disabled={readOnly}
+              aria-label={isCompleted ? 'Reativar tarefa' : 'Concluir tarefa'}
+            />
+          </div>
           <div className="task-title">{titleText}</div>
           {!isContactTask && !readOnly && (onEditTask || onDeleteTask) ? (
             <div className="task-actions">
