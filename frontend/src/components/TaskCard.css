@@ -93,6 +93,7 @@
   border-radius: 8px;
   background: var(--color-white);
   transition: var(--transition-default);
+  font-size: 1rem; /* Nunca menor que 16px dentro do cartão */
 }
 
 /* Ensure icon actions can be reused outside TaskCard markup (e.g., Movimentações inline list) */
@@ -112,7 +113,7 @@
   right: 12px;
   padding: 6px 12px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0.06em;
   border: 2px solid transparent;
@@ -188,7 +189,7 @@
 }
 
 .task-time {
-  font-size: 0.9rem;
+  font-size: 1.0625rem; /* 17px */
   font-weight: 700;
   color: var(--color-gray-700);
 }
@@ -317,7 +318,7 @@
 
 .task-title {
   font-weight: 700;
-  font-size: 17px;
+  font-size: 1.125rem; /* 18px */
   color: var(--color-gray-800);
   margin: 0 0 8px 0;
   word-break: break-word;
@@ -343,7 +344,7 @@
   color: var(--color-gray-700);
   border-radius: 6px;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -355,7 +356,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 1.125rem; /* ícone mais legível */
   line-height: 1;
 }
 
@@ -385,7 +386,7 @@
 }
 
 .task-process-meta {
-  font-size: 15px;
+  font-size: 1rem;
   margin: 8px 0 12px 0;
   padding: 8px 0;
   display: flex;
@@ -546,7 +547,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 13px;
+  font-size: 1.0625rem; /* 17px (data/hora) */
   color: var(--color-gray-600);
   align-items: center;
 }
@@ -563,7 +564,7 @@
 }
 
 .task-meta-dot {
-  font-size: 16px;
+  font-size: 1.0625rem; /* 17px */
   line-height: 1;
 }
 
@@ -571,7 +572,7 @@
 .task-item:not(.completed) .task-remaining,
 .task-item:not(.completed) .task-meta-dot {
   color: var(--color-gray-700);
-  font-size: 16px;
+  font-size: 1.0625rem; /* 17px */
   font-weight: 700;
 }
 
@@ -638,7 +639,7 @@
   }
 
   .task-title {
-    font-size: 15px;
+    font-size: 1.0625rem; /* 17px */
   }
 
   .task-meta {
