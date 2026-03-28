@@ -22,7 +22,10 @@ function PartiesTab({
 }) {
   const [selectedPartyId, setSelectedPartyId] = useState(null);
 
-  const representations = Array.isArray(caseData?.representations) ? caseData.representations : [];
+  const representations = useMemo(
+    () => (Array.isArray(caseData?.representations) ? caseData.representations : []),
+    [caseData]
+  );
 
   // Helper to format document based on person type
   const formatDocument = (doc, personType) => {
@@ -33,11 +36,11 @@ function PartiesTab({
     return formatCPF(doc);
   };
 
-  const handleSelectParty = (partyId) => {
-    setSelectedPartyId(selectedPartyId === partyId ? null : partyId);
-  };
+  const handleSelectParty = useCallback((partyId) => {
+    setSelectedPartyId((current) => (current === partyId ? null : partyId));
+  }, []);
 
-  const orderedParties = (() => {
+  const orderedParties = useMemo(() => {
     if (!Array.isArray(parties) || parties.length === 0) return [];
 
     const clientParty = parties.find((p) => p?.is_client);
@@ -45,7 +48,7 @@ function PartiesTab({
 
     const rest = parties.filter((p) => Number(p?.id) !== Number(clientParty.id));
     return [clientParty, ...rest];
-  })();
+  }, [parties]);
 
   const shouldShowRepresentativeCardInlineAfter = useCallback((party) => {
     if (!party?.is_client) return true;
