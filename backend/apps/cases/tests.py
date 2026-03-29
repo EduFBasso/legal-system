@@ -650,13 +650,42 @@ class CaseAPITest(APITestCase):
         self.assertEqual(self.case1.titulo, 'Caso Atualizado')
     
     def test_delete_case(self):
-        """Test deleting a case (soft delete)"""
+        """Test deleting a case (hard delete)"""
         response = self.client.delete(f'/api/cases/{self.case1.id}/')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        # Soft delete keeps the case in database but marks as deleted
-        self.case1.refresh_from_db()
-        self.assertTrue(self.case1.deleted)
-        self.assertIsNotNone(self.case1.deleted_at)
+        self.assertFalse(Case.objects.filter(id=self.case1.id).exists())
+
+    def test_delete_principal_detaches_derived_cases(self):
+        principal = Case.objects.create(
+            owner=self.user,
+            numero_processo='0000900-23.2024.8.26.0100',
+            titulo='Principal',
+            tribunal='TJSP',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            classificacao='PRINCIPAL',
+        )
+        derived = Case.objects.create(
+            owner=self.user,
+            numero_processo='0000901-23.2024.8.26.0100',
+            titulo='Derivado',
+            tribunal='TJSP',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date(),
+            case_principal=principal,
+            vinculo_tipo='APENSO',
+            # Forçar um valor diferente para garantir que será resetado no delete.
+            classificacao='PRINCIPAL',
+        )
+
+        response = self.client.delete(f'/api/cases/{principal.id}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Case.objects.filter(id=principal.id).exists())
+
+        derived.refresh_from_db()
+        self.assertIsNone(derived.case_principal_id)
+        self.assertEqual(derived.vinculo_tipo, '')
+        self.assertEqual(derived.classificacao, 'NEUTRO')
     
     def test_update_financial_data(self):
         """Test updating financial data of a case"""

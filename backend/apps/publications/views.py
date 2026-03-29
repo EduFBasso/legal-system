@@ -561,7 +561,12 @@ def _save_publications_to_db(publicacoes, owner=None):
     total_novas = 0
     
     for pub in publicacoes:
-        id_api = pub.get('id_api')
+        raw_id = (pub or {}).get('id_api')
+        try:
+            id_api = int(raw_id) if raw_id is not None and str(raw_id).strip() != '' else None
+        except (TypeError, ValueError):
+            id_api = None
+
         if not id_api:
             continue
 
@@ -619,6 +624,11 @@ def _enrich_publications_with_db_data(publicacoes, owner=None):
     if owner is not None:
         db_pubs = db_pubs.filter(owner=owner)
     db_pubs = db_pubs.values('id', 'id_api', 'integration_status', 'case_id')
+
+    movement_qs = CaseMovement.objects.filter(publicacao_id__in=id_apis)
+    if owner is not None:
+        movement_qs = movement_qs.filter(case__owner=owner)
+    id_apis_with_movements = set(movement_qs.values_list('publicacao_id', flat=True))
     
     # Criar mapa id_api -> dados do banco
     db_map = {pub['id_api']: pub for pub in db_pubs}
@@ -634,6 +644,7 @@ def _enrich_publications_with_db_data(publicacoes, owner=None):
         enriched_pub['integration_status'] = db_data.get('integration_status', 'PENDING')
         enriched_pub['case_id'] = db_data.get('case_id')
         enriched_pub['id'] = db_data.get('id')
+        enriched_pub['has_integrated_movement'] = bool(id_api and id_api in id_apis_with_movements)
         
         enriched.append(enriched_pub)
     
@@ -856,6 +867,14 @@ def retrieve_last_search_publications(request):
             data_disponibilizacao__gte=last_search.data_inicio,
             data_disponibilizacao__lte=last_search.data_fim
         ), user).order_by('-data_disponibilizacao', '-created_at')
+
+        id_apis = list(publicacoes_db.values_list('id_api', flat=True))
+        id_apis_with_movements = set(
+            CaseMovement.objects.filter(
+                publicacao_id__in=id_apis,
+                case__owner=user,
+            ).values_list('publicacao_id', flat=True)
+        )
         
         # Serializar publicações no formato idêntico à API
         publicacoes_json = []
@@ -876,6 +895,7 @@ def retrieve_last_search_publications(request):
                 'hash': pub.hash_pub,
                 'integration_status': pub.integration_status,
                 'case_id': pub.case_id,
+                'has_integrated_movement': pub.id_api in id_apis_with_movements,
                 'case_suggestion': case_suggestion,
             })
         
@@ -1748,6 +1768,11 @@ def get_publication_by_id(request, id_api):
         if not publication:
             raise Publication.DoesNotExist
         
+        has_integrated_movement = CaseMovement.objects.filter(
+            publicacao_id=publication.id_api,
+            case__owner=user,
+        ).exists()
+
         # Serializar no formato da API
         return Response({
             'success': True,
@@ -1766,6 +1791,7 @@ def get_publication_by_id(request, id_api):
                 'hash_pub': publication.hash_pub,
                 'integration_status': publication.integration_status,
                 'case_id': publication.case_id,
+                'has_integrated_movement': has_integrated_movement,
                 'case_suggestion': _build_case_suggestion(publication.numero_processo, user=user),
                 'created_at': publication.created_at.isoformat(),
             }
@@ -1807,16 +1833,35 @@ def delete_publication(request, id_api):
         if not publication:
             raise Publication.DoesNotExist
 
+        movement_case_id = (
+            CaseMovement.objects.filter(
+                publicacao_id=publication.id_api,
+                case__owner=publication.owner,
+            )
+            .values_list('case_id', flat=True)
+            .first()
+        )
+        has_integrated_movement = bool(movement_case_id)
+
         has_linked_case = False
         if publication.case_id:
             has_linked_case = Case.objects.filter(id=publication.case_id).exists()
 
         created_cases_count = publication.casos_criados.count()
 
+        if has_integrated_movement:
+            return Response({
+                'success': False,
+                'error': 'Não é possível apagar esta publicação: já existe movimentação integrada no processo. Para remover, delete o processo vinculado.',
+                'reason_code': 'PUBLICATION_HAS_MOVEMENTS',
+                'movement_case_id': movement_case_id,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         if has_linked_case or created_cases_count > 0:
             return Response({
                 'success': False,
                 'error': 'Não é possível apagar publicação com processo vinculado. Desvincule/desative o processo primeiro.',
+                'reason_code': 'PUBLICATION_HAS_LINKED_CASE',
                 'linked_case_id': publication.case_id,
                 'created_cases_count': created_cases_count,
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -1903,7 +1948,12 @@ def delete_multiple_publications(request):
 
             has_created_case = publication.casos_criados.exists()
 
-            if has_linked_case or has_created_case:
+            has_integrated_movement = CaseMovement.objects.filter(
+                publicacao_id=publication.id_api,
+                case__owner=publication.owner,
+            ).exists()
+
+            if has_integrated_movement or has_linked_case or has_created_case:
                 protected_ids.append(publication.id_api)
             else:
                 deletable_ids.append(publication.id_api)
@@ -1973,18 +2023,21 @@ def delete_all_publications(request):
     """
     try:
         user = request.user
-        linked_case_pub_ids = set(
-            _apply_owner_filter(Publication.objects.filter(case__isnull=False), user)
-            .values_list('id', flat=True)
+        scoped_pubs = _apply_owner_filter(Publication.objects.all(), user)
+
+        protected_id_apis = set(scoped_pubs.filter(case__isnull=False).values_list('id_api', flat=True))
+        protected_id_apis |= set(scoped_pubs.filter(casos_criados__isnull=False).values_list('id_api', flat=True))
+
+        scoped_cases = apply_user_owned_or_shared(Case.objects.all(), user)
+        protected_id_apis |= set(
+            CaseMovement.objects.filter(
+                case__in=scoped_cases,
+                publicacao_id__isnull=False,
+            ).values_list('publicacao_id', flat=True)
         )
-        linked_origin_pub_ids = set(
-            _apply_owner_filter(Publication.objects.filter(casos_criados__isnull=False), user)
-            .values_list('id', flat=True)
-        )
-        protected_pub_ids = linked_case_pub_ids | linked_origin_pub_ids
 
         # HARD DELETE: Deletar notificações não lidas de publicações não protegidas
-        deletable_pubs = _apply_owner_filter(Publication.objects.exclude(id__in=protected_pub_ids), user)
+        deletable_pubs = scoped_pubs.exclude(id_api__in=protected_id_apis)
         notifications_deleted = 0
         for pub in deletable_pubs:
             notification_qs = Notification.objects.filter(
@@ -1997,7 +2050,7 @@ def delete_all_publications(request):
             notifications_deleted += notification_qs.delete()[0]
         
         # Agora deletar as publicações
-        deleted_count = _apply_owner_filter(Publication.objects.exclude(id__in=protected_pub_ids), user).delete()[0]
+        deleted_count = scoped_pubs.exclude(id_api__in=protected_id_apis).delete()[0]
         
         # HARD DELETE: Limpar histórico (sem publicações visíveis, histórico não faz sentido)
         history_deleted = _apply_owner_filter(SearchHistory.objects.all(), user).delete()[0]
@@ -2005,7 +2058,7 @@ def delete_all_publications(request):
         return Response({
             'success': True,
             'deleted': deleted_count,
-            'protected': len(protected_pub_ids),
+            'protected': len(protected_id_apis),
             'notifications_deleted': notifications_deleted,
             'history_deleted': history_deleted,
             'message': f'{deleted_count} publicação(ões) removida(s), {notifications_deleted} notificações deletadas e {history_deleted} históricos removidos'

@@ -138,7 +138,10 @@ export default function PublicationCard({
 
   const actionState = getPublicationActionState(publication, caseSuggestion);
   const shouldShowDeleteButton = showDeleteButton === undefined ? showActionButtons : Boolean(showDeleteButton);
-  const isIntegrated = publication?.integration_status === 'INTEGRATED' || !!publication?.case_id;
+  const isIntegrated =
+    publication?.integration_status === 'INTEGRATED' ||
+    !!publication?.case_id ||
+    !!publication?.has_integrated_movement;
   const canDeletePublication = !isIntegrated;
 
   return (

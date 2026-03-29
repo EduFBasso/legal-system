@@ -523,11 +523,6 @@ function InformacaoTab({
             {isEditing ? '✏️ Editando Informações' : '📋 Detalhes do Processo'}
           </h2>
           <div className="section-header-actions">
-            {!isEditing && formData.owner_name && (
-              <span className="section-owner-label">
-                {formData.owner_name}{formData.owner_oab ? ` ${formData.owner_oab}` : ''}
-              </span>
-            )}
             {!isEditing && !readOnly && (
               <>
                 <EditButton onClick={() => {
@@ -967,18 +962,24 @@ function InformacaoTab({
                           ) : (
                             <div className="detail-client-block">
                               <span className="detail-value empty">Nenhum cliente vinculado</span>
-                              <button
-                                className="btn btn-sm btn-primary"
-                                onClick={() => {
-                                  if (onAddPartyClick) {
-                                    onAddPartyClick();
-                                  }
-                                }}
-                                style={{marginTop: '0.5rem'}}
+                              <span
+                                className={`btn-tooltip-wrapper${!id ? ' is-disabled' : ''}`}
+                                title={!id ? 'Salve o processo primeiro para adicionar partes.' : undefined}
+                                style={{ marginTop: '0.5rem' }}
                               >
+                                <button
+                                  className="btn btn-sm btn-primary"
+                                  disabled={!id || readOnly}
+                                  onClick={() => {
+                                    if (onAddPartyClick) {
+                                      onAddPartyClick();
+                                    }
+                                  }}
+                                >
                                   <UserPlus size={16} />
                                   Selecionar Contato
-                              </button>
+                                </button>
+                              </span>
                             </div>
                           )}
                         </>

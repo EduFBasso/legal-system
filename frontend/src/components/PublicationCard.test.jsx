@@ -49,4 +49,18 @@ describe('PublicationCard', () => {
 
     expect(screen.queryByTitle('Apagar esta publicação')).not.toBeInTheDocument();
   });
+
+  it('hides delete button when publication has integrated movement', () => {
+    render(
+      <PublicationCard
+        publication={{ ...basePublication, integration_status: 'PENDING', case_id: null, has_integrated_movement: true }}
+        onClick={vi.fn()}
+        onMarkAsRead={vi.fn()}
+        showActionButtons={true}
+        onDelete={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTitle('Apagar esta publicação')).not.toBeInTheDocument();
+  });
 });

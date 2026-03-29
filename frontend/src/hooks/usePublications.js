@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import publicationsService from '../services/publicationsService';
 import { getAuthToken } from '../utils/apiFetch';
 import { openPublicationDetailsWindow } from '../utils/publicationNavigation';
+import { subscribePublicationSync } from '../services/publicationSync';
 
 /**
  * Custom hook para gerenciar estado e operações de publicações
@@ -129,6 +130,25 @@ export function usePublications() {
       setLoading(false);
     }
   }, [showToast, fetchLastSearch]);
+
+  // Sync cross-tab: se publicações forem alteradas em outra aba/janela
+  // (integração, deleção, deleção via exclusão de case), atualiza o estado global.
+  useEffect(() => {
+    const unsubscribe = subscribePublicationSync((event) => {
+      if (!event?.type) return;
+
+      const shouldReload =
+        event.type === 'PUBLICATION_INTEGRATED' ||
+        event.type === 'PUBLICATIONS_UPDATED' ||
+        event.type === 'PUBLICATION_DELETED';
+
+      if (!shouldReload) return;
+
+      loadLastSearch();
+    });
+
+    return unsubscribe;
+  }, [loadLastSearch]);
 
   /**
    * Busca publicações do dia atual

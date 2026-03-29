@@ -919,48 +919,68 @@ class CaseViewSet(viewsets.ModelViewSet):
     
     def perform_destroy(self, instance):
         """
-        Soft delete: mark as deleted instead of removing from database
+        Hard delete: remove case from database
         
-        Query params:
+        Body:
         - delete_linked_publication: bool (default: False)
-          * True: Also soft-delete the linked publication
-          * False: Unlink publication (reset to PENDING status for reuse)
+          * True: Also hard-delete the linked publication(s)
+          * False: Unlink publication(s) (reset to PENDING status for reuse)
         """
-        # Verificar se deve deletar também a publicação vinculada
-        delete_linked_publication = self.request.data.get('delete_linked_publication', False)
-        
-        # Desvincular TODAS as publicações relacionadas a este case
+        def _as_bool(value):
+            if isinstance(value, bool):
+                return value
+            if value is None:
+                return False
+            raw = str(value).strip().lower()
+            return raw in {'1', 'true', 't', 'yes', 'y', 'on'}
+
+        delete_linked_publication = _as_bool(
+            self.request.data.get('delete_linked_publication', None)
+        )
+
+        # Se este case for principal de outros, ao deletar ele os vinculados devem:
+        # - perder o vínculo (case_principal=NULL)
+        # - limpar vinculo_tipo
+        # - voltar para classificacao=NEUTRO
+        Case.objects.filter(case_principal_id=instance.id).update(
+            case_principal=None,
+            vinculo_tipo='',
+            classificacao='NEUTRO',
+            updated_at=timezone.now(),
+        )
+
+        # Capturar publicações relacionadas ANTES de deletar o case
         from apps.publications.models import Publication
         from apps.notifications.models import Notification
-        
-        # Buscar todas as publicações vinculadas (não apenas publicacao_origem)
-        related_pubs = Publication.objects.filter(case_id=instance.id)
-        
-        for pub in related_pubs:
-            if delete_linked_publication:
-                # HARD DELETE a publicação também e suas notificações
-                Notification.objects.filter(
-                    type='publication',
-                    metadata__id_api=pub.id_api,
-                    read=False
-                ).delete()
-                pub.delete()
-            else:
-                # Apenas desvincula: reseta case e volta status para PENDING
+
+        related_pubs = list(Publication.objects.filter(case_id=instance.id).only('id', 'id_api'))
+
+        if not delete_linked_publication:
+            # Apenas desvincula: reseta case e volta status para PENDING
+            for pub in related_pubs:
                 pub.case = None
                 pub.integration_status = 'PENDING'
                 pub.save(update_fields=['case', 'integration_status', 'updated_at'])
-        
-        # Renomear numero_processo para liberar constraint UNIQUE
-        # Permite criar novo caso com mesmo número no futuro
-        timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
-        instance.numero_processo = f"{instance.numero_processo}_deleted_{timestamp}"
-        
-        # Deletar soft o case
-        instance.deleted = True
-        instance.deleted_at = timezone.now()
-        instance.deleted_reason = self.request.data.get('deleted_reason', 'Deleted via API')
-        instance.save()
+
+            # Hard delete do case (sem soft-delete/auditoria)
+            instance.delete()
+            return
+
+        # delete_linked_publication=True
+        # Para evitar ProtectedError (publicacao_origem -> casos_criados), deletamos o case primeiro.
+        # O on_delete=SET_NULL irá desvincular as publicações (Publication.case) automaticamente.
+        instance.delete()
+
+        # Agora hard-delete das publicações capturadas + notificações não lidas
+        for pub in related_pubs:
+            if pub.id_api:
+                Notification.objects.filter(
+                    type='publication',
+                    metadata__id_api=pub.id_api,
+                    read=False,
+                ).delete()
+            # Publicação pode já ter sido removida por outra ação; delete silencioso
+            Publication.objects.filter(id=pub.id).delete()
     
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):

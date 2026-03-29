@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, UserPlus } from 'lucide-react';
 import Toast from '../common/Toast';
+import { CancelButton, DeleteButton } from '../common/Button';
 import ContactDetailModal from '../ContactDetailModal';
 import SelectContactModal from '../SelectContactModal';
 import SearchableCreatableSelectField from '../FormFields/SearchableCreatableSelectField';
@@ -874,12 +875,12 @@ export default function CaseDetailModals({
             </div>
 
             <div className="modal-footer" style={{ borderTop: '1px solid #e5e7eb' }}>
-              <button className="btn btn-secondary" onClick={onCancelDelete}>
+              <CancelButton onClick={onCancelDelete}>
                 Cancelar
-              </button>
-              <button className="btn btn-danger" onClick={onConfirmDelete} style={{ background: '#ef4444' }}>
+              </CancelButton>
+              <DeleteButton onClick={onConfirmDelete}>
                 🗑️ Deletar Processo
-              </button>
+              </DeleteButton>
             </div>
           </div>
         </div>

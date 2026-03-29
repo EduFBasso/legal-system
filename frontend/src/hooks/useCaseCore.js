@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import casesService from '../services/casesService';
+import { notifyCaseSync } from '../services/caseSyncService';
 import publicationsService from '../services/publicationsService';
+import { notifyPublicationSync } from '../services/publicationSync';
 
 /**
  * useCaseCore
@@ -429,23 +431,6 @@ export function useCaseCore(
         // Criar novo caso
         const created = await casesService.create(cleanedData);
 
-        let failedParties = 0;
-        for (const party of parties) {
-          try {
-            const { default: casePartiesService } = await import('../services/casePartiesService');
-            await casePartiesService.createParty({
-              case: created.id,
-              contact: party.contact,
-              role: party.role,
-              is_client: !!party.is_client,
-              observacoes: party.observacoes || '',
-            });
-          } catch (partyError) {
-            failedParties += 1;
-            console.error('Error creating party after case creation:', partyError);
-          }
-        }
-
         const pubId = sourcePublication?.id_api || publicationId;
 
         if (pubId) {
@@ -492,14 +477,10 @@ export function useCaseCore(
             Number(created.case_principal) ||
             Number(formData?.case_principal) ||
             null;
-          onCaseCreated(created.id, failedParties, { casePrincipalId });
+          onCaseCreated(created.id, 0, { casePrincipalId });
         }
 
-        if (failedParties > 0) {
-          showToast(`Processo criado! ${failedParties} parte(s) não foram vinculadas`, 'warning');
-        } else {
-          showToast('Processo criado com sucesso!', 'success');
-        }
+        showToast('Processo criado com sucesso!', 'success');
 
         return created;
       }
@@ -550,9 +531,31 @@ export function useCaseCore(
   /**
    * Deletar caso
    */
-  const handleDelete = async (deletePublicationToo = false) => {
+  const handleDelete = async (deletePublicationToo = false, options = {}) => {
+    const extraCaseIds = Array.isArray(options?.caseIds) ? options.caseIds : [];
+
     try {
       await casesService.delete(id, 'Deleted via UI', deletePublicationToo);
+
+      if (deletePublicationToo) {
+        notifyPublicationSync({
+          type: 'PUBLICATIONS_UPDATED',
+          action: 'deleted-by-case',
+          caseId: Number(id),
+          source: options?.source || 'useCaseCore.handleDelete',
+        });
+      }
+
+      notifyCaseSync({
+        caseIds: [
+          Number(id),
+          Number(caseData?.case_principal),
+          ...extraCaseIds,
+        ],
+        action: options?.action || 'case-deleted',
+        source: options?.source || 'useCaseCore.handleDelete',
+      });
+
       window.dispatchEvent(new Event('publicationsSearchCompleted'));
       showToast('Processo deletado com sucesso!', 'success');
       

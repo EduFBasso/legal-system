@@ -25,6 +25,19 @@
   transform: none !important;
 }
 
+/* Tooltip para botões disabled (title no wrapper) */
+.btn-tooltip-wrapper {
+  display: inline-block;
+}
+
+.btn-tooltip-wrapper.is-disabled {
+  cursor: not-allowed;
+}
+
+.btn-tooltip-wrapper.is-disabled .btn {
+  pointer-events: none;
+}
+
 /* ========================================
    TAMANHOS
    ======================================== */

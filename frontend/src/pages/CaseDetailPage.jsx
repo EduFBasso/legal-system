@@ -623,9 +623,22 @@ function CaseDetailPage() {
 
   const handleConfirmDelete = async () => {
     modalsNotif.setShowDeleteConfirmModal(false);
+
+    const currentCaseId = Number(id) || null;
+    const linkedCaseIds = Array.isArray(linkedCases)
+      ? linkedCases.map((item) => Number(item?.id) || 0).filter(Boolean)
+      : [];
     
     try {
-      await caseCore.handleDelete(modalsNotif.deletePublicationToo);
+      await caseCore.handleDelete(modalsNotif.deletePublicationToo, {
+        caseIds: [
+          currentCaseId,
+          Number(caseCore.caseData?.case_principal),
+          ...linkedCaseIds,
+        ],
+        action: 'case-deleted',
+        source: 'CaseDetailPage.handleConfirmDelete',
+      });
     } finally {
       modalsNotif.setDeletePublicationToo(false);
     }

@@ -321,6 +321,46 @@ class PublicationDeleteTests(TestCase):
 		self.assertFalse(payload.get('success'))
 		self.assertTrue(Publication.objects.filter(id_api=publication.id_api).exists())
 
+	def test_delete_publication_is_blocked_when_movement_exists(self):
+		publication = Publication.objects.create(
+			id_api=900000003,
+			owner=self.user,
+			numero_processo='1000000-00.2026.8.26.0003',
+			tribunal='TJSP',
+			tipo_comunicacao='Intimação',
+			data_disponibilizacao=date(2026, 2, 22),
+			orgao='3ª Vara',
+			meio='D',
+			texto_resumo='Resumo',
+			texto_completo='Texto completo',
+		)
+
+		case = Case.objects.create(
+			numero_processo='1000000-00.2026.8.26.0003',
+			titulo='Caso com movimentação',
+			tribunal='TJSP',
+			status='ATIVO',
+			owner=self.user,
+		)
+
+		CaseMovement.objects.create(
+			case=case,
+			data=date(2026, 2, 22),
+			tipo='INTIMACAO',
+			titulo='Movimentação criada da publicação',
+			descricao='...',
+			origem='DJE',
+			publicacao_id=publication.id_api,
+		)
+
+		url = reverse('publications:delete', kwargs={'id_api': publication.id_api})
+		response = self.client.delete(url)
+		self.assertEqual(response.status_code, 400)
+		payload = response.json()
+		self.assertFalse(payload.get('success'))
+		self.assertEqual(payload.get('reason_code'), 'PUBLICATION_HAS_MOVEMENTS')
+		self.assertTrue(Publication.objects.filter(id_api=publication.id_api).exists())
+
 
 class PublicationReimportAfterDeleteTests(TestCase):
 	def setUp(self):

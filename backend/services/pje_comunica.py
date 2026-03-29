@@ -234,8 +234,19 @@ class PJeComunicaService:
         elif link_base:
             link_oficial = link_base
         
+        raw_id = item.get('id')
+        if raw_id is None:
+            raw_id = item.get('idComunicacao')
+        if raw_id is None:
+            raw_id = item.get('id_api')
+
+        try:
+            id_api = int(raw_id) if raw_id is not None and str(raw_id).strip() != '' else None
+        except (TypeError, ValueError):
+            id_api = None
+
         return {
-            "id_api": item.get('id'),
+            "id_api": id_api,
             "numero_processo": numero_processo,
             "tribunal": tribunal,  # Usa tribunal passado como parâmetro
             "data_disponibilizacao": item.get('data_disponibilizacao'),

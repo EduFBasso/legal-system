@@ -16,6 +16,10 @@ function CasesStatsPanel({
   onToggleTribunalBreakdown,
   toggleTribunal,
 }) {
+  const tribunalCount = tribunalBreakdown ? Object.keys(tribunalBreakdown).length : 0;
+  const hasTribunals = tribunalCount > 0;
+  const vinculosCount = (vinculoTypeBreakdown?.principal || 0) + (vinculoTypeBreakdown?.derivado || 0);
+
   return (
     <div className="cases-stats" aria-busy={loadingStats ? 'true' : 'false'}>
       <div
@@ -47,8 +51,8 @@ function CasesStatsPanel({
         onClick={onToggleVinculoBreakdown}
         title="Clique para filtrar por tipo de vínculo"
       >
-        <div className="stat-value">{vinculoTypeBreakdown.derivado}</div>
-        <div className="stat-label">Derivados {showVinculoBreakdown ? '▲' : '▼'}</div>
+        <div className="stat-value">{vinculosCount}</div>
+        <div className="stat-label">Vínculos {showVinculoBreakdown ? '▲' : '▼'}</div>
 
         {showVinculoBreakdown && (
           <div className="vinculo-breakdown" onClick={(e) => e.stopPropagation()}>
@@ -99,42 +103,40 @@ function CasesStatsPanel({
           </div>
         )}
       </div>
-      {tribunalBreakdown && Object.keys(tribunalBreakdown).length > 0 && (
-        <div
-          className={`stat-card stat-clickable stat-tribunal ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
-          onClick={onToggleTribunalBreakdown}
-          title="Clique para expandir lista de tribunais"
-        >
-          <div className="stat-value">{Object.keys(tribunalBreakdown).length}</div>
-          <div className="stat-label">Tribunais {showTribunalBreakdown ? '▲' : '▼'}</div>
+      <div
+        className={`stat-card stat-tribunal ${hasTribunals ? 'stat-clickable' : ''} ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
+        onClick={hasTribunals ? onToggleTribunalBreakdown : undefined}
+        title={hasTribunals ? 'Clique para expandir lista de tribunais' : 'Sem tribunais (adicione processos)'}
+      >
+        <div className="stat-value">{tribunalCount}</div>
+        <div className="stat-label">Tribunais {hasTribunals ? (showTribunalBreakdown ? '▲' : '▼') : ''}</div>
 
-          {showTribunalBreakdown && (
-            <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
-              {Object.entries(tribunalBreakdown).map(([tribunal, count]) => (
-                <div
-                  key={tribunal}
-                  className="tribunal-item"
-                  onClick={() => toggleTribunal(tribunal)}
-                  title={tribunal}
-                >
-                  <div className="tribunal-checkbox-group">
-                    <input
-                      type="checkbox"
-                      className="tribunal-filter-checkbox"
-                      checked={selectedTribunals.includes(tribunal)}
-                      onChange={() => toggleTribunal(tribunal)}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Filtrar por tribunal ${tribunal}`}
-                    />
-                    <span className="tribunal-name">{tribunal}</span>
-                  </div>
-                  <span className="tribunal-count">{count}</span>
+        {hasTribunals && showTribunalBreakdown && (
+          <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
+            {Object.entries(tribunalBreakdown).map(([tribunal, count]) => (
+              <div
+                key={tribunal}
+                className="tribunal-item"
+                onClick={() => toggleTribunal(tribunal)}
+                title={tribunal}
+              >
+                <div className="tribunal-checkbox-group">
+                  <input
+                    type="checkbox"
+                    className="tribunal-filter-checkbox"
+                    checked={selectedTribunals.includes(tribunal)}
+                    onChange={() => toggleTribunal(tribunal)}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Filtrar por tribunal ${tribunal}`}
+                  />
+                  <span className="tribunal-name">{tribunal}</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                <span className="tribunal-count">{count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

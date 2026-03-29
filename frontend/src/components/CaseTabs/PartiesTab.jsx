@@ -21,6 +21,7 @@ function PartiesTab({
   readOnly = false,
 }) {
   const [selectedPartyId, setSelectedPartyId] = useState(null);
+  const canManageParties = !readOnly && Boolean(caseData?.id);
 
   const representations = useMemo(
     () => (Array.isArray(caseData?.representations) ? caseData.representations : []),
@@ -62,6 +63,7 @@ function PartiesTab({
 
     const rep = representations.find((r) => Number(r?.represented_contact) === Number(clientParty.contact));
     if (!rep) return null;
+    if (Number(rep?.representative_contact) === Number(rep?.represented_contact)) return null;
 
     const representativeParty = parties.find((p) => Number(p?.contact) === Number(rep?.representative_contact));
     const representativeName = representativeParty?.contact_name || rep?.representative_contact_name || 'Representante';
@@ -94,19 +96,24 @@ function PartiesTab({
       <div className="section-card">
         <div className="section-header">
           <h2 className="section-title">👥 Partes do Processo</h2>
-          <Button
-            variant="success"
-            size="md"
-            onClick={() => {
-              if (readOnly) return;
-              onAddPartyClick();
-            }}
-            disabled={readOnly}
-            aria-disabled={readOnly ? 'true' : undefined}
+          <span
+            className={`btn-tooltip-wrapper${!caseData?.id ? ' is-disabled' : ''}`}
+            title={!caseData?.id ? 'Salve o processo primeiro para adicionar partes.' : undefined}
           >
-            <UserPlus size={18} />
-            Adicionar Parte
-          </Button>
+            <Button
+              variant="success"
+              size="md"
+              onClick={() => {
+                if (!canManageParties) return;
+                onAddPartyClick();
+              }}
+              disabled={!canManageParties}
+              aria-disabled={!canManageParties ? 'true' : undefined}
+            >
+              <UserPlus size={18} />
+              Adicionar Parte
+            </Button>
+          </span>
         </div>
 
         {loadingParties ? (
@@ -209,6 +216,7 @@ function PartiesTab({
                 {party.contact != null && shouldShowRepresentativeCardInlineAfter(party) && (() => {
                   const rep = representations.find((r) => Number(r?.represented_contact) === Number(party.contact));
                   if (!rep) return null;
+                  if (Number(rep?.representative_contact) === Number(rep?.represented_contact)) return null;
 
                   const representativeParty = parties.find((p) => Number(p?.contact) === Number(rep?.representative_contact));
                   const representativeName = representativeParty?.contact_name || rep?.representative_contact_name || 'Representante';

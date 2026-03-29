@@ -1,9 +1,8 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePublicationsContext } from '../contexts/PublicationsContext';
 import { usePublicationNotificationRead } from '../hooks/usePublicationNotificationRead';
 import publicationsService from '../services/publicationsService';
-import { subscribePublicationSync } from '../services/publicationSync';
 import PublicationsSearchForm from  '../components/PublicationsSearchForm';
 import PublicationsList from '../components/PublicationsList';
 import PublicationsStats from '../components/PublicationsStats';
@@ -129,10 +128,10 @@ export default function PublicationsPage() {
         await loadLastSearch();
         notifyPublicationsUpdated();
       } else {
-        setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
-          result.error,
-          'Não foi possível excluir as publicações selecionadas.'
-        ));
+          setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+            result,
+            'Não foi possível excluir as publicações selecionadas.'
+          ));
         setShowDeleteBlockedDialog(true);
       }
     } catch (error) {
@@ -151,7 +150,10 @@ export default function PublicationsPage() {
    */
   const handleDeleteSingle = async (idApi) => {
     const pub = publications.find(p => p.id_api === idApi);
-    const linkedToCase = !!pub?.case_id || pub?.integration_status === 'INTEGRATED';
+    const linkedToCase =
+      !!pub?.case_id ||
+      pub?.integration_status === 'INTEGRATED' ||
+      !!pub?.has_integrated_movement;
 
     if (linkedToCase) {
       setDeleteBlockedMessage('Esta publicação não pode ser excluída porque está vinculada a um processo no sistema.');
@@ -178,10 +180,10 @@ export default function PublicationsPage() {
         await loadLastSearch();
         notifyPublicationsUpdated();
       } else {
-        setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
-          result.error,
-          'Não foi possível excluir a publicação.'
-        ));
+          setDeleteBlockedMessage(getPublicationDeleteBlockedMessage(
+            result,
+            'Não foi possível excluir a publicação.'
+          ));
         setShowDeleteBlockedDialog(true);
       }
     } catch (error) {
@@ -351,16 +353,6 @@ export default function PublicationsPage() {
     return () => {
       window.removeEventListener('reloadPublicationsFromSidebar', handleReloadFromSidebar);
     };
-  }, [loadLastSearch]);
-
-  useEffect(() => {
-    const unsubscribe = subscribePublicationSync((event) => {
-      if (event?.type === 'PUBLICATION_INTEGRATED') {
-        loadLastSearch();
-      }
-    });
-
-    return unsubscribe;
   }, [loadLastSearch]);
 
   return (

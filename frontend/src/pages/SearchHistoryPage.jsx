@@ -270,7 +270,13 @@ function SearchHistoryPage() {
   // recarregar o painel de detalhes aberto para refletir o novo status.
   useEffect(() => {
     const unsubscribe = subscribePublicationSync((event) => {
-      if (event?.type !== 'PUBLICATION_INTEGRATED') return;
+      if (
+        event?.type !== 'PUBLICATION_INTEGRATED' &&
+        event?.type !== 'PUBLICATIONS_UPDATED' &&
+        event?.type !== 'PUBLICATION_DELETED'
+      ) {
+        return;
+      }
       if (!selectedSearch?.id) return;
       refreshSelectedDetail();
     });
