@@ -17,11 +17,11 @@
 
 .case-navbar-tabs {
   display: flex;
-  gap: 0.5rem;
+  gap: 0;
 }
 
 .nav-tab {
-  padding: 1rem 1.5rem;
+  padding: 1rem 2rem;
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
@@ -34,6 +34,8 @@
   gap: 0.5rem;
   transition: all 0.2s;
   position: relative;
+  flex: 1;
+  justify-content: center;
 }
 
 .nav-tab:hover {

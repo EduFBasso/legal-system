@@ -79,6 +79,7 @@ from .models import (
     CaseTipoAcaoOption,
     CaseTituloOption,
     CasePartyRoleOption,
+    CaseVinculoTipoOption,
 )
 
 from apps.cases.defaults import DEFAULT_CASE_PARTY_ROLE_OPTIONS, DEFAULT_CASE_REPRESENTATION_TYPES
@@ -592,6 +593,123 @@ class CaseViewSet(viewsets.ModelViewSet):
 
         if old_label and old_label != new_label:
             CaseParty.objects.filter(role=old_label).update(role=new_label)
+
+        return Response(
+            {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True},
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=['get', 'post'], url_path='vinculo-tipo-options')
+    def vinculo_tipo_options(self, request):
+        """Lista e cadastra opções compartilhadas para `Case.vinculo_tipo`.
+
+        - GET: retorna opções padrão (choices) + opções persistidas
+        - POST: cria (ou retorna existente) com normalização/descrição capitalizada
+        """
+
+        field = Case._meta.get_field('vinculo_tipo')
+        default_options = [
+            {'value': code, 'label': label, 'editable': False}
+            for code, label in (field.choices or [])
+            if code not in (None, '') and label
+        ]
+
+        if request.method.upper() == 'GET':
+            persisted = [
+                {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True}
+                for opt in CaseVinculoTipoOption.objects.filter(is_active=True).order_by('label')
+            ]
+
+            # Dedup por label normalizada; defaults têm prioridade.
+            seen = set()
+            merged = []
+            for opt in default_options + persisted:
+                key = _collapse_spaces(_normalize(opt.get('label')))
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                merged.append(opt)
+
+            return Response(merged)
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        label = _capitalize_words(raw_label)
+        if not label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        key = _collapse_spaces(_normalize(label))
+
+        # Se bater com uma opção padrão, não persiste: retorna a default.
+        for opt in default_options:
+            if _collapse_spaces(_normalize(opt['label'])) == key:
+                return Response(opt, status=status.HTTP_200_OK)
+
+        existing = CaseVinculoTipoOption.objects.filter(key=key).first()
+        if existing:
+            return Response(
+                {'id': existing.id, 'value': existing.label, 'label': existing.label, 'editable': True},
+                status=status.HTTP_200_OK,
+            )
+
+        try:
+            created = CaseVinculoTipoOption.objects.create(
+                label=label,
+                key=key,
+                created_by=request.user if getattr(request.user, 'is_authenticated', False) else None,
+            )
+        except IntegrityError:
+            created = CaseVinculoTipoOption.objects.filter(key=key).first()
+
+        if not created:
+            return Response({'error': 'Falha ao criar opção'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(
+            {'id': created.id, 'value': created.label, 'label': created.label, 'editable': True},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=['patch'], url_path='vinculo-tipo-options/(?P<option_id>\\d+)')
+    def update_vinculo_tipo_option(self, request, option_id=None):
+        """Edita (rename) uma opção persistida de vínculo tipo e ajusta Cases existentes."""
+        try:
+            option_id_int = int(option_id)
+        except (TypeError, ValueError):
+            return Response({'error': 'ID inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        opt = CaseVinculoTipoOption.objects.filter(id=option_id_int, is_active=True).first()
+        if not opt:
+            return Response({'error': 'Opção não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        raw_label = request.data.get('label') or request.data.get('value') or ''
+        new_label = _capitalize_words(raw_label)
+        if not new_label:
+            return Response({'error': 'label é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        field = Case._meta.get_field('vinculo_tipo')
+        default_labels_normalized = {
+            _collapse_spaces(_normalize(label))
+            for code, label in (field.choices or [])
+            if code not in (None, '') and label
+        }
+
+        new_key = _collapse_spaces(_normalize(new_label))
+        if new_key in default_labels_normalized:
+            return Response(
+                {'error': 'Não é permitido renomear para um tipo padronizado (lista fixa).'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        collision = CaseVinculoTipoOption.objects.filter(key=new_key).exclude(id=opt.id).first()
+        if collision:
+            return Response({'error': 'Já existe uma opção com este nome.'}, status=status.HTTP_409_CONFLICT)
+
+        old_label = opt.label
+        opt.label = new_label
+        opt.key = new_key
+        opt.save(update_fields=['label', 'key', 'updated_at'])
+
+        if old_label and old_label != new_label:
+            Case.objects.filter(vinculo_tipo=old_label).update(vinculo_tipo=new_label)
 
         return Response(
             {'id': opt.id, 'value': opt.label, 'label': opt.label, 'editable': True},

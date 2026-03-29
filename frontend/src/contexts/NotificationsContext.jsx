@@ -90,12 +90,31 @@ export function NotificationsProvider({ children }) {
       } catch (err) {
         console.error('Erro ao marcar notificação como lida:', err);
       }
-      
-      if (notification.link) {
+
+      // Importante: para publicações, NÃO navegar para o link oficial do tribunal.
+      // Sempre abrir a página interna de detalhes da publicação.
+      if (notification?.type === 'publication') {
+        const idApi = notification?.metadata?.id_api;
+        const internalUrl = idApi ? `/publications/${idApi}/details` : null;
+
+        if (internalUrl) {
+          const opened = window.open(internalUrl, '_blank', 'noopener,noreferrer');
+          // Se o navegador bloquear popup, não navegar a aba atual.
+          // Mantém o usuário no sistema e evita “sair do app”.
+          if (!opened) {
+            window.focus();
+          }
+        } else if (notification?.link) {
+          const opened = window.open(notification.link, '_blank', 'noopener,noreferrer');
+          if (!opened) {
+            window.focus();
+          }
+        }
+      } else if (notification?.link) {
         const opened = window.open(notification.link, '_blank', 'noopener,noreferrer');
         // Fallback se o navegador bloquear popup (raro, mas possível)
         if (!opened) {
-          window.location.href = notification.link;
+          window.focus();
         }
       }
       webNotification.close();

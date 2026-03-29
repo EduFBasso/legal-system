@@ -13,6 +13,32 @@
   margin-bottom: 2rem;
 }
 
+.cases-header.cases-header--select {
+  align-items: flex-start;
+}
+
+.cases-select-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cases-select-description {
+  margin: 0;
+  color: #475569;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.cases-select-vinculo-field {
+  max-width: 420px;
+}
+
+.cases-select-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
 .cases-header h1 {
   font-size: 2rem;
   font-weight: 700;
@@ -213,6 +239,82 @@
 
 .cases-page .stat-tribunal .stat-label {
   color: #1e293b;
+}
+
+.cases-page .stat-vinculo {
+  background: #ffffff;
+  border-color: var(--color-primary-soft-border, #1e40af);
+  color: var(--color-primary-soft-text, #1e40af);
+}
+
+.cases-page .stat-vinculo .stat-value,
+.cases-page .stat-vinculo .stat-label {
+  color: var(--color-primary-soft-text, #1e40af);
+}
+
+.cases-page .stat-card.stat-vinculo.stat-clickable:hover {
+  border-color: var(--color-primary-soft-border, #1e40af);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+  transform: translateY(-2px);
+  background: var(--color-primary-soft-bg, #eff6ff);
+}
+
+.cases-page .stat-card.stat-vinculo.stat-selected {
+  border-color: var(--color-primary-soft-border, #1e40af);
+  background: var(--color-primary-soft-bg, #eff6ff);
+  box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cases-page .stat-card.stat-vinculo.stat-selected:hover {
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.2);
+  transform: translateY(-1px);
+}
+
+.vinculo-breakdown {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dbeafe;
+  display: grid;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.vinculo-breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.vinculo-breakdown-item:hover {
+  background: #f1f5f9;
+}
+
+.vinculo-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.vinculo-filter-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-soft-text, #1e40af);
+}
+
+.vinculo-breakdown-name {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.vinculo-breakdown-count {
+  color: var(--color-primary-soft-text, #1e40af);
+  font-weight: 700;
 }
 
 .cases-page .stat-active .stat-value {

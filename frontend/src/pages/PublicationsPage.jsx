@@ -7,6 +7,7 @@ import { subscribePublicationSync } from '../services/publicationSync';
 import PublicationsSearchForm from  '../components/PublicationsSearchForm';
 import PublicationsList from '../components/PublicationsList';
 import PublicationsStats from '../components/PublicationsStats';
+import PublicationDetailModal from '../components/PublicationDetailModal';
 import Toast from '../components/common/Toast';
 import PublicationDeleteDialogs from '../components/publications/PublicationDeleteDialogs';
 import {
@@ -37,6 +38,7 @@ export default function PublicationsPage() {
   const [deleteBlockedMessage, setDeleteBlockedMessage] = useState('');
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
   const [pendingDeletePublication, setPendingDeletePublication] = useState(null);
+  const [selectedPublication, setSelectedPublication] = useState(null);
   
   // Obter estado e ações do contexto
   const {
@@ -47,7 +49,6 @@ export default function PublicationsPage() {
     toast,
     search,
     loadLastSearch,
-    openModal,
     hideToast,
     showToast
   } = usePublicationsContext();
@@ -430,7 +431,7 @@ export default function PublicationsPage() {
         searchParams={searchParams}
         onCardClick={(pub) => {
           markPublicationNotificationAsRead(pub.id_api);
-          openModal(pub);
+          setSelectedPublication(pub);
         }}
         selectionMode={selectionMode}
         selectedIds={selectedIds}
@@ -440,6 +441,13 @@ export default function PublicationsPage() {
         onIntegrate={handleIntegrateSingle}
         onCreateCase={handleCreateCaseSingle}
       />
+
+      {selectedPublication && (
+        <PublicationDetailModal
+          publication={selectedPublication}
+          onClose={() => setSelectedPublication(null)}
+        />
+      )}
 
       {/* Toast Notifications */}
       {toast.show && (

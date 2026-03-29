@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import NotificationDetailModal from '../components/NotificationDetailModal';
+import PublicationDetailModal from '../components/PublicationDetailModal';
+import publicationsService from '../services/publicationsService';
 import { routeNotification } from '../utils/notificationRouting';
 import './NotificationsPage.css';
 
@@ -24,6 +26,7 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [selectedPublication, setSelectedPublication] = useState(null);
 
   const highlightNotificationId = new URLSearchParams(location.search).get('highlight');
 
@@ -92,6 +95,29 @@ export default function NotificationsPage() {
 
   // Função para buscar publicação e abrir modal apropriado
   const handleViewDetails = async (notification) => {
+    if (notification?.type === 'publication' && notification?.metadata?.id_api) {
+      if (!notification.read) {
+        await markAsRead(notification.id);
+      }
+
+      if (String(notification.id) === String(highlightNotificationId)) {
+        navigate('/notifications', { replace: true });
+      }
+
+      try {
+        const result = await publicationsService.getPublicationById(notification.metadata.id_api);
+        if (!result?.success || !result?.publication) {
+          alert(result?.error || 'Não foi possível carregar os detalhes da publicação.');
+          return;
+        }
+        setSelectedPublication(result.publication);
+      } catch (err) {
+        console.error('Erro ao buscar detalhes da publicação:', err);
+        alert('Não foi possível carregar os detalhes da publicação.');
+      }
+      return;
+    }
+
     // Mark as read when viewing details (only if not already read)
     if (!notification.read) {
       await markAsRead(notification.id);
@@ -374,6 +400,13 @@ export default function NotificationsPage() {
           notification={selectedNotification}
           onClose={() => setSelectedNotification(null)}
           onMarkAsRead={handleMarkAsRead}
+        />
+      )}
+
+      {selectedPublication && (
+        <PublicationDetailModal
+          publication={selectedPublication}
+          onClose={() => setSelectedPublication(null)}
         />
       )}
       {error && (

@@ -22,6 +22,7 @@ from apps.cases.models import (
     Expense,
     CaseTituloOption,
     CaseRepresentationTypeOption,
+    CaseVinculoTipoOption,
 )
 
 
@@ -187,6 +188,32 @@ class CaseModelTest(TestCase):
         self.assertEqual(derived.case_principal_id, principal.id)
         self.assertEqual(derived.vinculo_tipo, 'DERIVADO')
 
+    def test_case_classificacao_default_neutro(self):
+        case = Case.objects.create(**self.case_data)
+        self.assertEqual(case.classificacao, 'NEUTRO')
+
+    def test_case_classificacao_can_be_principal_when_not_derived(self):
+        case = Case.objects.create(**self.case_data, classificacao='PRINCIPAL')
+        case.clean()
+        self.assertEqual(case.classificacao, 'PRINCIPAL')
+
+    def test_derived_case_cannot_be_classified_principal(self):
+        principal = Case.objects.create(**self.case_data)
+
+        derived = Case(
+            numero_processo='0000014-23.2024.8.26.0100',
+            titulo='Derivado',
+            tribunal='TJSP',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=9),
+            case_principal=principal,
+            vinculo_tipo='APENSO',
+            classificacao='PRINCIPAL',
+        )
+
+        with self.assertRaises(ValidationError):
+            derived.clean()
+
     def test_case_principal_requires_vinculo_tipo(self):
         principal = Case.objects.create(**self.case_data)
 
@@ -228,6 +255,33 @@ class CaseModelTest(TestCase):
 
         with self.assertRaises(ValidationError):
             case_a.clean()
+
+    def test_case_principal_cannot_point_to_derived(self):
+        """Bloqueia encadeamento: derivado não pode apontar para outro derivado."""
+        principal = Case.objects.create(**self.case_data)
+
+        derived_principal = Case.objects.create(
+            numero_processo='0000012-23.2024.8.26.0100',
+            titulo='Derivado 1',
+            tribunal='TJSP',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=7),
+            case_principal=principal,
+            vinculo_tipo='DERIVADO',
+        )
+
+        derived2 = Case(
+            numero_processo='0000013-23.2024.8.26.0100',
+            titulo='Derivado 2',
+            tribunal='TJSP',
+            status='ATIVO',
+            data_distribuicao=timezone.now().date() - timedelta(days=3),
+            case_principal=derived_principal,
+            vinculo_tipo='APENSO',
+        )
+
+        with self.assertRaises(ValidationError):
+            derived2.clean()
 
     def test_str_representation(self):
         """Test string representation"""
@@ -895,6 +949,36 @@ class CasePartyAPITest(APITestCase):
         self.assertEqual(response.data.get('label'), 'Procurador')
         self.assertEqual(response.data.get('editable'), False)
         self.assertEqual(CaseRepresentationTypeOption.objects.count(), 0)
+
+    def test_vinculo_tipo_options_returns_defaults_when_empty(self):
+        """Mesmo com base “zerada”, o dropdown de vínculo tipo não pode ficar vazio."""
+        CaseVinculoTipoOption.objects.all().delete()
+
+        response = self.client.get('/api/cases/vinculo-tipo-options/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
+        self.assertGreater(len(response.data), 0)
+
+        self.assertTrue(
+            any(
+                item.get('label') == 'Apenso' and item.get('editable') is False
+                for item in response.data
+            )
+        )
+
+    def test_vinculo_tipo_options_post_default_does_not_persist(self):
+        """Criar uma opção que já existe na lista fixa deve apenas retornar o default."""
+        CaseVinculoTipoOption.objects.all().delete()
+
+        response = self.client.post(
+            '/api/cases/vinculo-tipo-options/',
+            {'label': 'Apenso'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('label'), 'Apenso')
+        self.assertEqual(response.data.get('editable'), False)
+        self.assertEqual(CaseVinculoTipoOption.objects.count(), 0)
 
     def test_api_allows_same_client_in_multiple_cases(self):
         """Mesmo contato pode ser cliente em processos diferentes"""

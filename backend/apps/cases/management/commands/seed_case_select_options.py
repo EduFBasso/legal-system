@@ -54,9 +54,35 @@ def _load_seed_tipo_acao() -> list[str]:
     ]
 
 
+def _load_seed_vinculo_tipo() -> list[str]:
+    """Load default vínculo tipo labels from application model defaults.
+
+    Do not use migrations as a runtime source of truth.
+    """
+
+    try:
+        from apps.cases.models import Case
+
+        values = [label for _, label in (getattr(Case, 'VINCULO_TIPO_CHOICES', None) or [])]
+        if values:
+            return [str(v) for v in values]
+    except Exception:
+        pass
+
+    # Fallback minimal (should rarely happen)
+    return [
+        'Derivado',
+        'Apenso',
+        'Incidente',
+        'Cumprimento de Sentença',
+        'Recurso',
+        'Outro',
+    ]
+
+
 class Command(BaseCommand):
     help = (
-        'Repopula opções persistidas dos dropdowns do Case (Título / Tipo de Ação). '
+        'Repopula opções persistidas dos dropdowns do Case (Título / Tipo de Ação / Vínculo Tipo). '
         'Útil após purge_system_data para voltar a ter opções offline.'
     )
 
@@ -72,6 +98,11 @@ class Command(BaseCommand):
             help='Seed apenas CaseTipoAcaoOption',
         )
         parser.add_argument(
+            '--vinculo-tipo',
+            action='store_true',
+            help='Seed apenas CaseVinculoTipoOption',
+        )
+        parser.add_argument(
             '--clear-first',
             action='store_true',
             help='Apaga as opções existentes antes de semear (cuidado: remove customizações)',
@@ -82,22 +113,25 @@ class Command(BaseCommand):
             help='Mostra o que faria, sem escrever no banco',
         )
 
-    def _iter_selected_targets(self, only_titles: bool, only_tipo_acao: bool) -> Iterable[str]:
-        if only_titles and not only_tipo_acao:
+    def _iter_selected_targets(self, only_titles: bool, only_tipo_acao: bool, only_vinculo_tipo: bool) -> Iterable[str]:
+        if only_titles and not only_tipo_acao and not only_vinculo_tipo:
             return ['titles']
-        if only_tipo_acao and not only_titles:
+        if only_tipo_acao and not only_titles and not only_vinculo_tipo:
             return ['tipo_acao']
-        return ['titles', 'tipo_acao']
+        if only_vinculo_tipo and not only_titles and not only_tipo_acao:
+            return ['vinculo_tipo']
+        return ['titles', 'tipo_acao', 'vinculo_tipo']
 
     def handle(self, *args, **options):
-        from apps.cases.models import CaseTipoAcaoOption, CaseTituloOption
+        from apps.cases.models import CaseTipoAcaoOption, CaseTituloOption, CaseVinculoTipoOption
 
         only_titles = bool(options.get('titles'))
         only_tipo_acao = bool(options.get('tipo_acao'))
+        only_vinculo_tipo = bool(options.get('vinculo_tipo'))
         clear_first = bool(options.get('clear_first'))
         dry_run = bool(options.get('dry_run'))
 
-        selected = list(self._iter_selected_targets(only_titles, only_tipo_acao))
+        selected = list(self._iter_selected_targets(only_titles, only_tipo_acao, only_vinculo_tipo))
 
         self.stdout.write('\n' + '=' * 70)
         self.stdout.write('SEED CASE SELECT OPTIONS')
@@ -108,20 +142,25 @@ class Command(BaseCommand):
 
         titles_seed = _load_seed_titles()
         tipo_acao_seed = _load_seed_tipo_acao()
+        vinculo_tipo_seed = _load_seed_vinculo_tipo()
 
         before_titles = CaseTituloOption.objects.count()
         before_tipo = CaseTipoAcaoOption.objects.count()
+        before_vinculo = CaseVinculoTipoOption.objects.count()
 
         if dry_run:
             self.stdout.write('\nResumo atual:')
             self.stdout.write(f' - cases.CaseTituloOption: {before_titles}')
             self.stdout.write(f' - cases.CaseTipoAcaoOption: {before_tipo}')
+            self.stdout.write(f' - cases.CaseVinculoTipoOption: {before_vinculo}')
 
             self.stdout.write('\nO que seria semeado:')
             if 'titles' in selected:
                 self.stdout.write(f' - Títulos (TITULOS_SEED): {len(titles_seed)}')
             if 'tipo_acao' in selected:
                 self.stdout.write(f' - Tipo de Ação (TIPO_ACAO_SEED): {len(tipo_acao_seed)}')
+            if 'vinculo_tipo' in selected:
+                self.stdout.write(f' - Vínculo Tipo (VINCULO_TIPO_SEED): {len(vinculo_tipo_seed)}')
 
             self.stdout.write('\nDry-run: nenhuma alteração foi feita.')
             return
@@ -134,6 +173,9 @@ class Command(BaseCommand):
                 if 'tipo_acao' in selected:
                     deleted, _ = CaseTipoAcaoOption.objects.all().delete()
                     self.stdout.write(f'✓ Cleared CaseTipoAcaoOption: {deleted}')
+                if 'vinculo_tipo' in selected:
+                    deleted, _ = CaseVinculoTipoOption.objects.all().delete()
+                    self.stdout.write(f'✓ Cleared CaseVinculoTipoOption: {deleted}')
 
             created_titles = 0
             reactivated_titles = 0
@@ -194,6 +236,33 @@ class Command(BaseCommand):
 
                 self.stdout.write(
                     f'✓ Seed tipo_acao: created={created_tipo}, reactivated={reactivated_tipo}, total={CaseTipoAcaoOption.objects.count()}'
+                )
+
+            created_vinculo = 0
+            reactivated_vinculo = 0
+            if 'vinculo_tipo' in selected:
+                for raw in vinculo_tipo_seed:
+                    label = ' '.join(str(raw or '').split()).strip()
+                    if not label:
+                        continue
+                    key = CaseVinculoTipoOption.normalize_key(label)
+                    if not key:
+                        continue
+
+                    obj, created = CaseVinculoTipoOption.objects.get_or_create(
+                        key=key,
+                        defaults={'label': label, 'is_active': True, 'created_by': None},
+                    )
+                    if created:
+                        created_vinculo += 1
+                    else:
+                        if not obj.is_active:
+                            obj.is_active = True
+                            obj.save(update_fields=['is_active'])
+                            reactivated_vinculo += 1
+
+                self.stdout.write(
+                    f'✓ Seed vinculo_tipo: created={created_vinculo}, reactivated={reactivated_vinculo}, total={CaseVinculoTipoOption.objects.count()}'
                 )
 
         self.stdout.write('\n✅ Seed concluído.')

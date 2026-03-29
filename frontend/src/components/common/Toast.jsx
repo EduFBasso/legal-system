@@ -36,6 +36,18 @@ export default function Toast({
   const timerRef = useRef(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     if (isOpen && autoCloseMs > 0) {
       timerRef.current = setTimeout(() => {
         onClose();

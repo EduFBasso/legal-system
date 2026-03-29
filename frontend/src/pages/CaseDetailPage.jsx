@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import useAutoSave from '../hooks/useAutoSave';
@@ -7,9 +7,11 @@ import CaseDetailNavbar from '../components/CaseDetail/CaseDetailNavbar';
 import CaseDetailTabContent from '../components/CaseDetail/CaseDetailTabContent';
 import CaseDetailModals from '../components/CaseDetail/CaseDetailModals';
 import ContactDetailModal from '../components/ContactDetailModal';
+import PublicationDetailModal from '../components/PublicationDetailModal';
 
 import { formatCnj } from '../utils/cnj';
-import { openPublicationDetailsWindow } from '../utils/publicationNavigation';
+import publicationsService from '../services/publicationsService';
+import casesService from '../services/casesService';
 
 // Custom hooks para separação de responsabilidades
 import { useModalsAndNotifications } from '../hooks/useModalsAndNotifications';
@@ -19,10 +21,11 @@ import { usePartyManagement } from '../hooks/usePartyManagement';
 import { useMovementsAndTasks } from '../hooks/useMovementsAndTasks';
 import { usePublicationsForCase } from '../hooks/usePublicationsForCase';
 import { useFinancialData } from '../hooks/useFinancialData';
-import { useCaseDetailLinkedCases } from '../hooks/useCaseDetailLinkedCases';
+import useCaseVinculosCases from '../hooks/useCaseVinculosCases';
 import { useCaseDetailAutoRefresh } from '../hooks/useCaseDetailAutoRefresh';
 import { useFinanceiroAutoSaveGuards } from '../hooks/useFinanceiroAutoSaveGuards';
 import { useCaseDetailLinkContactFlow } from '../hooks/useCaseDetailLinkContactFlow';
+import { CASE_SYNC_STORAGE_KEY, notifyCaseSync, parseCaseSyncStorageValue } from '../services/caseSyncService';
 
 import '../components/common/Button/Button.css';
 import './CaseDetailPage.css';
@@ -41,7 +44,7 @@ import './CaseDetailPage.css';
  * - usePublicationsForCase: Publicações
  * - useModalsAndNotifications: Modais e notificações (Toast)
  * - usePageNavigation: Navegação de abas e URL params
- * - useCaseDetailLinkedCases: Processos relacionados (aba Vínculos)
+ * - useCaseVinculosCases: Processos vinculados (principal/derivado)
  * - useCaseDetailAutoRefresh: Recarrega dados ao entrar em abas e ao retomar foco
  * - useFinanceiroAutoSaveGuards: Força salvar rascunho do Financeiro ao sair/ocultar
  */
@@ -49,9 +52,10 @@ function CaseDetailPage() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const publicationId = new URLSearchParams(location.search).get('pub_id');
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const publicationId = searchParams.get('pub_id');
   const isReadOnly = (() => {
-    const value = (new URLSearchParams(location.search).get('readonly') || '').trim().toLowerCase();
+    const value = (searchParams.get('readonly') || '').trim().toLowerCase();
     return value === '1' || value === 'true' || value === 'yes';
   })();
 
@@ -64,6 +68,24 @@ function CaseDetailPage() {
   
   // Modals e notificações (base)
   const modalsNotif = useModalsAndNotifications();
+
+  useEffect(() => {
+    const linkedFlag = (searchParams.get('linked') || '').trim().toLowerCase();
+    const shouldShow = linkedFlag === '1' || linkedFlag === 'true' || linkedFlag === 'yes';
+    if (!shouldShow) return;
+
+    modalsNotif.showToast('Processo vinculado com sucesso!', 'success');
+
+    try {
+      const nextParams = new URLSearchParams(location.search);
+      nextParams.delete('linked');
+      const nextSearch = nextParams.toString();
+      navigate(`${location.pathname}${nextSearch ? `?${nextSearch}` : ''}`, { replace: true });
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search, navigate, modalsNotif.showToast, searchParams]);
 
   // Navegação de páginas (base)
   const navigation = usePageNavigation();
@@ -81,12 +103,30 @@ function CaseDetailPage() {
   const { isEditing: isCaseEditing, setIsEditing: setIsCaseEditing } = caseCore;
 
   useEffect(() => {
+    // Prefill: create DERIVADO from principal, via /cases/new?case_principal=ID&vinculo_tipo=...
+    if (id) return;
+    const principalId = Number(searchParams.get('case_principal')) || null;
+    const vinculoTipo = String(searchParams.get('vinculo_tipo') || '').trim();
+    if (!principalId) return;
+
+    caseCore.setFormData((prev) => {
+      const next = { ...prev };
+      if (!next.classificacao) next.classificacao = 'NEUTRO';
+      if (!next.case_principal) next.case_principal = principalId;
+      if (!next.vinculo_tipo && vinculoTipo) next.vinculo_tipo = vinculoTipo;
+      return next;
+    });
+  }, [id, searchParams, caseCore]);
+
+  useEffect(() => {
     if (isReadOnly && isCaseEditing) {
       setIsCaseEditing(false);
     }
   }, [isReadOnly, isCaseEditing, setIsCaseEditing]);
 
   const [mentionedProcessLinks, setMentionedProcessLinks] = useState([]);
+
+  const [selectedPublication, setSelectedPublication] = useState(null);
 
   const [openContactId, setOpenContactId] = useState(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -124,6 +164,49 @@ function CaseDetailPage() {
       ];
     });
   }, []);
+
+  const reloadLinkedCasesRef = useRef(null);
+
+  const handlePatchCase = useCallback(async (patch = {}) => {
+    if (!id) return null;
+
+    const safePatch = patch && typeof patch === 'object' ? patch : {};
+    const hasTargetWrapper =
+      Object.prototype.hasOwnProperty.call(safePatch, 'caseId') ||
+      Object.prototype.hasOwnProperty.call(safePatch, 'patch');
+
+    const targetCaseId = hasTargetWrapper
+      ? Number(safePatch.caseId) || Number(id)
+      : Number(id);
+
+    const payload = hasTargetWrapper
+      ? (safePatch.patch && typeof safePatch.patch === 'object' ? safePatch.patch : {})
+      : safePatch;
+
+    try {
+      await casesService.update(targetCaseId, payload);
+      await caseCore.loadCaseData({ silent: true });
+      if (hasTargetWrapper && reloadLinkedCasesRef.current) reloadLinkedCasesRef.current();
+
+      notifyCaseSync({
+        caseIds: [
+          targetCaseId,
+          Number(id),
+          Number(caseCore.caseData?.case_principal),
+          Number(payload?.case_principal),
+        ],
+        action: payload?.case_principal ? 'linked' : 'unlinked',
+        source: 'CaseDetailPage.handlePatchCase',
+      });
+
+      modalsNotif.showToast('Vínculo atualizado com sucesso!', 'success');
+      return true;
+    } catch (error) {
+      console.error('Error patching case:', error);
+      modalsNotif.showToast(error?.message || 'Erro ao atualizar vínculo', 'error');
+      throw error;
+    }
+  }, [caseCore, id, modalsNotif]);
 
   const handleMentionedProcessRoleChange = useCallback((cnj, papel) => {
     if (!cnj) return;
@@ -186,10 +269,43 @@ function CaseDetailPage() {
   // Em read-only nunca devemos tentar flush/auto-save financeiro.
   const forceSaveFinancialSafe = useCallback(async () => {}, []);
 
-  const { linkedCases, loadingLinkedCases } = useCaseDetailLinkedCases({
-    clientId: caseCore.caseData?.cliente_principal,
+  const { linkedCases, loadingLinkedCases, reloadLinkedCases } = useCaseVinculosCases({
     currentCaseId: caseCore.caseData?.id,
+    casePrincipalId: caseCore.caseData?.case_principal,
+    classificacao: caseCore.caseData?.classificacao,
   });
+  reloadLinkedCasesRef.current = reloadLinkedCases;
+
+  useEffect(() => {
+    const currentCaseId = Number(id) || null;
+    if (!currentCaseId) return;
+
+    const handleCaseSync = (event) => {
+      if (event.key !== CASE_SYNC_STORAGE_KEY || !event.newValue) return;
+
+      const payload = parseCaseSyncStorageValue(event.newValue);
+      if (!payload) return;
+      if (!payload.caseIds.includes(currentCaseId)) return;
+
+      caseCore.loadCaseData({ silent: true });
+      if (reloadLinkedCasesRef.current) {
+        reloadLinkedCasesRef.current();
+      }
+
+      const action = payload.action || 'case-updated';
+      if (action === 'linked' || action === 'unlinked') {
+        modalsNotif.showToast(
+          action === 'unlinked' ? 'Vínculo removido.' : 'Processo vinculado com sucesso!',
+          action === 'unlinked' ? 'info' : 'success'
+        );
+      }
+    };
+
+    window.addEventListener('storage', handleCaseSync);
+    return () => {
+      window.removeEventListener('storage', handleCaseSync);
+    };
+  }, [id, caseCore, modalsNotif]);
 
   useFinanceiroAutoSaveGuards({
     caseId: isReadOnly ? null : id,
@@ -277,11 +393,54 @@ function CaseDetailPage() {
   /**
    * Callback quando caso é criado
    */
-  function handleCaseCreated(caseId) {
+  function handleCaseCreated(caseId, _failedParties = 0, meta = {}) {
+    // Prefer the principal ID passed directly from useCaseCore (from the API response
+    // or formData), falling back to the URL param for robustness.
+    const fromMeta = Number(meta?.casePrincipalId) || null;
+    const fromUrl = Number(new URLSearchParams(location.search).get('case_principal')) || null;
+    const createdAsDerivedFromPrincipalId = fromMeta || fromUrl;
+
+    if (createdAsDerivedFromPrincipalId) {
+      const principalParams = new URLSearchParams();
+      principalParams.set('tab', 'info');
+      principalParams.set('linked', '1');
+
+      const nextUrl = `/cases/${createdAsDerivedFromPrincipalId}?${principalParams.toString()}`;
+      const autoCloseRaw = String(searchParams.get('autoclose') || '').trim().toLowerCase();
+      const shouldAutoClose = autoCloseRaw === '1' || autoCloseRaw === 'true' || autoCloseRaw === 'yes';
+
+      if (shouldAutoClose) {
+        try {
+          window.localStorage.setItem(
+            LINKED_CASE_COMPLETED_STORAGE_KEY,
+            JSON.stringify({
+              principalId: createdAsDerivedFromPrincipalId,
+              timestamp: Date.now(),
+            })
+          );
+        } catch {
+          // ignore
+        }
+
+        try {
+          window.close();
+          return;
+        } catch {
+          // fallback below
+        }
+      }
+
+      navigate(nextUrl, { replace: true });
+      return;
+    }
+
     const currentParams = new URLSearchParams(location.search);
+
     currentParams.delete('pub_id');
     currentParams.delete('action');
     currentParams.delete('contactId');
+    currentParams.delete('case_principal');
+    currentParams.delete('vinculo_tipo');
     currentParams.set('tab', navigation.activeSection || 'info');
     const nextQuery = currentParams.toString();
     const nextUrl = nextQuery ? `/cases/${caseId}?${nextQuery}` : `/cases/${caseId}`;
@@ -401,7 +560,7 @@ function CaseDetailPage() {
     window.open(targetUrl, '_blank', 'width=1400,height=900,left=100,top=100,resizable=yes,scrollbars=yes');
   };
 
-  const handleOpenOrigemPublicacao = () => {
+  const handleOpenOrigemPublicacao = async () => {
     const sourcePublicationApiId = caseCore.sourcePublication?.id_api
       ? Number(caseCore.sourcePublication.id_api)
       : null;
@@ -413,8 +572,24 @@ function CaseDetailPage() {
         || 0
     ) || null;
 
+    const tryOpenByApiId = async (idApi) => {
+      try {
+        const result = await publicationsService.getPublicationById(idApi);
+        if (!result?.success || !result?.publication) {
+          modalsNotif.showToast(result?.error || 'Não foi possível carregar os detalhes da publicação.', 'warning');
+          return false;
+        }
+        setSelectedPublication(result.publication);
+        return true;
+      } catch (err) {
+        console.error('Erro ao buscar detalhes da publicação:', err);
+        modalsNotif.showToast('Não foi possível carregar os detalhes da publicação.', 'warning');
+        return false;
+      }
+    };
+
     if (origemPublicationApiId) {
-      openPublicationDetailsWindow(origemPublicationApiId);
+      await tryOpenByApiId(origemPublicationApiId);
       return;
     }
 
@@ -432,7 +607,7 @@ function CaseDetailPage() {
 
     const fallbackApiId = Number(origemPublication?.id_api || 0) || null;
     if (fallbackApiId) {
-      openPublicationDetailsWindow(fallbackApiId);
+      await tryOpenByApiId(fallbackApiId);
       return;
     }
 
@@ -506,9 +681,6 @@ function CaseDetailPage() {
 
       linkedCases,
       loadingLinkedCases,
-      mentionedProcessLinks,
-      onMentionedProcessRoleChange: handleMentionedProcessRoleChange,
-      onRemoveMentionedProcess: handleRemoveMentionedProcess,
     };
   }, [
     id,
@@ -526,9 +698,6 @@ function CaseDetailPage() {
     currentCaseCnj,
     linkedCases,
     loadingLinkedCases,
-    mentionedProcessLinks,
-    handleMentionedProcessRoleChange,
-    handleRemoveMentionedProcess,
   ]);
 
   const activeTasks = useMemo(
@@ -582,7 +751,6 @@ function CaseDetailPage() {
         showPublicacoesTab={showPublicacoesTab}
         publicacoesCount={publications.publicacoes.length}
         activeStandaloneTasksCount={activeStandaloneTasksCount}
-        linkedCasesCount={linkedCases.length}
       />
 
       {/* Content */}
@@ -596,6 +764,7 @@ function CaseDetailPage() {
         }}
         onOpenOrigemMovimentacao={handleOpenOrigemMovimentacao}
         onOpenOrigemPublicacao={handleOpenOrigemPublicacao}
+        onPatchCase={handlePatchCase}
         onAddPartyClick={handleOpenContactSelection}
         onRemoveParty={handleRemoveParty}
         onOpenContactModal={handleOpenContactModal}
@@ -622,6 +791,13 @@ function CaseDetailPage() {
         onCancelDelete={handleCancelDelete}
         onConfirmDelete={handleConfirmDelete}
       />
+
+      {selectedPublication && (
+        <PublicationDetailModal
+          publication={selectedPublication}
+          onClose={() => setSelectedPublication(null)}
+        />
+      )}
     </div>
   );
 }
