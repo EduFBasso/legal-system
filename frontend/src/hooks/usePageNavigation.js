@@ -46,8 +46,7 @@ export function usePageNavigation() {
     if (tab === 'vinculos') return 'vinculos';
     if (tab === 'publicacoes') return 'publicacoes';
     if (tab === 'tasks' || tab === 'tarefas') return 'tasks';
-
-    return null;
+    return 'info';
   }, []);
 
   const resolveTabFromSection = useCallback((section) => {
@@ -56,7 +55,6 @@ export function usePageNavigation() {
     if (section === 'parties') return 'parties';
     if (section === 'info') return 'info';
     if (section === 'financeiro') return 'financeiro';
-    if (section === 'vinculos') return 'vinculos';
     if (section === 'publicacoes') return 'publicacoes';
     if (section === 'tasks') return 'tasks';
     return 'info';

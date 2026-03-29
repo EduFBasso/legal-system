@@ -5,7 +5,6 @@ import {
   FinanceiroTab,
   PublicacoesTab,
   TasksTab,
-  VinculosTab,
 } from '../CaseTabs';
 
 import './CaseDetailSections.css';
@@ -20,6 +19,7 @@ export default function CaseDetailTabContent({
   onOpenLatestMovimentacao,
   onOpenOrigemMovimentacao,
   onOpenOrigemPublicacao,
+  onPatchCase,
   onAddPartyClick,
 
   onOpenContactModal = null,
@@ -49,9 +49,6 @@ export default function CaseDetailTabContent({
 
     linkedCases,
     loadingLinkedCases,
-    mentionedProcessLinks,
-    onMentionedProcessRoleChange,
-    onRemoveMentionedProcess,
   } = caseDetail;
 
   return (
@@ -88,6 +85,9 @@ export default function CaseDetailTabContent({
           onInputChange={caseCore.handleInputChange}
           readOnly={isReadOnly}
           onOpenContactModal={onOpenContactModal}
+          linkedCases={linkedCases}
+          loadingLinkedCases={loadingLinkedCases}
+          onPatchCase={onPatchCase}
         />
       )}
 
@@ -162,19 +162,6 @@ export default function CaseDetailTabContent({
           onAddDespesa={financial.handleAdicionarDespesa}
           onRemoveDespesa={financial.handleRemoverDespesa}
           autoSavingObservations={autoSavingFinancial}
-          readOnly={isReadOnly}
-        />
-      )}
-
-      {activeSection === 'vinculos' && (
-        <VinculosTab
-          caseData={caseCore.caseData}
-          linkedCases={linkedCases}
-          loading={loadingLinkedCases}
-          parties={parties.parties}
-          mentionedProcessLinks={mentionedProcessLinks}
-          onMentionedProcessRoleChange={onMentionedProcessRoleChange}
-          onRemoveMentionedProcess={onRemoveMentionedProcess}
           readOnly={isReadOnly}
         />
       )}

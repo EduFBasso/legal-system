@@ -245,7 +245,7 @@
 }
 
 .detail-financeiro-item {
-  display: flex;
+  padding-left: calc(1.5rem + 0.9rem + 0.2rem);
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
@@ -419,7 +419,7 @@
 /* Badges Row */
 .detail-badges-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 0.5rem;
 }
@@ -429,6 +429,14 @@
   flex-direction: column;
   gap: 0.5rem;
   align-items: flex-start;
+}
+
+.case-detail-page .vinculo-badge-inline-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
 }
 
 /* Badges (Tipo / Status / Tribunal) */
@@ -449,31 +457,29 @@
 .case-detail-page .process-tipo-badge {
   background: var(--color-primary-soft-bg);
   color: var(--color-primary-soft-text);
-  border: 1px solid var(--color-primary-soft-border);
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .case-detail-page .process-tipo-badge.tipo-criminal {
   background: var(--color-danger-bg);
   color: var(--color-danger);
-  border-color: var(--color-danger);
 }
 
 .case-detail-page .process-tipo-badge.tipo-civil {
   background: var(--color-primary-soft-bg);
   color: var(--color-primary-soft-text);
-  border-color: var(--color-primary-soft-border);
 }
 
 .case-detail-page .process-tipo-badge.tipo-trabalhista {
   background: var(--color-warning-soft-bg);
   color: var(--color-warning-soft-text);
-  border-color: var(--color-warning-soft-border);
 }
 
 .case-detail-page .process-tipo-badge.tipo-administrativo {
   background: var(--color-secondary-soft-bg);
   color: var(--color-secondary-soft-text);
-  border-color: var(--color-secondary-soft-border);
 }
 
 /* Status */
@@ -513,6 +519,261 @@
   background: var(--color-primary-soft-bg);
   color: var(--color-primary-soft-text);
   border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Vínculo (Principal / Neutro / Derivado) */
+.case-detail-page .info-badge.vinculo-badge {
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.case-detail-page .info-badge.vinculo-badge.vinculo-principal {
+  background: var(--color-success-soft-bg);
+  color: var(--color-success-soft-text);
+}
+
+.case-detail-page .info-badge.vinculo-badge.vinculo-neutro {
+  background: var(--color-secondary-soft-bg);
+  color: var(--color-text-muted);
+}
+
+.case-detail-page .info-badge.vinculo-badge.vinculo-derivado {
+  background: var(--color-warning-soft-bg);
+  color: var(--color-warning-soft-text);
+}
+
+.case-detail-page .vinculos-identificacao .section-header {
+  margin-bottom: 0.75rem;
+}
+
+/* Lista de vínculos no bloco IDENTIFICAÇÃO */
+.case-detail-page .vinculos-identificacao {
+  padding: 0;
+  border: 2px solid #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.case-detail-page .vinculos-identificacao .section-header {
+  background: #1e293b;
+  border-bottom: 2px solid #1e293b;
+  padding: 0.85rem 1rem;
+  margin: 0;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.case-detail-page .vinculos-identificacao .section-title {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.case-detail-page .vinculos-identificacao__loading {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.case-detail-page .vinculos-identificacao__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.case-detail-page .vinculos-identificacao__badge-action-button {
+  height: auto;
+  min-height: 0;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 8px;
+  background: var(--color-success-button, #166534);
+  border-color: var(--color-success-button, #166534);
+  color: #f8fafc;
+}
+
+.case-detail-page .vinculos-identificacao__badge-action-button:hover:not(:disabled) {
+  background: var(--color-success-button-hover, #15803d);
+  border-color: var(--color-success-button-hover, #15803d);
+}
+
+.case-detail-page .vinculos-identificacao__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+}
+
+.case-detail-page .vinculos-identificacao__row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(220px, 300px) minmax(220px, 1fr) minmax(160px, 1fr) minmax(120px, auto) minmax(70px, auto);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.45rem 0.2rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.case-detail-page .vinculos-identificacao__row.is-principal {
+  padding: 0.35rem 0.2rem;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  margin-bottom: 0.9rem;
+}
+
+.case-detail-page .vinculos-identificacao__row.is-principal .vinculos-identificacao__title {
+  font-size: 1rem;
+}
+
+.case-detail-page .vinculos-identificacao__row.is-derived {
+  padding-top: 0.2rem;
+}
+
+.case-detail-page .vinculos-identificacao__subtitle {
+  margin-top: -0.1rem;
+  margin-bottom: 0.1rem;
+  padding-left: calc(1.5rem + 0.9rem + 0.2rem);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.case-detail-page .vinculos-identificacao__action-button {
+  height: auto;
+  min-height: 0;
+  min-width: 170px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.case-detail-page .vinculos-identificacao__action-button--derived {
+  background: #92400e;
+  border-color: #92400e;
+  color: #fffbeb;
+}
+
+.case-detail-page .vinculos-identificacao__action-button--derived:hover:not(:disabled) {
+  background: #78350f;
+  border-color: #78350f;
+}
+
+.case-detail-page .vinculos-identificacao__parties {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.case-detail-page .info-badge.vinculo-link {
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  justify-self: start;
+}
+
+.case-detail-page .info-badge.vinculo-link:hover {
+  text-decoration: underline;
+}
+
+.case-detail-page .info-badge.vinculo-link.vinculo-principal {
+  color: var(--color-success-soft-text);
+}
+
+.case-detail-page .info-badge.vinculo-link.is-principal-number {
+  font-size: 1.1rem;
+}
+
+.case-detail-page .info-badge.vinculo-link.vinculo-neutro {
+  color: var(--color-text-muted);
+}
+
+.case-detail-page .info-badge.vinculo-link.vinculo-derivado {
+  color: var(--color-warning-soft-text);
+}
+
+.case-detail-page .info-badge.vinculo-link.is-derived-number {
+  font-size: 1rem;
+}
+
+.case-detail-page .info-badge.vinculo-tipo-badge {
+  background: var(--color-secondary-soft-bg);
+  color: var(--color-text-muted);
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.9rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+}
+
+.case-detail-page .vinculos-identificacao__tipo {
+  justify-self: start;
+}
+
+.case-detail-page .vinculos-identificacao__tipo-placeholder {
+  color: var(--color-text-muted);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.case-detail-page .vinculos-identificacao__row-actions {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 28px;
+}
+
+.case-detail-page .vinculos-identificacao__icon-button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-default, #cbd5e1);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--color-text-muted, #475569);
+  cursor: pointer;
+}
+
+.case-detail-page .vinculos-identificacao__icon-button:hover {
+  border-color: var(--color-primary-soft-border, #93c5fd);
+  background: var(--color-primary-soft-bg, #eff6ff);
+  color: var(--color-primary-soft-text, #1d4ed8);
+}
+
+.case-detail-page .vinculos-identificacao__icon-button:focus-visible {
+  outline: 2px solid var(--color-border-focus, #93c5fd);
+  outline-offset: 2px;
+}
+
+.case-detail-page .vinculos-identificacao__icon-button--danger:hover {
+  border-color: var(--color-danger-soft-border, #fecaca);
+  background: var(--color-danger-soft-bg, #fef2f2);
+  color: var(--color-danger-soft-text, #b91c1c);
+}
+
+/* Ação "Vincular processo" (apenas quando NEUTRO) */
+.case-detail-page .vinculos-identificacao__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
 }
 
 /* Hint links ("Use a aba..." / "Ver movimentação destacada") */

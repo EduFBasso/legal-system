@@ -17,7 +17,6 @@ export default function CaseDetailNavbar({
   showFinanceiroTab = true,
   publicacoesCount = 0,
   activeStandaloneTasksCount = 0,
-  linkedCasesCount = 0,
 }) {
   return (
     <nav className="case-navbar">
@@ -72,15 +71,6 @@ export default function CaseDetailNavbar({
               💰 Financeiro
             </button>
           )}
-
-          <button
-            className={`nav-tab ${activeSection === 'vinculos' ? 'active' : ''}`}
-            onClick={() => onTabChange('vinculos')}
-            title="Vínculos por contato e por processo"
-          >
-            🔗 Vínculos
-            {linkedCasesCount > 0 && <span className="badge">{linkedCasesCount}</span>}
-          </button>
         </div>
       </div>
     </nav>
