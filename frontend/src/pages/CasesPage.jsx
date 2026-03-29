@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import casesService from '../services/casesService';
-import CaseCard from '../components/CaseCard';
 import Toast from '../components/common/Toast';
 import CasesFilters from '../components/CasesFilters';
 import CasesStatsPanel from '../components/Cases/CasesStatsPanel';
 import CasesPageHeader from '../components/Cases/CasesPageHeader';
+import CasesListView from '../components/Cases/CasesListView';
 import { openCaseDetailWindow, openCreateCaseWindow } from '../utils/publicationNavigation';
 import { CASE_SYNC_STORAGE_KEY, notifyCaseSync, parseCaseSyncStorageValue } from '../services/caseSyncService';
 import './CasesPage.css';
@@ -886,56 +886,17 @@ export default function CasesPage() {
       />
 
       {/* Cases List */}
-      <div className="cases-list-container">
-        {shouldShowLoadingState ? (
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Carregando processos...</p>
-          </div>
-        ) : listCases.length === 0 ? (
-          <div className="empty-state">
-            <p>Nenhum processo encontrado</p>
-            <p className="empty-state-hint">
-              {isSelectDerivedMode
-                ? 'Nenhum processo NEUTRO e ATIVO disponível para vínculo.'
-                : isSelectPrincipalMode
-                  ? 'Nenhum processo PRINCIPAL ou NEUTRO disponível para ser selecionado como principal.'
-                : 'Ajuste os filtros ou crie um novo processo'}
-            </p>
-          </div>
-        ) : (
-          <div className="cases-list">
-            {listCases.map((caseItem) => {
-              const isPrincipalReference =
-                isSelectDerivedMode && Number(caseItem.id) === Number(principalCaseId);
-              const isPrincipalCategory =
-                isSelectDerivedMode &&
-                !caseItem?.case_principal &&
-                String(caseItem?.classificacao || '').trim().toUpperCase() === 'PRINCIPAL';
-
-              const isDisabledInSelectDerived = isPrincipalReference || isPrincipalCategory;
-
-              const disabledLabel = isPrincipalReference
-                ? 'Processo principal'
-                : isPrincipalCategory
-                  ? 'Principal indisponível'
-                  : '';
-
-              return (
-                <CaseCard
-                  key={caseItem.id}
-                  caseData={caseItem}
-                  linkedCases={linkedCasesById.get(caseItem.id) || []}
-                  onClick={() => openCaseDetail(caseItem)}
-                  isSelected={isSelectLinkMode && Number(selectedCaseId) === Number(caseItem.id)}
-                  isDisabled={isDisabledInSelectDerived}
-                  disabledLabel={disabledLabel}
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <CasesListView
+        shouldShowLoadingState={shouldShowLoadingState}
+        listCases={listCases}
+        isSelectDerivedMode={isSelectDerivedMode}
+        isSelectPrincipalMode={isSelectPrincipalMode}
+        isSelectLinkMode={isSelectLinkMode}
+        linkedCasesById={linkedCasesById}
+        principalCaseId={principalCaseId}
+        selectedCaseId={selectedCaseId}
+        openCaseDetail={openCaseDetail}
+      />
 
       {/* Toast */}
       {toast && (
