@@ -51,7 +51,11 @@ function InformacaoTab({
   onCreateTituloOption = null,
   onEditTituloOption = null,
   onSearchTituloOptions = null,
+  vinculoTipoOptions = [],
+  onCreateVinculoTipoOption = null,
+  onEditVinculoTipoOption = null,
   onInputChange = () => {},
+  validationErrors = {},
 }) {
   const navigate = useNavigate();
     const openContact = (e, contactId) => {
@@ -229,7 +233,8 @@ function InformacaoTab({
     const params = new URLSearchParams();
     params.set('action', 'select-derived');
     params.set('principalCaseId', String(parsedId));
-    navigate(`/cases?${params.toString()}`);
+    params.set('autoclose', '1');
+    window.open(`/cases?${params.toString()}`, '_blank');
   };
 
   const handleLinkAsDerived = () => {
@@ -554,7 +559,7 @@ function InformacaoTab({
                         value={formData.numero_processo || ''}
                         onChange={(e) => handleInputChange('numero_processo', maskNumeroProcesso(e.target.value))}
                         placeholder="0000000-00.0000.0.00.0000"
-                        className="detail-input detail-input-large"
+                        className={`detail-input detail-input-large ${validationErrors?.numero_processo ? 'is-invalid' : ''}`}
                         maxLength={25}
                       />
                     </>
@@ -624,6 +629,7 @@ function InformacaoTab({
                     value={formData.tribunal}
                     isEditing={isEditing}
                     type="select"
+                    className={validationErrors?.tribunal ? 'is-invalid' : ''}
                     options={tribunalOptions}
                     onChange={(value) => handleInputChange('tribunal', value)}
                     formatDisplay={(v) => formData.tribunal_display || v}
@@ -631,6 +637,27 @@ function InformacaoTab({
                     required={true}
                     selectProps={{ placeholder: 'Selecione...' }}
                   />
+
+                  {Boolean(formData?.case_principal) && (
+                    <EditableDetailField
+                      label="Tipo de Vínculo"
+                      value={formData.vinculo_tipo || ''}
+                      isEditing={isEditing}
+                      type="searchable-select"
+                      className={validationErrors?.vinculo_tipo ? 'is-invalid' : ''}
+                      options={vinculoTipoOptions}
+                      onChange={(value) => handleInputChange('vinculo_tipo', value)}
+                      formatDisplay={(v) => formData.vinculo_tipo_display || v}
+                      placeholder="Selecione..."
+                      required={true}
+                      selectProps={{
+                        allowCreate: true,
+                        onCreateOption: onCreateVinculoTipoOption || null,
+                        onEditOption: onEditVinculoTipoOption || null,
+                        placeholder: 'Pesquisar ou cadastrar...'
+                      }}
+                    />
+                  )}
                 </div>
               )}
               

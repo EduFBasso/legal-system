@@ -28,6 +28,7 @@ export function useCaseCore(
   const [isEditing, setIsEditing] = useState(!id); // Novo caso = modo edição
   const [loading, setLoading] = useState(!!id); // Só carrega se tem ID
   const [saving, setSaving] = useState(false);
+  const [fieldValidationErrors, setFieldValidationErrors] = useState({});
 
   // Publicação de origem (para pré-preenchimento)
   const [sourcePublication, setSourcePublication] = useState(null);
@@ -69,6 +70,7 @@ export function useCaseCore(
   const [tipoAcaoOptions, setTipoAcaoOptions] = useState(defaultTipoAcaoOptions);
 
   const [tituloOptions, setTituloOptions] = useState([]);
+  const [vinculoTipoOptions, setVinculoTipoOptions] = useState([]);
 
   const loadTipoAcaoOptions = useCallback(async () => {
     try {
@@ -91,6 +93,24 @@ export function useCaseCore(
     } catch (error) {
       // Fallback silencioso (ex: offline)
       console.warn('Error loading titulo options:', error);
+    }
+  }, []);
+
+  const loadVinculoTipoOptions = useCallback(async () => {
+    try {
+      const options = await casesService.getVinculoTipoOptions();
+      if (Array.isArray(options) && options.length > 0) {
+        const normalized = options
+          .map((opt) => ({
+            ...opt,
+            value: String(opt?.value || opt?.label || '').trim(),
+            label: String(opt?.label || opt?.value || '').trim(),
+          }))
+          .filter((opt) => opt.value && opt.label);
+        setVinculoTipoOptions(normalized);
+      }
+    } catch (error) {
+      console.warn('Error loading vinculo_tipo options:', error);
     }
   }, []);
 
@@ -221,6 +241,49 @@ export function useCaseCore(
     loadTituloOptions();
   }, [loadTituloOptions]);
 
+  useEffect(() => {
+    loadVinculoTipoOptions();
+  }, [loadVinculoTipoOptions]);
+
+  const createVinculoTipoOption = useCallback(async (label) => {
+    const created = await casesService.createVinculoTipoOption(label);
+    if (created && typeof created === 'object') {
+      setVinculoTipoOptions((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const exists = next.some((opt) => String(opt?.value) === String(created.value));
+        if (!exists) next.push(created);
+        return next;
+      });
+    }
+    return created;
+  }, []);
+
+  const updateVinculoTipoOption = useCallback(async (idToUpdate, label) => {
+    try {
+      const updated = await casesService.updateVinculoTipoOption(idToUpdate, label);
+      if (updated && typeof updated === 'object') {
+        setVinculoTipoOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const index = next.findIndex((opt) => Number(opt?.id) === Number(updated.id));
+          if (index >= 0) {
+            next[index] = { ...next[index], ...updated };
+            return next;
+          }
+          const byValue = next.findIndex((opt) => String(opt?.value) === String(updated.value));
+          if (byValue >= 0) {
+            next[byValue] = { ...next[byValue], ...updated };
+            return next;
+          }
+          return [...next, updated];
+        });
+      }
+      return updated;
+    } catch (error) {
+      showToast?.(error?.message || 'Erro ao editar Tipo de Vínculo', 'error');
+      return null;
+    }
+  }, [showToast]);
+
   /**
    * Pré-preenchimento via publicação
    */
@@ -278,6 +341,13 @@ export function useCaseCore(
       ...prev,
       [field]: value,
     }));
+
+    setFieldValidationErrors((prev) => {
+      if (!prev?.[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   /**
@@ -286,6 +356,29 @@ export function useCaseCore(
   const handleSave = async (parties = []) => {
     try {
       setSaving(true);
+      setFieldValidationErrors({});
+
+      const requiredFields = [
+        { key: 'numero_processo', label: 'Processo Nº' },
+        { key: 'tribunal', label: 'Tribunal' },
+      ];
+
+      if (Boolean(formData?.case_principal)) {
+        requiredFields.push({ key: 'vinculo_tipo', label: 'Tipo de Vínculo' });
+      }
+
+      const missingRequired = requiredFields.filter(({ key }) => !String(formData?.[key] || '').trim());
+      if (missingRequired.length > 0) {
+        const nextErrors = missingRequired.reduce((acc, item) => {
+          acc[item.key] = true;
+          return acc;
+        }, {});
+        setFieldValidationErrors(nextErrors);
+
+        const labels = missingRequired.map((item) => item.label).join(' e ');
+        showToast(`Preencha os campos obrigatórios: ${labels}.`, 'warning');
+        return null;
+      }
 
       const dataToSave = {
         ...formData,
@@ -395,7 +488,11 @@ export function useCaseCore(
         setIsEditing(false);
 
         if (onCaseCreated) {
-          onCaseCreated(created.id, failedParties);
+          const casePrincipalId =
+            Number(created.case_principal) ||
+            Number(formData?.case_principal) ||
+            null;
+          onCaseCreated(created.id, failedParties, { casePrincipalId });
         }
 
         if (failedParties > 0) {
@@ -417,7 +514,20 @@ export function useCaseCore(
       return updated;
     } catch (error) {
       console.error('Error saving case:', error);
-      showToast('Erro ao atualizar processo', 'error');
+
+      const message = String(error?.message || '');
+      const backendFieldErrors = {};
+      if (/numero_processo/i.test(message)) backendFieldErrors.numero_processo = true;
+      if (/tribunal/i.test(message)) backendFieldErrors.tribunal = true;
+      if (/vinculo_tipo|tipo de v[ií]nculo/i.test(message)) backendFieldErrors.vinculo_tipo = true;
+
+      if (Object.keys(backendFieldErrors).length > 0) {
+        setFieldValidationErrors((prev) => ({ ...prev, ...backendFieldErrors }));
+        showToast('Não foi possível salvar. Revise os campos obrigatórios destacados.', 'warning');
+      } else {
+        showToast(id ? 'Erro ao atualizar processo' : 'Erro ao criar processo', 'error');
+      }
+
       throw error;
     } finally {
       setSaving(false);
@@ -468,6 +578,7 @@ export function useCaseCore(
     loading,
     saving,
     sourcePublication,
+    fieldValidationErrors,
 
     // Opções
     tribunalOptions,
@@ -480,6 +591,10 @@ export function useCaseCore(
     createTituloOption,
     updateTituloOption,
     searchTituloOptions,
+
+    vinculoTipoOptions,
+    createVinculoTipoOption,
+    updateVinculoTipoOption,
 
     // Funções
     handleInputChange,

@@ -8,6 +8,8 @@ import SearchableCreatableSelectField from '../components/FormFields/SearchableC
 import { openCaseDetailWindow, openCreateCaseWindow } from '../utils/publicationNavigation';
 import './CasesPage.css';
 
+const LINKED_CASE_COMPLETED_STORAGE_KEY = 'legal_system_linked_case_completed';
+
 /**
  * Cases Page - Manage legal cases/processes
  */
@@ -41,6 +43,10 @@ export default function CasesPage() {
   const principalCaseId = parseInt(searchParams.get('principalCaseId') || '', 10);
   const isSelectDerivedMode =
     linkAction === 'select-derived' && Number.isInteger(principalCaseId) && principalCaseId > 0;
+  const shouldAutoCloseAfterLink = (() => {
+    const raw = String(searchParams.get('autoclose') || '').trim().toLowerCase();
+    return raw === '1' || raw === 'true' || raw === 'yes';
+  })();
 
   const editDerivedCaseId = parseInt(searchParams.get('editDerivedCaseId') || '', 10);
   const editDerivedVinculoTipo = searchParams.get('vinculoTipo') || '';
@@ -52,6 +58,21 @@ export default function CasesPage() {
     search: '',
     ordering: '-data_ultima_movimentacao',
   });
+
+  const effectiveFilters = useMemo(() => {
+    if (!isSelectDerivedMode) return filters;
+
+    const next = {
+      ...filters,
+      status: 'ATIVO',
+    };
+
+    if (Object.prototype.hasOwnProperty.call(next, 'tribunal')) {
+      delete next.tribunal;
+    }
+
+    return next;
+  }, [filters, isSelectDerivedMode]);
 
   const hasActiveFilters = Boolean(
     (filters.search && filters.search.trim() !== '') ||
@@ -65,7 +86,7 @@ export default function CasesPage() {
   const loadCases = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await casesService.getAll(filters);
+      const response = await casesService.getAll(effectiveFilters);
       // Handle both paginated and non-paginated responses
       setCases(Array.isArray(response) ? response : (response.results || []));
     } catch (error) {
@@ -77,7 +98,7 @@ export default function CasesPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [effectiveFilters]);
 
   /**
    * Load statistics
@@ -226,8 +247,28 @@ export default function CasesPage() {
     const params = new URLSearchParams();
     params.set('case_principal', String(parsedPrincipalId));
     params.set('vinculo_tipo', vinculoTipo);
+    if (shouldAutoCloseAfterLink) {
+      params.set('autoclose', '1');
+    }
     navigate(`/cases/new?${params.toString()}`);
   };
+
+  const notifyLinkedCaseCompleted = useCallback((principalId) => {
+    const parsedPrincipalId = Number(principalId) || 0;
+    if (!parsedPrincipalId) return;
+
+    try {
+      window.localStorage.setItem(
+        LINKED_CASE_COMPLETED_STORAGE_KEY,
+        JSON.stringify({
+          principalId: parsedPrincipalId,
+          timestamp: Date.now(),
+        })
+      );
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const handleSaveSelectDerived = async () => {
     if (!isSelectDerivedMode) return;
@@ -257,7 +298,18 @@ export default function CasesPage() {
         vinculo_tipo: vinculoTipo,
       });
 
-      navigate(`/cases/${principalCaseId}?linked=1`);
+      const principalUrl = `/cases/${principalCaseId}?linked=1`;
+      if (shouldAutoCloseAfterLink) {
+        notifyLinkedCaseCompleted(principalCaseId);
+        try {
+          window.close();
+          return;
+        } catch {
+          // fallback below
+        }
+      }
+
+      navigate(principalUrl);
     } catch (error) {
       setToast({
         message: 'Erro ao aplicar vínculo: ' + (error?.message || 'Erro desconhecido'),
@@ -530,6 +582,27 @@ export default function CasesPage() {
     return links;
   }, [cases]);
 
+  const visibleCases = useMemo(() => {
+    if (!isSelectDerivedMode) return cases;
+
+    return cases.filter((caseItem) => {
+      const caseId = Number(caseItem?.id) || 0;
+      if (!caseId) return false;
+
+      if (caseId === Number(editDerivedCaseId)) return true;
+      if (caseId === Number(principalCaseId)) return false;
+
+      const isDerived = Boolean(caseItem?.case_principal);
+      if (isDerived) return false;
+
+      const classificacao = String(caseItem?.classificacao || '').trim().toUpperCase();
+      if (classificacao === 'PRINCIPAL') return false;
+
+      const status = String(caseItem?.status || '').trim().toUpperCase();
+      return status === 'ATIVO';
+    });
+  }, [cases, isSelectDerivedMode, principalCaseId, editDerivedCaseId]);
+
   return (
     <div className="cases-page">
       <div className={`cases-header ${isSelectDerivedMode ? 'cases-header--select' : ''}`}>
@@ -591,69 +664,70 @@ export default function CasesPage() {
         )}
       </div>
 
-      {/* Statistics (KPI sempre montado; números atualizam quando stats carrega) */}
-      <div className="cases-stats" aria-busy={loadingStats ? 'true' : 'false'}>
-        <div
-          className={`stat-card stat-clickable ${!hasActiveFilters ? 'stat-selected' : ''}`}
-          onClick={clearFilters}
-          title="Ver todos os processos"
-        >
-          <div className="stat-value">{stats?.total || 0}</div>
-          <div className="stat-label">Total</div>
-        </div>
-        <div
-          className={`stat-card stat-active stat-clickable ${filters.status === 'ATIVO' ? 'stat-selected' : ''}`}
-          onClick={() => toggleStatusFilter('ATIVO')}
-          title="Processos ativos (movimentação < 90 dias)"
-        >
-          <div className="stat-value">{stats?.ativos || 0}</div>
-          <div className="stat-label">Ativos</div>
-        </div>
-        <div
-          className={`stat-card stat-inactive stat-clickable ${filters.status === 'INATIVO' ? 'stat-selected' : ''}`}
-          onClick={() => toggleStatusFilter('INATIVO')}
-          title="Processos inativos (sem movimentação > 90 dias)"
-        >
-          <div className="stat-value">{stats?.inativos || 0}</div>
-          <div className="stat-label">Inativos</div>
-        </div>
-        {allTribunals && Object.keys(allTribunals).length > 0 && (
+      {!isSelectDerivedMode && (
+        <div className="cases-stats" aria-busy={loadingStats ? 'true' : 'false'}>
           <div
-            className={`stat-card stat-clickable stat-tribunal ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
-            onClick={() => setShowTribunalBreakdown(!showTribunalBreakdown)}
-            title="Clique para expandir lista de tribunais"
+            className={`stat-card stat-clickable ${!hasActiveFilters ? 'stat-selected' : ''}`}
+            onClick={clearFilters}
+            title="Ver todos os processos"
           >
-            <div className="stat-value">{Object.keys(allTribunals).length}</div>
-            <div className="stat-label">Tribunais {showTribunalBreakdown ? '▲' : '▼'}</div>
-
-            {showTribunalBreakdown && (
-              <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
-                {Object.entries(allTribunals).map(([tribunal, count]) => (
-                  <div
-                    key={tribunal}
-                    className="tribunal-item"
-                    onClick={() => toggleTribunal(tribunal)}
-                    title={tribunal}
-                  >
-                    <div className="tribunal-checkbox-group">
-                      <input
-                        type="checkbox"
-                        className="tribunal-filter-checkbox"
-                        checked={selectedTribunals.includes(tribunal)}
-                        onChange={() => toggleTribunal(tribunal)}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label={`Filtrar por tribunal ${tribunal}`}
-                      />
-                      <span className="tribunal-name">{tribunal}</span>
-                    </div>
-                    <span className="tribunal-count">{count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="stat-value">{stats?.total || 0}</div>
+            <div className="stat-label">Total</div>
           </div>
-        )}
-      </div>
+          <div
+            className={`stat-card stat-active stat-clickable ${filters.status === 'ATIVO' ? 'stat-selected' : ''}`}
+            onClick={() => toggleStatusFilter('ATIVO')}
+            title="Processos ativos (movimentação < 90 dias)"
+          >
+            <div className="stat-value">{stats?.ativos || 0}</div>
+            <div className="stat-label">Ativos</div>
+          </div>
+          <div
+            className={`stat-card stat-inactive stat-clickable ${filters.status === 'INATIVO' ? 'stat-selected' : ''}`}
+            onClick={() => toggleStatusFilter('INATIVO')}
+            title="Processos inativos (sem movimentação > 90 dias)"
+          >
+            <div className="stat-value">{stats?.inativos || 0}</div>
+            <div className="stat-label">Inativos</div>
+          </div>
+          {allTribunals && Object.keys(allTribunals).length > 0 && (
+            <div
+              className={`stat-card stat-clickable stat-tribunal ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
+              onClick={() => setShowTribunalBreakdown(!showTribunalBreakdown)}
+              title="Clique para expandir lista de tribunais"
+            >
+              <div className="stat-value">{Object.keys(allTribunals).length}</div>
+              <div className="stat-label">Tribunais {showTribunalBreakdown ? '▲' : '▼'}</div>
+
+              {showTribunalBreakdown && (
+                <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
+                  {Object.entries(allTribunals).map(([tribunal, count]) => (
+                    <div
+                      key={tribunal}
+                      className="tribunal-item"
+                      onClick={() => toggleTribunal(tribunal)}
+                      title={tribunal}
+                    >
+                      <div className="tribunal-checkbox-group">
+                        <input
+                          type="checkbox"
+                          className="tribunal-filter-checkbox"
+                          checked={selectedTribunals.includes(tribunal)}
+                          onChange={() => toggleTribunal(tribunal)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Filtrar por tribunal ${tribunal}`}
+                        />
+                        <span className="tribunal-name">{tribunal}</span>
+                      </div>
+                      <span className="tribunal-count">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <CasesFilters
@@ -661,8 +735,8 @@ export default function CasesPage() {
         onSearchChange={(value) => handleFilterChange('search', value)}
         isAscending={filters.ordering === 'data_ultima_movimentacao'}
         onOrderingToggle={toggleOrdering}
-        totalCount={stats?.total ?? (cases.length || 0)}
-        filteredCount={cases.length || 0}
+        totalCount={isSelectDerivedMode ? (visibleCases.length || 0) : (stats?.total ?? (cases.length || 0))}
+        filteredCount={visibleCases.length || 0}
       />
 
       {/* Cases List */}
@@ -672,16 +746,18 @@ export default function CasesPage() {
             <div className="spinner"></div>
             <p>Carregando processos...</p>
           </div>
-        ) : cases.length === 0 ? (
+        ) : visibleCases.length === 0 ? (
           <div className="empty-state">
             <p>Nenhum processo encontrado</p>
             <p className="empty-state-hint">
-              Ajuste os filtros ou crie um novo processo
+              {isSelectDerivedMode
+                ? 'Nenhum processo NEUTRO e ATIVO disponível para vínculo.'
+                : 'Ajuste os filtros ou crie um novo processo'}
             </p>
           </div>
         ) : (
           <div className="cases-list">
-            {cases.map((caseItem) => {
+            {visibleCases.map((caseItem) => {
               const isPrincipalReference =
                 isSelectDerivedMode && Number(caseItem.id) === Number(principalCaseId);
               const isPrincipalCategory =

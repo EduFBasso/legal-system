@@ -82,7 +82,11 @@ export default function CaseDetailTabContent({
           onCreateTituloOption={caseCore.createTituloOption}
           onEditTituloOption={caseCore.updateTituloOption}
           onSearchTituloOptions={caseCore.searchTituloOptions}
+          vinculoTipoOptions={caseCore.vinculoTipoOptions}
+          onCreateVinculoTipoOption={caseCore.createVinculoTipoOption}
+          onEditVinculoTipoOption={caseCore.updateVinculoTipoOption}
           onInputChange={caseCore.handleInputChange}
+          validationErrors={caseCore.fieldValidationErrors}
           readOnly={isReadOnly}
           onOpenContactModal={onOpenContactModal}
           linkedCases={linkedCases}

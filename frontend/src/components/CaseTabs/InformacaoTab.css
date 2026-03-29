@@ -619,6 +619,16 @@
   background: transparent;
 }
 
+.case-detail-page .vinculos-identificacao__marker {
+  width: 1.5rem;
+  min-width: 1.5rem;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--color-primary-soft-text, #1d4ed8);
+}
+
 .case-detail-page .vinculos-identificacao__row.is-principal {
   padding: 0.35rem 0.2rem;
   border: none;
@@ -931,6 +941,16 @@
   opacity: 1;
 }
 
+.detail-input.is-invalid {
+  border-bottom-color: var(--color-danger-soft-text, #b91c1c);
+  background: var(--color-danger-soft-bg, #fef2f2);
+}
+
+.detail-input.is-invalid:focus {
+  border-bottom-color: var(--color-danger-soft-text, #b91c1c);
+  background: var(--color-danger-soft-bg, #fef2f2);
+}
+
 /* Input grande (ex: número do processo) */
 .detail-input-large {
   font-size: 1.5rem;
@@ -1087,6 +1107,18 @@
 .detail-select-wrapper .searchable-select-item.is-selected:hover {
   background: var(--color-border-focus, #3b82f6);
   color: white;
+}
+
+.editable-field.is-invalid .detail-label {
+  color: var(--color-danger-soft-text, #b91c1c);
+}
+
+.editable-field.is-invalid .detail-select-wrapper select,
+.editable-field.is-invalid .detail-select-wrapper .select-field select,
+.editable-field.is-invalid .detail-select-wrapper .searchable-select-input,
+.editable-field.is-invalid .detail-select-wrapper .searchable-select-btn {
+  border-bottom-color: var(--color-danger-soft-text, #b91c1c) !important;
+  background: var(--color-danger-soft-bg, #fef2f2);
 }
 
 .detail-select-wrapper select,

@@ -29,6 +29,8 @@ import { useCaseDetailLinkContactFlow } from '../hooks/useCaseDetailLinkContactF
 import '../components/common/Button/Button.css';
 import './CaseDetailPage.css';
 
+const LINKED_CASE_COMPLETED_STORAGE_KEY = 'legal_system_linked_case_completed';
+
 /**
  * CaseDetailPage - Página dedicada para detalhes completos do processo
  * 
@@ -263,6 +265,34 @@ function CaseDetailPage() {
   });
   reloadLinkedCasesRef.current = reloadLinkedCases;
 
+  useEffect(() => {
+    const currentCaseId = Number(id) || null;
+    if (!currentCaseId) return;
+
+    const handleLinkedCaseCompleted = (event) => {
+      if (event.key !== LINKED_CASE_COMPLETED_STORAGE_KEY || !event.newValue) return;
+
+      try {
+        const payload = JSON.parse(event.newValue);
+        const principalId = Number(payload?.principalId) || null;
+        if (principalId !== currentCaseId) return;
+
+        caseCore.loadCaseData({ silent: true });
+        if (reloadLinkedCasesRef.current) {
+          reloadLinkedCasesRef.current();
+        }
+        modalsNotif.showToast('Processo vinculado com sucesso!', 'success');
+      } catch {
+        // ignore malformed payloads
+      }
+    };
+
+    window.addEventListener('storage', handleLinkedCaseCompleted);
+    return () => {
+      window.removeEventListener('storage', handleLinkedCaseCompleted);
+    };
+  }, [id, caseCore, modalsNotif]);
+
   useFinanceiroAutoSaveGuards({
     caseId: isReadOnly ? null : id,
     activeSection: navigation.activeSection,
@@ -349,11 +379,54 @@ function CaseDetailPage() {
   /**
    * Callback quando caso é criado
    */
-  function handleCaseCreated(caseId) {
+  function handleCaseCreated(caseId, _failedParties = 0, meta = {}) {
+    // Prefer the principal ID passed directly from useCaseCore (from the API response
+    // or formData), falling back to the URL param for robustness.
+    const fromMeta = Number(meta?.casePrincipalId) || null;
+    const fromUrl = Number(new URLSearchParams(location.search).get('case_principal')) || null;
+    const createdAsDerivedFromPrincipalId = fromMeta || fromUrl;
+
+    if (createdAsDerivedFromPrincipalId) {
+      const principalParams = new URLSearchParams();
+      principalParams.set('tab', 'info');
+      principalParams.set('linked', '1');
+
+      const nextUrl = `/cases/${createdAsDerivedFromPrincipalId}?${principalParams.toString()}`;
+      const autoCloseRaw = String(searchParams.get('autoclose') || '').trim().toLowerCase();
+      const shouldAutoClose = autoCloseRaw === '1' || autoCloseRaw === 'true' || autoCloseRaw === 'yes';
+
+      if (shouldAutoClose) {
+        try {
+          window.localStorage.setItem(
+            LINKED_CASE_COMPLETED_STORAGE_KEY,
+            JSON.stringify({
+              principalId: createdAsDerivedFromPrincipalId,
+              timestamp: Date.now(),
+            })
+          );
+        } catch {
+          // ignore
+        }
+
+        try {
+          window.close();
+          return;
+        } catch {
+          // fallback below
+        }
+      }
+
+      navigate(nextUrl, { replace: true });
+      return;
+    }
+
     const currentParams = new URLSearchParams(location.search);
+
     currentParams.delete('pub_id');
     currentParams.delete('action');
     currentParams.delete('contactId');
+    currentParams.delete('case_principal');
+    currentParams.delete('vinculo_tipo');
     currentParams.set('tab', navigation.activeSection || 'info');
     const nextQuery = currentParams.toString();
     const nextUrl = nextQuery ? `/cases/${caseId}?${nextQuery}` : `/cases/${caseId}`;
