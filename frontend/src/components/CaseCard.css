@@ -12,6 +12,40 @@
   height: 100%;
 }
 
+.case-card.case-card--selected {
+  border: 2px solid var(--color-primary-soft-border, #1e40af);
+}
+
+.case-card.case-card--disabled {
+  border: 2px dashed #475569;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.case-card.case-card--disabled:hover {
+  transform: none;
+  border-color: #334155;
+  box-shadow: none;
+}
+
+.case-card.case-card--disabled:hover .case-header {
+  background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%);
+}
+
+.case-card-disabled-label {
+  display: inline-flex;
+  align-items: center;
+  background: #334155;
+  color: #f8fafc;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.6rem;
+}
+
 .case-card:hover {
   border-color: #6366f1;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
@@ -42,21 +76,21 @@
   font-size: 1rem;
   display: inline-block;
   white-space: nowrap;
+  border: none;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 /* Default visual (evita overrides quando for status/tribunal) */
 .case-card .info-badge:not(.status):not(.tribunal) {
   background: #f8fafc;
   color: #1e293b;
-  border: 2px solid #cbd5e1;
-  font-weight: 600;
 }
 
 .case-card .info-badge.status {
-  border: none;
-  text-transform: uppercase;
-  line-height: 1;
-  letter-spacing: 0.05em;
+  /* mantém apenas cores específicas nas variantes */
 }
 
 .case-card .info-badge.status.status-ativo {
@@ -87,10 +121,6 @@
 .case-card .info-badge.tribunal {
   background: #dbeafe;
   color: #1e40af;
-  border: none;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.05em;
 }
 
 .badge-auto-status-inactive {

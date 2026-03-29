@@ -7,7 +7,14 @@ import './CaseCard.css';
  * Case Card Component
  * Displays a case summary card
  */
-export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
+export default function CaseCard({
+  caseData,
+  onClick,
+  linkedCases = [],
+  isSelected = false,
+  isDisabled = false,
+  disabledLabel = '',
+}) {
   const navigate = useNavigate();
 
   const normalize = (value = '') =>
@@ -19,7 +26,9 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
       .toLowerCase();
 
   const isDerived = Boolean(caseData?.case_principal);
-  const classificationBadge = isDerived ? 'Derivado' : 'Principal';
+  const classificacao = (caseData?.classificacao || '').toString().trim().toUpperCase();
+  const isPrincipal = !isDerived && classificacao === 'PRINCIPAL';
+  const classificationBadge = isDerived ? 'Derivado' : (isPrincipal ? 'Principal' : 'Neutro');
   const vinculoLabel = (caseData?.vinculo_tipo_display || caseData?.vinculo_tipo || '').toString().trim();
   const showVinculoLabel = isDerived && vinculoLabel && normalize(vinculoLabel) !== 'derivado';
 
@@ -38,6 +47,11 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
    * Handle card click - open in new tab
    */
   const handleCardClick = (e) => {
+    if (isDisabled) {
+      e.preventDefault();
+      return;
+    }
+
     // Previne a abertura se clicou no botão de copiar
     if (e.target.closest('.btn-copy-processo')) {
       return;
@@ -161,9 +175,15 @@ export default function CaseCard({ caseData, onClick, linkedCases = [] }) {
     : [];
 
   return (
-    <div className="case-card" onClick={handleCardClick}>
+    <div
+      className={`case-card ${isSelected ? 'case-card--selected' : ''} ${isDisabled ? 'case-card--disabled' : ''}`}
+      onClick={handleCardClick}
+    >
       {/* Header */}
       <div className="case-header">
+        {isDisabled && disabledLabel && (
+          <div className="case-card-disabled-label">{disabledLabel}</div>
+        )}
         <div className="case-badges">
           <span 
             className="info-badge tribunal"

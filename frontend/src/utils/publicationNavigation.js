@@ -22,6 +22,7 @@ export function openCaseDetailWindow(
     contactId = null,
     teamMemberId = null,
     readOnly = false,
+    openVinculo = false,
   } = {}
 ) {
   if (!caseId) return;
@@ -34,6 +35,7 @@ export function openCaseDetailWindow(
   if (contactId) params.set('contactId', String(contactId));
   if (teamMemberId) params.set('team_member_id', String(teamMemberId));
   if (readOnly) params.set('readonly', '1');
+  if (openVinculo) params.set('openVinculo', '1');
 
   const query = params.toString();
   const url = query ? `/cases/${caseId}?${query}` : `/cases/${caseId}`;
@@ -47,3 +49,15 @@ export function openCaseMovementsWindow(caseId, focusMovement = null) {
 export function openCreateCaseWindow() {
   window.open('/cases/new', '_blank');
 }
+
+export function openCreateDerivedCaseWindow(principalCaseId, vinculoTipo = '') {
+  const parsed = Number(principalCaseId) || 0;
+  if (!parsed) return;
+  const params = new URLSearchParams();
+  params.set('case_principal', String(parsed));
+  if (String(vinculoTipo || '').trim()) {
+    params.set('vinculo_tipo', String(vinculoTipo).trim());
+  }
+  window.open(`/cases/new?${params.toString()}`, '_blank', 'noopener,noreferrer');
+}
+

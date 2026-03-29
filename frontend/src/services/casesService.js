@@ -172,6 +172,39 @@ const casesService = {
   },
 
   /**
+   * Get shared "Vínculo Tipo" options (defaults + persisted)
+   * @returns {Promise<Array<{id?:number,value:string,label:string,editable?:boolean}>>}
+   */
+  async getVinculoTipoOptions() {
+    return await apiFetch('/cases/vinculo-tipo-options/');
+  },
+
+  /**
+   * Create a new shared "Vínculo Tipo" option
+   * @param {string} label
+   * @returns {Promise<{id?:number,value:string,label:string,editable?:boolean}>}
+   */
+  async createVinculoTipoOption(label) {
+    return await apiFetch('/cases/vinculo-tipo-options/', {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
+   * Rename an existing shared "Vínculo Tipo" option
+   * @param {number} id
+   * @param {string} label
+   * @returns {Promise<{id:number,value:string,label:string,editable:boolean}>}
+   */
+  async updateVinculoTipoOption(id, label) {
+    return await apiFetch(`/cases/vinculo-tipo-options/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  /**
    * Get shared "Título" options (persisted + dynamic suggestions)
    * @param {string} q - Optional query to reduce results
    * @returns {Promise<Array<{id?:number,value:string,label:string,editable?:boolean}>>}

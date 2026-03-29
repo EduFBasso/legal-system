@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import casesService from '../services/casesService';
 import CaseCard from '../components/CaseCard';
 import Toast from '../components/common/Toast';
 import CasesFilters from '../components/CasesFilters';
+import SearchableCreatableSelectField from '../components/FormFields/SearchableCreatableSelectField';
 import { openCaseDetailWindow, openCreateCaseWindow } from '../utils/publicationNavigation';
 import './CasesPage.css';
 
@@ -11,12 +12,18 @@ import './CasesPage.css';
  * Cases Page - Manage legal cases/processes
  */
 export default function CasesPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const debounceTimerRef = useRef(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
   const [toast, setToast] = useState(null);
+  const [linkingVinculo, setLinkingVinculo] = useState(false);
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
+  const [vinculoTipoOptions, setVinculoTipoOptions] = useState([]);
+  const [selectedVinculoTipo, setSelectedVinculoTipo] = useState('');
+  const [principalCaseNumber, setPrincipalCaseNumber] = useState('');
   // Mantém o KPI sempre montado (sem esperar fetch) e apenas atualiza números.
   const [stats, setStats] = useState({ total: 0, ativos: 0, inativos: 0, by_tribunal: {} });
   const [allTribunals, setAllTribunals] = useState({});
@@ -26,7 +33,20 @@ export default function CasesPage() {
   const linkAction = searchParams.get('action');
   const linkContactId = parseInt(searchParams.get('contactId') || '', 10);
   const isLinkMode = linkAction === 'link' && Number.isInteger(linkContactId) && linkContactId > 0;
-  
+
+  const targetCaseId = parseInt(searchParams.get('targetCaseId') || '', 10);
+  const isSelectPrincipalMode =
+    linkAction === 'select-principal' && Number.isInteger(targetCaseId) && targetCaseId > 0;
+
+  const principalCaseId = parseInt(searchParams.get('principalCaseId') || '', 10);
+  const isSelectDerivedMode =
+    linkAction === 'select-derived' && Number.isInteger(principalCaseId) && principalCaseId > 0;
+
+  const editDerivedCaseId = parseInt(searchParams.get('editDerivedCaseId') || '', 10);
+  const editDerivedVinculoTipo = searchParams.get('vinculoTipo') || '';
+  const isEditDerivedMode =
+    isSelectDerivedMode && Number.isInteger(editDerivedCaseId) && editDerivedCaseId > 0;
+
   // Filters
   const [filters, setFilters] = useState({
     search: '',
@@ -86,6 +106,168 @@ export default function CasesPage() {
   useEffect(() => {
     loadStats();
   }, [loadStats]);
+
+  useEffect(() => {
+    if (!isSelectPrincipalMode) return;
+    setToast({
+      message:
+        'Selecione um processo PRINCIPAL para vincular. Ao clicar em um processo, o vínculo será aplicado e o detalhe do processo original será aberto.',
+      type: 'info',
+      autoCloseMs: 0,
+    });
+  }, [isSelectPrincipalMode]);
+
+  useEffect(() => {
+    if (!isSelectDerivedMode) {
+      setSelectedCaseId(null);
+      setVinculoTipoOptions([]);
+      setSelectedVinculoTipo('');
+      setPrincipalCaseNumber('');
+      return;
+    }
+    setSelectedCaseId(isEditDerivedMode ? editDerivedCaseId : null);
+
+    const loadPrincipalCaseInfo = async () => {
+      try {
+        const principal = await casesService.getById(Number(principalCaseId));
+        const numero = String(
+          principal?.numero_processo_formatted || principal?.numero_processo || ''
+        ).trim();
+        setPrincipalCaseNumber(numero);
+      } catch {
+        setPrincipalCaseNumber('');
+      }
+    };
+
+    const loadVinculoTipoOptions = async () => {
+      try {
+        const options = await casesService.getVinculoTipoOptions();
+        const normalized = Array.isArray(options)
+          ? options.map((opt) => ({
+              ...opt,
+              value: String(opt?.value || opt?.label || '').trim(),
+              label: String(opt?.label || opt?.value || '').trim(),
+            })).filter((opt) => opt.value && opt.label)
+          : [];
+
+        setVinculoTipoOptions(normalized);
+
+        const normalize = (value) => String(value || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase();
+
+        if (editDerivedVinculoTipo) {
+          const editNorm = normalize(editDerivedVinculoTipo);
+          const matchedOpt = normalized.find(
+            (opt) => normalize(opt.value) === editNorm || normalize(opt.label) === editNorm
+          );
+          setSelectedVinculoTipo(matchedOpt?.value || editDerivedVinculoTipo);
+        } else {
+          const preferred = normalized.find((opt) =>
+            normalize(opt.value) === 'DERIVADO' || normalize(opt.label) === 'DERIVADO'
+          );
+          setSelectedVinculoTipo(preferred?.value || normalized[0]?.value || '');
+        }
+      } catch (error) {
+        setToast({
+          message: 'Erro ao carregar tipos de vínculo: ' + (error?.message || 'Erro desconhecido'),
+          type: 'error',
+          autoCloseMs: 0,
+        });
+      }
+    };
+
+    loadPrincipalCaseInfo();
+    loadVinculoTipoOptions();
+  }, [isSelectDerivedMode, principalCaseId, editDerivedCaseId, editDerivedVinculoTipo, isEditDerivedMode]);
+
+  const handleCreateVinculoTipoOption = async (label) => {
+    try {
+      const created = await casesService.createVinculoTipoOption(label);
+      if (created && typeof created === 'object') {
+        setVinculoTipoOptions((prev) => {
+          const next = Array.isArray(prev) ? [...prev] : [];
+          const exists = next.some((opt) => String(opt?.value) === String(created.value));
+          if (!exists) next.push(created);
+          return next;
+        });
+        return created;
+      }
+      return null;
+    } catch (error) {
+      setToast({
+        message: error?.message || 'Erro ao cadastrar tipo de vínculo',
+        type: 'error',
+        autoCloseMs: 0,
+      });
+      return null;
+    }
+  };
+
+  const handleCancelSelectDerived = () => {
+    if (!isSelectDerivedMode) return;
+    navigate(`/cases/${principalCaseId}`);
+  };
+
+  const handleCreateNewFromSelectDerived = () => {
+    if (!isSelectDerivedMode) return;
+    const parsedPrincipalId = Number(principalCaseId) || 0;
+    if (!parsedPrincipalId) return;
+    const vinculoTipo = String(selectedVinculoTipo || '').trim();
+    if (!vinculoTipo) {
+      setToast({
+        message: 'Selecione o tipo de vínculo antes de criar um novo processo derivado.',
+        type: 'warning',
+        autoCloseMs: 0,
+      });
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set('case_principal', String(parsedPrincipalId));
+    params.set('vinculo_tipo', vinculoTipo);
+    navigate(`/cases/new?${params.toString()}`);
+  };
+
+  const handleSaveSelectDerived = async () => {
+    if (!isSelectDerivedMode) return;
+    if (linkingVinculo) return;
+    const derivedId = Number(selectedCaseId) || 0;
+    if (!derivedId) return;
+    if (derivedId === Number(principalCaseId)) return;
+    const vinculoTipo = String(selectedVinculoTipo || '').trim();
+    if (!vinculoTipo) {
+      setToast({
+        message: 'Selecione o tipo de vínculo antes de salvar.',
+        type: 'warning',
+        autoCloseMs: 0,
+      });
+      return;
+    }
+
+    setLinkingVinculo(true);
+    try {
+      if (isEditDerivedMode && derivedId !== editDerivedCaseId) {
+        // Trocou de processo: desvincula o antigo antes
+        await casesService.update(editDerivedCaseId, { case_principal: null, vinculo_tipo: '' });
+      }
+      await casesService.update(derivedId, {
+        classificacao: 'NEUTRO',
+        case_principal: Number(principalCaseId),
+        vinculo_tipo: vinculoTipo,
+      });
+
+      navigate(`/cases/${principalCaseId}?linked=1`);
+    } catch (error) {
+      setToast({
+        message: 'Erro ao aplicar vínculo: ' + (error?.message || 'Erro desconhecido'),
+        type: 'error',
+        autoCloseMs: 0,
+      });
+    } finally {
+      setLinkingVinculo(false);
+    }
+  };
 
   /**
    * Handle filter changes (search has debounce, ordering is immediate)
@@ -182,8 +364,102 @@ export default function CasesPage() {
   /**
    * Open case detail page
    */
-  const openCaseDetail = (caseItem) => {
+  const openCaseDetail = async (caseItem) => {
     if (caseItem) {
+      if (isSelectDerivedMode) {
+        const clickedId = Number(caseItem?.id) || null;
+        if (!clickedId) return;
+        if (clickedId === Number(principalCaseId)) {
+          setToast({
+            message: 'Você não pode vincular o processo a ele mesmo.',
+            type: 'warning',
+            autoCloseMs: 0,
+          });
+          return;
+        }
+        if (caseItem?.case_principal && clickedId !== editDerivedCaseId) {
+          setToast({
+            message: 'Por enquanto, selecione um processo NEUTRO (não derivado) para vincular.',
+            type: 'warning',
+            autoCloseMs: 0,
+          });
+          return;
+        }
+
+        const classificacao = String(caseItem?.classificacao || '').trim().toUpperCase();
+        if (classificacao === 'PRINCIPAL') {
+          setToast({
+            message: 'Por enquanto, selecione um processo NEUTRO (não principal) para vincular.',
+            type: 'warning',
+            autoCloseMs: 0,
+          });
+          return;
+        }
+
+        setSelectedCaseId(clickedId);
+        return;
+      }
+
+      if (isSelectPrincipalMode) {
+        if (linkingVinculo) return;
+        const clickedId = Number(caseItem?.id) || null;
+        if (!clickedId) return;
+        if (clickedId === Number(targetCaseId)) {
+          setToast({
+            message: 'Você não pode selecionar o próprio processo como principal.',
+            type: 'warning',
+            autoCloseMs: 0,
+          });
+          return;
+        }
+        if (caseItem?.case_principal) {
+          setToast({
+            message: 'Não é possível selecionar um processo DERIVADO como principal. Selecione um processo principal (não vinculado).',
+            type: 'warning',
+            autoCloseMs: 0,
+          });
+          return;
+        }
+
+        const vinculoTipo = String(
+          window.prompt('Tipo de vínculo (ex: Apenso, Incidente, Recurso…)', '') || ''
+        ).trim();
+        if (!vinculoTipo) {
+          setToast({
+            message: 'Tipo de vínculo é obrigatório para vincular a um processo principal.',
+            type: 'warning',
+            autoCloseMs: 0,
+          });
+          return;
+        }
+
+        setLinkingVinculo(true);
+        setToast({
+          message: 'Aplicando vínculo…',
+          type: 'info',
+          autoCloseMs: 0,
+        });
+
+        try {
+          await casesService.update(Number(targetCaseId), {
+            classificacao: 'NEUTRO',
+            case_principal: clickedId,
+            vinculo_tipo: vinculoTipo,
+          });
+          openCaseDetailWindow(targetCaseId);
+        } catch (error) {
+          setToast({
+            message: 'Erro ao aplicar vínculo: ' + (error?.message || 'Erro desconhecido'),
+            type: 'error',
+            autoCloseMs: 0,
+          });
+        } finally {
+          setLinkingVinculo(false);
+        }
+
+        return;
+      }
+
       if (isLinkMode) {
         openCaseDetailWindow(caseItem.id, {
           tab: 'parties',
@@ -256,11 +532,63 @@ export default function CasesPage() {
 
   return (
     <div className="cases-page">
-      <div className="cases-header">
-        <h1>Processos</h1>
-        <button className="btn btn-primary" onClick={() => openCaseDetail(null)}>
-          + Novo Processo
-        </button>
+      <div className={`cases-header ${isSelectDerivedMode ? 'cases-header--select' : ''}`}>
+        {isSelectDerivedMode ? (
+          <div className="cases-select-header">
+            <h1>
+              {isEditDerivedMode
+                ? `Editar vínculo derivado do Principal: ${principalCaseNumber || `#${principalCaseId}`}`
+                : `Escolha um processo para vincular ao Principal: ${principalCaseNumber || `#${principalCaseId}`}`}
+            </h1>
+
+            <div className="cases-select-vinculo-field">
+              <SearchableCreatableSelectField
+                label="Tipo de vínculo"
+                value={selectedVinculoTipo}
+                onChange={setSelectedVinculoTipo}
+                options={vinculoTipoOptions}
+                placeholder="Selecione ou cadastre..."
+                allowCreate={true}
+                onCreateOption={handleCreateVinculoTipoOption}
+              />
+            </div>
+
+            <div className="cases-select-actions">
+              <button
+                className="btn btn-primary"
+                onClick={handleCreateNewFromSelectDerived}
+                disabled={linkingVinculo}
+              >
+                + Novo Processo
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                onClick={handleCancelSelectDerived}
+                disabled={linkingVinculo}
+              >
+                Cancelar
+              </button>
+
+              {Boolean(selectedCaseId) && (
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSaveSelectDerived}
+                  disabled={linkingVinculo}
+                >
+                  Salvar
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <h1>Processos</h1>
+            <button className="btn btn-primary" onClick={() => openCaseDetail(null)}>
+              + Novo Processo
+            </button>
+          </>
+        )}
       </div>
 
       {/* Statistics (KPI sempre montado; números atualizam quando stats carrega) */}
@@ -353,14 +681,34 @@ export default function CasesPage() {
           </div>
         ) : (
           <div className="cases-list">
-            {cases.map((caseItem) => (
-              <CaseCard
-                key={caseItem.id}
-                caseData={caseItem}
-                linkedCases={linkedCasesById.get(caseItem.id) || []}
-                onClick={() => openCaseDetail(caseItem)}
-              />
-            ))}
+            {cases.map((caseItem) => {
+              const isPrincipalReference =
+                isSelectDerivedMode && Number(caseItem.id) === Number(principalCaseId);
+              const isPrincipalCategory =
+                isSelectDerivedMode &&
+                !caseItem?.case_principal &&
+                String(caseItem?.classificacao || '').trim().toUpperCase() === 'PRINCIPAL';
+
+              const isDisabledInSelectDerived = isPrincipalReference || isPrincipalCategory;
+
+              const disabledLabel = isPrincipalReference
+                ? 'Processo principal'
+                : isPrincipalCategory
+                  ? 'Principal indisponível'
+                  : '';
+
+              return (
+                <CaseCard
+                  key={caseItem.id}
+                  caseData={caseItem}
+                  linkedCases={linkedCasesById.get(caseItem.id) || []}
+                  onClick={() => openCaseDetail(caseItem)}
+                  isSelected={isSelectDerivedMode && Number(selectedCaseId) === Number(caseItem.id)}
+                  isDisabled={isDisabledInSelectDerived}
+                  disabledLabel={disabledLabel}
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -372,6 +720,7 @@ export default function CasesPage() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+          autoCloseMs={typeof toast.autoCloseMs === 'number' ? toast.autoCloseMs : 3000}
         />
       )}
     </div>

@@ -13,6 +13,25 @@
   margin-bottom: 2rem;
 }
 
+.cases-header.cases-header--select {
+  align-items: flex-start;
+}
+
+.cases-select-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cases-select-vinculo-field {
+  max-width: 420px;
+}
+
+.cases-select-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
 .cases-header h1 {
   font-size: 2rem;
   font-weight: 700;
