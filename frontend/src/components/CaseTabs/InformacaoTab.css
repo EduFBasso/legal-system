@@ -549,6 +549,35 @@
   margin-bottom: 0.75rem;
 }
 
+.case-detail-page .vinculos-identificacao .section-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.case-detail-page .vinculos-identificacao__badge-action-button.vinculos-identificacao__badge-action-button--neutralize {
+  background: var(--color-warning-soft-text, #92400e);
+  border-color: var(--color-warning-soft-text, #92400e);
+  color: #fffbeb;
+}
+
+.case-detail-page .vinculos-identificacao__badge-action-button.vinculos-identificacao__badge-action-button--neutralize:hover:not(:disabled) {
+  background: #78350f;
+  border-color: #92400e;
+}
+
+.case-detail-page .vinculos-identificacao__badge-action-button.vinculos-identificacao__badge-action-button--header-link {
+  background: var(--color-warning-soft-bg, #fef3c7);
+  border-color: var(--color-warning-soft-bg, #fef3c7);
+  color: var(--color-warning-soft-text, #92400e);
+}
+
+.case-detail-page .vinculos-identificacao__badge-action-button.vinculos-identificacao__badge-action-button--header-link:hover:not(:disabled) {
+  background: #fde68a;
+  border-color: #fde68a;
+  color: #78350f;
+}
+
 /* Lista de vínculos no bloco IDENTIFICAÇÃO */
 .case-detail-page .vinculos-identificacao {
   padding: 0;

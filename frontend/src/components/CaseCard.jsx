@@ -29,6 +29,9 @@ export default function CaseCard({
   const classificacao = (caseData?.classificacao || '').toString().trim().toUpperCase();
   const isPrincipal = !isDerived && classificacao === 'PRINCIPAL';
   const classificationBadge = isDerived ? 'Derivado' : (isPrincipal ? 'Principal' : 'Neutro');
+  const classificationBadgeClass = isDerived
+    ? 'classification-derivado'
+    : (isPrincipal ? 'classification-principal' : 'classification-neutro');
   const vinculoLabel = (caseData?.vinculo_tipo_display || caseData?.vinculo_tipo || '').toString().trim();
   const showVinculoLabel = isDerived && vinculoLabel && normalize(vinculoLabel) !== 'derivado';
 
@@ -186,16 +189,16 @@ export default function CaseCard({
         )}
         <div className="case-badges">
           <span 
-            className="info-badge tribunal"
-          >
-            {caseData.tribunal_display || caseData.tribunal}
-          </span>
-          <span 
             className={`info-badge status ${statusClass ? `status-${statusClass}` : ''}`}
           >
             {caseData.status_display || caseData.status}
           </span>
-          <span className="info-badge">
+          <span 
+            className="info-badge tribunal"
+          >
+            {caseData.tribunal_display || caseData.tribunal}
+          </span>
+          <span className={`info-badge classification-badge ${classificationBadgeClass}`}>
             {classificationBadge}
           </span>
           {showVinculoLabel && (

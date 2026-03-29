@@ -347,6 +347,34 @@ export default function CasesPage() {
     };
   }, [filters, loadCases]);
 
+  useEffect(() => {
+    const refreshCasesPage = () => {
+      loadCases();
+      loadStats();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCasesPage();
+      }
+    };
+
+    const handleStorage = (event) => {
+      if (event.key !== LINKED_CASE_COMPLETED_STORAGE_KEY || !event.newValue) return;
+      refreshCasesPage();
+    };
+
+    window.addEventListener('focus', refreshCasesPage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('focus', refreshCasesPage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [loadCases, loadStats]);
+
   /**
    * Handle filter changes (search and ordering)
    */

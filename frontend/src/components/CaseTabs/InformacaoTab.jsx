@@ -194,8 +194,13 @@ function InformacaoTab({
 
   const showVinculoActions = !readOnly && !isEditing && !!id;
   const showNeutralActionBar = showVinculoActions && vinculoInfo.label === 'NEUTRO';
-  const showPrincipalInlineAdd = showVinculoActions && vinculoInfo.isPrincipal;
+  const showPrincipalInlineNeutralize = showVinculoActions && vinculoInfo.isPrincipal;
   const showNeutralInlineMarkPrincipal = showVinculoActions && vinculoInfo.label === 'NEUTRO';
+  const linkedDerivedCount = vinculosListModel.rows.filter((row) => row?._rowKind === 'derived').length;
+  const canMarkAsNeutral =
+    showPrincipalInlineNeutralize &&
+    typeof onPatchCase === 'function' &&
+    linkedDerivedCount === 0;
 
   const canMarkAsPrincipal = showNeutralActionBar && typeof onPatchCase === 'function';
   const canLinkAsDerived = showNeutralActionBar && typeof onPatchCase === 'function';
@@ -222,6 +227,21 @@ function InformacaoTab({
     if (typeof onPatchCase !== 'function') return;
     await onPatchCase({
       classificacao: 'PRINCIPAL',
+      case_principal: null,
+      vinculo_tipo: '',
+    });
+  };
+
+  const handleMarkAsNeutral = async () => {
+    if (!canMarkAsNeutral || typeof onPatchCase !== 'function') return;
+
+    const confirmed = window.confirm(
+      'Tornar este processo NEUTRO? Esta ação só é permitida quando não há processos derivados vinculados.'
+    );
+    if (!confirmed) return;
+
+    await onPatchCase({
+      classificacao: 'NEUTRO',
       case_principal: null,
       vinculo_tipo: '',
     });
@@ -704,15 +724,18 @@ function InformacaoTab({
                           Tornar principal
                         </Button>
                       )}
-                      {showPrincipalInlineAdd && (
+                      {showPrincipalInlineNeutralize && (
                         <Button
-                          variant="success"
+                          variant="warning"
                           size="sm"
-                          className="vinculos-identificacao__badge-action-button"
-                          onClick={handleAddDerivedCase}
-                          title="Selecionar um processo existente para vincular a este principal"
+                          className="vinculos-identificacao__badge-action-button vinculos-identificacao__badge-action-button--neutralize"
+                          onClick={handleMarkAsNeutral}
+                          disabled={!canMarkAsNeutral}
+                          title={canMarkAsNeutral
+                            ? 'Desfazer classificação de principal (tornar neutro)'
+                            : 'Remova os processos derivados vinculados antes de tornar neutro'}
                         >
-                          + Vincular
+                          Tornar neutro
                         </Button>
                       )}
                     </div>
@@ -742,6 +765,17 @@ function InformacaoTab({
                   <div className="section-header">
                     <h3 className="section-title">🔗 PROCESSOS VINCULADOS</h3>
                     <div className="section-header-actions">
+                      {showVinculoActions && vinculoInfo.isPrincipal && (
+                        <Button
+                          variant="success"
+                          size="sm"
+                          className="vinculos-identificacao__badge-action-button vinculos-identificacao__badge-action-button--header-link"
+                          onClick={handleAddDerivedCase}
+                          title="Selecionar um processo existente para vincular a este principal"
+                        >
+                          + Vincular
+                        </Button>
+                      )}
                       {loadingLinkedCases && (
                         <span className="vinculos-identificacao__loading">Carregando…</span>
                       )}
