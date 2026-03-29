@@ -92,6 +92,22 @@ describe('Toast', () => {
 
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
+
+    it('calls onClose when Enter is pressed', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <Toast
+          isOpen={true}
+          message="Test message"
+          onClose={mockOnClose}
+          autoCloseMs={0}
+        />
+      );
+
+      await user.keyboard('{Enter}');
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Auto-close', () => {

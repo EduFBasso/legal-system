@@ -1,5 +1,5 @@
 // src/components/Menu.jsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import caseTasksService from '../services/caseTasksService';
 import contactTasksService from '../services/contactTasksService';
@@ -11,6 +11,31 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
   const [openTasksCount, setOpenTasksCount] = useState(0);
   const [openContactTasksCount, setOpenContactTasksCount] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const loadCounts = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    const [caseResult, contactResult] = await Promise.allSettled([
+      caseTasksService.getTasksCount({
+        status__in: 'PENDENTE,EM_ANDAMENTO',
+      }),
+      contactTasksService.getTasksCount({
+        status__in: 'PENDENTE,EM_ANDAMENTO',
+      }),
+    ]);
+
+    if (caseResult.status === 'fulfilled') {
+      setOpenTasksCount(Number(caseResult.value?.count || 0));
+    } else {
+      setOpenTasksCount(0);
+    }
+
+    if (contactResult.status === 'fulfilled') {
+      setOpenContactTasksCount(Number(contactResult.value?.count || 0));
+    } else {
+      setOpenContactTasksCount(0);
+    }
+  }, [isAuthenticated]);
 
   const renderMenuLink = ({ to, end = true, icon, label, badge = null }) => {
     if (!isAuthenticated) {
@@ -40,29 +65,16 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const loadCounts = async () => {
-      try {
-        const [caseResult, contactResult] = await Promise.all([
-          caseTasksService.getTasksCount({
-            status__in: 'PENDENTE,EM_ANDAMENTO',
-          }),
-          contactTasksService.getTasksCount({
-            status__in: 'PENDENTE,EM_ANDAMENTO',
-          }),
-        ]);
-
-        setOpenTasksCount(Number(caseResult?.count || 0));
-        setOpenContactTasksCount(Number(contactResult?.count || 0));
-      } catch {
-        setOpenTasksCount(0);
-        setOpenContactTasksCount(0);
-      }
-    };
-
     loadCounts();
 
     const handleWindowFocus = () => {
       loadCounts();
+    };
+
+    const handleAuthChanged = (event) => {
+      if (event?.detail?.isAuthenticated) {
+        loadCounts();
+      }
     };
 
     const unsubscribeTasks = subscribeToTaskUpdates(() => {
@@ -70,12 +82,14 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
     });
 
     window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('auth:changed', handleAuthChanged);
 
     return () => {
       unsubscribeTasks();
       window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('auth:changed', handleAuthChanged);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loadCounts]);
 
   return (
     <>

@@ -78,6 +78,7 @@ import { apiFetch } from '../utils/apiFetch';
 
 describe('MasterDashboardPage', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     getAllMock.mockResolvedValue([]);
     openCaseDetailWindowMock.mockReset();
     getAllTasksMock.mockResolvedValue([]);
@@ -114,6 +115,7 @@ describe('MasterDashboardPage', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -124,9 +126,8 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
-
-    // Wait team members load and option is available
-    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByRole('option', { name: /^Adv$/i })).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Advogado(a)'), {
@@ -136,8 +137,10 @@ describe('MasterDashboardPage', () => {
 
     // Debounced contacts fetch (300ms)
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await vi.advanceTimersByTimeAsync(350);
     });
+
+    await act(async () => {});
 
     const calls = getAllMock.mock.calls.map((call) => call[0]);
     expect(calls.some((params) => params && params.team_member_id === '1')).toBe(true);
@@ -169,8 +172,8 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
-
-    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByRole('option', { name: /^Adv$/i })).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Advogado(a)'), {
@@ -179,16 +182,18 @@ describe('MasterDashboardPage', () => {
     });
 
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await vi.advanceTimersByTimeAsync(350);
     });
 
-    expect(await screen.findByText('Contato A')).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByText('Contato A')).toBeInTheDocument();
 
     await act(async () => {
       screen.getByTitle('Visualizar contato').click();
     });
 
-    const modal = await screen.findByTestId('contact-detail-modal');
+    await act(async () => {});
+    const modal = screen.getByTestId('contact-detail-modal');
     expect(modal).toHaveTextContent('open:10');
     expect(modal).toHaveTextContent('scope:1');
   });
@@ -200,8 +205,8 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
-
-    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByRole('option', { name: /^Adv$/i })).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Advogado(a)'), {
@@ -215,10 +220,11 @@ describe('MasterDashboardPage', () => {
 
     // Debounced cases fetch (300ms)
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await vi.advanceTimersByTimeAsync(350);
     });
 
-    expect(await screen.findByText('Processo X')).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByText('Processo X')).toBeInTheDocument();
 
     await act(async () => {
       screen.getByText('Processo X').closest('tr').click();
@@ -234,8 +240,8 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
-
-    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByRole('option', { name: /^Adv$/i })).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Advogado(a)'), {
@@ -248,10 +254,11 @@ describe('MasterDashboardPage', () => {
     });
 
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await vi.advanceTimersByTimeAsync(350);
     });
 
-    expect(await screen.findByText('Processo X')).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByText('Processo X')).toBeInTheDocument();
 
     await act(async () => {
       screen.getByTitle('Abrir aba Financeiro (somente leitura)').click();
@@ -293,7 +300,8 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByRole('option', { name: /^Adv$/i })).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Advogado(a)'), {
@@ -306,10 +314,11 @@ describe('MasterDashboardPage', () => {
     });
 
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await vi.advanceTimersByTimeAsync(350);
     });
 
-    expect(await screen.findByText('Processo X')).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByText('Processo X')).toBeInTheDocument();
     expect(screen.getByText(/15\.000,00/)).toBeInTheDocument();
   });
 
@@ -342,7 +351,8 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByRole('option', { name: /^Adv$/i })).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Advogado(a)'), {
@@ -355,10 +365,11 @@ describe('MasterDashboardPage', () => {
     });
 
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await vi.advanceTimersByTimeAsync(350);
     });
 
-    expect(await screen.findByText('Processo X')).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByText('Processo X')).toBeInTheDocument();
     expect(screen.getByText(/2\.000,00/)).toBeInTheDocument();
   });
 
@@ -383,8 +394,8 @@ describe('MasterDashboardPage', () => {
       </MemoryRouter>
     );
 
-
-    expect(await screen.findByRole('option', { name: 'Adv' })).toBeInTheDocument();
+    await act(async () => {});
+    expect(screen.getByRole('option', { name: /^Adv$/i })).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(screen.getByLabelText('Advogado(a)'), {
@@ -396,8 +407,10 @@ describe('MasterDashboardPage', () => {
       screen.getByRole('button', { name: /Tarefas Processuais/i }).click();
     });
 
+    await act(async () => {});
+
     expect(screen.queryByText('Abrir Tarefas Processuais em nova aba')).not.toBeInTheDocument();
-    expect(await screen.findByText('Tarefa A')).toBeInTheDocument();
+    expect(screen.getByText('Tarefa A')).toBeInTheDocument();
     expect(getAllTasksMock).toHaveBeenCalledWith({ team_member_id: '1' });
 
     const caseLink = screen.getByText('0000000-00.0000.0.00.0000');
