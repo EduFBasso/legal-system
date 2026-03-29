@@ -727,6 +727,12 @@
   text-decoration: underline;
 }
 
+.case-detail-page .info-badge.vinculo-link.vinculo-link--readonly,
+.case-detail-page .info-badge.vinculo-link.vinculo-link--readonly:hover {
+  text-decoration: none;
+  cursor: default;
+}
+
 .case-detail-page .info-badge.vinculo-link.vinculo-principal {
   color: var(--color-success-soft-text);
 }

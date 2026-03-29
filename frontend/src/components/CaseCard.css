@@ -13,7 +13,7 @@
 }
 
 .case-card.case-card--selected {
-  border: 2px solid var(--color-primary-soft-border, #1e40af);
+  border: 3px solid var(--color-primary-soft-border, #1e40af);
 }
 
 .case-card.case-card--disabled {

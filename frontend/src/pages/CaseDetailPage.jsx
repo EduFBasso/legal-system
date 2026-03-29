@@ -25,11 +25,10 @@ import useCaseVinculosCases from '../hooks/useCaseVinculosCases';
 import { useCaseDetailAutoRefresh } from '../hooks/useCaseDetailAutoRefresh';
 import { useFinanceiroAutoSaveGuards } from '../hooks/useFinanceiroAutoSaveGuards';
 import { useCaseDetailLinkContactFlow } from '../hooks/useCaseDetailLinkContactFlow';
+import { CASE_SYNC_STORAGE_KEY, notifyCaseSync, parseCaseSyncStorageValue } from '../services/caseSyncService';
 
 import '../components/common/Button/Button.css';
 import './CaseDetailPage.css';
-
-const LINKED_CASE_COMPLETED_STORAGE_KEY = 'legal_system_linked_case_completed';
 
 /**
  * CaseDetailPage - Página dedicada para detalhes completos do processo
@@ -188,6 +187,18 @@ function CaseDetailPage() {
       await casesService.update(targetCaseId, payload);
       await caseCore.loadCaseData({ silent: true });
       if (hasTargetWrapper && reloadLinkedCasesRef.current) reloadLinkedCasesRef.current();
+
+      notifyCaseSync({
+        caseIds: [
+          targetCaseId,
+          Number(id),
+          Number(caseCore.caseData?.case_principal),
+          Number(payload?.case_principal),
+        ],
+        action: payload?.case_principal ? 'linked' : 'unlinked',
+        source: 'CaseDetailPage.handlePatchCase',
+      });
+
       modalsNotif.showToast('Vínculo atualizado com sucesso!', 'success');
       return true;
     } catch (error) {
@@ -269,27 +280,30 @@ function CaseDetailPage() {
     const currentCaseId = Number(id) || null;
     if (!currentCaseId) return;
 
-    const handleLinkedCaseCompleted = (event) => {
-      if (event.key !== LINKED_CASE_COMPLETED_STORAGE_KEY || !event.newValue) return;
+    const handleCaseSync = (event) => {
+      if (event.key !== CASE_SYNC_STORAGE_KEY || !event.newValue) return;
 
-      try {
-        const payload = JSON.parse(event.newValue);
-        const principalId = Number(payload?.principalId) || null;
-        if (principalId !== currentCaseId) return;
+      const payload = parseCaseSyncStorageValue(event.newValue);
+      if (!payload) return;
+      if (!payload.caseIds.includes(currentCaseId)) return;
 
-        caseCore.loadCaseData({ silent: true });
-        if (reloadLinkedCasesRef.current) {
-          reloadLinkedCasesRef.current();
-        }
-        modalsNotif.showToast('Processo vinculado com sucesso!', 'success');
-      } catch {
-        // ignore malformed payloads
+      caseCore.loadCaseData({ silent: true });
+      if (reloadLinkedCasesRef.current) {
+        reloadLinkedCasesRef.current();
+      }
+
+      const action = payload.action || 'case-updated';
+      if (action === 'linked' || action === 'unlinked') {
+        modalsNotif.showToast(
+          action === 'unlinked' ? 'Vínculo removido.' : 'Processo vinculado com sucesso!',
+          action === 'unlinked' ? 'info' : 'success'
+        );
       }
     };
 
-    window.addEventListener('storage', handleLinkedCaseCompleted);
+    window.addEventListener('storage', handleCaseSync);
     return () => {
-      window.removeEventListener('storage', handleLinkedCaseCompleted);
+      window.removeEventListener('storage', handleCaseSync);
     };
   }, [id, caseCore, modalsNotif]);
 

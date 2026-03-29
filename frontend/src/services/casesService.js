@@ -6,6 +6,7 @@
  */
 
 import { apiFetch } from '@/utils/apiFetch.js';
+import { notifyCaseSync } from './caseSyncService';
 
 /**
  * Cases Service
@@ -80,10 +81,21 @@ const casesService = {
    * @returns {Promise<Object>} Updated case
    */
   async update(id, caseData) {
-    return await apiFetch(`/cases/${id}/`, {
+    const updated = await apiFetch(`/cases/${id}/`, {
       method: 'PATCH',
       body: JSON.stringify(caseData),
     });
+
+    notifyCaseSync({
+      caseIds: [
+        Number(id),
+        Number(caseData?.case_principal),
+      ],
+      action: 'case-updated',
+      source: 'casesService.update',
+    });
+
+    return updated;
   },
 
   /**

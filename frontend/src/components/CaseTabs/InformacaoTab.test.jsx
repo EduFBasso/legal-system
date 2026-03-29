@@ -161,7 +161,7 @@ describe('InformacaoTab', () => {
     confirmSpy.mockRestore();
   });
 
-  it('shows inline +Vincular action next to vínculo badge when case is principal', () => {
+  it('shows inline add-derived action next to vínculo badge when case is principal', () => {
     renderWithRouter(
       <InformacaoTab
         id={55}
@@ -176,7 +176,7 @@ describe('InformacaoTab', () => {
       />
     );
 
-    expect(screen.getByText(/\+\s*Vincular/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+\s*Adicionar Processo Derivado/i)).toBeInTheDocument();
     expect(screen.queryByText(/Tornar principal/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Vincular a principal/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Vincular como derivado/i)).not.toBeInTheDocument();

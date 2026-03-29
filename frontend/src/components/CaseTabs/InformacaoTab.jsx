@@ -7,7 +7,7 @@ import SearchableCreatableSelectField from '../FormFields/SearchableCreatableSel
 import EditableDetailField from '../EditableDetailField';
 import { Button, SaveButton, CancelButton, DeleteButton, EditButton } from '../common/Button';
 import PartyRoleBadge from '../common/PartyRoleBadge';
-import { openCaseDetailWindow, openCreateDerivedCaseWindow } from '../../utils/publicationNavigation';
+import { openCaseDetailWindow } from '../../utils/publicationNavigation';
 
 /**
  * InformacaoTab - Aba de Informações do Processo
@@ -205,22 +205,15 @@ function InformacaoTab({
   const canMarkAsPrincipal = showNeutralActionBar && typeof onPatchCase === 'function';
   const canLinkAsDerived = showNeutralActionBar && typeof onPatchCase === 'function';
 
-  const handleCreateDerivedFromNeutral = async () => {
-    if (typeof onPatchCase !== 'function') return;
+  const handleCreateDerivedFromNeutral = () => {
+    const parsedId = Number(id) || 0;
+    if (!parsedId) return;
 
-    const vinculoTipo = String(
-      window.prompt('Tipo de vínculo (ex: Apenso, Incidente, Recurso…)', '') || ''
-    ).trim();
-
-    if (!vinculoTipo) return;
-
-    await onPatchCase({
-      classificacao: 'PRINCIPAL',
-      case_principal: null,
-      vinculo_tipo: '',
-    });
-
-    openCreateDerivedCaseWindow(id, vinculoTipo);
+    const params = new URLSearchParams();
+    params.set('action', 'select-principal');
+    params.set('targetCaseId', String(parsedId));
+    params.set('autoclose', '1');
+    window.open(`/cases?${params.toString()}`, '_blank');
   };
 
   const handleMarkAsPrincipal = async () => {
@@ -724,16 +717,13 @@ function InformacaoTab({
                           Tornar principal
                         </Button>
                       )}
-                      {showPrincipalInlineNeutralize && (
+                      {showPrincipalInlineNeutralize && canMarkAsNeutral && (
                         <Button
                           variant="warning"
                           size="sm"
                           className="vinculos-identificacao__badge-action-button vinculos-identificacao__badge-action-button--neutralize"
                           onClick={handleMarkAsNeutral}
-                          disabled={!canMarkAsNeutral}
-                          title={canMarkAsNeutral
-                            ? 'Desfazer classificação de principal (tornar neutro)'
-                            : 'Remova os processos derivados vinculados antes de tornar neutro'}
+                          title="Desfazer classificação de principal (tornar neutro)"
                         >
                           Tornar neutro
                         </Button>
@@ -771,9 +761,9 @@ function InformacaoTab({
                           size="sm"
                           className="vinculos-identificacao__badge-action-button vinculos-identificacao__badge-action-button--header-link"
                           onClick={handleAddDerivedCase}
-                          title="Selecionar um processo existente para vincular a este principal"
+                          title="Adicionar um novo processo derivado a este processo principal"
                         >
-                          + Vincular
+                          + Adicionar Processo Derivado
                         </Button>
                       )}
                       {loadingLinkedCases && (
@@ -811,17 +801,26 @@ function InformacaoTab({
                             {row?._isCurrent ? '➜' : ''}
                           </div>
 
-                          <a
-                            href={`/cases/${row?.id}`}
-                            className={`info-badge vinculo-link vinculo-${rowVariant} ${isPrincipalRow ? 'is-principal-number' : 'is-derived-number'}`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              openCaseDetailWindow(row?.id);
-                            }}
-                            title="Abrir detalhes do processo"
-                          >
-                            {numero}
-                          </a>
+                          {readOnly ? (
+                            <span
+                              className={`info-badge vinculo-link vinculo-link--readonly vinculo-${rowVariant} ${isPrincipalRow ? 'is-principal-number' : 'is-derived-number'}`}
+                              title="Modo leitura: navegação de vínculo desabilitada"
+                            >
+                              {numero}
+                            </span>
+                          ) : (
+                            <a
+                              href={`/cases/${row?.id}`}
+                              className={`info-badge vinculo-link vinculo-${rowVariant} ${isPrincipalRow ? 'is-principal-number' : 'is-derived-number'}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openCaseDetailWindow(row?.id);
+                              }}
+                              title="Abrir detalhes do processo"
+                            >
+                              {numero}
+                            </a>
+                          )}
 
                           <div className="vinculos-identificacao__title" title={titulo}>{titulo}</div>
                           <div className="vinculos-identificacao__parties" title={partiesText}>{partiesText}</div>

@@ -6,9 +6,8 @@ import Toast from '../components/common/Toast';
 import CasesFilters from '../components/CasesFilters';
 import SearchableCreatableSelectField from '../components/FormFields/SearchableCreatableSelectField';
 import { openCaseDetailWindow, openCreateCaseWindow } from '../utils/publicationNavigation';
+import { CASE_SYNC_STORAGE_KEY, notifyCaseSync, parseCaseSyncStorageValue } from '../services/caseSyncService';
 import './CasesPage.css';
-
-const LINKED_CASE_COMPLETED_STORAGE_KEY = 'legal_system_linked_case_completed';
 
 /**
  * Cases Page - Manage legal cases/processes
@@ -17,8 +16,13 @@ export default function CasesPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const debounceTimerRef = useRef(null);
+  const loadRunIdRef = useRef(0);
+  const lastLoadStartedAtRef = useRef(0);
+  const lastBackgroundRefreshAtRef = useRef(0);
+  const loadingUiTimerRef = useRef(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showLoadingUi, setShowLoadingUi] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
   const [toast, setToast] = useState(null);
   const [linkingVinculo, setLinkingVinculo] = useState(false);
@@ -26,11 +30,13 @@ export default function CasesPage() {
   const [vinculoTipoOptions, setVinculoTipoOptions] = useState([]);
   const [selectedVinculoTipo, setSelectedVinculoTipo] = useState('');
   const [principalCaseNumber, setPrincipalCaseNumber] = useState('');
+  const [targetCaseNumber, setTargetCaseNumber] = useState('');
   // Mantém o KPI sempre montado (sem esperar fetch) e apenas atualiza números.
   const [stats, setStats] = useState({ total: 0, ativos: 0, inativos: 0, by_tribunal: {} });
-  const [allTribunals, setAllTribunals] = useState({});
   const [showTribunalBreakdown, setShowTribunalBreakdown] = useState(false);
   const [selectedTribunals, setSelectedTribunals] = useState([]);
+  const [showVinculoBreakdown, setShowVinculoBreakdown] = useState(false);
+  const [selectedVinculos, setSelectedVinculos] = useState([]);
 
   const linkAction = searchParams.get('action');
   const linkContactId = parseInt(searchParams.get('contactId') || '', 10);
@@ -52,6 +58,7 @@ export default function CasesPage() {
   const editDerivedVinculoTipo = searchParams.get('vinculoTipo') || '';
   const isEditDerivedMode =
     isSelectDerivedMode && Number.isInteger(editDerivedCaseId) && editDerivedCaseId > 0;
+  const isSelectLinkMode = isSelectDerivedMode || isSelectPrincipalMode;
 
   // Filters
   const [filters, setFilters] = useState({
@@ -60,6 +67,21 @@ export default function CasesPage() {
   });
 
   const effectiveFilters = useMemo(() => {
+    if (isSelectPrincipalMode) {
+      const next = {
+        ...filters,
+      };
+
+      if (Object.prototype.hasOwnProperty.call(next, 'status')) {
+        delete next.status;
+      }
+      if (Object.prototype.hasOwnProperty.call(next, 'tribunal')) {
+        delete next.tribunal;
+      }
+
+      return next;
+    }
+
     if (!isSelectDerivedMode) return filters;
 
     const next = {
@@ -77,47 +99,130 @@ export default function CasesPage() {
   const hasActiveFilters = Boolean(
     (filters.search && filters.search.trim() !== '') ||
     filters.status ||
-    filters.tribunal
+    filters.tribunal ||
+    selectedVinculos.length > 0
   );
+
+  const tribunalBreakdown = useMemo(() => {
+    const grouped = {};
+
+    cases.forEach((caseItem) => {
+      const tribunal = String(caseItem?.tribunal || '').trim();
+      if (!tribunal) return;
+      grouped[tribunal] = (grouped[tribunal] || 0) + 1;
+    });
+
+    return grouped;
+  }, [cases]);
+
+  const vinculoTypeBreakdown = useMemo(() => {
+    let neutro = 0;
+    let principal = 0;
+    let derivado = 0;
+
+    cases.forEach((caseItem) => {
+      if (caseItem?.case_principal) {
+        derivado += 1;
+        return;
+      }
+
+      const classificacao = String(caseItem?.classificacao || '').trim().toUpperCase();
+      if (classificacao === 'PRINCIPAL') {
+        principal += 1;
+        return;
+      }
+
+      neutro += 1;
+    });
+
+    return { neutro, principal, derivado };
+  }, [cases]);
+
+  const casesAfterVinculoFilter = useMemo(() => {
+    if (isSelectLinkMode) return cases;
+    if (selectedVinculos.length === 0) return cases;
+
+    const selectedSet = new Set(selectedVinculos);
+
+    return cases.filter((caseItem) => {
+      const vinculoClass = caseItem?.case_principal
+        ? 'DERIVADO'
+        : (String(caseItem?.classificacao || '').trim().toUpperCase() === 'PRINCIPAL'
+          ? 'PRINCIPAL'
+          : 'NEUTRO');
+
+      return selectedSet.has(vinculoClass);
+    });
+  }, [cases, selectedVinculos, isSelectLinkMode]);
 
   /**
    * Load cases from API
    */
-  const loadCases = useCallback(async () => {
-    setLoading(true);
+  const loadCases = useCallback(async (options = {}) => {
+    const { silent = false } = options || {};
+    const runId = ++loadRunIdRef.current;
+    lastLoadStartedAtRef.current = Date.now();
+
+    if (loadingUiTimerRef.current) {
+      clearTimeout(loadingUiTimerRef.current);
+    }
+
+    setShowLoadingUi(false);
+
+    if (!silent) {
+      loadingUiTimerRef.current = setTimeout(() => {
+        if (loadRunIdRef.current !== runId) return;
+        setShowLoadingUi(true);
+      }, 150);
+    }
+
+    if (!silent) {
+      setLoading(true);
+    }
+
     try {
       const response = await casesService.getAll(effectiveFilters);
+      if (loadRunIdRef.current !== runId) return;
       // Handle both paginated and non-paginated responses
       setCases(Array.isArray(response) ? response : (response.results || []));
     } catch (error) {
+      if (loadRunIdRef.current !== runId) return;
       console.error('Error loading cases:', error);
       setToast({
         message: 'Erro ao carregar processos: ' + error.message,
         type: 'error'
       });
     } finally {
-      setLoading(false);
+      if (loadRunIdRef.current !== runId) return;
+      if (loadingUiTimerRef.current) {
+        clearTimeout(loadingUiTimerRef.current);
+      }
+      setShowLoadingUi(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [effectiveFilters]);
 
   /**
    * Load statistics
    */
-  const loadStats = useCallback(async () => {
-    setLoadingStats(true);
+  const loadStats = useCallback(async (options = {}) => {
+    const { silent = false } = options || {};
+
+    if (!silent) {
+      setLoadingStats(true);
+    }
+
     try {
       const statsData = await casesService.getStats({});
       setStats(statsData);
-
-      // Preenche breakdown 1x sem causar refetch por dependência.
-      setAllTribunals((prev) => {
-        if (prev && Object.keys(prev).length > 0) return prev;
-        return statsData?.by_tribunal || {};
-      });
     } catch (error) {
       console.error('Error loading stats:', error);
     } finally {
-      setLoadingStats(false);
+      if (!silent) {
+        setLoadingStats(false);
+      }
     }
   }, []);
 
@@ -129,34 +234,51 @@ export default function CasesPage() {
   }, [loadStats]);
 
   useEffect(() => {
-    if (!isSelectPrincipalMode) return;
-    setToast({
-      message:
-        'Selecione um processo PRINCIPAL para vincular. Ao clicar em um processo, o vínculo será aplicado e o detalhe do processo original será aberto.',
-      type: 'info',
-      autoCloseMs: 0,
-    });
-  }, [isSelectPrincipalMode]);
-
-  useEffect(() => {
-    if (!isSelectDerivedMode) {
+    if (!isSelectDerivedMode && !isSelectPrincipalMode) {
       setSelectedCaseId(null);
       setVinculoTipoOptions([]);
       setSelectedVinculoTipo('');
       setPrincipalCaseNumber('');
+      setTargetCaseNumber('');
       return;
     }
-    setSelectedCaseId(isEditDerivedMode ? editDerivedCaseId : null);
 
-    const loadPrincipalCaseInfo = async () => {
+    if (isSelectPrincipalMode) {
+      setSelectedTribunals([]);
+      setSelectedVinculos([]);
+      setShowVinculoBreakdown(false);
+      setFilters((prev) => {
+        const next = { ...prev };
+        if (Object.prototype.hasOwnProperty.call(next, 'status')) {
+          delete next.status;
+        }
+        if (Object.prototype.hasOwnProperty.call(next, 'tribunal')) {
+          delete next.tribunal;
+        }
+        return next;
+      });
+    }
+
+    setSelectedCaseId(isSelectDerivedMode && isEditDerivedMode ? editDerivedCaseId : null);
+
+    const loadSelectedModeCaseInfo = async () => {
       try {
-        const principal = await casesService.getById(Number(principalCaseId));
+        const caseIdToLoad = isSelectDerivedMode ? Number(principalCaseId) : Number(targetCaseId);
+        const selectedModeCase = await casesService.getById(caseIdToLoad);
         const numero = String(
-          principal?.numero_processo_formatted || principal?.numero_processo || ''
+          selectedModeCase?.numero_processo_formatted || selectedModeCase?.numero_processo || ''
         ).trim();
-        setPrincipalCaseNumber(numero);
+        if (isSelectDerivedMode) {
+          setPrincipalCaseNumber(numero);
+        } else {
+          setTargetCaseNumber(numero);
+        }
       } catch {
-        setPrincipalCaseNumber('');
+        if (isSelectDerivedMode) {
+          setPrincipalCaseNumber('');
+        } else {
+          setTargetCaseNumber('');
+        }
       }
     };
 
@@ -178,7 +300,7 @@ export default function CasesPage() {
           .replace(/[\u0300-\u036f]/g, '')
           .toUpperCase();
 
-        if (editDerivedVinculoTipo) {
+        if (isSelectDerivedMode && editDerivedVinculoTipo) {
           const editNorm = normalize(editDerivedVinculoTipo);
           const matchedOpt = normalized.find(
             (opt) => normalize(opt.value) === editNorm || normalize(opt.label) === editNorm
@@ -199,9 +321,17 @@ export default function CasesPage() {
       }
     };
 
-    loadPrincipalCaseInfo();
+    loadSelectedModeCaseInfo();
     loadVinculoTipoOptions();
-  }, [isSelectDerivedMode, principalCaseId, editDerivedCaseId, editDerivedVinculoTipo, isEditDerivedMode]);
+  }, [
+    isSelectDerivedMode,
+    isSelectPrincipalMode,
+    principalCaseId,
+    targetCaseId,
+    editDerivedCaseId,
+    editDerivedVinculoTipo,
+    isEditDerivedMode,
+  ]);
 
   const handleCreateVinculoTipoOption = async (label) => {
     try {
@@ -226,9 +356,14 @@ export default function CasesPage() {
     }
   };
 
-  const handleCancelSelectDerived = () => {
-    if (!isSelectDerivedMode) return;
-    navigate(`/cases/${principalCaseId}`);
+  const handleCancelSelectLinkMode = () => {
+    if (isSelectDerivedMode) {
+      navigate(`/cases/${principalCaseId}`);
+      return;
+    }
+    if (isSelectPrincipalMode) {
+      navigate(`/cases/${targetCaseId}`);
+    }
   };
 
   const handleCreateNewFromSelectDerived = () => {
@@ -252,23 +387,6 @@ export default function CasesPage() {
     }
     navigate(`/cases/new?${params.toString()}`);
   };
-
-  const notifyLinkedCaseCompleted = useCallback((principalId) => {
-    const parsedPrincipalId = Number(principalId) || 0;
-    if (!parsedPrincipalId) return;
-
-    try {
-      window.localStorage.setItem(
-        LINKED_CASE_COMPLETED_STORAGE_KEY,
-        JSON.stringify({
-          principalId: parsedPrincipalId,
-          timestamp: Date.now(),
-        })
-      );
-    } catch {
-      // ignore
-    }
-  }, []);
 
   const handleSaveSelectDerived = async () => {
     if (!isSelectDerivedMode) return;
@@ -298,9 +416,14 @@ export default function CasesPage() {
         vinculo_tipo: vinculoTipo,
       });
 
+      notifyCaseSync({
+        caseIds: [derivedId, Number(principalCaseId), editDerivedCaseId],
+        action: 'linked',
+        source: 'CasesPage.handleSaveSelectDerived',
+      });
+
       const principalUrl = `/cases/${principalCaseId}?linked=1`;
       if (shouldAutoCloseAfterLink) {
-        notifyLinkedCaseCompleted(principalCaseId);
         try {
           window.close();
           return;
@@ -310,6 +433,72 @@ export default function CasesPage() {
       }
 
       navigate(principalUrl);
+    } catch (error) {
+      setToast({
+        message: 'Erro ao aplicar vínculo: ' + (error?.message || 'Erro desconhecido'),
+        type: 'error',
+        autoCloseMs: 0,
+      });
+    } finally {
+      setLinkingVinculo(false);
+    }
+  };
+
+  const handleSaveSelectPrincipal = async () => {
+    if (!isSelectPrincipalMode) return;
+    if (linkingVinculo) return;
+
+    const selectedPrincipalId = Number(selectedCaseId) || 0;
+    if (!selectedPrincipalId) return;
+    if (selectedPrincipalId === Number(targetCaseId)) return;
+
+    const vinculoTipo = String(selectedVinculoTipo || '').trim();
+    if (!vinculoTipo) {
+      setToast({
+        message: 'Selecione o tipo de vínculo antes de salvar.',
+        type: 'warning',
+        autoCloseMs: 0,
+      });
+      return;
+    }
+
+    setLinkingVinculo(true);
+    try {
+      const selectedCase = cases.find((item) => Number(item?.id) === selectedPrincipalId) || null;
+      const selectedClassificacao = String(selectedCase?.classificacao || '').trim().toUpperCase();
+      const selectedIsDerived = Boolean(selectedCase?.case_principal);
+
+      if (!selectedIsDerived && selectedClassificacao !== 'PRINCIPAL') {
+        await casesService.update(selectedPrincipalId, {
+          classificacao: 'PRINCIPAL',
+          case_principal: null,
+          vinculo_tipo: '',
+        });
+      }
+
+      await casesService.update(Number(targetCaseId), {
+        classificacao: 'NEUTRO',
+        case_principal: selectedPrincipalId,
+        vinculo_tipo: vinculoTipo,
+      });
+
+      notifyCaseSync({
+        caseIds: [Number(targetCaseId), selectedPrincipalId],
+        action: 'linked',
+        source: 'CasesPage.handleSaveSelectPrincipal',
+      });
+
+      const targetUrl = `/cases/${targetCaseId}?linked=1`;
+      if (shouldAutoCloseAfterLink) {
+        try {
+          window.close();
+          return;
+        } catch {
+          // fallback below
+        }
+      }
+
+      navigate(targetUrl);
     } catch (error) {
       setToast({
         message: 'Erro ao aplicar vínculo: ' + (error?.message || 'Erro desconhecido'),
@@ -348,19 +537,35 @@ export default function CasesPage() {
   }, [filters, loadCases]);
 
   useEffect(() => {
+    return () => {
+      if (loadingUiTimerRef.current) {
+        clearTimeout(loadingUiTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const refreshCasesPage = () => {
-      loadCases();
-      loadStats();
+      const now = Date.now();
+      if (now - lastBackgroundRefreshAtRef.current < 600) return;
+      lastBackgroundRefreshAtRef.current = now;
+
+      loadCases({ silent: true });
+      loadStats({ silent: true });
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        const elapsedMs = Date.now() - (lastLoadStartedAtRef.current || 0);
+        if (elapsedMs < 1200) return;
         refreshCasesPage();
       }
     };
 
     const handleStorage = (event) => {
-      if (event.key !== LINKED_CASE_COMPLETED_STORAGE_KEY || !event.newValue) return;
+      if (event.key !== CASE_SYNC_STORAGE_KEY || !event.newValue) return;
+      const payload = parseCaseSyncStorageValue(event.newValue);
+      if (!payload) return;
       refreshCasesPage();
     };
 
@@ -438,7 +643,17 @@ export default function CasesPage() {
       ordering: '-data_ultima_movimentacao',
     });
     setSelectedTribunals([]);
+    setSelectedVinculos([]);
     setShowTribunalBreakdown(false);
+    setShowVinculoBreakdown(false);
+  };
+
+  const toggleVinculoType = (type) => {
+    setSelectedVinculos((prev) => (
+      prev.includes(type)
+        ? prev.filter((item) => item !== type)
+        : [...prev, type]
+    ));
   };
 
   /**
@@ -501,41 +716,7 @@ export default function CasesPage() {
           return;
         }
 
-        const vinculoTipo = String(
-          window.prompt('Tipo de vínculo (ex: Apenso, Incidente, Recurso…)', '') || ''
-        ).trim();
-        if (!vinculoTipo) {
-          setToast({
-            message: 'Tipo de vínculo é obrigatório para vincular a um processo principal.',
-            type: 'warning',
-            autoCloseMs: 0,
-          });
-          return;
-        }
-
-        setLinkingVinculo(true);
-        setToast({
-          message: 'Aplicando vínculo…',
-          type: 'info',
-          autoCloseMs: 0,
-        });
-
-        try {
-          await casesService.update(Number(targetCaseId), {
-            classificacao: 'NEUTRO',
-            case_principal: clickedId,
-            vinculo_tipo: vinculoTipo,
-          });
-          openCaseDetailWindow(targetCaseId);
-        } catch (error) {
-          setToast({
-            message: 'Erro ao aplicar vínculo: ' + (error?.message || 'Erro desconhecido'),
-            type: 'error',
-            autoCloseMs: 0,
-          });
-        } finally {
-          setLinkingVinculo(false);
-        }
+        setSelectedCaseId(clickedId);
 
         return;
       }
@@ -560,7 +741,7 @@ export default function CasesPage() {
   const linkedCasesById = useMemo(() => {
     const groupsByClientId = new Map();
 
-    cases.forEach((caseItem) => {
+    casesAfterVinculoFilter.forEach((caseItem) => {
       const clientId = caseItem?.cliente_principal;
       if (!clientId) return;
 
@@ -608,12 +789,12 @@ export default function CasesPage() {
     });
 
     return links;
-  }, [cases]);
+  }, [casesAfterVinculoFilter]);
 
   const visibleCases = useMemo(() => {
-    if (!isSelectDerivedMode) return cases;
+    if (!isSelectDerivedMode) return casesAfterVinculoFilter;
 
-    return cases.filter((caseItem) => {
+    return casesAfterVinculoFilter.filter((caseItem) => {
       const caseId = Number(caseItem?.id) || 0;
       if (!caseId) return false;
 
@@ -629,11 +810,28 @@ export default function CasesPage() {
       const status = String(caseItem?.status || '').trim().toUpperCase();
       return status === 'ATIVO';
     });
-  }, [cases, isSelectDerivedMode, principalCaseId, editDerivedCaseId]);
+  }, [casesAfterVinculoFilter, isSelectDerivedMode, principalCaseId, editDerivedCaseId]);
+
+  const visiblePrincipalCandidates = useMemo(() => {
+    if (!isSelectPrincipalMode) return visibleCases;
+
+    return casesAfterVinculoFilter.filter((caseItem) => {
+      const caseId = Number(caseItem?.id) || 0;
+      if (!caseId) return false;
+      if (caseId === Number(targetCaseId)) return false;
+      if (caseItem?.case_principal) return false;
+
+      const classificacao = String(caseItem?.classificacao || '').trim().toUpperCase();
+      return classificacao === 'PRINCIPAL' || classificacao === 'NEUTRO' || classificacao === '';
+    });
+  }, [casesAfterVinculoFilter, isSelectPrincipalMode, targetCaseId, visibleCases]);
+
+  const listCases = isSelectPrincipalMode ? visiblePrincipalCandidates : visibleCases;
+  const shouldShowLoadingState = loading && (showLoadingUi || cases.length === 0);
 
   return (
     <div className="cases-page">
-      <div className={`cases-header ${isSelectDerivedMode ? 'cases-header--select' : ''}`}>
+      <div className={`cases-header ${isSelectLinkMode ? 'cases-header--select' : ''}`}>
         {isSelectDerivedMode ? (
           <div className="cases-select-header">
             <h1>
@@ -665,7 +863,7 @@ export default function CasesPage() {
 
               <button
                 className="btn btn-secondary"
-                onClick={handleCancelSelectDerived}
+                onClick={handleCancelSelectLinkMode}
                 disabled={linkingVinculo}
               >
                 Cancelar
@@ -675,6 +873,47 @@ export default function CasesPage() {
                 <button
                   className="btn btn-primary"
                   onClick={handleSaveSelectDerived}
+                  disabled={linkingVinculo}
+                >
+                  Salvar
+                </button>
+              )}
+            </div>
+          </div>
+        ) : isSelectPrincipalMode ? (
+          <div className="cases-select-header">
+            <h1>
+              Você está vinculando {targetCaseNumber || `#${targetCaseId}`} como DERIVADO
+            </h1>
+            <p className="cases-select-description">
+              Escolha um processo PRINCIPAL ou NEUTRO para criar o vínculo.
+            </p>
+
+            <div className="cases-select-vinculo-field">
+              <SearchableCreatableSelectField
+                label="Tipo de vínculo"
+                value={selectedVinculoTipo}
+                onChange={setSelectedVinculoTipo}
+                options={vinculoTipoOptions}
+                placeholder="Selecione ou cadastre..."
+                allowCreate={true}
+                onCreateOption={handleCreateVinculoTipoOption}
+              />
+            </div>
+
+            <div className="cases-select-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={handleCancelSelectLinkMode}
+                disabled={linkingVinculo}
+              >
+                Cancelar
+              </button>
+
+              {Boolean(selectedCaseId) && (
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSaveSelectPrincipal}
                   disabled={linkingVinculo}
                 >
                   Salvar
@@ -692,7 +931,7 @@ export default function CasesPage() {
         )}
       </div>
 
-      {!isSelectDerivedMode && (
+      {!isSelectLinkMode && (
         <div className="cases-stats" aria-busy={loadingStats ? 'true' : 'false'}>
           <div
             className={`stat-card stat-clickable ${!hasActiveFilters ? 'stat-selected' : ''}`}
@@ -718,18 +957,75 @@ export default function CasesPage() {
             <div className="stat-value">{stats?.inativos || 0}</div>
             <div className="stat-label">Inativos</div>
           </div>
-          {allTribunals && Object.keys(allTribunals).length > 0 && (
+          <div
+            className={`stat-card stat-clickable stat-vinculo ${selectedVinculos.length > 0 ? 'stat-selected' : ''}`}
+            onClick={() => setShowVinculoBreakdown(!showVinculoBreakdown)}
+            title="Clique para filtrar por tipo de vínculo"
+          >
+            <div className="stat-value">{vinculoTypeBreakdown.derivado}</div>
+            <div className="stat-label">Derivados {showVinculoBreakdown ? '▲' : '▼'}</div>
+
+            {showVinculoBreakdown && (
+              <div className="vinculo-breakdown" onClick={(e) => e.stopPropagation()}>
+                <div className="vinculo-breakdown-item" onClick={() => toggleVinculoType('NEUTRO')}>
+                  <div className="vinculo-checkbox-group">
+                    <input
+                      type="checkbox"
+                      className="vinculo-filter-checkbox"
+                      checked={selectedVinculos.includes('NEUTRO')}
+                      onChange={() => toggleVinculoType('NEUTRO')}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Filtrar por vínculo Neutro"
+                    />
+                    <span className="vinculo-breakdown-name">Neutro</span>
+                  </div>
+                  <span className="vinculo-breakdown-count">{vinculoTypeBreakdown.neutro}</span>
+                </div>
+
+                <div className="vinculo-breakdown-item" onClick={() => toggleVinculoType('PRINCIPAL')}>
+                  <div className="vinculo-checkbox-group">
+                    <input
+                      type="checkbox"
+                      className="vinculo-filter-checkbox"
+                      checked={selectedVinculos.includes('PRINCIPAL')}
+                      onChange={() => toggleVinculoType('PRINCIPAL')}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Filtrar por vínculo Principal"
+                    />
+                    <span className="vinculo-breakdown-name">Principal</span>
+                  </div>
+                  <span className="vinculo-breakdown-count">{vinculoTypeBreakdown.principal}</span>
+                </div>
+
+                <div className="vinculo-breakdown-item" onClick={() => toggleVinculoType('DERIVADO')}>
+                  <div className="vinculo-checkbox-group">
+                    <input
+                      type="checkbox"
+                      className="vinculo-filter-checkbox"
+                      checked={selectedVinculos.includes('DERIVADO')}
+                      onChange={() => toggleVinculoType('DERIVADO')}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Filtrar por vínculo Derivado"
+                    />
+                    <span className="vinculo-breakdown-name">Derivado</span>
+                  </div>
+                  <span className="vinculo-breakdown-count">{vinculoTypeBreakdown.derivado}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          {tribunalBreakdown && Object.keys(tribunalBreakdown).length > 0 && (
             <div
               className={`stat-card stat-clickable stat-tribunal ${selectedTribunals.length > 0 ? 'stat-selected' : ''}`}
               onClick={() => setShowTribunalBreakdown(!showTribunalBreakdown)}
               title="Clique para expandir lista de tribunais"
             >
-              <div className="stat-value">{Object.keys(allTribunals).length}</div>
+              <div className="stat-value">{Object.keys(tribunalBreakdown).length}</div>
               <div className="stat-label">Tribunais {showTribunalBreakdown ? '▲' : '▼'}</div>
 
               {showTribunalBreakdown && (
                 <div className="tribunal-breakdown" onClick={(e) => e.stopPropagation()}>
-                  {Object.entries(allTribunals).map(([tribunal, count]) => (
+                  {Object.entries(tribunalBreakdown).map(([tribunal, count]) => (
                     <div
                       key={tribunal}
                       className="tribunal-item"
@@ -763,29 +1059,31 @@ export default function CasesPage() {
         onSearchChange={(value) => handleFilterChange('search', value)}
         isAscending={filters.ordering === 'data_ultima_movimentacao'}
         onOrderingToggle={toggleOrdering}
-        totalCount={isSelectDerivedMode ? (visibleCases.length || 0) : (stats?.total ?? (cases.length || 0))}
-        filteredCount={visibleCases.length || 0}
+        totalCount={isSelectLinkMode ? (listCases.length || 0) : (stats?.total ?? (cases.length || 0))}
+        filteredCount={listCases.length || 0}
       />
 
       {/* Cases List */}
       <div className="cases-list-container">
-        {loading ? (
+        {shouldShowLoadingState ? (
           <div className="loading-container">
             <div className="spinner"></div>
             <p>Carregando processos...</p>
           </div>
-        ) : visibleCases.length === 0 ? (
+        ) : listCases.length === 0 ? (
           <div className="empty-state">
             <p>Nenhum processo encontrado</p>
             <p className="empty-state-hint">
               {isSelectDerivedMode
                 ? 'Nenhum processo NEUTRO e ATIVO disponível para vínculo.'
+                : isSelectPrincipalMode
+                  ? 'Nenhum processo PRINCIPAL ou NEUTRO disponível para ser selecionado como principal.'
                 : 'Ajuste os filtros ou crie um novo processo'}
             </p>
           </div>
         ) : (
           <div className="cases-list">
-            {visibleCases.map((caseItem) => {
+            {listCases.map((caseItem) => {
               const isPrincipalReference =
                 isSelectDerivedMode && Number(caseItem.id) === Number(principalCaseId);
               const isPrincipalCategory =
@@ -807,7 +1105,7 @@ export default function CasesPage() {
                   caseData={caseItem}
                   linkedCases={linkedCasesById.get(caseItem.id) || []}
                   onClick={() => openCaseDetail(caseItem)}
-                  isSelected={isSelectDerivedMode && Number(selectedCaseId) === Number(caseItem.id)}
+                  isSelected={isSelectLinkMode && Number(selectedCaseId) === Number(caseItem.id)}
                   isDisabled={isDisabledInSelectDerived}
                   disabledLabel={disabledLabel}
                 />
