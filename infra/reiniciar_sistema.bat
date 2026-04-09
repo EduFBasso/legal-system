@@ -1,8 +1,16 @@
 @echo off
 :: ============================================================
 ::  REINICIAR SISTEMA JURIDICO
-::  Execute como Administrador (clique direito > Executar como administrador)
+::  Se nao estiver como Admin, pede elevacao automaticamente
 :: ============================================================
+
+:: Verifica se ja esta rodando como Administrador
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo Solicitando permissao de Administrador...
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    exit /b
+)
 
 echo.
 echo  ====================================
