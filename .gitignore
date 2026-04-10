@@ -112,3 +112,5 @@ backend/*_backup*.json
 # Artefatos locais de teste (notificações/UI)
 test_notifications*.json
 files-legado/test_notifications_ui.py
+
+info.txt

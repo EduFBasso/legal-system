@@ -28,11 +28,13 @@ timeout /t 5 /nobreak >nul
 
 echo [3/4] Iniciando Backend...
 sc.exe start LegalSystem-Backend
-timeout /t 5 /nobreak >nul
+echo     Aguardando Backend inicializar (20 segundos)...
+timeout /t 20 /nobreak >nul
 
 echo [4/4] Iniciando Frontend...
 sc.exe start LegalSystem-Frontend
-timeout /t 3 /nobreak >nul
+echo     Aguardando Frontend inicializar (15 segundos)...
+timeout /t 15 /nobreak >nul
 
 echo.
 echo  ====================================
