@@ -1,7 +1,7 @@
 /**
  * @fileoverview Centralized API fetch wrapper with error handling
  * @module utils/apiFetch
- * 
+ *
  * This module provides a unified fetch wrapper for all API calls across the application.
  * Eliminates code duplication and allows for easy addition of common features like:
  * - Authorization tokens
@@ -11,29 +11,33 @@
  */
 
 function resolveApiBaseUrl() {
-  const configuredUrl = (import.meta.env.VITE_API_URL || '').trim();
+  const configuredUrl = (import.meta.env.VITE_API_URL || "").trim();
   if (configuredUrl) {
     return configuredUrl;
   }
 
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    const protocol = window.location.protocol || 'http:';
+  if (import.meta.env.DEV) {
+    return "/api";
+  }
+
+  if (typeof window !== "undefined" && window.location?.hostname) {
+    const protocol = window.location.protocol || "http:";
     return `${protocol}//${window.location.hostname}:8000/api`;
   }
 
-  return 'http://127.0.0.1:8000/api';
+  return "http://127.0.0.1:8000/api";
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
-const AUTH_STORAGE_KEY = 'legal_system_auth';
+const AUTH_STORAGE_KEY = "legal_system_auth";
 
 function getWindowQueryParams() {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return new URLSearchParams();
   }
 
   try {
-    return new URLSearchParams(window.location?.search || '');
+    return new URLSearchParams(window.location?.search || "");
   } catch {
     return new URLSearchParams();
   }
@@ -41,22 +45,22 @@ function getWindowQueryParams() {
 
 function withScopedParams(endpoint) {
   const windowParams = getWindowQueryParams();
-  const teamMemberId = windowParams.get('team_member_id');
-  const teamScope = windowParams.get('team_scope');
+  const teamMemberId = windowParams.get("team_member_id");
+  const teamScope = windowParams.get("team_scope");
 
   if (!teamMemberId && !teamScope) {
     return endpoint;
   }
 
-  const [pathPart, queryPart = ''] = String(endpoint || '').split('?');
+  const [pathPart, queryPart = ""] = String(endpoint || "").split("?");
   const endpointParams = new URLSearchParams(queryPart);
 
-  if (teamMemberId && !endpointParams.has('team_member_id')) {
-    endpointParams.set('team_member_id', teamMemberId);
+  if (teamMemberId && !endpointParams.has("team_member_id")) {
+    endpointParams.set("team_member_id", teamMemberId);
   }
 
-  if (teamScope && !endpointParams.has('team_scope')) {
-    endpointParams.set('team_scope', teamScope);
+  if (teamScope && !endpointParams.has("team_scope")) {
+    endpointParams.set("team_scope", teamScope);
   }
 
   const nextQuery = endpointParams.toString();
@@ -65,8 +69,8 @@ function withScopedParams(endpoint) {
 
 function isReadOnlyWindow() {
   const windowParams = getWindowQueryParams();
-  const flag = (windowParams.get('readonly') || '').trim().toLowerCase();
-  return flag === '1' || flag === 'true' || flag === 'yes';
+  const flag = (windowParams.get("readonly") || "").trim().toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes";
 }
 
 export function getStoredAuth() {
@@ -84,7 +88,7 @@ export function getAuthToken() {
 
 /**
  * Generic API fetch wrapper with error handling
- * 
+ *
  * @param {string} endpoint - API endpoint (e.g., '/cases/', '/payments/')
  * @param {Object} options - Fetch options
  * @param {string} options.method - HTTP method (GET, POST, PATCH, DELETE, etc) - default: GET
@@ -92,33 +96,35 @@ export function getAuthToken() {
  * @param {string} options.body - Request body (will be sent as JSON)
  * @returns {Promise<Object>} Parsed JSON response
  * @throws {Error} With formatted error message
- * 
+ *
  * @example
  * // GET request
  * const cases = await apiFetch('/cases/?status=ATIVO');
- * 
+ *
  * @example
  * // POST request
  * const newCase = await apiFetch('/cases/', {
  *   method: 'POST',
  *   body: JSON.stringify({ numero_processo: '1234567-89.2021.8.26.0100', ... })
  * });
- * 
+ *
  * @example
  * // PATCH request
  * const updated = await apiFetch('/cases/123/', {
  *   method: 'PATCH',
  *   body: JSON.stringify({ status: 'ATIVO' })
  * });
- * 
+ *
  * @example
  * // DELETE request
  * await apiFetch('/cases/123/', { method: 'DELETE' });
  */
 export async function apiFetch(endpoint, options = {}) {
-  const method = String(options.method || 'GET').toUpperCase();
-  if (isReadOnlyWindow() && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    const readOnlyError = new Error('Modo somente leitura: operação não permitida.');
+  const method = String(options.method || "GET").toUpperCase();
+  if (isReadOnlyWindow() && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const readOnlyError = new Error(
+      "Modo somente leitura: operação não permitida.",
+    );
     readOnlyError.status = 403;
     throw readOnlyError;
   }
@@ -127,11 +133,11 @@ export async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}${scopedEndpoint}`;
   const token = getAuthToken();
   const headers = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
-  
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -142,66 +148,66 @@ export async function apiFetch(endpoint, options = {}) {
     if (!response.ok) {
       // Try to parse error response
       const errorData = await response.json().catch(() => ({}));
-      console.error('API Error Response:', errorData);
+      console.error("API Error Response:", errorData);
 
       // 401: sessão/token inválido ou expirado
       if (response.status === 401) {
-        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
 
-        const apiError = new Error('Sessão expirada. Faça login novamente.');
+        const apiError = new Error("Sessão expirada. Faça login novamente.");
         apiError.status = response.status;
-        apiError.code = errorData?.code || 'token_not_valid';
+        apiError.code = errorData?.code || "token_not_valid";
         throw apiError;
       }
 
       const formatErrorValue = (value) => {
         if (Array.isArray(value)) {
-          return value.map(formatErrorValue).join(', ');
+          return value.map(formatErrorValue).join(", ");
         }
 
-        if (value && typeof value === 'object') {
-          if (typeof value.message === 'string') {
+        if (value && typeof value === "object") {
+          if (typeof value.message === "string") {
             return value.message;
           }
 
-          if (typeof value.detail === 'string') {
+          if (typeof value.detail === "string") {
             return value.detail;
           }
 
           return Object.entries(value)
             .map(([k, v]) => `${k}: ${formatErrorValue(v)}`)
-            .join('; ');
+            .join("; ");
         }
 
-        return String(value ?? '');
+        return String(value ?? "");
       };
 
       const serverMessage =
-        (typeof errorData?.error === 'string' && errorData.error.trim())
-        || (typeof errorData?.message === 'string' && errorData.message.trim())
-        || (typeof errorData?.detail === 'string' && errorData.detail.trim())
-        || (typeof errorData === 'string' && errorData.trim())
-        || '';
+        (typeof errorData?.error === "string" && errorData.error.trim()) ||
+        (typeof errorData?.message === "string" && errorData.message.trim()) ||
+        (typeof errorData?.detail === "string" && errorData.detail.trim()) ||
+        (typeof errorData === "string" && errorData.trim()) ||
+        "";
 
       if (serverMessage) {
         const apiError = new Error(serverMessage);
         apiError.status = response.status;
         throw apiError;
       }
-      
+
       // Format validation errors from Django
-      if (errorData && typeof errorData === 'object') {
+      if (errorData && typeof errorData === "object") {
         const errors = Object.entries(errorData)
           .map(([field, messages]) => {
             const msg = formatErrorValue(messages);
             return `${field}: ${msg}`;
           })
-          .join('\n');
+          .join("\n");
         const apiError = new Error(errors || `API Error: ${response.status}`);
         apiError.status = response.status;
         throw apiError;
       }
-      
+
       const detail = errorData.detail || `API Error: ${response.status}`;
 
       const apiError = new Error(detail);
@@ -224,7 +230,7 @@ export async function apiFetch(endpoint, options = {}) {
 /**
  * Get the API base URL
  * Useful for logging or debugging
- * 
+ *
  * @returns {string} API_BASE_URL
  */
 export function getApiBaseUrl() {
