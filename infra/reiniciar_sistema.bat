@@ -36,7 +36,6 @@ sc.exe start LegalSystem-Frontend
 echo     Aguardando Frontend inicializar (15 segundos)...
 timeout /t 15 /nobreak >nul
 
-
 echo.
 echo  ====================================
 echo   VERIFICANDO STATUS DOS SERVICOS:
