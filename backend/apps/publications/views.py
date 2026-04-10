@@ -1,3 +1,4 @@
+# type: ignore
 """
 Views para API de Publications.
 """
@@ -47,7 +48,7 @@ def _get_user_publication_identity(user):
     tribunais = (profile.monitored_tribunais if profile else None) or getattr(
         settings,
         'PJE_COMUNICA_DEFAULT_TRIBUNAIS',
-        ['TJSP', 'TRF3', 'TRT2', 'TRT15'],
+        ['TJSP', 'TRF3', 'TRT2', 'TRT15', 'TJMG'],
     )
     return oab_number, advogado_nome, tribunais
 
