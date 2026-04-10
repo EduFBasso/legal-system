@@ -18,6 +18,7 @@ import socket
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -46,7 +47,7 @@ def _collect_local_ipv4_hosts() -> list[str]:
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             ip = info[4][0]
             if ip:
-                hosts.add(ip)
+                hosts.add(ip)  # type: ignore[arg-type]
     except Exception:
         pass
 
@@ -55,8 +56,8 @@ def _collect_local_ipv4_hosts() -> list[str]:
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 for local_host in _collect_local_ipv4_hosts():
-    if local_host not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(local_host)
+    if local_host not in ALLOWED_HOSTS:  # type: ignore[operator]
+        ALLOWED_HOSTS.append(local_host)  # type: ignore[union-attr]
 
 # === Segurança de produção (ativadas quando DEBUG=False) ===
 # Todas controladas via .env — sem código diferente entre dev e prod
@@ -136,9 +137,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #   SQLite:     DATABASE_URL=sqlite:///db.sqlite3
 #   PostgreSQL: DATABASE_URL=postgresql://user:pass@localhost:5432/legal_system
 
-_DATABASE_URL = config('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}')
+_DATABASE_URL = config('DATABASE_URL', default=f'sqlite:///{PROJECT_ROOT / "db.sqlite3"}')
 DATABASES = {
-    'default': dj_database_url.parse(_DATABASE_URL, conn_max_age=600)
+    'default': dj_database_url.parse(_DATABASE_URL, conn_max_age=600)  # type: ignore[arg-type]
 }
 
 
@@ -204,8 +205,8 @@ CORS_ALLOWED_ORIGINS = config(
 )
 for local_host in _collect_local_ipv4_hosts():
     local_origin = f'http://{local_host}:5173'
-    if local_origin not in CORS_ALLOWED_ORIGINS:
-        CORS_ALLOWED_ORIGINS.append(local_origin)
+    if local_origin not in CORS_ALLOWED_ORIGINS:  # type: ignore[operator]
+        CORS_ALLOWED_ORIGINS.append(local_origin)  # type: ignore[union-attr]
 CORS_ALLOW_CREDENTIALS = True
 
 # Django REST Framework
@@ -247,7 +248,7 @@ PJE_COMUNICA_RETRY_BACKOFF_SECONDS = config(
 )
 PJE_COMUNICA_DEFAULT_TRIBUNAIS = config(
     'PJE_COMUNICA_DEFAULT_TRIBUNAIS',
-    default='TJSP,TRF3,TRT2,TRT15',
+    default='TJSP,TRF3,TRT2,TRT15,TJMG',
     cast=Csv(),
 )
 
