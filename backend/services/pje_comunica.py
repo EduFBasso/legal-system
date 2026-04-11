@@ -21,6 +21,7 @@ DEFAULT_PJE_COMUNICA_RETRY_BACKOFF_SECONDS = (0.75, 2.0)
 
 DEFAULT_TRIBUNAIS = [
     'TJSP',
+    'TJMG',
     'TRF3',
     'TRT2',
     'TRT15',
@@ -180,6 +181,10 @@ class PJeComunicaService:
             numero_processo = f"{m[0]}-{m[1]}.{m[2]}.{m[3]}.{m[4]}.{m[5]}"
             if m[6]:  # Se tiver último grupo
                 numero_processo += f".{m[6]}"
+
+        # Fallback: usar numeroprocessocommascara da API (ex: TJMG não inclui número no texto)
+        if not numero_processo:
+            numero_processo = item.get('numeroprocessocommascara') or None
         
         # Limita resumo a 500 caracteres
         texto_resumo = texto[:500] + "..." if len(texto) > 500 else texto

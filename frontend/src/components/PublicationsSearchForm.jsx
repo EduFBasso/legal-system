@@ -24,6 +24,7 @@ export default function PublicationsSearchForm({ onSearch, isLoading }) {
     // Padrão: todos selecionados
     return {
       TJSP: true,
+      TJMG: true,
       TRF3: true,
       TRT2: true,
       TRT15: true,
@@ -72,6 +73,7 @@ export default function PublicationsSearchForm({ onSearch, isLoading }) {
   const handleSelectAll = () => {
     setTribunais({
       TJSP: true,
+      TJMG: true,
       TRF3: true,
       TRT2: true,
       TRT15: true,
@@ -81,6 +83,7 @@ export default function PublicationsSearchForm({ onSearch, isLoading }) {
   const handleDeselectAll = () => {
     setTribunais({
       TJSP: false,
+      TJMG: false,
       TRF3: false,
       TRT2: false,
       TRT15: false,
@@ -89,6 +92,7 @@ export default function PublicationsSearchForm({ onSearch, isLoading }) {
 
   const tribunaisInfo = {
     TJSP: 'Tribunal de Justiça de São Paulo',
+    TJMG: 'Tribunal de Justiça de Minas Gerais',
     TRF3: 'Tribunal Regional Federal 3ª Região',
     TRT2: 'Tribunal Regional do Trabalho 2ª Região (SP)',
     TRT15: 'Tribunal Regional do Trabalho 15ª Região (Campinas)',
