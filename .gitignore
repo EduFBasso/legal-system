@@ -42,7 +42,9 @@ yarn-error.log*
 .env.local
 .env.production
 .env.development
-.env.example
+.env.test
+!.env.example
+!backend/.env.example
 
 # === IDEs ===
 .vscode/
@@ -77,9 +79,15 @@ docs/INFO_*.md
 docs/QUICK_*.md
 docs/*.md
 !docs/API_ROUTES_MAP.md
+!docs/CHANGELOG.md
+!docs/AUDITORIA_BACKEND_CASES.md
+!docs/AUDITORIA_FRONTEND_CASES_FASE2.md
+!docs/VISAO_FUNCIONAL_SISTEMA.md
+!docs/INFRA_E_MIGRACAO_PLANO.md
 
 # === Outros ===
 pub_fetcher/
+tools/pub_fetcher/output/
 
 # === Tools/Binários ===
 *.exe
@@ -114,3 +122,4 @@ test_notifications*.json
 files-legado/test_notifications_ui.py
 
 info.txt
+frontend-clinic/

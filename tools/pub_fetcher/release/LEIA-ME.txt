@@ -11,7 +11,7 @@
 2. Uma janela vai abrir com o formulário
 3. Preencha os campos:
    - **Tribunal**: TJSP (ou outro se necessário)
-   - **Número OAB**: Seu número da OAB (ex: 507553)
+   - **Número OAB**: Seu número da OAB (ex: 123456)
    - **Período**: Escolha "Publicações de hoje" ou defina um período customizado
 
 4. Clique em **🔍 Buscar Publicações**
@@ -28,7 +28,7 @@ Para abrir a pasta rapidamente, clique no botão **📁 Abrir Pasta de Resultado
 
 Cada busca gera um arquivo JSON com nome no formato:
 ```
-publications_TJSP_507553_20260211_110655.json
+publications_TJSP_123456_20260211_110655.json
 ```
 
 Este arquivo contém todas as informações das publicações encontradas e pode ser usado depois no sistema principal.

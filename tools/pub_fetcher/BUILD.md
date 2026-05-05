@@ -74,13 +74,13 @@ pyinstaller --onefile main.py --name pub_fetcher --target-arch x86_64 --win-priv
 
 3. **Executar**
    ```bash
-   .\pub_fetcher.exe --tribunal TJSP --oab 507553 --today
+   .\pub_fetcher.exe --tribunal TJSP --oab 123456 --today
    
    # ou com período personalizado
-   .\pub_fetcher.exe --tribunal TJSP --oab 507553 --from 2026-01-30 --to 2026-02-02
+   .\pub_fetcher.exe --tribunal TJSP --oab 123456 --from 2026-01-30 --to 2026-02-02
    ```
 
-4. **Arquivo de saída** será criado em: `output\publications_TJSP_507553_....json`
+4. **Arquivo de saída** será criado em: `output\publications_TJSP_123456_....json`
 
 ## Otimizações (opcional)
 

@@ -1634,7 +1634,7 @@ def get_search_history_detail(request, search_id):
             "duration_seconds": 3.45,
             "search_params": {
                 "retroactive_days": 7,
-                "oab": "507553"
+                "oab": "123456"
             }
         },
         "publicacoes": [...]

@@ -12,6 +12,16 @@ export default defineConfig({
     host: "0.0.0.0", // aceita conexões da rede local (Mac, celular, etc)
     port: 5173,
     allowedHosts: ["desktop-irvt17p", "server-juri", "localhost", "127.0.0.1"],
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+      "/media": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: "0.0.0.0",

@@ -871,7 +871,7 @@ export default function MasterDashboardPage() {
                 type="text"
                 value={masterAccountForm.username}
                 onChange={handleMasterAccountFormChange}
-                placeholder="Ex: master.vitoria"
+                placeholder="Ex: master.ana"
                 required
               />
             </div>
@@ -883,7 +883,7 @@ export default function MasterDashboardPage() {
                 type="text"
                 value={masterAccountForm.first_name}
                 onChange={handleMasterAccountFormChange}
-                placeholder="Ex: Vitoria"
+                placeholder="Ex: Ana"
                 required
               />
             </div>
@@ -898,7 +898,7 @@ export default function MasterDashboardPage() {
                 type="text"
                 value={masterAccountForm.full_name_oab}
                 onChange={handleMasterAccountFormChange}
-                placeholder="Ex: Vitória Rocha de Morais"
+                placeholder="Ex: Ana Silva"
               />
             </div>
             <div className="master-admin-form-field">
@@ -909,7 +909,7 @@ export default function MasterDashboardPage() {
                 type="text"
                 value={masterAccountForm.oab_number}
                 onChange={handleMasterAccountFormChange}
-                placeholder="Ex: 507553"
+                placeholder="Ex: 123456"
               />
             </div>
           </div>
@@ -1064,7 +1064,7 @@ export default function MasterDashboardPage() {
               name="publications_excluded_oabs_text"
               value={memberForm.publications_excluded_oabs_text}
               onChange={handleMemberFormChange}
-              placeholder="Uma OAB por linha ou separadas por vírgula (ex: 407729)"
+              placeholder="Uma OAB por linha ou separadas por vírgula (ex: 654321)"
               rows={3}
             />
           </div>
@@ -1076,7 +1076,7 @@ export default function MasterDashboardPage() {
               name="publications_excluded_keywords_text"
               value={memberForm.publications_excluded_keywords_text}
               onChange={handleMemberFormChange}
-              placeholder="Uma frase por linha (ex: LUCIA VITORIA, ROCHA DO NASCIMENTO)"
+              placeholder="Uma frase por linha (ex: NOME EXCLUIDO, SILVA TERCEIRO)"
               rows={3}
             />
           </div>

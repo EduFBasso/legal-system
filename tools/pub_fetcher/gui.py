@@ -107,7 +107,7 @@ class PublicationFetcherGUI:
         # Número OAB
         self.oab_label = ttk.Label(main_frame, text="Número OAB:", font=('Segoe UI', 11))
         self.oab_label.grid(row=4, column=0, sticky=W, pady=5)
-        self.oab_var = StringVar(value="507553")
+        self.oab_var = StringVar(value="")
         self.oab_entry = ttk.Entry(main_frame, textvariable=self.oab_var, width=32, font=('Segoe UI', 11))
         self.oab_entry.grid(row=4, column=1, columnspan=2, sticky=W, pady=5)
         

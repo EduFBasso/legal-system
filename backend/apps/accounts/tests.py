@@ -64,38 +64,38 @@ class TeamMemberNameFallbackTests(TestCase):
 
     def test_team_member_serializer_falls_back_to_full_name_when_first_name_empty(self):
         user = User.objects.create_user(
-            username='vitoria.rocha',
-            email='advocaciavitoriarocha@gmail.com',
+            username='ana.silva',
+            email='ana.silva@example.com',
             password='SenhaForte!123',
             first_name='',
         )
         user.profile.role = UserProfile.ROLE_ADVOGADO
-        user.profile.full_name_oab = 'Vitoria Rocha de Morais'
-        user.profile.oab_number = '507553'
+        user.profile.full_name_oab = 'Ana Silva'
+        user.profile.oab_number = '123456'
         user.profile.is_active = True
         user.profile.save(update_fields=['role', 'full_name_oab', 'oab_number', 'is_active'])
 
         payload = TeamMemberSerializer.from_user(user)
 
-        self.assertEqual(payload['first_name'], 'Vitoria')
+        self.assertEqual(payload['first_name'], 'Ana')
 
     def test_lawyers_for_login_falls_back_to_full_name_when_first_name_empty(self):
         user = User.objects.create_user(
-            username='vitoria.rocha',
-            email='advocaciavitoriarocha@gmail.com',
+            username='ana.silva',
+            email='ana.silva@example.com',
             password='SenhaForte!123',
             first_name='',
         )
         user.profile.role = UserProfile.ROLE_ADVOGADO
-        user.profile.full_name_oab = 'Vitoria Rocha de Morais'
-        user.profile.oab_number = '507553'
+        user.profile.full_name_oab = 'Ana Silva'
+        user.profile.oab_number = '123456'
         user.profile.is_active = True
         user.profile.save(update_fields=['role', 'full_name_oab', 'oab_number', 'is_active'])
 
         response = self.client.get('/api/auth/lawyers/')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['results'][0]['name'], 'Vitoria')
+        self.assertEqual(response.data['results'][0]['name'], 'Ana')
 
 
 class MasterSelfAccountProfileUpdateTests(TestCase):
@@ -117,17 +117,17 @@ class MasterSelfAccountProfileUpdateTests(TestCase):
         response = self.client.patch(
             '/api/auth/account/',
             {
-                'full_name_oab': 'Vitória Rocha de Morais',
-                'oab_number': '507553',
+                'full_name_oab': 'Ana Silva',
+                'oab_number': '123456',
             },
             format='json',
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['full_name_oab'], 'Vitória Rocha de Morais')
-        self.assertEqual(response.data['oab_number'], '507553')
+        self.assertEqual(response.data['full_name_oab'], 'Ana Silva')
+        self.assertEqual(response.data['oab_number'], '123456')
 
         self.master.refresh_from_db()
         self.master.profile.refresh_from_db()
-        self.assertEqual(self.master.profile.full_name_oab, 'Vitória Rocha de Morais')
-        self.assertEqual(self.master.profile.oab_number, '507553')
+        self.assertEqual(self.master.profile.full_name_oab, 'Ana Silva')
+        self.assertEqual(self.master.profile.oab_number, '123456')

@@ -274,8 +274,8 @@ class PJeComunicaService:
         Verifica se uma publicação deve ser EXCLUÍDA por pertencer a outra advogada.
         
         Critérios de exclusão (caso mencione):
-        - OABs de outras advogadas (ex: 407729 - LÚCIA VITÓRIA)
-        - Keywords de outras advogadas (LUCIA, LÚCIA, etc.)
+        - OABs de terceiros definidos na lista de exclusão
+        - Keywords de terceiros definidos na lista de exclusão
         
         Args:
             pub: Publicação normalizada
@@ -316,8 +316,8 @@ class PJeComunicaService:
         
         Args:
             pub: Publicação normalizada
-            oab: OAB da advogada (ex: "507553")
-            nome_advogado: Nome completo (ex: "Vitoria Rocha de Morais")
+            oab: OAB da advogada (ex: "123456")
+            nome_advogado: Nome completo (ex: "Nome Sobrenome")
             
         Returns:
             True se menciona a advogada, False caso contrário
@@ -378,8 +378,8 @@ class PJeComunicaService:
         2. Busca por nome do advogado
         
         Args:
-            oab: Número da OAB (ex: "507553")
-            nome_advogado: Nome completo (ex: "Vitoria Rocha de Morais")
+            oab: Número da OAB (ex: "123456")
+            nome_advogado: Nome completo (ex: "Nome Sobrenome")
             data_inicio: Data inicial (YYYY-MM-DD)
             data_fim: Data final (YYYY-MM-DD)
             tribunais: Lista de tribunais (default: TRIBUNAIS constante)
@@ -523,8 +523,8 @@ class PJeComunicaService:
         Atalho para fetch_publications com data_inicio e data_fim = hoje.
         
         Args:
-            oab: Número da OAB (ex: "507553")
-            nome_advogado: Nome completo (ex: "Vitoria Rocha de Morais")
+            oab: Número da OAB (ex: "123456")
+            nome_advogado: Nome completo (ex: "Nome Sobrenome")
             tribunais: Lista de tribunais (default: TRIBUNAIS constante)
             
         Returns:

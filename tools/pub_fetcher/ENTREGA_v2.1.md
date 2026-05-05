@@ -9,7 +9,7 @@
 
 **Campo "Nome Advogado" adicionado à interface**
 - Opcional mas recomendado
-- Aceita nome completo (ex: "Vitoria Rocha")
+- Aceita nome completo (ex: "Ana Silva")
 - Funciona em conjunto com OAB ou separadamente
 - Melhora precisão da busca
 
@@ -31,7 +31,7 @@
 │    Busca de Publicações Jurídicas        │
 ├──────────────────────────────────────────┤
 │  Tribunal:      [TJSP ▼]                 │
-│  Número OAB:    [507553       ]          │
+│  Número OAB:    [123456       ]          │
 │  Nome Advogado: [              ] (NOVO!) │
 │                 (opcional - ex: Vitoria) │
 ├──────────────────────────────────────────┤
@@ -100,8 +100,8 @@
 **Exemplo:**
 ```
 Tribunal: TJSP
-Número OAB: 507553
-Nome Advogado: Vitoria Rocha
+Número OAB: 123456
+Nome Advogado: Ana Silva
 ```
 
 ### Benefícios:

@@ -286,7 +286,7 @@ DEFAULT_MASTER_PASSWORD = config(
 DEFAULT_MASTER_FIRST_NAME = config('MASTER_FIRST_NAME', default='Master')
 # Nota: O sistema aplica filtros inteligentes:
 # 1. POSITIVO: Garante menção à OAB/nome no texto (evita falsos positivos)
-# 2. NEGATIVO: Exclui publicações de outras advogadas (ex: LÚCIA VITÓRIA - OAB 407729)
+# 2. NEGATIVO: Exclui publicações de terceiros com nome/OAB parecidos (via lista de exclusão)
 # Ajuste em services/pje_comunica.py → EXCLUDED_LAWYERS
 
 # ===== SISTEMA DE CONFIGURAÇÕES =====

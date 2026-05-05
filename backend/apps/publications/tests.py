@@ -504,20 +504,20 @@ class PublicationGetByIdResponseTests(TestCase):
 class PJeComunicaNameNormalizationTests(TestCase):
 	def test_should_include_publication_matches_name_with_or_without_accents(self):
 		pub = {
-			'texto_completo': 'Intima-se a advogada VITORIA ROCHA DE MORAIS para manifestação.',
+			'texto_completo': 'Intima-se a advogada ANA SILVA para manifestação.',
 			'texto_resumo': '',
 			'orgao': '',
 		}
 		# nome com acento + caixa variada no cadastro não deve perder match
-		self.assertTrue(PJeComunicaService.should_include_publication(pub, oab='507553', nome_advogado='Vitória Rocha de Morais'))
+		self.assertTrue(PJeComunicaService.should_include_publication(pub, oab='123456', nome_advogado='Ana Silva'))
 
 	@override_settings(
-		PJE_COMUNICA_EXCLUDED_LAWYERS_OABS=['407729'],
-		PJE_COMUNICA_EXCLUDED_LAWYERS_KEYWORDS=['ROCHA DO NASCIMENTO', 'LUCIA VITORIA'],
+		PJE_COMUNICA_EXCLUDED_LAWYERS_OABS=['654321'],
+		PJE_COMUNICA_EXCLUDED_LAWYERS_KEYWORDS=['SILVA TERCEIRO', 'NOME EXCLUIDO'],
 	)
 	def test_should_exclude_publication_excludes_keyword_even_with_accent_variation(self):
 		pub = {
-			'texto_completo': 'Consta como patrona LUCIA VITORIA ROCHA DO NASCIMENTO (OAB 407729).',
+			'texto_completo': 'Consta como patrona NOME EXCLUIDO SILVA TERCEIRO (OAB 654321).',
 			'texto_resumo': '',
 			'orgao': '',
 		}

@@ -3,8 +3,8 @@
 Publication Fetcher - CLI tool to fetch legal publications from PJe Comunica API.
 
 Usage:
-  python main.py --tribunal TJSP --oab 507553 --today
-  python main.py --tribunal TJSP --oab 507553 --from 2026-01-30 --to 2026-02-02
+    python main.py --tribunal TJSP --oab 123456 --today
+    python main.py --tribunal TJSP --oab 123456 --from 2026-01-30 --to 2026-02-02
 """
 
 import json
@@ -127,7 +127,7 @@ def display_summary(publications):
 @click.command()
 @click.option('--tribunal', default='TJSP', help='Sigla do tribunal (padrão: TJSP)')
 @click.option('--oab', required=True, help='Número da OAB (obrigatório, sem formatação)')
-@click.option('--nome', default=None, help='Nome do advogado (opcional, ex: Vitoria Rocha)')
+@click.option('--nome', default=None, help='Nome do advogado (opcional, ex: Ana Silva)')
 @click.option('--today', is_flag=True, help='Usar data de hoje como período')
 @click.option('--from', 'data_inicio', default=None, help='Data inicial (YYYY-MM-DD)')
 @click.option('--to', 'data_fim', default=None, help='Data final (YYYY-MM-DD)')
@@ -139,9 +139,9 @@ def main(tribunal, oab, nome, today, data_inicio, data_fim, output):
     Exemplos de uso:
     
     \b
-    python main.py --tribunal TJSP --oab 507553 --today
-    python main.py --tribunal TJSP --oab 507553 --nome "Vitoria Rocha" --today
-    python main.py --tribunal TJSP --oab 507553 --from 2026-01-30 --to 2026-02-02
+    python main.py --tribunal TJSP --oab 123456 --today
+    python main.py --tribunal TJSP --oab 123456 --nome "Ana Silva" --today
+    python main.py --tribunal TJSP --oab 123456 --from 2026-01-30 --to 2026-02-02
     """
     
     # Validar argumentos

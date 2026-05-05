@@ -46,14 +46,14 @@ Clique na aba **"Params"** abaixo da URL
 | KEY                          | VALUE        | DESCRIPTION            |
 | ---------------------------- | ------------ | ---------------------- |
 | `siglaTribunal`              | `TJSP`       | Tribunal de São Paulo  |
-| `numeroOab`                  | `507553`     | Número OAB da advogada |
+| `numeroOab`                  | `123456`     | Número OAB da advogada |
 | `dataDisponibilizacaoInicio` | `2026-02-11` | Data início            |
 | `dataDisponibilizacaoFinal`  | `2026-02-11` | Data fim               |
 
 **Dica:** Ao adicionar os params, o Postman monta a URL automaticamente:
 
 ```
-https://comunicaapi.pje.jus.br/api/v1/comunicacao?siglaTribunal=TJSP&numeroOab=507553&dataDisponibilizacaoInicio=2026-02-11&dataDisponibilizacaoFinal=2026-02-11
+https://comunicaapi.pje.jus.br/api/v1/comunicacao?siglaTribunal=TJSP&numeroOab=123456&dataDisponibilizacaoInicio=2026-02-11&dataDisponibilizacaoFinal=2026-02-11
 ```
 
 ### Passo 3: Enviar Request
@@ -87,7 +87,7 @@ Clique na aba **"Body"** para ver:
       "nomeOrgao": "Foro Central - 1ª Vara Cível",
       "tipoComunicacao": "Intimação",
       "nomeAdvogado": "Nome da Advogada",
-      "numeroOab": "507553",
+      "numeroOab": "123456",
       "data_disponibilizacao": "2026-02-11",
       "texto": "Intimação processo 1234567-12.2021.8.26.0100..."
     }
@@ -127,7 +127,7 @@ Params:
 ```
 Params:
 - siglaTribunal: TJSP
-- numeroOab: 507553
+- numeroOab: 123456
 - nomeAdvogado: Maria Silva Santos
 - dataDisponibilizacaoInicio: 2026-02-11
 - dataDisponibilizacaoFinal: 2026-02-11
@@ -158,7 +158,7 @@ Tribunais Federais:
 ```
 Params:
 - siglaTribunal: TJSP
-- numeroOab: 507553
+- numeroOab: 123456
 - dataDisponibilizacaoInicio: 2026-02-01
 - dataDisponibilizacaoFinal: 2026-02-28
 ```
@@ -215,7 +215,7 @@ Params:
 | ----------- | ------- | --------------------------------------- | ------------- |
 | `base_url`  | default | `https://comunicaapi.pje.jus.br/api/v1` | (mesmo)       |
 | `tribunal`  | default | `TJSP`                                  | (mesmo)       |
-| `oab`       | default | `507553`                                | (mesmo)       |
+| `oab`       | default | `123456`                                | (mesmo)       |
 | `data_hoje` | default | `2026-02-11`                            | (mesmo)       |
 
 #### Usar Variáveis na Request
@@ -345,7 +345,7 @@ Crie `testes_publicacoes.csv`:
 
 ```csv
 tribunal,oab,data_inicio,data_fim
-TJSP,507553,2026-02-11,2026-02-11
+TJSP,123456,2026-02-11,2026-02-11
 TJRJ,123456,2026-02-10,2026-02-11
 TRF3,789012,2026-02-09,2026-02-11
 ```
@@ -480,7 +480,7 @@ No editor de Scripts, clique em **"Snippets"** (lado direito):
 ☐ 3. URL: https://comunicaapi.pje.jus.br/api/v1/comunicacao
 ☐ 4. Params:
      - siglaTribunal: TJSP
-     - numeroOab: 507553
+     - numeroOab: 123456
      - dataDisponibilizacaoInicio: 2026-02-11
      - dataDisponibilizacaoFinal: 2026-02-11
 ☐ 5. Send
@@ -540,7 +540,7 @@ Quando voltar, podemos:
     "method": "GET",
     "header": [],
     "url": {
-      "raw": "https://comunicaapi.pje.jus.br/api/v1/comunicacao?siglaTribunal=TJSP&numeroOab=507553&dataDisponibilizacaoInicio=2026-02-11&dataDisponibilizacaoFinal=2026-02-11",
+      "raw": "https://comunicaapi.pje.jus.br/api/v1/comunicacao?siglaTribunal=TJSP&numeroOab=123456&dataDisponibilizacaoInicio=2026-02-11&dataDisponibilizacaoFinal=2026-02-11",
       "protocol": "https",
       "host": ["comunicaapi", "pje", "jus", "br"],
       "path": ["api", "v1", "comunicacao"],
@@ -551,7 +551,7 @@ Quando voltar, podemos:
         },
         {
           "key": "numeroOab",
-          "value": "507553"
+          "value": "123456"
         },
         {
           "key": "dataDisponibilizacaoInicio",

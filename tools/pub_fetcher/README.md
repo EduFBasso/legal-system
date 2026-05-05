@@ -20,17 +20,17 @@ CLI tool para buscar publicações jurídicas do PJe Comunica.
 
 ### Opção 1: Buscar publicações de hoje
 ```bash
-python main.py --tribunal TJSP --oab 507553 --today
+python main.py --tribunal TJSP --oab 123456 --today
 ```
 
 ### Opção 2: Buscar publicações de um período
 ```bash
-python main.py --tribunal TJSP --oab 507553 --from 2026-01-30 --to 2026-02-02
+python main.py --tribunal TJSP --oab 123456 --from 2026-01-30 --to 2026-02-02
 ```
 
 ### Parâmetros
 - `--tribunal` (padrão: TJSP): Sigla do tribunal (ex: TJSP, TRF3, TRT15)
-- `--oab` (obrigatório): Número da OAB sem formatação (ex: 507553)
+- `--oab` (obrigatório): Número da OAB sem formatação (ex: 123456)
 - `--today`: Usar data de hoje como período
 - `--from` e `--to`: Data inicial e final (formato YYYY-MM-DD)
 - `--output` (opcional): Nome customizado para arquivo de saída
@@ -39,7 +39,7 @@ python main.py --tribunal TJSP --oab 507553 --from 2026-01-30 --to 2026-02-02
 
 Os resultados são salvos em JSON na pasta `output/` com nome:
 ```
-publications_TJSP_507553_20260210_143022.json
+publications_TJSP_123456_20260210_143022.json
 ```
 
 Exemplo de estrutura:

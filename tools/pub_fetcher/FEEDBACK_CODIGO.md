@@ -95,7 +95,7 @@ API_TIMEOUT = 10
 
 # UI
 DEFAULT_TRIBUNAL = "TJSP"
-DEFAULT_OAB = "507553"
+DEFAULT_OAB = "123456"
 TRIBUNAIS = ["TJSP", "TJRJ", "TJMG", "TJPR", "TJRS", 
              "TJSC", "TRF1", "TRF2", "TRF3", "TRF4", "TRF5"]
 
@@ -263,7 +263,7 @@ from main import fetch_publications, normalize_publications
 
 def test_fetch_publications_sucesso():
     """Testa busca bem-sucedida."""
-    result = fetch_publications("TJSP", "507553", "2026-02-11", "2026-02-11")
+    result = fetch_publications("TJSP", "123456", "2026-02-11", "2026-02-11")
     assert result is not None
     assert result.get('status') == 'success'
 
@@ -501,7 +501,7 @@ def fetch_publications(tribunal, oab=None, data_inicio=None, data_fim=None, nome
         requests.RequestException: Erros de conexão com API.
     
     Example:
-        >>> data = fetch_publications("TJSP", oab="507553", data_inicio="2026-02-11", data_fim="2026-02-11")
+        >>> data = fetch_publications("TJSP", oab="123456", data_inicio="2026-02-11", data_fim="2026-02-11")
         >>> print(data['count'])
         3
     """
@@ -523,12 +523,12 @@ timeout = 10
 ### 3. **Nomes Descritivos**
 ```python
 # ✅ Bom
-numero_oab = "507553"
+numero_oab = "123456"
 data_disponibilizacao = "2026-02-11"
 publications_list = []
 
 # ❌ Evitar
-n = "507553"
+n = "123456"
 d = "2026-02-11"
 lst = []
 ```
