@@ -163,3 +163,34 @@
     gap: 8px;
   }
 }
+
+/* Header actions row */
+.deadlines-content .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Botão "Ver concluídas" */
+.btn-toggle-completed {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-primary, #1e3a8a);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-default);
+  white-space: nowrap;
+}
+
+.btn-toggle-completed:hover {
+  background: var(--color-primary-soft-text, #1e40af);
+}
+
+.btn-toggle-completed--active {
+  background: var(--color-primary-soft-text, #1e40af);
+  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.25);
+}

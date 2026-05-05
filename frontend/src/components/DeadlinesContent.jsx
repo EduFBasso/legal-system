@@ -34,6 +34,7 @@ export default function DeadlinesContent({
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const fetchAllTasks = useCallback(async ({ showSpinner } = {}) => {
     const shouldShowSpinner = showSpinner ?? !hasLoadedOnceRef.current;
@@ -104,8 +105,13 @@ export default function DeadlinesContent({
     setIsContactModalOpen(true);
   };
 
+  const { pendingTasks, completedTasks } = useMemo(() => ({
+    pendingTasks: tasks.filter((t) => t.status !== 'CONCLUIDA'),
+    completedTasks: tasks.filter((t) => t.status === 'CONCLUIDA'),
+  }), [tasks]);
+
   const grouped = useMemo(() => {
-    const tasksWithUrgency = tasks.map((task) => ({
+    const tasksWithUrgency = pendingTasks.map((task) => ({
       ...task,
       calculated_urgency: getTaskUrgency(task.data_vencimento),
     }));
@@ -129,9 +135,9 @@ export default function DeadlinesContent({
     });
 
     return groupedTasks;
-  }, [tasks]);
+  }, [pendingTasks]);
 
-  const totalTasks = useMemo(() => tasks.length, [tasks]);
+  const totalPending = useMemo(() => pendingTasks.length, [pendingTasks]);
 
   const { URGENCIES, urgencyConfig, shouldShowUrgency } = useUrgencyVisibility(selectedUrgency);
 
@@ -175,17 +181,27 @@ export default function DeadlinesContent({
           <h1>{title}</h1>
           {displayLabel ? <div className="header-subtitle">{displayLabel}</div> : null}
         </div>
-        {headerActions ? <div className="header-actions">{headerActions}</div> : null}
+        <div className="header-actions">
+          <button
+            type="button"
+            className={`btn-toggle-completed${showCompleted ? ' btn-toggle-completed--active' : ''}`}
+            onClick={() => setShowCompleted((v) => !v)}
+            title={showCompleted ? 'Ocultar concluídas' : 'Ver concluídas'}
+          >
+            {showCompleted ? 'Ocultar concluídas' : 'Ver concluídas'}
+          </button>
+          {headerActions}
+        </div>
       </div>
 
       <div className="deadlines-stats">
         <div
           className={`stat-card stat-total stat-clickable ${selectedUrgency === null ? 'stat-selected' : ''}`}
           onClick={() => setSelectedUrgency(null)}
-          title="Mostrar todas as tarefas"
+          title="Mostrar tarefas pendentes"
         >
-          <div className="stat-number">{totalTasks}</div>
-          <div className="stat-label">Todas</div>
+          <div className="stat-number">{totalPending}</div>
+          <div className="stat-label">Pendentes</div>
         </div>
         <div
           className={`stat-card stat-urgentissimo stat-clickable ${selectedUrgency === 'URGENTISSIMO' ? 'stat-selected' : ''}`}
@@ -223,7 +239,7 @@ export default function DeadlinesContent({
           <div className="error-state">
             <p>❌ {error}</p>
           </div>
-        ) : totalTasks === 0 ? (
+        ) : tasks.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">✅</div>
             <h2>Nenhuma tarefa</h2>
@@ -254,6 +270,28 @@ export default function DeadlinesContent({
                   readOnly={readOnly}
                 />
               ) : null
+            )}
+            {showCompleted && completedTasks.length > 0 && (
+              <UrgencySection
+                key="CONCLUIDA"
+                urgency="CONCLUIDA"
+                tasks={completedTasks}
+                sectionClassName="completed-section"
+                selectedTaskId={selectedTaskId}
+                onSelectTask={setSelectedTaskId}
+                onToggleStatus={handleToggleTaskStatus}
+                onEditTask={null}
+                onDeleteTask={onDeleteTask}
+                onOpenCase={handleOpenCase}
+                onOpenMovement={handleOpenMovement}
+                onOpenContact={handleOpenContact}
+                isOverdue={isOverdue}
+                isToday={isToday}
+                formatDate={formatDate}
+                formatDaysRemaining={formatDaysRemaining}
+                showBorder={true}
+                readOnly={readOnly}
+              />
             )}
           </>
         )}
