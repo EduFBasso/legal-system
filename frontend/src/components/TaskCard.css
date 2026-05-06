@@ -197,6 +197,12 @@
   border-color: var(--color-gray-300);
 }
 
+.task-item.concluida .task-stamp--completed {
+  border-color: var(--color-primary, #1e3a8a);
+  background: var(--color-primary, #1e3a8a);
+  color: var(--color-white);
+}
+
 .task-item.concluida:hover {
   --color-rgb: 30, 58, 138;
   background: var(--color-primary-light, #e6f0fa);
@@ -245,6 +251,19 @@
 }
 
 .task-item.normal.selected:hover {
+  box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
+  transform: var(--transform-hover-emphasis);
+}
+
+.task-item.concluida.selected {
+  --color-rgb: 30, 58, 138;
+  border: 3px solid var(--color-primary, #1e3a8a);
+  background: var(--color-primary-light, #e6f0fa);
+  box-shadow: 0 4px 12px rgba(var(--color-rgb), 0.15);
+  transform: var(--transform-hover-normal);
+}
+
+.task-item.concluida.selected:hover {
   box-shadow: 0 6px 16px rgba(var(--color-rgb), 0.2);
   transform: var(--transform-hover-emphasis);
 }

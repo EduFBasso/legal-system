@@ -19,6 +19,9 @@ export default function DeadlinesPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const readOnly = searchParams.get('readonly') === '1';
+  const initialSelectedTaskId = Number(searchParams.get('task_id')) || null;
+  const initialShowCompleted = searchParams.get('show_completed') === '1';
+  const autoScrollToSelectedTask = searchParams.get('focus_task') === '1';
   const [editingTask, setEditingTask] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [toast, setToast] = useState(null);
@@ -153,6 +156,9 @@ export default function DeadlinesPage() {
         readOnly={readOnly}
         onEditTask={handleOpenEditTask}
         onDeleteTask={handleDeleteTask}
+        initialSelectedTaskId={initialSelectedTaskId}
+        initialShowCompleted={initialShowCompleted}
+        autoScrollToSelectedTask={autoScrollToSelectedTask}
       />
 
       <Toast

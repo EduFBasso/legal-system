@@ -115,6 +115,10 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
           })}
         </li>
 
+        <li className="menu-item">
+          {renderMenuLink({ to: '/agenda-mensal', icon: '📅', label: 'Agenda Mensal' })}
+        </li>
+
           <li className="menu-item">
             {renderMenuLink({
               to: '/deadlines',

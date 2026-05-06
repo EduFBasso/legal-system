@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BellRing } from 'lucide-react';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { PublicationsProvider } from './contexts/PublicationsContext';
@@ -19,6 +19,7 @@ import SearchHistoryPage from './pages/SearchHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import DeadlinesPage from './pages/DeadlinesPage';
 import ContactTasksPage from './pages/ContactTasksPage';
+import MonthlyAgendaPage from './pages/MonthlyAgendaPage';
 import MasterDashboardPage from './pages/MasterDashboardPage';
 import PublicationsSummary from './components/PublicationsSummary';
 import NotificationsSummary from './components/NotificationsSummary';
@@ -57,10 +58,25 @@ function CaseDetailRouteElement() {
 function App() {
   const { isAuthenticated, showNotLoggedMessage, user } = useAuth();
   const isMasterUser = user?.role === 'MASTER';
+  const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem('ui:rightSidebarCollapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     return () => cleanupTaskSync();
   }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('ui:rightSidebarCollapsed', isRightSidebarCollapsed ? '1' : '0');
+    } catch {
+      // Ignore localStorage failures (private mode / blocked storage)
+    }
+  }, [isRightSidebarCollapsed]);
 
   return (
     <BrowserRouter>
@@ -135,6 +151,7 @@ function App() {
                         <Route path="/notifications" element={<NotificationsPage />} />
                         <Route path="/deadlines" element={<DeadlinesPage />} />
                         <Route path="/contact-tasks" element={<ContactTasksPage />} />
+                        <Route path="/agenda-mensal" element={<MonthlyAgendaPage />} />
                         <Route
                           path="/master"
                           element={user?.role === 'MASTER' ? <Navigate to="/painel-master" replace /> : <div className="not-logged-panel">Acesso restrito ao usuário Master.</div>}
@@ -145,7 +162,10 @@ function App() {
                     )}
                   </MainContent>
               
-              <Sidebar>
+              <Sidebar
+                isCollapsed={isRightSidebarCollapsed}
+                onToggle={() => setIsRightSidebarCollapsed((prev) => !prev)}
+              >
                 {isAuthenticated ? (
                   <>
                     <h2>Controles</h2>

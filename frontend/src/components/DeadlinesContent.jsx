@@ -25,16 +25,36 @@ export default function DeadlinesContent({
   headerActions = null,
   onEditTask = null,
   onDeleteTask = null,
+  initialSelectedTaskId = null,
+  initialShowCompleted = false,
+  autoScrollToSelectedTask = false,
 }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const hasLoadedOnceRef = useRef(false);
   const [selectedUrgency, setSelectedUrgency] = useState(null);
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [selectedTaskId, setSelectedTaskId] = useState(
+    Number.isFinite(Number(initialSelectedTaskId)) ? Number(initialSelectedTaskId) : null
+  );
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(Boolean(initialShowCompleted));
+  const autoScrollPendingRef = useRef(Boolean(autoScrollToSelectedTask));
+
+  useEffect(() => {
+    if (!Number.isFinite(Number(initialSelectedTaskId))) return;
+    setSelectedTaskId(Number(initialSelectedTaskId));
+  }, [initialSelectedTaskId]);
+
+  useEffect(() => {
+    if (!initialShowCompleted) return;
+    setShowCompleted(true);
+  }, [initialShowCompleted]);
+
+  useEffect(() => {
+    autoScrollPendingRef.current = Boolean(autoScrollToSelectedTask);
+  }, [autoScrollToSelectedTask]);
 
   const fetchAllTasks = useCallback(async ({ showSpinner } = {}) => {
     const shouldShowSpinner = showSpinner ?? !hasLoadedOnceRef.current;
@@ -173,6 +193,29 @@ export default function DeadlinesContent({
     const date = parseLocalDate(dateString);
     return date.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' });
   };
+
+  useEffect(() => {
+    if (!autoScrollPendingRef.current) return;
+    if (!selectedTaskId || loading) return;
+
+    const selectedTask = tasks.find((task) => Number(task.id) === Number(selectedTaskId));
+    if (!selectedTask) return;
+
+    if (selectedTask.status === 'CONCLUIDA' && !showCompleted) {
+      setShowCompleted(true);
+      return;
+    }
+
+    const selectedEl = document.querySelector(`.task-item[data-task-id="${selectedTaskId}"]`);
+    if (!selectedEl) return;
+
+    selectedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (typeof selectedEl.focus === 'function') {
+      selectedEl.focus({ preventScroll: true });
+    }
+
+    autoScrollPendingRef.current = false;
+  }, [selectedTaskId, showCompleted, tasks, loading]);
 
   return (
     <div className="deadlines-content">

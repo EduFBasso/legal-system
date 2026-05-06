@@ -1,11 +1,58 @@
 /* Sidebar Styles - Painel Direito de Controles */
-.sidebar {
+.right-sidebar-shell {
+  position: relative;
   width: 380px;
+  min-width: 380px;
+  transition: width 0.25s ease, min-width 0.25s ease;
+  overflow: visible;
+}
+
+.right-sidebar-shell.is-collapsed {
+  width: 0;
+  min-width: 0;
+}
+
+.right-sidebar-shell.is-collapsed .right-sidebar-toggle {
+  left: -28px;
+  border-right: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.right-sidebar-toggle {
+  position: absolute;
+  top: 12px;
+  left: -14px;
+  width: 28px;
+  height: 44px;
+  border: 1px solid #cbd5e1;
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: #ffffff;
+  color: #1e3a5f;
+  cursor: pointer;
+  z-index: 10;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.right-sidebar-toggle:hover {
+  background: #eff6ff;
+}
+
+.sidebar {
+  width: 100%;
   background: #f8fafc;
   border-left: 3px solid #e2e8f0;
   padding: 16px;
   overflow-y: auto;
   height: calc(100vh - 60px - 36px); /* 60px header + 36px breadcrumb */
+}
+
+.sidebar--collapsed {
+  border-left: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .sidebar h2 {
@@ -50,4 +97,16 @@
   padding: 32px 16px;
   color: #94a3b8;
   font-size: 14px;
+}
+
+@media (max-width: 1200px) {
+  .right-sidebar-shell {
+    width: 320px;
+    min-width: 320px;
+  }
+
+  .right-sidebar-shell.is-collapsed {
+    width: 0;
+    min-width: 0;
+  }
 }

@@ -14,6 +14,9 @@ export default function ContactTasksPage() {
   const { user } = useAuth();
 
   const readOnly = searchParams.get('readonly') === '1';
+  const initialSelectedTaskId = Number(searchParams.get('task_id')) || null;
+  const initialShowCompleted = searchParams.get('show_completed') === '1';
+  const autoScrollToSelectedTask = searchParams.get('focus_task') === '1';
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -92,6 +95,9 @@ export default function ContactTasksPage() {
         displayLabel={displayLabel}
         readOnly={readOnly}
         kind="contact"
+        initialSelectedTaskId={initialSelectedTaskId}
+        initialShowCompleted={initialShowCompleted}
+        autoScrollToSelectedTask={autoScrollToSelectedTask}
         headerActions={
           !readOnly ? (
             <Button variant="success" size="md" type="button" onClick={() => setIsCreateOpen(true)}>

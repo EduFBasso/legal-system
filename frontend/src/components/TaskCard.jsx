@@ -111,6 +111,8 @@ export default function TaskCard({
   return (
     <div
       key={task.id}
+      data-task-id={task.id}
+      tabIndex={isSelected ? -1 : undefined}
       className={`task-item ${urgencyClass} ${isCompleted ? 'completed' : ''} ${isSelected ? 'selected' : ''}`}
     >
       <div className="task-main" onClick={handleSelectClick}>
