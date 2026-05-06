@@ -116,19 +116,19 @@ export default function Menu({ isAuthenticated, onBlockedAction }) {
         </li>
 
         <li className="menu-item">
-          {renderMenuLink({ to: '/agenda-mensal', icon: '📅', label: 'Agenda Mensal' })}
+          {renderMenuLink({
+            to: '/deadlines',
+            icon: '⏰',
+            label: 'Tarefas Processuais',
+            badge: isAuthenticated && openTasksCount > 0 ? (
+              <span className="menu-count-badge menu-count-badge--tasks">{openTasksCount}</span>
+            ) : null,
+          })}
         </li>
 
-          <li className="menu-item">
-            {renderMenuLink({
-              to: '/deadlines',
-              icon: '⏰',
-              label: 'Tarefas Processuais',
-              badge: isAuthenticated && openTasksCount > 0 ? (
-                <span className="menu-count-badge menu-count-badge--tasks">{openTasksCount}</span>
-              ) : null,
-            })}
-          </li>
+        <li className="menu-item">
+          {renderMenuLink({ to: '/agenda-mensal', icon: '📅', label: 'Agenda Mensal' })}
+        </li>
 
           <li className="menu-group-spacer menu-group-spacer-lg" aria-hidden="true" />
 
